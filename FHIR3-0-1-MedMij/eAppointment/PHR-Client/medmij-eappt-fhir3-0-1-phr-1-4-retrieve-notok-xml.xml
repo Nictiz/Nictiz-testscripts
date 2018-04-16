@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir">
+	<id value="medmij-eappt-fhir3-0-1-phr-1-4-retrieve-notok-xml" />
+	<url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-eappt-fhir3-0-1-phr-1-4-retrieve-notok-xml" />
+	<name value="Nictiz MedMij eAppointment - PHR Client - Scenario 1.4 - Retrieve Person 3 Not OK - XML" />
+	<status value="active" />
+	<date value="2018-03-28" />
+	<publisher value="Nictiz" />
+	<contact>
+		<name value="Nictiz"/>
+		<telecom>
+			<system value="email"/>
+			<value value="kwalificatie@nictiz.nl"/>
+			<use value="work"/>
+		</telecom>
+	</contact>
+	<description value="MedMij eAppointment for FHIR STU3 (v3.0.1) - Scenario 1.4: Retrieve Appointments Not OK - XML Format - All appointments of person 3 in period from 1 January 2018 to 31 December 2018 (no appointments). Search parameters used: patient (match person 3), date (various invalid values)." />
+	<copyright value="© Nictiz 2018" />
+
+	<origin>
+		<index value="1" />
+		<profile>
+			<system value="http://hl7.org/fhir/testscript-profile-origin-types"/>
+			<code value="FHIR-Client"/>
+		</profile>
+	</origin>
+	<destination>
+		<index value="1" />
+		<profile>
+			<system value="http://hl7.org/fhir/testscript-profile-destination-types"/>
+			<code value="FHIR-Server"/>
+		</profile>
+	</destination>
+
+	<fixture id="patient3-fixture">
+		<resource>
+			<reference value="../_reference/resources/eAfspraken-Patient-kwalificatie3.xml" />
+		</resource>
+	</fixture>
+
+	<profile id="Bundle-profile">
+		<reference value="http://hl7.org/fhir/StructureDefinition/Bundle" />
+	</profile>
+	<profile id="OperationOutcome-profile">
+		<reference value="http://hl7.org/fhir/StructureDefinition/OperationOutcome" />
+	</profile>
+
+	<variable>
+		<name value="patient3-id" />
+		<path value="Patient/id" />
+		<sourceId value="patient3-fixture" />
+	</variable>
+
+	<ruleset id="ruleset-eAfspraken-serve-invalid-Range-headers-body">
+		<resource>
+			<reference value="../_reference/ruleset/RuleSet-eAfspraken-Serve-Invalid-Range-HeadersBody-Groovy.xml"/>
+		</resource>
+		<rule>
+			<ruleId value="assertContentTypeIfBody" />
+		</rule>
+		<rule>
+			<ruleId value="assertContentTypeCharsetIfBody" />
+		</rule>
+		<rule>
+			<ruleId value="assertResourceTypesIfBody" />
+			<param>
+				<name value="resource" />
+				<value value="Bundle,OperationOutcome" />
+			</param>
+		</rule>
+		<rule>
+			<ruleId value="assertResponseCodeIfOperationOutcome" />
+		</rule>
+		<rule>
+			<ruleId value="assertResponseCodeIfBundle" />
+		</rule>
+		<rule>
+			<ruleId value="assertProfileIfOperationOutcome" />
+			<param>
+				<name value="validateProfileId" />
+				<value value="OperationOutcome-profile" />
+			</param>
+		</rule>
+		<rule>
+			<ruleId value="assertProfileIfBundle" />
+			<param>
+				<name value="validateProfileId" />
+				<value value="Bundle-profile" />
+			</param>
+		</rule>
+		<rule>
+			<ruleId value="assertErrorIssueIfOperationOutcome" />
+		</rule>
+		<rule>
+			<ruleId value="assertTypeSearchsetIfBundle" />
+		</rule>
+		<rule>
+			<ruleId value="assertTotalZeroIfBundle" />
+		</rule>
+	</ruleset>
+
+	<!-- No Setup -->
+
+	<test id="01-RetrieveAppointmentsInvalidRange">
+		<name value="01-RetrieveAppointmentsInvalidRange" />
+		<description value="Test PHR Client retrieve search operation for known Appointments of person 3 and in period from 31 May 2018 to 1 May 2018. The expected response code is 200(OK) and content is a searchset Bundle resource where no found entries of Appointment resources are returned, or a 4xx,5xx response code with an OperationOutcome containing at least one error issue in XML format." />
+		<action>
+			<operation>
+				<type>
+					<system value="http://hl7.org/fhir/testscript-operation-codes" />
+					<code value="search" />
+				</type>
+				<resource value="Appointment" />
+				<description value="XIS Server query search operation with invalid date range values where the start value is after the end value." />
+				<accept value="xml" />
+				<contentType value="none" />
+				<destination value="1" />
+				<origin value="1" />
+				<params value="?patient=${patient3-id}&amp;date=ge2018-05-31&amp;date=le2018-05-01" />
+			</operation>
+		</action>
+		<action>
+			<assert>
+				<description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
+				<direction value="request"/>
+				<headerField value="Accept"/>
+				<operator value="contains"/>
+				<value value="application/fhir+xml"/>
+			</assert>
+		</action>
+		<action>
+			<assert>
+				<description value="Confirm that the client did not request a Content-Type. Warning only to allow for systems that automatically send Content-Type."/>
+				<direction value="request"/>
+				<headerField value="Content-Type"/>
+				<operator value="empty"/>
+				<warningOnly value="true"/>
+			</assert>
+		</action>
+		<action>
+			<assert>
+				<description value="Complex ruleset assertion to conditionally validate expected eAfspraken Serve search operation with invalid date range."/>
+				<direction value="response"/>
+				<ruleset>
+					<rulesetId value="ruleset-eAfspraken-serve-invalid-Range-headers-body"/>
+					<rule>
+						<ruleId value="assertContentTypeMimeTypeIfBody" />
+						<param>
+							<name value="headerExpectedValue" />
+							<value value="application/fhir+xml" />
+						</param>
+					</rule>
+					<rule>
+						<ruleId value="assertEntryCountZeroIfBundle" />
+					</rule>
+				</ruleset>
+			</assert>
+		</action>
+	</test>
+
+	<test id="02-RetrieveAppointmentsDateFormatError">
+		<name value="02-RetrieveAppointmentsDateFormatError" />
+		<description value="Test PHR Client retrieve search operation for known Appointments of person 3 and in period from 1 May 2018 to AA May 2018. The expected response code is 4xx,5xx with an OperationOutcome containing at least one error issue in XML format." />
+		<action>
+			<operation>
+				<type>
+					<system value="http://hl7.org/fhir/testscript-operation-codes" />
+					<code value="search" />
+				</type>
+				<resource value="Appointment" />
+				<description value="XIS Server query search operation with invalid date format parameter." />
+				<accept value="xml" />
+				<contentType value="none" />
+				<destination value="1" />
+				<origin value="1" />
+				<params value="?patient=${patient3-id}&amp;date=ge2018-05-01&amp;date=le2018-05-AA" />
+			</operation>
+		</action>
+		<action>
+			<assert>
+				<description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
+				<direction value="request"/>
+				<headerField value="Accept"/>
+				<operator value="contains"/>
+				<value value="application/fhir+xml"/>
+			</assert>
+		</action>
+		<action>
+			<assert>
+				<description value="Confirm that the client did not request a Content-Type. Warning only to allow for systems that automatically send Content-Type."/>
+				<direction value="request"/>
+				<headerField value="Content-Type"/>
+				<operator value="empty"/>
+				<warningOnly value="true"/>
+			</assert>
+		</action>
+		<action>
+			<assert>
+				<description value="Complex ruleset assertion to conditionally validate expected eAfspraken Serve search operation with invalid date range."/>
+				<direction value="response"/>
+				<ruleset>
+					<rulesetId value="ruleset-eAfspraken-serve-invalid-Range-headers-body"/>
+					<rule>
+						<ruleId value="assertContentTypeMimeTypeIfBody" />
+						<param>
+							<name value="headerExpectedValue" />
+							<value value="application/fhir+xml" />
+						</param>
+					</rule>
+				</ruleset>
+			</assert>
+		</action>
+	</test>
+</TestScript>

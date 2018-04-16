@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir">
+	<id value="medmij-eappt-fhir3-0-1-xis-1-3-serve-year-xml" />
+	<url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-eappt-fhir3-0-1-xis-1-3-serve-year-xml" />
+	<name value="Nictiz MedMij eAppointment - XIS Server - Scenario 1.3 - Serve Person 3 Year Period - XML" />
+	<status value="active" />
+	<date value="2018-03-27" />
+	<publisher value="Nictiz" />
+	<contact>
+		<name value="Nictiz"/>
+		<telecom>
+			<system value="email"/>
+			<value value="kwalificatie@nictiz.nl"/>
+			<use value="work"/>
+		</telecom>
+	</contact>
+	<description value="MedMij eAppointment for FHIR STU3 (v3.0.1) - Scenario 1.3: Query Year Appointments - XML Format - All appointments of person 3 in period from 1 January 2018 to 31 December 2018 (no appointments). Search parameters used: patient (match person 3), date (greater than or equal to 1 January 2018), date (less than or equal to 31 December 2018)." />
+	<copyright value="© Nictiz 2018" />
+
+	<fixture id="patient3-fixture">
+		<resource>
+			<reference value="../_reference/resources/eAfspraken-Patient-kwalificatie3.xml" />
+		</resource>
+	</fixture>
+
+	<profile id="Bundle-profile">
+		<reference value="http://hl7.org/fhir/StructureDefinition/Bundle" />
+	</profile>
+
+	<variable>
+		<name value="patient3-id" />
+		<path value="Patient/id" />
+		<sourceId value="patient3-fixture" />
+	</variable>
+
+	<!-- No Setup -->
+
+	<test id="01-ServeAppointments">
+		<name value="01-ServeAppointments" />
+		<description value="Test XIS Server query search operation for known Appointments of person 3 and in period from 1 January 2018 to 31 December 2018. The expected response code is 200(OK) and content is a searchset Bundle resource where no found entries of Appointment resources are returned in XML format." />
+		<action>
+			<operation>
+				<type>
+					<system value="http://hl7.org/fhir/testscript-operation-codes" />
+					<code value="search" />
+				</type>
+				<resource value="Appointment" />
+				<description value="XIS Server query search operation for known Appointments." />
+				<accept value="xml" />
+				<contentType value="none" />
+				<params value="?patient=${patient3-id}&amp;date=ge2018-01-01&amp;date=le2018-12-31" />
+			</operation>
+		</action>
+		<action>
+			<assert>
+				<description value="Confirm that the returned HTTP status is 200(OK)." />
+				<direction value="response" />
+				<responseCode value="200" />
+			</assert>
+		</action>
+		<action>
+			<assert>
+				<description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
+				<direction value="response" />
+				<contentType value="xml" />
+			</assert>
+		</action>
+		<action>
+			<assert>
+				<description value="Confirm that the returned resource type is Bundle." />
+				<direction value="response" />
+				<resource value="Bundle" />
+			</assert>
+		</action>
+		<action>
+			<assert>
+				<description value="Confirm that the returned Bundle conforms to the base FHIR specification." />
+				<direction value="response" />
+				<validateProfileId value="Bundle-profile" />
+			</assert>
+		</action>
+		<action>
+			<assert>
+				<description value="Confirm that the returned Bundle type is searchset." />
+				<direction value="response" />
+				<operator value="equals" />
+				<path value="Bundle/type" />
+				<value value="searchset" />
+			</assert>
+		</action>
+		<action>
+			<assert>
+				<description value="Confirm that the returned searchset Bundle contains 0 entries." />
+				<direction value="response" />
+				<operator value="equals" />
+				<path value="Bundle/total" />
+				<value value="0" />
+			</assert>
+		</action>
+		<action>
+			<assert>
+				<description value="Confirm that the returned searchset Bundle contains 0 entries." />
+				<direction value="response" />
+				<expression value="entry.count()" />
+				<operator value="equals" />
+				<value value="0" />
+			</assert>
+		</action>
+	</test>
+</TestScript>
