@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir">  
-    <id value="medmij-pdfa-fhir3-0-1-xis-1-1-serve-3-documentreference-xml"/>  
-    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-pdfa-fhir3-0-1-xis-1-1-serve-documentreference-xml"/>  
-    <name value="Nictiz MedMij PDFA - XIS Server - Scenario 1.1 - Serve 3 DocumentReference - XML"/>  
+    <id value="medmij-pdfa-fhir3-0-1-xis-1-2-serve-1-documentreference-xml"/>  
+    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-pdfa-fhir3-0-1-xis-1-2-serve-documentreference-xml"/>  
+    <name value="Nictiz MedMij PDFA - XIS Server - Scenario 1.2 - Serve 1 DocumentReference - XML"/>  
     <status value="active"/>  
     <date value="2018-05-23"/>  
     <publisher value="Nictiz"/>  
@@ -14,57 +14,47 @@
             <use value="work"/> 
         </telecom> 
     </contact>  
-    <description value="MedMij PDFA for FHIR STU3 (v3.0.1) - Scenario 1.1: Query PDF/A DocumentReferences - XML Format - Query all PDFA DocumentReference references of person 1. Response consists of 3 DocumentReference."/>  
+    <description value="MedMij PDFA for FHIR STU3 (v3.0.1) - Scenario 1.2: Query PDF/A DocumentReference - XML Format - Query all PDFA DocumentReference resources of person 2 that have a 'current' status. Response consists of 1 DocumentReference resource."/>  
     <copyright value="© Nictiz 2018"/>  
-    <fixture id="patient1-fixture"> 
+    <fixture id="patient2-fixture"> 
         <resource> 
-            <reference value="../_reference/resources/PDFA-Patient-kwalificatie1.xml"/> 
+            <reference value="../_reference/resources/PDFA-Patient-kwalificatie2.xml"/> 
         </resource> 
     </fixture>  
-    <fixture id="documentreference1-fixture"> 
+    <fixture id="documentreference4-fixture"> 
         <resource> 
-            <reference value="../_reference/resources/PDFA-DocumentReference-kwalificatie1.xml"/> 
+            <reference value="../_reference/resources/PDFA-DocumentReference-kwalificatie4.xml"/> 
         </resource> 
     </fixture>  
-    <fixture id="documentreference2-fixture"> 
+    <fixture id="documentreference5-fixture"> 
         <resource> 
-            <reference value="../_reference/resources/PDFA-DocumentReference-kwalificatie2.xml"/> 
-        </resource> 
-    </fixture>  
-    <fixture id="documentreference3-fixture"> 
-        <resource> 
-            <reference value="../_reference/resources/PDFA-DocumentReference-kwalificatie3.xml"/> 
+            <reference value="../_reference/resources/PDFA-DocumentReference-kwalificatie5.xml"/> 
         </resource> 
     </fixture>  
     <profile id="Bundle-profile"> 
         <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/> 
     </profile>  
     <variable> 
-        <name value="patient1-id"/>  
+        <name value="patient2-id"/>  
         <expression value="Patient.id"/>
-        <sourceId value="patient1-fixture"/> 
+        <sourceId value="patient2-fixture"/> 
     </variable>  
     <variable> 
-        <name value="documentreference1-id"/>  
+        <name value="documentreference4-id"/>  
         <expression value="DocumentReference.id"/>
-        <sourceId value="documentreference1-fixture"/> 
+        <sourceId value="documentreference4-fixture"/> 
     </variable>  
     <variable> 
-        <name value="documentreference2-id"/>  
+        <name value="documentreference5-id"/>  
         <expression value="DocumentReference.id"/>
-        <sourceId value="documentreference2-fixture"/> 
-    </variable>  
-    <variable> 
-        <name value="documentreference3-id"/>  
-        <expression value="DocumentReference.id"/>
-        <sourceId value="documentreference3-fixture"/> 
+        <sourceId value="documentreference5-fixture"/> 
     </variable>  
   
     <!-- No Setup -->
    
     <test id="01-ServeDocumentReference"> 
         <name value="01-ServeDocumentReference"/>  
-        <description value="Test XIS Server query search operation for known DocumentReference of person 1. The expected response code is 200(OK) and content is a searchset Bundle resource where 3 entries of found DocumentReference resources are returned in XML format."/>  
+        <description value="Test XIS Server query search operation for known DocumentReference resources with a current status of person 2. The expected response code is 200(OK) and content is a searchset Bundle resource where 3 entries of found DocumentReference resources are returned in XML format."/>  
         <action> 
             <operation> 
                 <type> 
@@ -72,10 +62,10 @@
                     <code value="search"/> 
                 </type>  
                 <resource value="DocumentReference"/>  
-                <description value="XIS Server query search operation for known DocumentReference."/>  
+                <description value="XIS Server query search operation for known DocumentReference with a current status."/>  
                 <accept value="xml"/>  
                 <contentType value="none"/>  
-                <params value="?patient=Patient/${patient1-id}"/> 
+                <params value="?patient=Patient/${patient2-id}&amp;status=current"/> 
             </operation> 
         </action>  
         <action> 
@@ -119,7 +109,7 @@
             <assert> 
                 <description value="Confirm that the returned searchset Bundle contains 3 entries."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 3"/>  
+                <expression value="Bundle.entry.count() = 1"/>  
             </assert> 
         </action>  
         <action>
@@ -131,29 +121,29 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned Bundle entries contain the first expected DocumentReference resource id."/>  
+                <description value="Confirm that the returned Bundle entry contain the expected DocumentReference resource id."/>  
                 <direction value="response"/>  
-                <operator value="in"/>  
-                <path value="Bundle/entry[1]/resource/DocumentReference/id"/>  
-                <value value="${documentreference1-id},${documentreference2-id},${documentreference3-id}"/> 
+                <operator value="equals"/>  
+                <expression value="Bundle.entry.resource.id"/>  
+                <value value="${documentreference4-id}"/> 
             </assert> 
-        </action>  
+        </action> 
         <action> 
             <assert> 
-                <description value="Confirm that the returned Bundle entries contain the second expected DocumentReference resource id."/>  
+                <description value="Confirm that the returned DocumentReference has a current status."/>  
                 <direction value="response"/>  
-                <operator value="in"/>  
-                <path value="Bundle/entry[2]/resource/DocumentReference/id"/>  
-                <value value="${documentreference1-id},${documentreference2-id},${documentreference3-id}"/> 
+                <operator value="equals"/>  
+                <expression value="Bundle.entry.resource.status"/>  
+                <value value="current"/> 
             </assert> 
-        </action>  
+        </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned Bundle entries contain the third expected DocumentReference resource id."/>  
+                <description value="Confirm that the returned DocumentReference has a person 2 as subject"/>  
                 <direction value="response"/>  
-                <operator value="in"/>  
-                <path value="Bundle/entry[3]/resource/DocumentReference/id"/>  
-                <value value="${documentreference1-id},${documentreference2-id},${documentreference3-id}"/> 
+                <operator value="contains"/>  
+                <expression value="Bundle.entry.resource.subject.reference"/>  
+                <value value="Patient/${patient2-id}"/> 
             </assert> 
         </action> 
     </test> 
