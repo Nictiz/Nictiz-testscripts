@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir">  
-    <id value="medmij-pdfa-fhir3-0-1-xis-1-1-serve-3-documentreference-xml"/>  
-    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-pdfa-fhir3-0-1-xis-1-1-serve-documentreference-xml"/>  
-    <name value="Nictiz MedMij PDFA - XIS Server - Scenario 1.1 - Serve 3 DocumentReference - XML"/>  
+    <id value="medmij-pdfa-fhir3-0-1-phr-1-1-retrieve-3-documentreference-xml"/>  
+    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-pdfa-fhir3-0-1-phr-1-1-retrieve-documentreference-xml"/>  
+    <name value="Nictiz MedMij PDFA - PHR Client - Scenario 1.1 - Retrieve 3 DocumentReference - XML"/>  
     <status value="active"/>  
-    <date value="2018-05-23"/>  
+    <date value="2018-06-13"/>  
     <publisher value="Nictiz"/>  
     <contact> 
         <name value="Nictiz"/>  
@@ -14,8 +14,24 @@
             <use value="work"/> 
         </telecom> 
     </contact>  
-    <description value="MedMij PDFA for FHIR STU3 (v3.0.1) - Scenario 1.1: Query PDF/A DocumentReference - XML Format - Query all PDFA DocumentReference resources of person 1. Response consists of 3 DocumentReference resources."/>  
+    <description value="MedMij PDFA for FHIR STU3 (v3.0.1) - Scenario 1.1: Retrieve PDF/A DocumentReference - XML Format - All PDFA DocumentReference resources of person 1 that have a 'current' status. Response consists of 3 DocumentReference resource."/>  
     <copyright value="© Nictiz 2018"/>  
+    
+    <origin>
+        <index value="1" />
+        <profile>
+            <system value="http://hl7.org/fhir/testscript-profile-origin-types"/>
+            <code value="FHIR-Client"/>
+        </profile>
+    </origin>
+    <destination>
+        <index value="1" />
+        <profile>
+            <system value="http://hl7.org/fhir/testscript-profile-destination-types"/>
+            <code value="FHIR-Server"/>
+        </profile>
+    </destination>
+    
     <fixture id="patient1-fixture"> 
         <resource> 
             <reference value="../_reference/resources/PDFA-Patient-kwalificatie1.xml"/> 
@@ -30,15 +46,17 @@
         <resource> 
             <reference value="../_reference/resources/PDFA-DocumentReference-kwalificatie2.xml"/> 
         </resource> 
-    </fixture>  
+    </fixture>
     <fixture id="documentreference3-fixture"> 
         <resource> 
             <reference value="../_reference/resources/PDFA-DocumentReference-kwalificatie3.xml"/> 
         </resource> 
     </fixture>  
+    
     <profile id="Bundle-profile"> 
         <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/> 
     </profile>  
+    
     <variable> 
         <name value="patient1-id"/>  
         <expression value="Patient.id"/>
@@ -59,12 +77,12 @@
         <expression value="DocumentReference.id"/>
         <sourceId value="documentreference3-fixture"/> 
     </variable>  
-  
+    
     <!-- No Setup -->
-   
-    <test id="01-ServeDocumentReference"> 
-        <name value="01-ServeDocumentReference"/>  
-        <description value="Test XIS Server query search operation for known DocumentReference of person 1. The expected response code is 200(OK) and content is a searchset Bundle resource where 3 entries of found DocumentReference resources are returned in XML format."/>  
+    
+    <test id="01-RetrieveDocumentReference"> 
+        <name value="01-RetrieveDocumentReference"/>  
+        <description value="Test PHR Client retrieve search operation for known DocumentReference resources of person 1 with a current status. The expected response code is 200(OK) and content is a searchset Bundle resource where 3 entries of found DocumentReference resources are returned in XML format."/>  
         <action> 
             <operation> 
                 <type> 
@@ -72,33 +90,53 @@
                     <code value="search"/> 
                 </type>  
                 <resource value="DocumentReference"/>  
-                <description value="XIS Server query search operation for known DocumentReference."/>  
+                <description value="PHR Server retrieve search operation for known DocumentReference with a current status."/>  
                 <accept value="xml"/>  
-                <contentType value="none"/>  
+                <contentType value="none" />
+                <destination value="1" />
+                <origin value="1" />
                 <params value="?patient=Patient/${patient1-id}&amp;status=current"/> 
             </operation> 
         </action>  
-        <action> 
-            <assert> 
-                <description value="Confirm that the returned HTTP status is 200(OK)."/>  
-                <direction value="response"/>  
-                <responseCode value="200"/> 
-            </assert> 
-        </action>  
-        <action> 
-            <assert> 
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>  
-                <direction value="response"/>  
-                <contentType value="xml"/> 
-            </assert> 
-        </action>  
-        <action> 
-            <assert> 
-                <description value="Confirm that the returned resource type is Bundle."/>  
-                <direction value="response"/>  
-                <resource value="Bundle"/> 
-            </assert> 
-        </action> 
+        <action>
+            <assert>
+                <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
+                <direction value="request"/>
+                <headerField value="Accept"/>
+                <operator value="contains"/>
+                <value value="application/fhir+xml"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the client did not request a Content-Type. Warning only to allow for systems that automatically send Content-Type."/>
+                <direction value="request"/>
+                <headerField value="Content-Type"/>
+                <operator value="empty"/>
+                <warningOnly value="true"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned HTTP status is 200(OK)." />
+                <direction value="response" />
+                <responseCode value="200" />
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
+                <direction value="response" />
+                <contentType value="xml" />
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned resource type is Bundle." />
+                <direction value="response" />
+                <resource value="Bundle" />
+            </assert>
+        </action>
         <action>
             <assert>
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification." />
@@ -106,15 +144,15 @@
                 <validateProfileId value="Bundle-profile" />
             </assert>
         </action>
-        <action> 
-            <assert> 
-                <description value="Confirm that the returned Bundle type is searchset."/>  
-                <direction value="response"/>  
-                <operator value="equals"/>  
-                <path value="Bundle/type"/>  
-                <value value="searchset"/> 
-            </assert> 
-        </action>  
+        <action>
+            <assert>
+                <description value="Confirm that the returned Bundle type is searchset." />
+                <direction value="response" />
+                <operator value="equals" />
+                <path value="Bundle/type" />
+                <value value="searchset" />
+            </assert>
+        </action>
         <action> 
             <assert> 
                 <description value="Confirm that the returned searchset Bundle contains 3 entries."/>  
