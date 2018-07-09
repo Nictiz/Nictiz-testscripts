@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir">  
+    <id value="medmij-pdfa-fhir3-0-1-phr-1-4-retrieve-1-documentreference-xml"/>  
+    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-pdfa-fhir3-0-1-phr-1-4-retrieve-documentreference-xml"/>  
+    <name value="Nictiz MedMij PDFA - PHR Client - Scenario 1.4 - Retrieve 1 DocumentReference - XML"/>  
+    <status value="active"/>  
+    <date value="2018-06-13"/>  
+    <publisher value="Nictiz"/>  
+    <contact> 
+        <name value="Nictiz"/>  
+        <telecom> 
+            <system value="email"/>  
+            <value value="kwalificatie@nictiz.nl"/>  
+            <use value="work"/> 
+        </telecom> 
+    </contact>  
+    <description value="MedMij PDFA for FHIR STU3 (v3.0.1) - Scenario 1.4: Retrieve PDF/A DocumentReference - XML Format - All PDFA DocumentReference resources of person 2 with a known ID. Response consists of 1 DocumentReference resource."/>  
+    <copyright value="© Nictiz 2018"/>  
+    
+    <origin>
+        <index value="1" />
+        <profile>
+            <system value="http://hl7.org/fhir/testscript-profile-origin-types"/>
+            <code value="FHIR-Client"/>
+        </profile>
+    </origin>
+    <destination>
+        <index value="1" />
+        <profile>
+            <system value="http://hl7.org/fhir/testscript-profile-destination-types"/>
+            <code value="FHIR-Server"/>
+        </profile>
+    </destination>
+    
+    <fixture id="patient1-fixture"> 
+        <resource> 
+            <reference value="../_reference/resources/PDFA-Patient-kwalificatie2.xml"/> 
+        </resource> 
+    </fixture>  
+    <fixture id="documentreference1-fixture"> 
+        <resource> 
+            <reference value="../_reference/resources/PDFA-DocumentReference-kwalificatie4.xml"/> 
+        </resource> 
+    </fixture>  
+   
+    
+    <profile id="MHD-profile"> 
+        <reference value="http://ihe.net/fhir/StructureDefinition/IHE.MHD.Query.Minimal.DocumentReference"/> 
+    </profile>  
+    
+    <variable> 
+        <name value="patient1-id"/>  
+        <expression value="Patient.id"/>
+        <sourceId value="patient1-fixture"/> 
+    </variable>  
+    <variable> 
+        <name value="documentreference1-id"/>  
+        <expression value="DocumentReference.id"/>
+        <sourceId value="documentreference1-fixture"/> 
+    </variable>  
+      
+    <!-- No Setup -->
+    
+    <test id="01-RetrieveDocumentReference"> 
+        <name value="01-RetrieveDocumentReference"/>  
+        <description value="Test PHR Client retrieve read operation for known DocumentReference resource of person 2. The expected response code is 200(OK) and content is a DocumentReference returned in XML format."/>  
+        <action> 
+            <operation> 
+                <type> 
+                    <system value="http://hl7.org/fhir/testscript-operation-codes"/>  
+                    <code value="read"/> 
+                </type>  
+                <resource value="DocumentReference"/>  
+                <description value="PHR Server retrieve read operation for known DocumentReference."/>  
+                <accept value="xml"/>  
+                <contentType value="none" />
+                <destination value="1" />
+                <origin value="1" />
+                <params value="/${documentreference1-id}"/> 
+            </operation> 
+        </action>  
+        <action>
+            <assert>
+                <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
+                <direction value="request"/>
+                <headerField value="Accept"/>
+                <operator value="contains"/>
+                <value value="application/fhir+xml"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the client did not request a Content-Type. Warning only to allow for systems that automatically send Content-Type."/>
+                <direction value="request"/>
+                <headerField value="Content-Type"/>
+                <operator value="empty"/>
+                <warningOnly value="true"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned HTTP status is 200(OK)." />
+                <direction value="response" />
+                <responseCode value="200" />
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
+                <direction value="response" />
+                <contentType value="xml" />
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned resource type is Bundle." />
+                <direction value="response" />
+                <resource value="DocumentReference" />
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned Bundle conforms to the base FHIR specification." />
+                <direction value="response" />
+                <validateProfileId value="MHD-profile" />
+            </assert>
+        </action>
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned Documentreference contains the expected DocumentReference resource id."/>  
+                <direction value="response"/>  
+                <operator value="equals"/>  
+                <expression value="DocumentReference.id"/>  
+                <value value="${documentreference1-id}"/> 
+            </assert> 
+        </action> 
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned DocumentReference has person 2 as subject"/>  
+                <direction value="response"/>  
+                <operator value="contains"/>  
+                <expression value="subject.reference"/>  
+                <value value="Patient/${patient1-id}"/> 
+            </assert> 
+        </action> 
+    </test> 
+</TestScript>
