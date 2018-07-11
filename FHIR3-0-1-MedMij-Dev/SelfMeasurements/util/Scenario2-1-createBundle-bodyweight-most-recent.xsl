@@ -11,8 +11,8 @@
     <xsl:include href="_include/createBundle.xsl"/>
     
     <xsl:param name="bundletype">batch</xsl:param>
-    <xsl:param name="inputdir" select="'../_reference/resources-raadplegen-sturen/'"/>
-    <xsl:param name="outputdir" select="'../_reference/resources-raadplegen-sturen/'"/>
+    <xsl:param name="inputdir" select="'../_reference/resources-query-send/'"/>
+    <xsl:param name="outputdir" select="'../_reference/resources-query-send/'"/>
     
     <xsl:variable name="outputid">medmij-selfmeasurements-fhir3-0-1-scenario-2-1-bundle</xsl:variable>
     <xsl:variable name="outputfilename" select="concat($outputid, '.xml')"/>
