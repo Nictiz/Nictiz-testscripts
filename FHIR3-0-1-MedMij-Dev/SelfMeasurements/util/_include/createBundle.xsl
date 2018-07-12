@@ -55,7 +55,9 @@
         <Bundle xmlns="http://hl7.org/fhir">
             <id value="{$outputid}"/>
             <type value="{$bundletype}"/>
-            <total value="{count($entries)}"/>
+            <xsl:if test="$bundletype = ('searchset', 'history')">
+                <total value="{count($entries)}"/>
+            </xsl:if>
             <xsl:for-each select="$entries">
                 <xsl:variable name="resourceType" as="xs:string" select="local-name()"/>
                 <xsl:variable name="resourceId" as="xs:string" select="f:id/@value"/>
