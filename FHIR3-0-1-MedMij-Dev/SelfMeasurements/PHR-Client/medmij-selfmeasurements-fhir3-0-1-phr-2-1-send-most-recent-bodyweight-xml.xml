@@ -15,7 +15,7 @@
             <use value="work"/>
         </telecom>
     </contact>
-    <description value="MedMij Self Measurements for FHIR STU3 (v3.0.1) - Scenario 2.1: - Send Most Recent BodyWeight Observation - XML Format - of person 1. Response consists HTTP 201 Created."/>
+    <description value="MedMij Self Measurements for FHIR STU3 (v3.0.1) - Scenario 2.1: - Send Most Recent BodyWeight Observation - XML Format - of person 1. Response is expected to be HTTP 201 Created."/>
     <copyright value="© Nictiz 2018"/>
     <origin>
         <index value="1" />
@@ -33,11 +33,19 @@
     </destination>
     <fixture id="patient1-token-fixture">
         <resource>
-            <reference value="../_reference/resources/medmij-selfmeasurements-fhir3-0-1-Patient-Token-kwalificatie1.xml"/>
+            <reference value="../_reference/resources-generic/medmij-selfmeasurements-fhir3-0-1-Patient-Token-kwalificatie1.xml"/>
+        </resource>
+    </fixture>
+    <fixture id="scenario-2-1-bundle-fixture">
+        <resource>
+            <reference value="../_reference/resources-query-send/medmij-selfmeasurements-fhir3-0-1-scenario-2-1-bundle.xml"/>
         </resource>
     </fixture>
     <profile id="BodyWeight-profile">
         <reference value="http://nictiz.nl/fhir/StructureDefinition/zib-BodyWeight"/>
+    </profile>
+    <profile id="Bundle-profile">
+        <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
     </profile>
     <variable>
         <name value="patient1-token-id"/>
@@ -51,33 +59,37 @@
             <operation>
                 <type>
                     <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-                    <code value="updateCreate"/>
+                    <code value="create"/>
                 </type>
-                <resource value="Observation"/>
-                <description value="XIS Server create or update operation of Observation of type BodyWeight."/>
+                <resource value="Bundle"/>
+                <description value="XIS Server create or update operation for a Bundle of Observations of type BodyWeight."/>
                 <accept value="xml"/>
-                <contentType value="none"/>
+                <contentType value="xml"/>
+                <destination value="1" />
+                <origin value="1" />
                 <requestHeader>
                     <!-- 0..* Each operation can have one or more header elements -->
                     <field value="Authorization"/>
                     <!-- 1..1 HTTP header field name: OAuth access token -->
-                    <value value="${patient-token-id}"/>
+                    <value value="${patient1-token-id}"/>
                     <!-- 1..1 HTTP headerfield value: UUID4 -->
                 </requestHeader>
+                <sourceId value="scenario-2-1-bundle-fixture"/>
             </operation>
         </action>
         <action>
             <assert>
-                <description value="Confirm that incoming resource conforms to the zib-BodyWeight profile."/>
+                <description value="Confirm that request body conforms to the Bundle profile."/>
                 <direction value="request"/>
-                <validateProfileId value="BodyWeight-profile"/>
+                <validateProfileId value="Bundle-profile"/>
             </assert>
         </action>
+        <!-- TODO: check Bundle resources against the appropriate profile -->
         <action>
             <assert>
                 <description value="Confirm that the returned HTTP status is 201(Created)."/>
                 <direction value="response"/>
-                <responseCode value="201"/>
+                <response value="created"/>
             </assert>
         </action>
     </test>

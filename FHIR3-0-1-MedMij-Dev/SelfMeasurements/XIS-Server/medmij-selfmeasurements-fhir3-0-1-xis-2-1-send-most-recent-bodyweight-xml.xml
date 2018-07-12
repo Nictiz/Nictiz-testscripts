@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://hl7.org/fhir http://hl7.org/fhir/STU3/fhir-all.xsd" xmlns="http://hl7.org/fhir">
+    <id value="xis-2-1-send-most-recent-bodyweight-xml"/>
+    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-selfmeasurements-fhir3-0-1-xis-2-1-send-most-recent-bodyweight-xml"/>
+    <name value="MedMij Self Measurements - PHR Client - Scenario 2.1 - Send Most Recent BodyWeight (Observation) - XML"/>
+    <status value="active"/>
+    <date value="2018-05-23"/>
+    <publisher value="Nictiz"/>
+    <contact>
+        <name value="Nictiz"/>
+        <telecom>
+            <system value="email"/>
+            <value value="kwalificatie@nictiz.nl"/>
+            <use value="work"/>
+        </telecom>
+    </contact>
+    <description value="MedMij Self Measurements for FHIR STU3 (v3.0.1) - Scenario 2.1: - Send Most Recent BodyWeight Observation - XML Format - of person 1. Response is expected to be HTTP 201 Created."/>
+    <copyright value="© Nictiz 2018"/>
+    <origin>
+        <index value="1" />
+        <profile>
+            <system value="http://hl7.org/fhir/testscript-profile-origin-types"/>
+            <code value="FHIR-Client"/>
+        </profile>
+    </origin>
+    <destination>
+        <index value="1" />
+        <profile>
+            <system value="http://hl7.org/fhir/testscript-profile-destination-types"/>
+            <code value="FHIR-Server"/>
+        </profile>
+    </destination>
+    <fixture id="patient1-token-fixture">
+        <resource>
+            <reference value="../_reference/resources-generic/medmij-selfmeasurements-fhir3-0-1-Patient-Token-kwalificatie1.xml"/>
+        </resource>
+    </fixture>
+    <fixture id="scenario-2-1-bundle-fixture">
+        <resource>
+            <reference value="../_reference/resources-serve-receive/medmij-selfmeasurements-fhir3-0-1-scenario-2-1-bundle.xml"/>
+        </resource>
+    </fixture>
+    <profile id="BodyWeight-profile">
+        <reference value="http://nictiz.nl/fhir/StructureDefinition/zib-BodyWeight"/>
+    </profile>
+    <profile id="Bundle-profile">
+        <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
+    </profile>
+    <variable>
+        <name value="patient1-token-id"/>
+        <path value=".id"/>
+        <sourceId value="patient1-token-fixture"/>
+    </variable>
+    <test id="Scenario2.1-SendMostRecentBodyWeight">
+        <name value="Scenario2.1-SendMostRecentBodyWeight"/>
+        <description value="Test XIS Client request to create/update the most recent BodyWeight Observation for known person 1. The expected response code is 201(Created)."/>
+        <action>
+            <operation>
+                <type>
+                    <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                    <code value="create"/>
+                </type>
+                <resource value="Bundle"/>
+                <description value="XIS Server create or update operation for a Bundle of Observations of type BodyWeight."/>
+                <accept value="xml"/>
+                <contentType value="xml"/>
+                <destination value="1" />
+                <origin value="1" />
+                <requestHeader>
+                    <!-- 0..* Each operation can have one or more header elements -->
+                    <field value="Authorization"/>
+                    <!-- 1..1 HTTP header field name: OAuth access token -->
+                    <value value="${patient1-token-id}"/>
+                    <!-- 1..1 HTTP headerfield value: UUID4 -->
+                </requestHeader>
+                <sourceId value="scenario-2-1-bundle-fixture"/>
+            </operation>
+        </action>
+        <!-- 2018-07-02 Deactivated. Would like to activate checking the request, but there a bug in the validator that leads to the following incorrect error:
+            
+        Validation of request body failed against profile 'http://hl7.org/fhir/StructureDefinition/Bundle'. Message from FHIR Validation 
+        Engine (FHIR specification's Java utilities): [ERROR: If code is the same as a component code then the value element associated with 
+        the code SHALL NOT be present [value.empty() or code!=component.code]. Location: Bundle.entry[3].resource (line 102, col19).].
+        -->
+        <!--<action>
+            <assert>
+                <description value="Confirm that request body conforms to the Bundle profile."/>
+                <direction value="request"/>
+                <validateProfileId value="Bundle-profile"/>
+            </assert>
+        </action>-->
+        <action>
+            <assert>
+                <description value="Confirm that the returned HTTP status is 201(Created)."/>
+                <direction value="response"/>
+                <response value="created"/>
+            </assert>
+        </action>
+    </test>
+</TestScript>
