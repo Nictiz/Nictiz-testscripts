@@ -32,10 +32,15 @@
         </profile>
     </destination>
     
-    <fixture id="patient1-fixture"> 
+    <fixture id="patient-fixture"> 
         <resource> 
             <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-Patient-kwalificatie1.xml"/> 
         </resource> 
+    </fixture>
+    <fixture id="patient-token-fixture">
+        <resource>
+            <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-Patient-Token-kwalificatie1.xml"/>
+        </resource>
     </fixture>
     <fixture id="documentreference1-fixture"> 
         <resource> 
@@ -52,15 +57,20 @@
             <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-DocumentReference-kwalificatie3.xml"/> 
         </resource> 
     </fixture>  
-     
+       
     <profile id="Bundle-profile"> 
         <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/> 
     </profile>  
     
     <variable> 
-        <name value="patient1-id"/>  
+        <name value="patient-id"/>  
         <expression value="Patient.id"/>
-        <sourceId value="patient1-fixture"/> 
+        <sourceId value="patient-fixture"/> 
+    </variable>
+    <variable>
+        <name value="patient-token-id"/>
+        <path value=".id"/>
+        <sourceId value="patient-token-fixture"/>
     </variable>
     <variable> 
         <name value="documentreference1-id"/>  
@@ -97,7 +107,7 @@
                 <origin value="1" />
                 <params value="?status=current"/> 
             </operation> 
-        </action>  
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
@@ -114,6 +124,30 @@
                 <headerField value="Content-Type"/>
                 <operator value="empty"/>
                 <warningOnly value="true"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that HTTP header Authorization contains the patient token {$patient-token-id}"/>
+                <direction value="request"/>
+                <headerField value="Authorization"/>
+                <value value="${patient-token-id}"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Observation query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+                <direction value="request"/>
+                <operator value="notContains"/>
+                <requestURL value="patient="/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Observation query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+                <direction value="request"/>
+                <operator value="notContains"/>
+                <requestURL value="subject="/>
             </assert>
         </action>
         <action>
