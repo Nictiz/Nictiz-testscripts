@@ -32,6 +32,7 @@
         <xsl:message>    Processing using <xsl:value-of select="$T"/> as base date</xsl:message>
         <xsl:result-document href="{concat($opDir,tokenize(document-uri(.), '/')[last()])}" indent="yes" omit-xml-declaration="yes" method="xml" exclude-result-prefixes="#all">
             <xsl:comment>Processed using <xsl:value-of select="$T"/> as base date to calculate against.</xsl:comment>
+            <xsl:text>&#10;</xsl:text>
             <xsl:apply-templates/>
         </xsl:result-document>
     </xsl:template>
