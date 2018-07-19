@@ -97,7 +97,7 @@
                                         <th>ICPC</th>
                                     </tr>
                                 </thead>
-                                <xsl:for-each select="$journalS, $journalO, $journalE, $journalP">
+                                <xsl:for-each select="$journalE, $journalP">
                                     <xsl:variable name="icpc" select="f:component[f:code/f:coding[f:code/@value = ('ADMDX', 'DISDX')]]/f:valueCodeableConcept/f:coding[f:system/@value = $uriICPCNL1]"/>
                                     <tr>
                                         <td>
@@ -137,7 +137,7 @@
                         <xsl:copy-of select="$practitionerRoleResource/f:practitioner/*"/>
                     </author>
                     <title value="Contactverslag dd. {$encounterDate}"/>
-                    <xsl:for-each select="$journalS, $journalO, $journalE, $journalP">
+                    <xsl:for-each select="$journalE, $journalP">
                         <section>
                             <xsl:if test="f:component[f:code/f:coding[f:code/@value = ('ADMDX', 'DISDX')]]">
                                 <extension url="http://nictiz.nl/fhir/StructureDefinition/code-icpc-1-nl">
