@@ -17,7 +17,7 @@ do
     java -jar ${saxon} -xsl:"processProcessingInstructions.xsl" -s:$file T=2018-07-17 outputDir=$outputDir
 done
 
-echo "Creating Composition resources from Encounters"
-java -jar ${saxon} -xsl:"createComposition.xsl" -s:createComposition.xsl inputDir1=$outputDir
+#echo "Creating Composition resources from Encounters"
+#java -jar ${saxon} -xsl:"createComposition.xsl" -s:createComposition.xsl inputDir1=$outputDir
 
 cd "$pwd"
