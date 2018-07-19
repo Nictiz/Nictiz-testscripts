@@ -160,7 +160,6 @@
                         </section>
                     </xsl:for-each>
                 </Composition>
-                
             </xsl:result-document>
         </xsl:for-each>
     </xsl:template>
