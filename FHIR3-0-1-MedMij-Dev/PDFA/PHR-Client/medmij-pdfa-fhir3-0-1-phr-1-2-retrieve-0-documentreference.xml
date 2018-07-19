@@ -32,12 +32,12 @@
         </profile>
     </destination>
     
-    <fixture id="patient1-fixture"> 
+    <fixture id="patient-fixture"> 
         <resource> 
             <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-Patient-kwalificatie1.xml"/> 
         </resource> 
     </fixture>  
-    <fixture id="patient1-token-fixture">
+    <fixture id="patient-token-fixture">
         <resource>
             <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-Patient-Token-kwalificatie1.xml"/>
         </resource>
@@ -48,14 +48,14 @@
     </profile>  
     
     <variable> 
-        <name value="patient1-id"/>  
+        <name value="patient-id"/>  
         <expression value="Patient.id"/>
-        <sourceId value="patient1-fixture"/> 
+        <sourceId value="patient-fixture"/> 
     </variable> 
     <variable>
-        <name value="patient1-token-id"/>
+        <name value="patient-token-id"/>
         <path value=".id"/>
-        <sourceId value="patient1-token-fixture"/>
+        <sourceId value="patient-token-fixture"/>
     </variable>
     
     <!-- No Setup -->
@@ -75,14 +75,7 @@
                 <contentType value="none" />
                 <destination value="1" />
                 <origin value="1" />
-                <params value="?patient=Patient/${patient1-id}&amp;status=current&amp;indexed=ge2018-01-01&amp;indexed=le2018-12-31"/>
-                <requestHeader>
-                    <!-- 0..* Each operation can have one or more header elements -->
-                    <field value="Authorization"/>
-                    <!-- 1..1 HTTP header field name: OAuth access token -->
-                    <value value="${patient1-token-id}"/>
-                    <!-- 1..1 HTTP headerfield value: UUID4 -->
-                </requestHeader>
+                <params value="?status=current&amp;indexed=ge2018-01-01&amp;indexed=le2018-12-31"/>
             </operation> 
         </action>  
         <action>
@@ -101,6 +94,30 @@
                 <headerField value="Content-Type"/>
                 <operator value="empty"/>
                 <warningOnly value="true"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that HTTP header Authorization contains the patient token {$patient-token-id}"/>
+                <direction value="request"/>
+                <headerField value="Authorization"/>
+                <value value="${patient-token-id}"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Observation query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+                <direction value="request"/>
+                <operator value="notContains"/>
+                <requestURL value="patient="/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Observation query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+                <direction value="request"/>
+                <operator value="notContains"/>
+                <requestURL value="subject="/>
             </assert>
         </action>
         <action>

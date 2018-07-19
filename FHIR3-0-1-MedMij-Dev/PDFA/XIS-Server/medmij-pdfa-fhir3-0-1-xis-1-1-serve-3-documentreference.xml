@@ -16,11 +16,13 @@
     </contact>  
     <description value="MedMij PDFA for FHIR STU3 (v3.0.1) - Scenario 1.1: Query PDF/A DocumentReference - XML Format - Query all PDFA DocumentReference resources of person 1. Response consists of 3 DocumentReference resources."/>  
     <copyright value="© Nictiz 2018"/>  
-    <fixture id="patient1-fixture"> 
-        <resource> 
-            <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-Patient-kwalificatie1.xml"/> 
-        </resource> 
-    </fixture>  
+    
+    <fixture id="patient-token-fixture">
+        <resource>
+            <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-Patient-Token-kwalificatie1.xml" />
+        </resource>
+    </fixture>
+    
     <fixture id="documentreference1-fixture"> 
         <resource> 
             <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-DocumentReference-kwalificatie1.xml"/> 
@@ -39,30 +41,31 @@
     <profile id="Bundle-profile"> 
         <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/> 
     </profile>  
+   
+    <variable>
+        <name value="patient-token-id" />
+        <path value=".id" />
+        <sourceId value="patient-token-fixture" />
+    </variable>
     <variable> 
-        <name value="patient1-id"/>  
-        <expression value="Patient.id"/>
-        <sourceId value="patient1-fixture"/> 
-    </variable>  
-    <variable> 
-        <name value="documentreference1-id"/>  
-        <expression value="DocumentReference.id"/>
+        <name value="documentreference1-masterIdentifier"/>  
+        <expression value="DocumentReference.masterIdentifier.value"/>
         <sourceId value="documentreference1-fixture"/> 
     </variable>  
     <variable> 
-        <name value="documentreference2-id"/>  
-        <expression value="DocumentReference.id"/>
+        <name value="documentreference2-masterIdentifier"/>  
+        <expression value="DocumentReference.masterIdentifier.value"/>
         <sourceId value="documentreference2-fixture"/> 
     </variable>  
     <variable> 
-        <name value="documentreference3-id"/>  
-        <expression value="DocumentReference.id"/>
+        <name value="documentreference3-masterIdentifier"/>  
+        <expression value="DocumentReference.masterIdentifier.value"/>
         <sourceId value="documentreference3-fixture"/> 
     </variable>  
   
     <!-- No Setup -->
    
-    <test id="01-ServeDocumentReference"> 
+    <test id="01-ServeDocumentReference">     
         <name value="01-ServeDocumentReference"/>  
         <description value="Test XIS Server query search operation for known DocumentReference of person 1. The expected response code is 200(OK) and content is a searchset Bundle resource where 3 entries of found DocumentReference resources are returned in XML format."/>  
         <action> 
@@ -75,7 +78,11 @@
                 <description value="XIS Server query search operation for known DocumentReference."/>  
                 <accept value="xml"/>  
                 <contentType value="none"/>  
-                <params value="?patient=Patient/${patient1-id}&amp;status=current"/> 
+                <params value="?status=current"/>
+                <requestHeader>  <!-- 0..* Each operation can have one or more header elements -->
+                    <field value="Authorization"/><!-- 1..1 HTTP header field name: OAuth access token -->
+                    <value value="${patient-token-id}"/><!-- 1..1 HTTP headerfield value: UUID4 -->
+                </requestHeader>
             </operation> 
         </action>  
         <action> 
@@ -84,7 +91,7 @@
                 <direction value="response"/>  
                 <responseCode value="200"/> 
             </assert> 
-        </action>  
+        </action> 
         <action> 
             <assert> 
                 <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>  
@@ -129,32 +136,138 @@
                 <expression value="Bundle.total.toInteger() &gt;= entry.count()" />
             </assert>
         </action>
-        <action> 
-            <assert> 
-                <description value="Confirm that the returned Bundle entries contain the first expected DocumentReference resource id."/>  
-                <direction value="response"/>  
-                <operator value="in"/>  
-                <path value="Bundle/entry[1]/resource/DocumentReference/id"/>  
-                <value value="${documentreference1-id},${documentreference2-id},${documentreference3-id}"/> 
-            </assert> 
-        </action>  
-        <action> 
-            <assert> 
-                <description value="Confirm that the returned Bundle entries contain the second expected DocumentReference resource id."/>  
-                <direction value="response"/>  
-                <operator value="in"/>  
-                <path value="Bundle/entry[2]/resource/DocumentReference/id"/>  
-                <value value="${documentreference1-id},${documentreference2-id},${documentreference3-id}"/> 
-            </assert> 
-        </action>  
-        <action> 
-            <assert> 
-                <description value="Confirm that the returned Bundle entries contain the third expected DocumentReference resource id."/>  
-                <direction value="response"/>  
-                <operator value="in"/>  
-                <path value="Bundle/entry[3]/resource/DocumentReference/id"/>  
-                <value value="${documentreference1-id},${documentreference2-id},${documentreference3-id}"/> 
-            </assert> 
-        </action> 
     </test> 
+    
+    <test id="02-ServeDocumentReference"> 
+        <name value="02-ServeDocumentReference"/>  
+        <description value="Test XIS Server query search operation for a specifc DocumentReference of person 1 to perform asserts on the content. The expected response code is 200(OK) and content is a searchset Bundle resource containing 1 DocumentReference resource in XML format."/>  
+        <action> 
+            <operation> 
+                <type> 
+                    <system value="http://hl7.org/fhir/testscript-operation-codes"/>  
+                    <code value="search"/> 
+                </type>  
+                <resource value="DocumentReference"/>  
+                <description value="XIS Server query search operation for known DocumentReference."/>  
+                <accept value="xml"/>  
+                <contentType value="none"/>  
+                <params value="?status=current&amp;type=http://loinc.org/|68688-1"/>
+                <requestHeader>  <!-- 0..* Each operation can have one or more header elements -->
+                    <field value="Authorization"/><!-- 1..1 HTTP header field name: OAuth access token -->
+                    <value value="${patient-token-id}"/><!-- 1..1 HTTP headerfield value: UUID4 -->
+                </requestHeader>
+            </operation> 
+        </action>  
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned HTTP status is 200(OK)."/>  
+                <direction value="response"/>  
+                <responseCode value="200"/> 
+            </assert> 
+        </action>  
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned searchset Bundle contains 3 entries."/>  
+                <direction value="response"/>  
+                <expression value="Bundle.entry.count() = 1"/>  
+            </assert> 
+        </action>  
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned DocumentReference has a similiar masterIdentifier as the corresponding fixture."/>  
+                <direction value="response"/>  
+                <expression value="Bundle.entry[0].resource.masterIdentifier.value"/>  
+                <operator value="equals"/>
+                <value value="${documentreference1-masterIdentifier}"/>
+            </assert> 
+        </action>  
+    </test>
+    <test id="03-ServeDocumentReference"> 
+        <name value="03-ServeDocumentReference"/>  
+        <description value="Test XIS Server query search operation for a specifc DocumentReference of person 1 to perform asserts on the content. The expected response code is 200(OK) and content is a searchset Bundle resource containing 1 DocumentReference resource in XML format."/>  
+        <action> 
+            <operation> 
+                <type> 
+                    <system value="http://hl7.org/fhir/testscript-operation-codes"/>  
+                    <code value="search"/> 
+                </type>  
+                <resource value="DocumentReference"/>  
+                <description value="XIS Server query search operation for known DocumentReference."/>  
+                <accept value="xml"/>  
+                <contentType value="none"/>  
+                <params value="?status=current&amp;type=http://loinc.org/|34781-5"/>
+                <requestHeader>  <!-- 0..* Each operation can have one or more header elements -->
+                    <field value="Authorization"/><!-- 1..1 HTTP header field name: OAuth access token -->
+                    <value value="${patient-token-id}"/><!-- 1..1 HTTP headerfield value: UUID4 -->
+                </requestHeader>
+            </operation> 
+        </action>  
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned HTTP status is 200(OK)."/>  
+                <direction value="response"/>  
+                <responseCode value="200"/> 
+            </assert> 
+        </action>  
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned searchset Bundle contains 3 entries."/>  
+                <direction value="response"/>  
+                <expression value="Bundle.entry.count() = 1"/>  
+            </assert> 
+        </action>  
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned DocumentReference has a similiar masterIdentifier as the corresponding fixture."/>  
+                <direction value="response"/>  
+                <expression value="Bundle.entry[0].resource.masterIdentifier.value"/>  
+                <operator value="equals"/>
+                <value value="${documentreference2-masterIdentifier}"/>
+            </assert> 
+        </action>  
+    </test>
+    <test id="04-ServeDocumentReference"> 
+        <name value="04-ServeDocumentReference"/>  
+        <description value="Test XIS Server query search operation for a specifc DocumentReference of person 1 to perform asserts on the content. The expected response code is 200(OK) and content is a searchset Bundle resource containing 1 DocumentReference resource in XML format."/>  
+        <action> 
+            <operation> 
+                <type> 
+                    <system value="http://hl7.org/fhir/testscript-operation-codes"/>  
+                    <code value="search"/> 
+                </type>  
+                <resource value="DocumentReference"/>  
+                <description value="XIS Server query search operation for known DocumentReference."/>  
+                <accept value="xml"/>  
+                <contentType value="none"/>  
+                <params value="?status=current&amp;type=http://loinc.org/|34797-1"/>
+                <requestHeader>  <!-- 0..* Each operation can have one or more header elements -->
+                    <field value="Authorization"/><!-- 1..1 HTTP header field name: OAuth access token -->
+                    <value value="${patient-token-id}"/><!-- 1..1 HTTP headerfield value: UUID4 -->
+                </requestHeader>
+            </operation> 
+        </action>  
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned HTTP status is 200(OK)."/>  
+                <direction value="response"/>  
+                <responseCode value="200"/> 
+            </assert> 
+        </action>  
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned searchset Bundle contains 3 entries."/>  
+                <direction value="response"/>  
+                <expression value="Bundle.entry.count() = 1"/>  
+            </assert> 
+        </action>  
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned DocumentReference has a similiar masterIdentifier as the corresponding fixture."/>  
+                <direction value="response"/>  
+                <expression value="Bundle.entry[0].resource.masterIdentifier.value"/>  
+                <operator value="equals"/>
+                <value value="${documentreference3-masterIdentifier}"/>
+            </assert> 
+        </action>  
+    </test>     
 </TestScript>

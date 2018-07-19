@@ -16,20 +16,54 @@
     </contact>  
     <description value="MedMij PDFA for FHIR STU3 (v3.0.1) - Scenario 1.4: Query PDF/A DocumentReference - XML Format - Query all PDFA DocumentReference resources of person 1 using a incorrect search parameters. Response consists of all 3 DocumentReference resources of person 1."/>  
     <copyright value="© Nictiz 2018"/>  
-    <fixture id="patient1-fixture"> 
+  
+    <fixture id="patient-token-fixture">
+        <resource>
+            <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-Patient-Token-kwalificatie1.xml" />
+        </resource>
+    </fixture>
+  
+    <fixture id="documentreference1-fixture"> 
         <resource> 
-            <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-Patient-kwalificatie1.xml"/> 
+            <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-DocumentReference-kwalificatie1.xml"/> 
         </resource> 
     </fixture>  
+    <fixture id="documentreference2-fixture"> 
+        <resource> 
+            <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-DocumentReference-kwalificatie2.xml"/> 
+        </resource> 
+    </fixture>  
+    <fixture id="documentreference3-fixture"> 
+        <resource> 
+            <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-DocumentReference-kwalificatie3.xml"/> 
+        </resource> 
+    </fixture>  
+    
     <profile id="Bundle-profile"> 
         <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/> 
     </profile>  
-    <variable> 
-        <name value="patient1-id"/>  
-        <expression value="Patient.id"/>
-        <sourceId value="patient1-fixture"/> 
-    </variable>  
     
+    <variable>
+        <name value="patient-token-id" />
+        <path value=".id" />
+        <sourceId value="patient-token-fixture" />
+    </variable>
+    <variable> 
+        <name value="documentreference1-masterIdentifier"/>  
+        <expression value="DocumentReference.masterIdentifier.value"/>
+        <sourceId value="documentreference1-fixture"/> 
+    </variable>  
+    <variable> 
+        <name value="documentreference2-masterIdentifier"/>  
+        <expression value="DocumentReference.masterIdentifier.value"/>
+        <sourceId value="documentreference2-fixture"/> 
+    </variable>  
+    <variable> 
+        <name value="documentreference3-masterIdentifier"/>  
+        <expression value="DocumentReference.masterIdentifier.value"/>
+        <sourceId value="documentreference3-fixture"/> 
+    </variable>  
+     
     <!-- No Setup -->
     
     <test id="01-ServeDocumentReference"> 
@@ -45,7 +79,11 @@
                 <description value="XIS Server query search operation for known DocumentReference using incorrect search parameter values."/>  
                 <accept value="xml"/>  
                 <contentType value="none"/>  
-                <params value="?patient=Patient/${patient1-id}&amp;indexed=ge2018-78-01&amp;indexed=le2018-12-32&amp;status=current"/> 
+                <params value="?indexed=ge2018-78-01&amp;indexed=le2018-12-32&amp;status=current"/> 
+                <requestHeader>  <!-- 0..* Each operation can have one or more header elements -->
+                    <field value="Authorization"/><!-- 1..1 HTTP header field name: OAuth access token -->
+                    <value value="${patient-token-id}"/><!-- 1..1 HTTP headerfield value: UUID4 -->
+                </requestHeader>
             </operation> 
         </action>  
         <action> 
@@ -78,17 +116,16 @@
                 <value value="searchset"/> 
             </assert> 
         </action>  
-        <!-- Expression is not 100% correct. Need an improved expression. It is not mandatory to state OperationOutcome in a fullUrl if it is about a OperationOutcome.
+        <!-- Expression needs improvement.  -->
         <action> 
             <assert> 
                 <description value="Confirm that the returned Bundle entry contains an OperationOutcome resource."/>  
                 <direction value="response"/>  
                 <operator value="equals"/>  
-                <expression value="entry.where(fullUrl.contains('OperationOutcome')).count() = 1"/>  
+                <expression value="Bundle.entry.resource.issue.exists()"/>  
                 <value value="true"/> 
             </assert> 
         </action> 
-        -->
         <action> 
             <assert> 
                 <description value="Confirm that the returned searchset Bundle contains 3 entries."/>  
@@ -104,5 +141,32 @@
                 <warningOnly value="true"/>
             </assert>
         </action>
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned DocumentReference recources are similiar to the fixtures"/>  
+                <direction value="response"/>  
+                <operator value="in"/>  
+                <expression value="Bundle.entry.resource.masterIdentifier[0]"/>  
+                <value value="documentreference1-masterIdentifier,documentreference2-masterIdentifier,documentreference3-masterIdentifier"/> 
+            </assert> 
+        </action> 
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned DocumentReference recources are similiar to the fixtures"/>  
+                <direction value="response"/>  
+                <operator value="in"/>  
+                <expression value="Bundle.entry.resource.masterIdentifier[1]"/>  
+                <value value="documentreference1-masterIdentifier,documentreference2-masterIdentifier,documentreference3-masterIdentifier"/> 
+            </assert> 
+        </action> 
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned DocumentReference recources are similiar to the fixtures"/>  
+                <direction value="response"/>  
+                <operator value="in"/>  
+                <expression value="Bundle.entry.resource.masterIdentifier[2]"/>  
+                <value value="documentreference1-masterIdentifier,documentreference2-masterIdentifier,documentreference3-masterIdentifier"/> 
+            </assert> 
+        </action> 
     </test> 
 </TestScript>
