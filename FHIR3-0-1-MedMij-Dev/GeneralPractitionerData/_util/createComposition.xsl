@@ -49,7 +49,10 @@
             
             <xsl:variable name="compositionFilename" select="concat($ipDir1,'medmij-gpdata-fhir3-0-1-composition-', $encounterId, '.xml')"/>
             
-            <xsl:variable name="patientResource" as="element(f:Patient)" select="$xml/f:Patient"/>
+            <xsl:variable name="patientResource" as="element(f:Patient)+" select="$xml/f:Patient[f:identifier | f:name]"/>
+            <xsl:if test="count($patientResource) gt 1">
+                <xsl:message terminate="yes">Multiple Patient resources found: "<xsl:value-of select="count($patientResource)"/>". IDs: <xsl:value-of select="$patientResource/f:id/@value"/></xsl:message>
+            </xsl:if>
             <xsl:variable name="practitionerResource" as="element(f:Practitioner)" select="$xml/f:Practitioner"/>
             <xsl:variable name="practitionerRoleResource" as="element(f:PractitionerRole)" select="$xml/f:PractitionerRole"/>
             <xsl:variable name="episodeOfCare" as="element(f:EpisodeOfCare)*" select="$xml/f:EpisodeOfCare[f:id/@value = $encounter/f:episodeOfCare/f:reference/tokenize(@value, '/')[last()]]"/>
@@ -127,7 +130,7 @@
                         </coding>
                     </type>
                     <subject>
-                        <xsl:copy-of select="$practitionerRoleResource/f:subject/*"/>
+                        <reference value="Patient/{$patientResource/f:id/@value}"/>
                     </subject>
                     <encounter>
                         <reference value="Encounter/{$encounterId}"/>
