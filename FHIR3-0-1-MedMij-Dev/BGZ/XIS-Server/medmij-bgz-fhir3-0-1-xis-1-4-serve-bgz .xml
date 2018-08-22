@@ -15,7 +15,7 @@
             <use value="work"/> 
         </telecom> 
     </contact>  
-    <description value="MedMij BgZ for FHIR STU3 (v3.0.1) - Scenario 1.4: Serve BgZ - XML Format - All BgZ resources of person 2 requested with incorrect syntax/parameters. Response consists of 1 patient resource and a lot of OperationOutcome resources."/>  
+    <description value="MedMij BgZ for FHIR STU3 (v3.0.1) - Scenario 1.4: Serve BgZ - XML Format - All BgZ resources of person 2 requested with incorrect syntax/parameters and one request with an incorrect authorization token. Response consists of 1 patient resource and a lot of error HTTP status codes and OperationOutcome resources."/>  
     <copyright value="© Nictiz 2018"/>  
     <fixture id="patient-token-fixture">
         <resource>
@@ -148,7 +148,7 @@
     </test> 
    <test id="02-ServeBgZ-Payer">
     <name value="02-ServeBgZ-Payer"/>
-    <description value="Test XIS Server search operation for known Coverage resource of person 2 including the insurer in an Organization resource. The expected response status code 4xx or 5xx with an OperationOutcome, returned in XML format."/>
+    <description value="Test XIS Server search operation for known Coverage resources with an incorrect authorization token. The expected response status code 401 or 404."/>
     <action>
       <operation>
         <type>
@@ -156,46 +156,24 @@
           <code value="search"/>
         </type>
         <resource value="Coverage"/>
-        <description value="XIS Server search operation for known Coverage resources, including the .payor reference Organization resource."/>
+        <description value="XIS Server search operation for known Coverage resources with an incorrect authorization token."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="?_include=Coverage:payor:Patient&amp;_incdlude=Coverage:payor:Organization"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
           <!-- 1..1 HTTP header field name: OAuth access token -->
-          <value value="${patient-token-id}"/>
+          <value value="wrong-authorization-token"/>
           <!-- 1..1 HTTP headerfield value: UUID4 -->
         </requestHeader>
       </operation>
     </action>
     <action>
       <assert>
-        <description value="The expected response status code 4xx or 5xx."/>
+        <description value="The expected response status code 401 or 404."/>
         <direction value="response"/>  
         <operator value="in"/>  
-        <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-        <direction value="response"/>
-        <contentType value="xml"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned resource type is OperationOutcome."/>
-        <direction value="response"/>
-        <resource value="OperationOutcome"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned OperationOutcome conforms to the base FHIR specification."/>
-        <direction value="response"/>
-        <validateProfileId value="OperationOutcome-profile"/>
+        <responseCode value="401,404"/> 
       </assert>
     </action>
   </test>
@@ -212,7 +190,7 @@
         <description value="XIS Server search operation for known Consent resources with a SNOMED category code for TreatmentDirective."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="?category==http://snomed.info/sct|11291000146105"/>
+        <params value="??category==http://snomed.info/sct|11291000146105"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -226,6 +204,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -264,7 +243,7 @@
         <description value="XIS Server search operation for known Consent resources with a SNOMED category code for AdvanceDirective."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="?categoryhttp://snomed.info/sct|11341000146107"/>
+        <params value="?#categoryhttp://snomed.info/sct|11341000146107"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -278,6 +257,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -302,7 +282,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="05-ServeBgZ-FunctionalOrMentalStatus">
     <name value="05-ServeBgZ-FunctionalOrMentalStatus"/>
@@ -317,7 +296,7 @@
         <description value="XIS Server search operation for last known Observation resource with a SNOMED code for FunctionalOrMentalStatus."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="/$la3stn?category=http://snomed.info/sct|118228005,http://snomed.info/sct|364644000"/>
+        <params value="/$la3stn?/category=http://snomed.info/sct|118228005,http://snomed.info/sct|364644000"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -331,6 +310,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -355,7 +335,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="06-ServeBgZ-Concern">
     <name value="06-ServeBgZ-Concern"/>
@@ -369,7 +348,8 @@
         <resource value="Condition"/>
         <description value="XIS Server search operation for all known Condition resources."/>
         <accept value="xml"/>
-        <contentType value="none"/>
+        <contentType value="none"/> 
+        <params value="/$"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -383,6 +363,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -407,15 +388,6 @@
               <validateProfileId value="OperationOutcome-profile"/>
           </assert>
       </action>
-      <action>
-          <assert>
-              <description value="Confirm that the returned OperationOutcome code is not-supported."/>
-              <direction value="response"/>
-              <expression value="OperationOutcome.issue.code"/>
-              <operator value="equals"/>
-              <value value="not-supported"/>
-          </assert>
-      </action>
   </test>
   <test id="07-ServeBgZ-LivingSituation">
     <name value="07-ServeBgZ-LivingSituation"/>
@@ -430,7 +402,7 @@
         <description value="XIS Server search operation for all known Observation resources."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="/$lastn?coode=http://snomed.info/sct|365508006"/>
+        <params value="?lastn?code=http://snomed.info/sct|365508006"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -444,6 +416,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -468,7 +441,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="08-ServeBgZ-DrugUse">
     <name value="08-ServeBgZ-DrugUse"/>
@@ -483,7 +455,7 @@
         <description value="XIS Server search operation for all known Observation resources with a SNOMED code for DrugUse."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="?code=http://snomed.info/sct]228366006"/>
+        <params value="?--"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -497,6 +469,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -521,7 +494,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="09-ServeBgZ-AlcoholUse">
     <name value="09-ServeBgZ-AlcoholUse"/>
@@ -536,7 +508,7 @@
         <description value="XIS Server search operation for all known Observation resources with a SNOMED code for AlcoholUse."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="?code="/>
+        <params value="!code&amp;status"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -550,6 +522,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -574,7 +547,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="10-ServeBgZ-TobaccoUse">
     <name value="10-ServeBgZ-TobaccoUse"/>
@@ -589,7 +561,7 @@
         <description value="XIS Server search operation for all known Observation resources with a SNOMED code for Tobaccouse."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="?code=http://snomed.info/sct||365980008"/>
+        <params value="?=codehttp://snomed.info/sct||365980008"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -603,6 +575,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -627,7 +600,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="11-ServeBgZ-NutritionAdvice">
     <name value="11-ServeBgZ-NutritionAdvice"/>
@@ -642,7 +614,7 @@
         <description value="XIS Server search operation for all known NutritionOrder resources with an active status."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="?status=activve"/>
+        <params value=")status=active"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -656,6 +628,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -680,7 +653,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="12-ServeBgZ-Alert">
     <name value="12-ServeBgZ-Alert"/>
@@ -695,7 +667,7 @@
         <description value="XIS Server search operation for all Flag resources."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="testtest"/>
+        <params value="flag"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -709,6 +681,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -733,7 +706,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="13-ServeBgZ-AllergyIntolerance">
     <name value="13-ServeBgZ-AllergyIntolerance"/>
@@ -762,6 +734,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -786,7 +759,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="14-ServeBgZ-MedicationUse">
     <name value="14-ServeBgZ-MedicationUse"/>
@@ -801,7 +773,7 @@
         <description value="XIS Server search operation for all MedicationStatement resources with a category code for MedicationUse and include Medication resources."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="?category=urn:oid:2.16.840.1.113883.2.4.3.11.60.20.77.5.3|6&amp;_include=MedicationStatement::medication"/>
+        <params value="?@+3"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -815,6 +787,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -839,7 +812,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="15-ServeBgZ-MedicationAgreement">
     <name value="15-ServeBgZ-MedicationAgreement"/>
@@ -854,7 +826,7 @@
         <description value="XIS Server search operation for all MedicationRequest resources with a category code for MedicationAgreement and include Medication resources."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="?category=http:/#/snomed.info/sct|16076005&amp;_include=Medi]cationRequest:medication"/>
+        <params value="!_include=Medi]cationRequest:medication"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -868,6 +840,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -892,7 +865,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="16-ServeBgZ-AdministrationAgreement">
     <name value="16-ServeBgZ-AdministrationAgreement"/>
@@ -921,6 +893,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -945,7 +918,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="17-ServeBgZ-MedicalAid">
     <name value="17-ServeBgZ-MedicalAid"/>
@@ -960,7 +932,7 @@
         <description value="XIS Server search operation for all DeviceUseStatement and include Device resources."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="?_include=deviceUseStatement:ddevice"/>
+        <params value="?_incclude=deviceUseStatement:device"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -974,6 +946,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -998,7 +971,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="18-ServeBgZ-Vaccination">
     <name value="18-ServeBgZ-Vaccination"/>
@@ -1013,7 +985,7 @@
         <description value="XIS Server search operation for all Immunization resources that are completed."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="?status=notdone"/>
+        <params value="l?status=notdone"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -1027,6 +999,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -1051,7 +1024,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="19-ServeBgZ-BloodPressure">
     <name value="19-ServeBgZ-BloodPressure"/>
@@ -1066,7 +1038,7 @@
         <description value="XIS Server search operation for the last kown Observation resource with a code for BloodPressure."/>
         <accept value="xml"/>
         <contentType value="none"/>
-        <params value="/$lastn??code=http://loinc.org|85354-9"/>
+        <params value="/$code/35354-9"/>
         <requestHeader>
           <!-- 0..* Each operation can have one or more header elements -->
           <field value="Authorization"/>
@@ -1080,6 +1052,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -1104,7 +1077,6 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
   <test id="20-ServeBgZ-BodyWeight">
     <name value="20-ServeBgZ-BodyWeight"/>
@@ -1133,6 +1105,7 @@
       <assert>
         <description value="The expected response status code 4xx or 5xx."/>
         <direction value="response"/>
+        <operator value="in"/>  
         <responseCode value="400,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,421,422,423,424,426,428,429,431,451,500,501,502,503,504,505,506,507,508,510,511"/> 
       </assert>
     </action>
@@ -1157,6 +1130,5 @@
         <validateProfileId value="OperationOutcome-profile"/>
       </assert>
     </action>
-
   </test>
 </TestScript>
