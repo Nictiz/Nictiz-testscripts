@@ -62,7 +62,7 @@
             <description value="[OPTIONAL] Clear (delete) MedMij General Practitioner Data test resources using the delete operation of the target FHIR server for use in qualification testing. All resource ids are pre-defined. The target XIS FHIR server is expected to support resource delete operation for client assigned ids."/>
             <copyright value="© Nictiz 2018"/>
             <xsl:for-each select="$xml1 | $xml2">
-                <xsl:variable name="resId" select="f:id/@value"/>
+                <xsl:variable name="resId" select="replace(f:id/@value, '\.', '')"/>
                 <xsl:variable name="dn" select="document-uri(ancestor::node())"/>
                 <fixture id="{$resId}-fx">
                     <resource>
@@ -81,7 +81,7 @@
                 <sourceId value="patient1-token-fixture"/>
             </variable>
             <xsl:for-each select="$xml1 | $xml2">
-                <xsl:variable name="resId" select="f:id/@value"/>
+                <xsl:variable name="resId" select="replace(f:id/@value, '\.', '')"/>
                 <variable>
                     <name value="{$resId}-id"/>
                     <expression value="{local-name(.)}.id"/>
@@ -93,7 +93,7 @@
                 <name value="Step1-ClearTestResourceDelete"/>
                 <description value="[OPTIONAL] Delete MedMij General Practitioner Data test resources using the delete (DELETE) operation of the target FHIR server for use in qualification testing."/>
                 <xsl:for-each select="$xml1 | $xml2">
-                    <xsl:variable name="resId" select="f:id/@value"/>
+                    <xsl:variable name="resId" select="replace(f:id/@value, '\.', '')"/>
                     <xsl:comment> Delete <xsl:value-of select="$resId"/></xsl:comment>
                     <action>
                         <operation>
