@@ -7,10 +7,10 @@ export outputDir1=../_reference/resources-query-send
 
 cd "`dirname $0`"
 
-if [ -e "${outputDir}" ]; then 
-    echo "Removing output directory: $outputDir"
-    rm -rf "$outputDir"
-fi
+#if [ -e "${outputDir}" ]; then 
+    #echo "Removing output directory: $outputDir"
+    #rm -rf "$outputDir"
+#fi
 
 #for file in `ls ${inputDir1}/*.xml`
 #do 
