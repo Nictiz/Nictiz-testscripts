@@ -12,11 +12,12 @@ if [ -e "${outputDir}" ]; then
     rm -rf "$outputDir"
 fi
 
-for file in `ls ${inputDir1}/*.xml`
-do 
-    echo "Processing $file ..."
-    java -jar ${saxon} -xsl:"processProcessingInstructions.xsl" -s:$file T=2018-07-17 outputDir=$outputDir1
-done
+#for file in `ls ${inputDir1}/*.xml`
+#do 
+#    echo "Processing $file ..."
+    #java -jar ${saxon} -xsl:"processProcessingInstructions.xsl" -s:$file T=2018-07-17 outputDir=$outputDir1
+#    java -jar ${saxon} -xsl:"processProcessingInstructions.xsl" -s:$file outputDir=$outputDir1
+#done
 
 echo "Creating Composition resources from Encounters"
 java -jar ${saxon} -xsl:"createComposition.xsl" -s:createComposition.xsl inputDir1=$outputDir1
