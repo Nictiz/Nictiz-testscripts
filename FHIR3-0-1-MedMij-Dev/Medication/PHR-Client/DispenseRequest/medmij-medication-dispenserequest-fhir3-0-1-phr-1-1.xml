@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir">  
-    <id value="medmij-medication-medicationagreement-fhir3-0-1-phr-1-8"/>  
-    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-medication-medicationagreement-fhir3-0-1-phr-1-8"/>  
-    <name value="Nictiz MedMij Medication - PHR Client - Scenario 1.8 - Retrieve MedicationAgreements based on a specific medication treatment - XML"/>  
+    <id value="medmij-medication-dispenserequest-fhir3-0-1-phr-1-1"/>  
+    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-medication-administratinagreement-fhir3-0-1-phr-1-1"/>  
+    <name value="Nictiz MedMij Medication - PHR Client - Scenario 1.1 - Retrieve All DispenseRequests - XML"/>  
     <status value="active"/>  
     <date value="2018-09-11"/>  
     <publisher value="Nictiz"/>  
@@ -14,7 +14,7 @@
             <use value="work"/> 
         </telecom> 
     </contact>  
-  <description value="MedMij Medication for FIR STU3 (v3.0.1) - Scenario 1.8: Retrieve MedicationAgreements based on a specific medication treatment - XML Format - All MedicationRequest resources that represent a MedicationAgreement of XXX_Bourgonje with medication treatment MBH_123_1. Response consists of 1 MedicationRequest resource."/>  
+    <description value="MedMij Medication for FIR STU3 (v3.0.1) - Scenario 1.1: Retrieve all DispenseRequests - XML Format - All MedicationRequest resources that represent an DispenseRequest of XXX_Dirksz. Response consists of 3 MedicationRequest resources."/>  
     <copyright value="© Nictiz 2018"/>      
     <origin>
         <index value="1" />
@@ -29,24 +29,27 @@
             <system value="http://hl7.org/fhir/testscript-profile-destination-types"/>
             <code value="FHIR-Server"/>
         </profile>
-    </destination>       
-    <fixture id="Patient-c980c4c9-a6d7-41d2-b541-5284f33b2f75-fixture">
-        <resource>
-            <reference value="../../_reference/mp9-nl-core-patient-XXX-BOURGONJE-token.xml" />
-        </resource>
-    </fixture>    
-    <profile id="Bundle-profile"> 
-      <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/> 
-    </profile>
-    <variable>
-        <name value="Patient-c980c4c9-a6d7-41d2-b541-5284f33b2f75-id" />
-        <expression value="Patient.id" />
-        <sourceId value="Patient-c980c4c9-a6d7-41d2-b541-5284f33b2f75-fixture" />
-    </variable>        
+    </destination>    
     
-    <test id="01-Retrieve-MedicationAgreements-MedicationTreatment"> 
-        <name value="01-Retrieve-MedicationAgreements-MedicationTreatment"/>
-      <description value="Test PHR Client retrieve search operation for MedicationRequest resources with a category code for MedicationAgreement and a medication treatment identifier of MBH_123_1. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 MedicationRequest resource and 1 Medication Resource, returned in XML format."/>  
+    <fixture id="Patient-fixture">
+        <resource>
+            <reference value="../../_reference/mp9-nl-core-patient-XXX-DIRKSZ-token.xml" />
+        </resource>
+    </fixture>
+    
+    <profile id="Bundle-profile"> 
+        <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/> 
+    </profile>    
+    
+    <variable>
+        <name value="Patient-id" />
+        <expression value="Patient.id" />
+        <sourceId value="Patient-fixture" />
+    </variable>
+ 
+    <test id="01-Retrieve-All-DispenseRequests"> 
+        <name value="01-Retrieve-All-DispenseRequests"/>
+        <description value="Test PHR Client retrieve search operation for all MedicationRequest resources with a category code for DispenseRequest of XXX_Dirksz, including the Medication resource. The expected response code is 200(OK) and content is a searchset Bundle resource with 3 MedicationRequest resource entry and 1 Medication resource entry, returned in XML format."/>  
         <action> 
             <operation> 
                 <type> 
@@ -54,12 +57,12 @@
                     <code value="search"/> 
                 </type>  
                 <resource value="MedicationRequest"/>  
-                <description value="PHR client retrieve search operation for MedicationRequest resources with a category code for MedicationAgreement and a specific medication treatment identifier, and include Medication resources."/>  
+                <description value="PHR client retrieve search operation for all MedicationRequest resources with a category code for DispenseRequest and include Medication resources."/>  
                 <accept value="xml"/>  
                 <contentType value="none" />
                 <destination value="1" />
                 <origin value="1" />
-              <params value="?category=http://snomed.info/sct|16076005&amp;medicationtreatment=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_123_1&amp;_include=MedicationRequest:medication"/> 
+                <params value="?category=http://snomed.info/sct|52711000146108&amp;_include=MedicationRequest:medication"/> 
             </operation> 
         </action>        
         <action>
@@ -82,10 +85,10 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that HTTP header Authorization contains the patient token ${Patient-e2696872-f855-4283-a01b-c0db9c50bde2-id}"/>
+                <description value="Confirm that HTTP header Authorization contains the patient token ${Patient-id}"/>
                 <direction value="request"/>
                 <headerField value="Authorization"/>
-                <value value="${Patient-c980c4c9-a6d7-41d2-b541-5284f33b2f75-id}"/>
+                <value value="${Patient-id}"/>
             </assert>
         </action>
         <action>
@@ -143,9 +146,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 2 entries (1 Medication Request and 1 Medication resource)."/>  
+                <description value="Confirm that the returned searchset Bundle contains 6 entry. (3 MedicationRequests and 3 Medications)"/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 2"/>  
+                <expression value="Bundle.entry.count() = 6"/>  
             </assert> 
         </action>
         <action>
@@ -155,5 +158,5 @@
                 <validateProfileId value="Bundle-profile" />
             </assert>
         </action>
-    </test>
+    </test> 
 </TestScript>
