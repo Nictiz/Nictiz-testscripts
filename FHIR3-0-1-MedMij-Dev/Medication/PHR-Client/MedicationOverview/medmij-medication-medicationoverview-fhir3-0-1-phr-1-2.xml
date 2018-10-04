@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
-<TestScript xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://hl7.org/fhir http://hl7.org/fhir/STU3/fhir-all.xsd" xmlns="http://hl7.org/fhir">
-    <id value="medmij-medication-dispense-fhir3-0-1-phr-3-1"/>  
-    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-medication-dispense-fhir3-0-1-phr-3-1"/>  
-    <name value="Nictiz MedMij Medication - PHR Client - Scenario 3.1 - Magistraal Dispense - XML"/> 
+<TestScript xmlns="http://hl7.org/fhir">  
+    <id value="medmij-medication-medicationoverview-fhir3-0-1-phr-1-2"/>  
+    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-medication-medicationoverview-fhir3-0-1-phr-1-2"/>  
+    <name value="Nictiz MedMij Medication - PHR Client - Scenario 1.2 - Retrieve MedicationOverview - XML"/>  
     <status value="active"/>  
-    <date value="2018-10-01"/>  
-    <publisher value="Nictiz"/>    
+    <date value="2018-09-11"/>  
+    <publisher value="Nictiz"/>  
     <contact> 
         <name value="Nictiz"/>  
         <telecom> 
@@ -15,7 +14,7 @@
             <use value="work"/> 
         </telecom> 
     </contact>  
-    <description value="MedMij Medication for FIR STU3 (v3.0.1) - Scenario 3.1: Magistraal Dispense - XML Format - Request all MedicationDispense resources that represent a Dispense of XXX_Strengersz, and include Medication resources. Response consists of 2 MedicationDispense resources."/>  
+    <description value="MedMij Medication for FIR STU3 (v3.0.1) - Scenario 1.2: Retrieve MedicationOverview - XML Format - All resources that belong to the MedicationOverview of XXX_Jangi. Response consists of a MedicationOverview Bundle.."/>  
     <copyright value="© Nictiz 2018"/>      
     <origin>
         <index value="1" />
@@ -34,36 +33,35 @@
     
     <fixture id="Patient-fixture">
         <resource>
-            <reference value="../../_reference/mp9-nl-core-patient-XXX-STRENGERSZ-token.xml" />
+            <reference value="../../_reference/mp9-nl-core-patient-XXX-JANGI-token.xml" />
         </resource>
     </fixture>
     
     <profile id="Bundle-profile"> 
         <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/> 
-    </profile>      
+    </profile>    
     
     <variable>
         <name value="Patient-id" />
         <expression value="Patient.id" />
         <sourceId value="Patient-fixture" />
     </variable>
-    
-    <test id="01-Retrieve-Dispense-Magistraal"> 
-        <name value="01-Retrieve-Dispense-Magistraal"/>
-        <description value="Test PHR Client retrieve search operation for MedicationDispense resources that represent a Dispense of XXX_Strengersz and inlcude Medication resources. The expected response code is 200(OK) and content is a searchset Bundle resource with 2 MedicationDispense resources, returned in XML format."/>  
+ 
+    <test id="01-Retrieve-MedicationOverview"> 
+        <name value="01-Retrieve-MedicationOverview"/>
+        <description value="Test PHR Client retrieve search operation for all a MedicationOverview, using the $medication-overview operation of XXX_Jangi. The expected response code is 200(OK) and content is a MedicationOverview Bundle, returned in XML format."/>  
         <action> 
             <operation> 
                 <type> 
                     <system value="http://hl7.org/fhir/testscript-operation-codes"/>  
                     <code value="search"/> 
                 </type>  
-                <resource value="MedicationDispense"/>  
-                <description value="PHR client retrieve search operation for MedicationDispense resources that represent a Dispense and include Medication resources."/>  
+                <description value="PHR client retrieve search operation for a MedicationOverview using the $medication-overview operation."/>  
                 <accept value="xml"/>  
                 <contentType value="none" />
                 <destination value="1" />
                 <origin value="1" />
-                <params value="?category=http://snomed.info/sct|373784005&amp;_include=MedicationDispense:medication"/> 
+                <params value="$medication-overview"/> 
             </operation> 
         </action>        
         <action>
@@ -135,7 +133,7 @@
                 <direction value="response" />
                 <expression value="Bundle.type" />
                 <operator value="equals" />
-                <value value="searchset" />
+                <value value="collection" />
             </assert>
         </action>
         <action>
@@ -145,13 +143,18 @@
                 <expression value="Bundle.total.toInteger() &lt;= entry.count()" />
             </assert>
         </action>
+        <!-- New assert to test if the returned MedicationOverview is similiar to pre-specified Bundle 
+        
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle conatins 4 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 2 entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 4"/>  
+                <expression value="Bundle.entry.count() = 2"/>  
             </assert> 
         </action>
+        
+        -->
+        
         <action>
             <assert>
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification." />
@@ -159,5 +162,5 @@
                 <validateProfileId value="Bundle-profile" />
             </assert>
         </action>
-    </test>
+    </test> 
 </TestScript>
