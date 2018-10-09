@@ -36,6 +36,7 @@
     <xsl:variable name="uriExtensionEpisodeOfCareTitle">http://nictiz.nl/fhir/StructureDefinition/EpisodeOfCare-Title</xsl:variable>
     <xsl:variable name="profileDiagnosticResult">http://nictiz.nl/fhir/StructureDefinition/gp-DiagnosticResult</xsl:variable>
     <xsl:variable name="profileLaboratoryResult">http://nictiz.nl/fhir/StructureDefinition/gp-LaboratoryResult</xsl:variable>
+    <xsl:variable name="profileAllergyIntolerance">http://nictiz.nl/fhir/StructureDefinition/zib-AllergyIntolerance</xsl:variable>
     <xd:doc>
         <xd:desc/>
     </xd:doc>
