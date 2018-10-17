@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<TestScript xmlns="http://hl7.org/fhir">  
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://hl7.org/fhir http://hl7.org/fhir/STU3/fhir-all.xsd" xmlns="http://hl7.org/fhir">
     <id value="medmij-pdfa-fhir3-0-1-xis-2-1-serve-2-binary-xml"/>  
     <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-pdfa-fhir3-0-1-xis-2-2-serve-pdfa-xml"/>  
-    <name value="Nictiz MedMij PDFA - XIS Server - Scenario 2.2 - Serve PDFA - XML"/>  
+    <name value="Nictiz MedMij PDFA - XIS Server - Scenario 2.2 - Serve PDFA from a non-FHIR endpoint - XML"/>  
     <status value="active"/>  
     <date value="2018-05-23"/>  
     <publisher value="Nictiz"/>  
@@ -38,8 +39,7 @@
         <expression value="Bundle.entry[0].resource.content[0].attachment.url"/>
         <sourceId value="documentreference1-search-response"/> 
     </variable> 
-
-    <!-- No Setup -->
+    
     <test id="01-ServeDocumentReference"> 
         <name value="01-ServeDocumentReference"/>  
         <description value="Test XIS Server query search operation for known DocumentReference of person 2. The expected response code is 200(OK) and content is a searchset Bundle resource containing 1 DocumentReference resource in XML format."/>  
@@ -54,9 +54,9 @@
                 <accept value="xml"/>  
                 <contentType value="none"/>  
                 <params value="?status=current&amp;type=http://loinc.org/|68626-1"/>
-                <requestHeader>  <!-- 0..* Each operation can have one or more header elements -->
-                    <field value="Authorization"/><!-- 1..1 HTTP header field name: OAuth access token -->
-                    <value value="${patient-token-id}"/><!-- 1..1 HTTP headerfield value: UUID4 -->
+                <requestHeader> 
+                    <field value="Authorization"/>
+                    <value value="${patient-token-id}"/>
                 </requestHeader>
                 <responseId value="documentreference1-search-response"/> 
             </operation> 
@@ -100,7 +100,7 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 3 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 1 entry."/>  
                 <direction value="response"/>  
                 <expression value="Bundle.entry.count() = 1"/>  
             </assert> 
@@ -109,20 +109,20 @@
    
     <test id="02-ServePDFA"> 
         <name value="02-ServePDFA"/>  
-        <description value="Test XIS Server read operation for known PDFA document of person 2. The location of the Binary is obtained from a fullURL reference in the DocumentReference.content.attachment.url. The expected response code is 200(OK) and content contains a PDF/A document."/>  
+        <description value="Test XIS Server read operation for known PDFA document of person 2. The location of the PDF/A document is obtained from a fullURL reference in the DocumentReference.content.attachment.url. The expected response code is 200(OK) and content contains a PDF/A document."/>  
         <action> 
             <operation> 
                 <type> 
                     <system value="http://hl7.org/fhir/testscript-operation-codes"/>  
                     <code value="read"/> 
                 </type>  
-                <resource value="Binary"/>  
-                <description value="XIS Server read operation for known Binary resource."/>  
+                <resource value="DocumentReference"/>  
+                <description value="XIS Server read operation for a document on a known location, using the fullURL."/>  
                 <accept value="xml"/>  
                 <contentType value="none"/>
-                <requestHeader>  <!-- 0..* Each operation can have one or more header elements -->
-                    <field value="Authorization"/><!-- 1..1 HTTP header field name: OAuth access token -->
-                    <value value="${patient-token-id}"/><!-- 1..1 HTTP headerfield value: UUID4 -->
+                <requestHeader>  
+                    <field value="Authorization"/>
+                    <value value="${patient-token-id}"/>
                 </requestHeader>
                 <url value="${pdfa-url}"/> 
             </operation> 
@@ -132,6 +132,40 @@
                 <description value="Confirm that the returned HTTP status is 200(OK)."/>  
                 <direction value="response"/>  
                 <responseCode value="200"/> 
+            </assert> 
+        </action>  
+    </test>
+    <test id="03-TestServerReferenceControl"> 
+        <name value="03-TestServerReferenceControl"/>  
+        <description value="Test XIS Server to have control over the reference obtained from the DocumentReference.content.attachment.url. This test resolves the fullURL withouth an authorization header. The request should fail to confirm that the XIS has control over the context. The expected response code is not 200(OK) but should be 401, 403 or 404."/>  
+        <action> 
+            <operation> 
+                <type> 
+                    <system value="http://hl7.org/fhir/testscript-operation-codes"/>  
+                    <code value="read"/> 
+                </type>  
+                <resource value="DocumentReference"/>  
+                <description value="XIS Server read operation for a document on a known location, using the fullURL."/>  
+                <accept value="xml"/>  
+                <contentType value="none"/>
+                <url value="${pdfa-url}"/> 
+            </operation> 
+        </action>  
+        <action> 
+            <assert> 
+                <description value="Confirm that the returned HTTP status is 200(OK)."/>  
+                <direction value="response"/> 
+                <operator value="notEquals"/>
+                <responseCode value="200"/> 
+            </assert> 
+        </action>  
+        <action> 
+            <assert> 
+                <description value="Check if the returned HTTP status is 401(Unauthorized), 403(Forbidden) or 404(Not Found). Assert is set to warning only becasue other HTTP failure codes may be expected as well."/>  
+                <direction value="response"/>  
+                <operator value="in"/>
+                <responseCode value="401,403,404"/> 
+                <warningOnly value="true" />
             </assert> 
         </action>  
     </test>
