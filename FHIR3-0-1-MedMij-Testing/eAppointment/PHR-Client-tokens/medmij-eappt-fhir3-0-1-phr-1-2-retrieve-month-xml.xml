@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir">
-	<id value="medmij-eappt-fhir3-0-1-phr-1-1-retrieve-future-xml" />
-	<url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-eappt-fhir3-0-1-phr-1-1-retrieve-future-xml" />
-	<name value="Nictiz MedMij eAppointment - PHR Client - Scenario 1.1 - Retrieve Future - XML" />
+	<id value="medmij-eappt-fhir3-0-1-phr-1-2-retrieve-month-xml" />
+	<url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-eappt-fhir3-0-1-phr-1-2-retrieve-month-xml" />
+	<name value="Nictiz MedMij eAppointment - PHR Client - Scenario 1.2 - Retrieve Person 2 Month May Period - XML" />
 	<status value="active" />
-	<date value="2018-03-26" />
+	<date value="2018-03-28" />
 	<publisher value="Nictiz" />
 	<contact>
 		<name value="Nictiz"/>
@@ -14,7 +14,7 @@
 			<use value="work"/>
 		</telecom>
 	</contact>
-	<description value="MedMij eAppointment for FHIR STU3 (v3.0.1) - Scenario 1.1: Retrieve Future Appointments - XML Format - All appointments of person 1 in period from 1 January 2018 and everything in the future (3 appointments to 3 different specialisms). Search parameters used: patient (match person 1), date (greater than or equal to 1 January 2018)." />
+	<description value="MedMij eAppointment for FHIR STU3 (v3.0.1) - Scenario 1.2: Retrieve Month Appointments - XML Format - All appointments of person 2 in period from 1 May 2018 to 31 May 2018 (3 appointments, of which 2 in May). Search parameters used: patient (match person 2), date (greater than or equal to 1 May 2018), date (less than or equal to 31 May 2018)." />
 	<copyright value="© Nictiz 2018" />
 
 	<origin>
@@ -32,24 +32,24 @@
 		</profile>
 	</destination>
 
-	<fixture id="patient1-fixture">
+	<fixture id="patient-fixture">
 		<resource>
-			<reference value="../_reference/resources/eAfspraak-Patient-kwalificatie1.xml" />
+			<reference value="../_reference/resources/eAfspraak-Patient-kwalificatie2.xml" />
 		</resource>
 	</fixture>
-	<fixture id="appointment1-fixture">
+    <fixture id="patient-token-fixture">
+        <resource>
+        	<reference value="../_reference/resources/eAfspraak-Patient-Token-kwalificatie2.xml"/>
+        </resource>
+    </fixture>
+	<fixture id="appointment5-fixture">
 		<resource>
-			<reference value="../_reference/resources/eAfspraak-Appointment-kwalificatie1.xml" />
+			<reference value="../_reference/resources/eAfspraak-Appointment-kwalificatie5.xml" />
 		</resource>
 	</fixture>
-	<fixture id="appointment2-fixture">
+	<fixture id="appointment6-fixture">
 		<resource>
-			<reference value="../_reference/resources/eAfspraak-Appointment-kwalificatie2.xml" />
-		</resource>
-	</fixture>
-	<fixture id="appointment3-fixture">
-		<resource>
-			<reference value="../_reference/resources/eAfspraak-Appointment-kwalificatie3.xml" />
+			<reference value="../_reference/resources/eAfspraak-Appointment-kwalificatie6.xml" />
 		</resource>
 	</fixture>
 
@@ -58,31 +58,31 @@
 	</profile>
 
 	<variable>
-		<name value="patient1-id" />
+		<name value="patient-id" />
 		<path value="Patient/id" />
-		<sourceId value="patient1-fixture" />
+		<sourceId value="patient-fixture" />
+	</variable>
+    <variable>
+        <name value="patient-token-id"/>
+        <path value="/id"/>
+        <sourceId value="patient-token-fixture"/>
+    </variable>
+	<variable>
+		<name value="appointment5-id" />
+		<path value="Appointment/id" />
+		<sourceId value="appointment5-fixture" />
 	</variable>
 	<variable>
-		<name value="appointment1-id" />
+		<name value="appointment6-id" />
 		<path value="Appointment/id" />
-		<sourceId value="appointment1-fixture" />
-	</variable>
-	<variable>
-		<name value="appointment2-id" />
-		<path value="Appointment/id" />
-		<sourceId value="appointment2-fixture" />
-	</variable>
-	<variable>
-		<name value="appointment3-id" />
-		<path value="Appointment/id" />
-		<sourceId value="appointment3-fixture" />
+		<sourceId value="appointment6-fixture" />
 	</variable>
 
 	<!-- No Setup -->
 
 	<test id="01-RetrieveAppointments">
 		<name value="01-RetrieveAppointments" />
-		<description value="Test PHR Client retrieve search operation for known Appointments of person 1 and in period from 1 January 2018 and everything in the future. The expected response code is 200(OK) and content is a searchset Bundle resource where multiple entries of found Appointment resources are returned in XML format." />
+		<description value="Test PHR Client retrieve search operation for known Appointments of person 2 and in period from 1 May 2018 to 31 May 2018. The expected response code is 200(OK) and content is a searchset Bundle resource where multiple entries of found Appointment resources are returned in XML format." />
 		<action>
 			<operation>
 				<type>
@@ -95,7 +95,7 @@
 				<contentType value="none" />
 				<destination value="1" />
 				<origin value="1" />
-				<params value="?patient=${patient1-id}&amp;date=ge2018-01-01" />
+				<params value="?date=ge2018-05-01&amp;date=le2018-05-31" />
 			</operation>
 		</action>
 		<action>
@@ -107,6 +107,30 @@
 				<value value="application/fhir+xml"/>
 			</assert>
 		</action>
+        <action>
+            <assert>
+                <description value="Confirm that HTTP header Authorization contains the patient token {$patient1-token-id}"/>
+                <direction value="request"/>
+                <headerField value="Authorization"/>
+                <value value="${patient-token-id}"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Observation query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+                <direction value="request"/>
+                <operator value="notContains"/>
+                <requestURL value="patient="/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Observation query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+                <direction value="request"/>
+                <operator value="notContains"/>
+                <requestURL value="subject="/>
+            </assert>
+        </action>
 		<action>
 			<assert>
 				<description value="Confirm that the client did not request a Content-Type. Warning only to allow for systems that automatically send Content-Type."/>
@@ -155,11 +179,11 @@
 		</action>
 		<action>
 			<assert>
-				<description value="Confirm that the returned searchset Bundle contains 3 entries." />
+				<description value="Confirm that the returned searchset Bundle contains 2 entries." />
 				<direction value="response" />
 				<operator value="equals" />
 				<path value="Bundle/total" />
-				<value value="3" />
+				<value value="2" />
 			</assert>
 		</action>
 		<action>
@@ -175,7 +199,7 @@
 				<direction value="response" />
 				<operator value="in" />
 				<path value="Bundle/entry[1]/resource/Appointment/id" />
-				<value value="${appointment1-id},${appointment2-id},${appointment3-id}" />
+				<value value="${appointment5-id},${appointment6-id}" />
 			</assert>
 		</action>
 		<action>
@@ -184,16 +208,7 @@
 				<direction value="response" />
 				<operator value="in" />
 				<path value="Bundle/entry[2]/resource/Appointment/id" />
-				<value value="${appointment1-id},${appointment2-id},${appointment3-id}" />
-			</assert>
-		</action>
-		<action>
-			<assert>
-				<description value="Confirm that the returned Bundle entries contain the third expected Appointment resource id." />
-				<direction value="response" />
-				<operator value="in" />
-				<path value="Bundle/entry[3]/resource/Appointment/id" />
-				<value value="${appointment1-id},${appointment2-id},${appointment3-id}" />
+				<value value="${appointment5-id},${appointment6-id}" />
 			</assert>
 		</action>
 	</test>

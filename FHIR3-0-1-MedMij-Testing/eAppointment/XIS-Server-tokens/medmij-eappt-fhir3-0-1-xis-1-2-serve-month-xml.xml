@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir">
-	<id value="medmij-eappt-fhir3-0-1-xis-1-1-serve-future-json" />
-	<url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-eappt-fhir3-0-1-xis-1-1-serve-future-json" />
-	<name value="Nictiz MedMij eAppointment - XIS Server - Scenario 1.1 - Serve Person 1 Future - JSON" />
+	<id value="medmij-eappt-fhir3-0-1-xis-1-2-serve-month-xml" />
+	<url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-eappt-fhir3-0-1-xis-1-2-serve-month-xml" />
+	<name value="Nictiz MedMij eAppointment - XIS Server - Scenario 1.2 - Serve Person 2 Month May Period - XML" />
 	<status value="active" />
 	<date value="2018-03-27" />
 	<publisher value="Nictiz" />
@@ -14,27 +14,22 @@
 			<use value="work"/>
 		</telecom>
 	</contact>
-	<description value="MedMij eAppointment for FHIR STU3 (v3.0.1) - Scenario 1.1: Query Future Appointments - JSON Format - All appointments of person 1 in period from 1 January 2018 and everything in the future (3 appointments to 3 different specialisms). Search parameters used: patient (match person 1), date (greater than or equal to 1 January 2018)." />
+	<description value="MedMij eAppointment for FHIR STU3 (v3.0.1) - Scenario 1.2: Query Month Appointments - XML Format - All appointments of person 2 in period from 1 May 2018 to 31 May 2018 (3 appointments, of which 2 in May). Search parameters used: patient (match person 2), date (greater than or equal to 1 May 2018), date (less than or equal to 31 May 2018)." />
 	<copyright value="© Nictiz 2018" />
 
-	<fixture id="patient1-fixture">
+	<fixture id="patient-token-fixture">
 		<resource>
-			<reference value="../_reference/resources/eAfspraak-Patient-kwalificatie1.json" />
+			<reference value="../_reference/resources/eAfspraak-Patient-Token-kwalificatie2.xml" />
 		</resource>
 	</fixture>
-	<fixture id="appointment1-fixture">
+	<fixture id="appointment5-fixture">
 		<resource>
-			<reference value="../_reference/resources/eAfspraak-Appointment-kwalificatie1.json" />
+			<reference value="../_reference/resources/eAfspraak-Appointment-kwalificatie5.xml" />
 		</resource>
 	</fixture>
-	<fixture id="appointment2-fixture">
+	<fixture id="appointment6-fixture">
 		<resource>
-			<reference value="../_reference/resources/eAfspraak-Appointment-kwalificatie2.json" />
-		</resource>
-	</fixture>
-	<fixture id="appointment3-fixture">
-		<resource>
-			<reference value="../_reference/resources/eAfspraak-Appointment-kwalificatie3.json" />
+			<reference value="../_reference/resources/eAfspraak-Appointment-kwalificatie6.xml" />
 		</resource>
 	</fixture>
 
@@ -43,31 +38,30 @@
 	</profile>
 
 	<variable>
-		<name value="patient1-id" />
-		<path value=".id" />
-		<sourceId value="patient1-fixture" />
+		<name value="patient-token-id" />
+		<path value="id" />
+		<sourceId value="patient-token-fixture" />
 	</variable>
 	<variable>
-		<name value="appointment1-id" />
-		<path value=".id" />
-		<sourceId value="appointment1-fixture" />
+		<name value="query-date" />
+		<defaultValue value="ge2018-05-01&amp;date=le2018-05-31" />
 	</variable>
 	<variable>
-		<name value="appointment2-id" />
-		<path value=".id" />
-		<sourceId value="appointment2-fixture" />
+		<name value="appointment5-id" />
+		<path value="Appointment/id" />
+		<sourceId value="appointment5-fixture" />
 	</variable>
 	<variable>
-		<name value="appointment3-id" />
-		<path value=".id" />
-		<sourceId value="appointment3-fixture" />
+		<name value="appointment6-id" />
+		<path value="Appointment/id" />
+		<sourceId value="appointment6-fixture" />
 	</variable>
 
 	<!-- No Setup -->
 
 	<test id="01-ServeAppointments">
 		<name value="01-ServeAppointments" />
-		<description value="Test XIS Server query search operation for known Appointments of person 1 and in period from 1 January 2018 and everything in the future. The expected response code is 200(OK) and content is a searchset Bundle resource where multiple entries of found Appointment resources are returned in JSON format." />
+		<description value="Test XIS Server query search operation for known Appointments of person 2 and in period from 1 May 2018 to 31 May 2018. The expected response code is 200(OK) and content is a searchset Bundle resource where multiple entries of found Appointment resources are returned in XML format." />
 		<action>
 			<operation>
 				<type>
@@ -76,9 +70,13 @@
 				</type>
 				<resource value="Appointment" />
 				<description value="XIS Server query search operation for known Appointments." />
-				<accept value="json" />
+				<accept value="xml" />
 				<contentType value="none" />
-				<params value="?patient=${patient1-id}&amp;date=ge2018-01-01" />
+				<params value="?${query-date}" />
+				<requestHeader>  <!-- 0..* Each operation can have one or more header elements -->
+					<field value="Authorization"/><!-- 1..1 HTTP header field name: OAuth access token -->
+					<value value="${patient-token-id}"/><!-- 1..1 HTTP headerfield value: UUID4 -->
+				</requestHeader>
 			</operation>
 		</action>
 		<action>
@@ -90,9 +88,9 @@
 		</action>
 		<action>
 			<assert>
-				<description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+json'." />
+				<description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
 				<direction value="response" />
-				<contentType value="json" />
+				<contentType value="xml" />
 			</assert>
 		</action>
 		<action>
@@ -114,17 +112,17 @@
 				<description value="Confirm that the returned Bundle type is searchset." />
 				<direction value="response" />
 				<operator value="equals" />
-				<path value=".type" />
+				<path value="Bundle/type" />
 				<value value="searchset" />
 			</assert>
 		</action>
 		<action>
 			<assert>
-				<description value="Confirm that the returned searchset Bundle contains 3 entries." />
+				<description value="Confirm that the returned searchset Bundle contains 2 entries." />
 				<direction value="response" />
 				<operator value="equals" />
-				<path value=".total" />
-				<value value="3" />
+				<path value="Bundle/total" />
+				<value value="2" />
 			</assert>
 		</action>
 		<action>
@@ -139,8 +137,8 @@
 				<description value="Confirm that the returned Bundle entries contain the first expected Appointment resource id." />
 				<direction value="response" />
 				<operator value="in" />
-				<path value=".entry[0].resource.id" />
-				<value value="${appointment1-id},${appointment2-id},${appointment3-id}" />
+				<path value="Bundle/entry[1]/resource/Appointment/id" />
+				<value value="${appointment5-id},${appointment6-id}" />
 			</assert>
 		</action>
 		<action>
@@ -148,17 +146,8 @@
 				<description value="Confirm that the returned Bundle entries contain the second expected Appointment resource id." />
 				<direction value="response" />
 				<operator value="in" />
-				<path value=".entry[1].resource.id" />
-				<value value="${appointment1-id},${appointment2-id},${appointment3-id}" />
-			</assert>
-		</action>
-		<action>
-			<assert>
-				<description value="Confirm that the returned Bundle entries contain the third expected Appointment resource id." />
-				<direction value="response" />
-				<operator value="in" />
-				<path value=".entry[2].resource.id" />
-				<value value="${appointment1-id},${appointment2-id},${appointment3-id}" />
+				<path value="Bundle/entry[2]/resource/Appointment/id" />
+				<value value="${appointment5-id},${appointment6-id}" />
 			</assert>
 		</action>
 	</test>
