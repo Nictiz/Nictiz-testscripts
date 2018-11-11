@@ -131,11 +131,21 @@
                     </type>
                     <subject>
                         <reference value="Patient/{$patientResource/f:id/@value}"/>
-                        <display value="{normalize-space(string-join($patientResource/f:name//@value, ' '))}"/>
+                        <display value="{normalize-space(string-join(($patientResource/f:name/f:given[1]/@value, $patientResource/f:name/f:family/@value), ' '))}"/>
                     </subject>
                     <encounter>
                         <reference value="Encounter/{$encounterId}"/>
-                        <display value="{f:type/f:Coding/f:display/@value, ' voor ', f:episodeOfCare/f:display/@value, ' met ', f:participant/f:individual/f:display/@value}"/>
+                        <display>
+                            <xsl:attribute name="value">
+                                <xsl:value-of select="f:type/f:coding/f:display/@value"/>
+                                <xsl:if test="f:episodeOfCare">
+                                    <xsl:text> voor </xsl:text>
+                                    <xsl:value-of select="f:episodeOfCare/f:display/@value"/>
+                                </xsl:if>
+                                <xsl:text> met </xsl:text>
+                                <xsl:value-of select="f:participant/f:individual/f:display/@value"/>
+                            </xsl:attribute>
+                        </display>
                     </encounter>
                     <date value="{$encounterDate}"/>
                     <author>
