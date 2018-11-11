@@ -131,9 +131,11 @@
                     </type>
                     <subject>
                         <reference value="Patient/{$patientResource/f:id/@value}"/>
+                        <display value="{normalize-space(string-join($patientResource/f:name//@value, ' '))}"/>
                     </subject>
                     <encounter>
                         <reference value="Encounter/{$encounterId}"/>
+                        <display value="{f:type/f:Coding/f:display/@value, ' voor ', f:episodeOfCare/f:display/@value, ' met ', f:participant/f:individual/f:display/@value}"/>
                     </encounter>
                     <date value="{$encounterDate}"/>
                     <author>
