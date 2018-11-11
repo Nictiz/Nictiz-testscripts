@@ -166,10 +166,12 @@
                             </text>
                             <entry>
                                 <reference value="{local-name()}/{f:id/@value}"/>
+                                <display value="{f:valueString/@value}"/>
                             </entry>
                             <xsl:for-each select="$episodeOfCare">
                                 <entry>
                                     <reference value="EpisodeOfCare/{f:id/@value}"/>
+                                    <display value="{f:type/f:coding[1]/f:display/@value, f:valueString/@value}"/>
                                 </entry>
                             </xsl:for-each>
                         </section>
