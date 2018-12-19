@@ -131,9 +131,21 @@
                     </type>
                     <subject>
                         <reference value="Patient/{$patientResource/f:id/@value}"/>
+                        <display value="{normalize-space(string-join(($patientResource/f:name/f:given[1]/@value, $patientResource/f:name/f:family/@value), ' '))}"/>
                     </subject>
                     <encounter>
                         <reference value="Encounter/{$encounterId}"/>
+                        <display>
+                            <xsl:attribute name="value">
+                                <xsl:value-of select="f:type/f:coding/f:display/@value"/>
+                                <xsl:if test="f:episodeOfCare">
+                                    <xsl:text> voor </xsl:text>
+                                    <xsl:value-of select="f:episodeOfCare/f:display/@value"/>
+                                </xsl:if>
+                                <xsl:text> met </xsl:text>
+                                <xsl:value-of select="f:participant/f:individual/f:display/@value"/>
+                            </xsl:attribute>
+                        </display>
                     </encounter>
                     <date value="{$encounterDate}"/>
                     <author>
@@ -154,10 +166,12 @@
                             </text>
                             <entry>
                                 <reference value="{local-name()}/{f:id/@value}"/>
+                                <display value="{f:valueString/@value}"/>
                             </entry>
                             <xsl:for-each select="$episodeOfCare">
                                 <entry>
                                     <reference value="EpisodeOfCare/{f:id/@value}"/>
+                                    <display value="{f:type/f:coding[1]/f:display/@value, f:diagnosis/f:condition/f:display/@value}"/>
                                 </entry>
                             </xsl:for-each>
                         </section>
