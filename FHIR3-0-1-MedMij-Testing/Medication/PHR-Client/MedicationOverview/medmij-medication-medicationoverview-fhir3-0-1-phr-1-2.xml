@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<TestScript xmlns="http://hl7.org/fhir">  
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://hl7.org/fhir http://hl7.org/fhir/STU3/fhir-all.xsd" xmlns="http://hl7.org/fhir">
     <id value="medmij-medication-medicationoverview-fhir3-0-1-phr-1-2"/>  
     <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-medication-medicationoverview-fhir3-0-1-phr-1-2"/>  
-    <name value="Nictiz MedMij Medication - PHR Client - Scenario 1.2 - Retrieve MedicationOverview - XML"/>  
+    <name value="Nictiz MedMij Medication - PHR Client - Scenario 1.2 - Retrieve MedicationOverview "/>  
     <status value="active"/>  
     <date value="2018-09-11"/>  
     <publisher value="Nictiz"/>  
@@ -14,7 +15,7 @@
             <use value="work"/> 
         </telecom> 
     </contact>  
-    <description value="MedMij Medication for FIR STU3 (v3.0.1) - Scenario 1.2: Retrieve MedicationOverview - XML Format - All resources that belong to the MedicationOverview of XXX_Jangi. Response consists of a MedicationOverview Bundle.."/>  
+    <description value="MedMij Medication for FIR STU3 (v3.0.1) - Scenario 1.2: Retrieve MedicationOverview - All resources that belong to the MedicationOverview of XXX_Jangi. Response consists of a MedicationOverview Bundle.."/>  
     <copyright value="© Nictiz 2018"/>      
     <origin>
         <index value="1" />
@@ -36,20 +37,65 @@
             <reference value="../../_reference/mp9-nl-core-patient-XXX-JANGI-token.xml" />
         </resource>
     </fixture>
+    <fixture id="Bundle-MO-XXX-JANGI-fx">
+        <resource>
+            <reference value="../../_MedicationOverview/mp9-Bundle-MO-XXX-JANGI.xml" />
+        </resource>
+    </fixture>
     
     <profile id="Bundle-profile"> 
         <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/> 
     </profile>    
     
     <variable>
-        <name value="Patient-id" />
+        <name value="patient-token-id" />
         <expression value="Patient.id" />
         <sourceId value="Patient-fixture" />
     </variable>
+    <variable>
+        <name value="Bundle-MO-XXX-JANGI-id" />
+        <expression value="Bundle.id" />
+        <sourceId value="Bundle-MO-XXX-JANGI-fx" />
+    </variable>
  
+    <setup>
+        <action>
+            <operation>
+                <type>
+                    <system value="http://hl7.org/fhir/testscript-operation-codes" />
+                    <code value="updateCreate" />
+                </type>
+                <resource value="Bundle" />
+                <description value="Put the MedicationOverview on the Bundle endpoint, needed for the $medication-overview operation."/>
+                <accept value="xml" />
+                <contentType value="xml" />
+                <params value="/${Bundle-MO-XXX-JANGI-id}" />
+                <requestHeader>
+                    <field value="Authorization" />
+                    <value value="Bearer e2696872-f855-4283-a01b-c0db9c50bde2" />
+                </requestHeader>
+                <requestHeader>
+                    <!-- 0..* Each operation can have one or more header elements -->
+                    <field value="Authorization"/>
+                    <!-- 1..1 HTTP header field name: OAuth access token -->
+                    <value value="${patient-token-id}"/>
+                    <!-- 1..1 HTTP headerfield value: UUID4 -->
+                </requestHeader>
+                <sourceId value="Bundle-MO-XXX-JANGI-fx" />
+            </operation>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned HTTP status is 200(OK) or 201(Created)." />
+                <operator value="in" />
+                <responseCode value="200,201" />
+            </assert>
+        </action>
+    </setup>
+    
     <test id="01-Retrieve-MedicationOverview"> 
         <name value="01-Retrieve-MedicationOverview"/>
-        <description value="Test PHR Client retrieve search operation for all a MedicationOverview, using the $medication-overview operation of XXX_Jangi. The expected response code is 200(OK) and content is a MedicationOverview Bundle, returned in XML format."/>  
+        <description value="Test PHR Client retrieve search operation for all a MedicationOverview, using the $medication-overview operation of XXX_Jangi. The expected response code is 200(OK) and content is a MedicationOverview Bundle."/>  
         <action> 
             <operation> 
                 <type> 
@@ -62,8 +108,16 @@
                 <destination value="1" />
                 <origin value="1" />
                 <params value="$medication-overview"/> 
+                <requestHeader>
+                    <!-- 0..* Each operation can have one or more header elements -->
+                    <field value="Authorization"/>
+                    <!-- 1..1 HTTP header field name: OAuth access token -->
+                    <value value="${patient-token-id}"/>
+                    <!-- 1..1 HTTP headerfield value: UUID4 -->
+                </requestHeader>
             </operation> 
-        </action>        
+        </action>
+        <!--  
         <action>
             <assert>
                 <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
@@ -73,6 +127,7 @@
                 <value value="application/fhir+xml"/>
             </assert>
         </action>
+        -->      
         <action>
             <assert>
                 <description value="Confirm that the client did not request a Content-Type. Warning only to allow for systems that automatically send Content-Type."/>
@@ -84,10 +139,10 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that HTTP header Authorization contains the patient token ${Patient-id}"/>
+                <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
                 <direction value="request"/>
                 <headerField value="Authorization"/>
-                <value value="${Patient-id}"/>
+                <value value="${patient-token-id}"/>
             </assert>
         </action>
         <action>
@@ -113,6 +168,7 @@
                 <responseCode value="200" />
             </assert>
         </action>
+        <!--
         <action>
             <assert>
                 <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
@@ -120,6 +176,7 @@
                 <contentType value="xml" />
             </assert>
         </action>
+        -->
         <action>
             <assert>
                 <description value="Confirm that the returned resource type is Bundle." />
@@ -133,33 +190,31 @@
                 <direction value="response" />
                 <expression value="Bundle.type" />
                 <operator value="equals" />
-                <value value="collection" />
+                <value value="searchset" />
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the .total." />
+                <description value="Confirm that the returned Bundle has the expected ID." />
                 <direction value="response" />
-                <expression value="Bundle.total.toInteger() &lt;= entry.count()" />
+                <expression value="Bundle.id" />
+                <operator value="equals" />
+                <value value="MO-XXX-JANGI" />
             </assert>
         </action>
-        <!-- New assert to test if the returned MedicationOverview is similiar to pre-specified Bundle 
-        
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 2 entry."/>  
+                <description value="Confirm that the returned searchset Bundle contains 41 entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 2"/>  
+                <expression value="Bundle.entry.count() = 41"/>  
             </assert> 
         </action>
-        
-        -->
-        
         <action>
             <assert>
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+                <warningOnly value="true"/>
             </assert>
         </action>
     </test> 
