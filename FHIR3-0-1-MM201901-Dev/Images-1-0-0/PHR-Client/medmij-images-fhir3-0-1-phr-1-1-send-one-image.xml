@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://hl7.org/fhir http://hl7.org/fhir/STU3/fhir-all.xsd" xmlns="http://hl7.org/fhir">
+    <id value="phr-1-1-send-image"/>
+    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-images-fhir3-0-1-phr-1-1-send-one-image"/>
+    <name value="MedMij Images - PHR Client - Scenario 1.1 - Send One Image"/>
+    <status value="active"/>
+    <date value="2019-04-24"/>
+    <publisher value="Nictiz"/>
+    <contact>
+        <name value="Nictiz"/>
+        <telecom>
+            <system value="email"/>
+            <value value="kwalificatie@nictiz.nl"/>
+            <use value="work"/>
+        </telecom>
+    </contact>
+    <description value="MedMij Images for FHIR STU3 (v3.0.1) - Scenario 1.1: - Send One Image - of person 1. Response is expected to be HTTP 201 Created."/>
+    <copyright value="© Nictiz 2018"/>
+    <origin>
+        <index value="1" />
+        <profile>
+            <system value="http://hl7.org/fhir/testscript-profile-origin-types"/>
+            <code value="FHIR-Client"/>
+        </profile>
+    </origin>
+    <destination>
+        <index value="1" />
+        <profile>
+            <system value="http://hl7.org/fhir/testscript-profile-destination-types"/>
+            <code value="FHIR-Server"/>
+        </profile>
+    </destination>
+    <fixture id="patient-01-token-fixture">
+        <resource>
+            <reference value="../_reference/resources/images-patient-01-token.xml"/>
+        </resource>
+    </fixture>
+    <fixture id="scenario-1-1-bundle-fixture">
+        <resource>
+            <reference value="../_reference/transaction-bundles/images-scenario-1-1-Bundle-one-image.xml"/>
+        </resource>
+    </fixture>
+    <profile id="Bundle-profile">
+        <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
+    </profile>
+    <variable>
+        <name value="patient-01-token-id"/>
+        <expression value="Patient.id"/>
+        <sourceId value="patient-01-token-fixture"/>
+    </variable>
+    
+    <variable>       
+        <name value="T" />
+        <defaultValue value="${CURRENTDATETIME}" />
+        <description value="Date that data and queries are expected to be relative to."/>
+    </variable>
+    
+    <test id="Scenario1.1-SendOneImage">
+        <name value="Scenario1.1-SendOneImage"/>
+        <description value="Test PHR Client request to create one image for known person 1. The expected response code is 201 (Created)."/>
+        <action>
+            <operation>
+                <type>
+                    <system value="http://hl7.org/fhir/testscript-operation-codes" />
+                    <code value="create" />
+                </type>
+                <resource value="Bundle"/>
+                <description value="PHR client create operation for a Bundle containing all required FHIR resources for one Image." />
+                <accept value="xml" />
+                <contentType value="xml" />
+                <destination value="1" />
+                <origin value="1" />
+                <requestHeader>
+                    <field value="Authorization" />
+                    <value value="${patient-01-token-id}" />
+                </requestHeader>
+                <sourceId value="scenario-1-1-bundle-fixture" />
+            </operation>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned HTTP status is 201(Created)."/>
+                <direction value="response"/>
+                <response value="created"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that request body conforms to the Bundle profile."/>
+                <direction value="request"/>
+                <validateProfileId value="Bundle-profile"/>
+            </assert>
+        </action>
+    </test>
+</TestScript>
