@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
 <TestScript xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://hl7.org/fhir http://hl7.org/fhir/STU3/fhir-all.xsd" xmlns="http://hl7.org/fhir">
-    <id value="phr-2-3-send-observations-from-june-2018-xml"/>
-    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-selfmeasurements-fhir3-0-1-phr-2-3-send-observations-from-june-2018-xml"/>
-    <name value="MedMij Self Measurements - PHR Client - Scenario 2.3 - Send Observations from June 2018 - XML"/>
+    <id value="phr-2-3-send-observations-from-june-2018"/>
+    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-selfmeasurements-fhir3-0-1-phr-2-3-send-observations-from-june-2018"/>
+    <name value="MedMij Self Measurements - PHR Client - Scenario 2.3 - Send Observations from June 2018"/>
     <status value="active"/>
-    <date value="2018-05-23"/>
+    <date value="2019-04"/>
     <publisher value="Nictiz"/>
     <contact>
         <name value="Nictiz"/>
@@ -49,6 +49,7 @@
         <expression value="Patient.id"/>
         <sourceId value="patient1-token-fixture"/>
     </variable>
+       
     <test id="Scenario2.3-SendObservationsFromJune2018">
         <name value="Scenario2.3-SendObservationsFromJune2018"/>
         <description value="Test XIS Client request to create/update the Observations from June 2018 for known person 1. The expected response code is 201(Created)."/>
@@ -87,6 +88,65 @@
                 <description value="Confirm that the returned HTTP status is 201(Created)."/>
                 <direction value="response"/>
                 <response value="created"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+                <direction value="request"/>
+                <headerField value="Authorization"/>
+                <value value="${patient1-token-id}"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+                <direction value="request"/>
+                <operator value="notContains"/>
+                <requestURL value="patient="/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+                <direction value="request"/>
+                <operator value="notContains"/>
+                <requestURL value="subject="/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that request Bundle is of type transaction."/>
+                <direction value="request"/>
+                <expression value="Bundle.type = 'batch'"/>
+            </assert>
+        </action> 
+        <action>
+            <assert>
+                <description value="Confirm that the all resources contain a meta.profile tag." />
+                <direction value="request" />
+                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Bundle contains 1 Patient resource"/>
+                <direction value="request"/>
+                <expression value="Bundle.entry.resource.ofType(Patient).count() = 1"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Bundle contains 12 Observation resources"/>
+                <direction value="request"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).count() = 12"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that request body conforms to the Bundle profile."/>
+                <direction value="request"/>
+                <validateProfileId value="Bundle-profile"/>
             </assert>
         </action>
     </test>
