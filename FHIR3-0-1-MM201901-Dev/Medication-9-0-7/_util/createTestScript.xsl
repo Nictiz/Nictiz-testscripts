@@ -68,7 +68,7 @@
             <!-- variable T -->
             <variable>
                 <name value="T" />
-                <defaultValue value="${CURRENTDATE}" />
+                <defaultValue value="${{CURRENTDATE}}" />
                 <description value="Date that data and queries are expected to be relative to." />
             </variable>
             <!-- No Setup -->
