@@ -65,7 +65,12 @@
                     <sourceId value="{$resId}-fx"/>
                 </variable>
             </xsl:for-each>
-
+            <!-- variable T -->
+            <variable>
+                <name value="T" />
+                <defaultValue value="${CURRENTDATE}" />
+                <description value="Date that data and queries are expected to be relative to." />
+            </variable>
             <!-- No Setup -->
             <test id="Step1-LoadTestResourceCreate">
                 <name value="Step1-LoadTestResourceCreate"/>
