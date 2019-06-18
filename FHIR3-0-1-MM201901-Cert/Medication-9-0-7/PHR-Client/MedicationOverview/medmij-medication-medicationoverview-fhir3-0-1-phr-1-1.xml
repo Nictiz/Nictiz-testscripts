@@ -36,6 +36,11 @@
             <reference value="../../_reference/mp9-nl-core-patient-XXX-RUYS-token.xml" />
         </resource>
     </fixture>
+    <fixture id="Bundle-MO-XXX-RUYS-fx">
+        <resource>
+            <reference value="../../_reference/_MedicationOverview/mp9-Bundle-MO-XXX-RUYS.xml" />
+        </resource>
+    </fixture>
     
     <profile id="Bundle-profile"> 
         <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/> 
@@ -46,6 +51,48 @@
         <expression value="Patient.id" />
         <sourceId value="Patient-fixture" />
     </variable>
+    
+    <variable>
+        <name value="Bundle-MO-XXX-RUYS-id" />
+        <expression value="Bundle.id" />
+        <sourceId value="Bundle-MO-XXX-RUYS-fx" />
+    </variable>
+
+ <setup>
+        <action>
+            <operation>
+                <type>
+                    <system value="http://hl7.org/fhir/testscript-operation-codes" />
+                    <code value="updateCreate" />
+                </type>
+                <resource value="Bundle" />
+                <description value="Put the MedicationOverview on the Bundle endpoint, needed for the $medication-overview operation."/>
+                <accept value="xml" />
+                <contentType value="xml" />
+                <params value="/${Bundle-MO-XXX-RUYS-id}" />
+                <requestHeader>
+                    <field value="Authorization" />
+                    <value value="Bearer e2696872-f855-4283-a01b-c0db9c50bde2" />
+                </requestHeader>
+                <requestHeader>
+                    <!-- 0..* Each operation can have one or more header elements -->
+                    <field value="Authorization"/>
+                    <!-- 1..1 HTTP header field name: OAuth access token -->
+                    <value value="${patient-token-id}"/>
+                    <!-- 1..1 HTTP headerfield value: UUID4 -->
+                </requestHeader>
+                <sourceId value="Bundle-MO-XXX-RUYS-fx" />
+            </operation>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned HTTP status is 200(OK) or 201(Created)." />
+                <operator value="in" />
+                <responseCode value="200,201" />
+            </assert>
+        </action>
+    </setup>
+    
  
     <test id="01-Retrieve-MedicationOverview-Without-MedicalTreatments"> 
         <name value="01-Retrieve-MedicationOverview-Without-MedicalTreatments"/>
@@ -59,16 +106,17 @@
                 <description value="PHR client retrieve search operation for a MedicationOverview using the $medication-overview operation."/>  
                 <accept value="xml"/>  
                 <contentType value="none" />
-                <destination value="1" />
+                  <destination value="1" />
                 <origin value="1" />
-                <params value="$medication-overview"/> 
-                <requestHeader>
+            <params value="$medication-overview"/> 
+                     <requestHeader>
                     <!-- 0..* Each operation can have one or more header elements -->
                     <field value="Authorization"/>
                     <!-- 1..1 HTTP header field name: OAuth access token -->
                     <value value="${patient-token-id}"/>
                     <!-- 1..1 HTTP headerfield value: UUID4 -->
                 </requestHeader>
+                <sourceId value="Bundle-MO-XXX-RUYS-fx" />
             </operation> 
         </action> 
         <!-- 
@@ -138,7 +186,6 @@
                 <resource value="Bundle" />
             </assert>
         </action>
-        <!--
         <action>
             <assert>
                 <description value="Confirm that the returned Bundle type is searchset." />
@@ -148,31 +195,21 @@
                 <value value="searchset" />
             </assert>
         </action>
-        -->
         <action>
             <assert>
-                <description value="Confirm that the returned Bundle type is searchset." />
+                <description value="Confirm that the returned Bundle has the expected ID." />
                 <direction value="response" />
+                <expression value="Bundle.id" />
                 <operator value="equals" />
-                <path value="Bundle/type" />
-                <value value="searchset" />
+                <value value="MO-XXX-RUYS" />
             </assert>
         </action>
-        <!-- <action> 
-            <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
-                <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 3"/>  
-            </assert> 
-        </action>-->
         <action>
             <assert>
                 <description value="Confirm that the returned searchset Bundle contains 3 entries."/>
-                <direction value="response"/>
-                <operator value="equals"/>
-                <path value="Bundle.total"/>
-                <value value="3"/>
-            </assert>
+                <direction value="response"/>  
+                <expression value="Bundle.entry.count() = 3"/>  
+            </assert> 
         </action>
         <action>
             <assert>
