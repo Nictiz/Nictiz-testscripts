@@ -67,11 +67,40 @@
             </xsl:for-each>
             <!-- variable T -->
             <variable>
-                <name value="T" />
-                <defaultValue value="${{CURRENTDATE}}" />
-                <description value="Date that data and queries are expected to be relative to." />
+                <name value="T"/>
+                <defaultValue value="${{CURRENTDATE}}"/>
+                <description value="Date that data and queries are expected to be relative to."/>
             </variable>
-            <!-- No Setup -->
+            <!--  Setup -->
+            <xsl:variable name="xml-token" select="collection(iri-to-uri(concat(resolve-uri($inputDir1), '?select=', '*token.xml;recurse=yes')))/f:*"/>
+            <setup>
+                <xsl:for-each select="$xml-token">
+                    <action>
+                        <operation>
+                            <type>
+                                <system value="http://touchstone.com/fhir/extended-operation-codes"/>
+                                <code value="purge"/>
+                            </type>
+                            <resource value="Patient"/>
+                            <accept value="xml"/>
+                            <contentType value="xml"/>
+                            <params value="/$purge"/>
+                            <requestHeader>
+                                <field value="Authorization"/>
+                                <value value="{f:id/@value}"/>
+                            </requestHeader>
+                        </operation>
+                    </action>
+                    <action>
+                        <assert>
+                            <description value="Confirm that the returned HTTP status is 200(OK)."/>
+                            <operator value="equals"/>
+                            <responseCode value="200"/>
+                        </assert>
+                    </action>
+                </xsl:for-each>
+            </setup>
+            <!-- Test -->
             <test id="Step1-LoadTestResourceCreate">
                 <name value="Step1-LoadTestResourceCreate"/>
                 <description value="Load Medication test resources using the update (PUT) operation of the target FHIR server for use in Medication qualification testing. All resource ids are pre-defined. The target XIS FHIR server is expected to support resource create via the update (PUT) operation for client assigned ids. "/>
