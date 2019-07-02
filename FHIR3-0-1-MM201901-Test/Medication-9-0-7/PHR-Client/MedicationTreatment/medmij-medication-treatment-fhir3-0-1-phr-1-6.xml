@@ -33,23 +33,19 @@
       <code value="FHIR-Server"/>
     </profile>
   </destination>
-
   <fixture id="Patient-fixture">
     <resource>
       <reference value="../../_reference/mp9-nl-core-patient-XXX-STRENGERSZ-token.xml"/>
     </resource>
   </fixture>
-
   <profile id="Bundle-profile">
     <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
   </profile>
-
   <variable>
     <name value="patient-token-id"/>
     <expression value="Patient.id"/>
     <sourceId value="Patient-fixture"/>
   </variable>
-
   <test id="01-Retrieve-MedicationTreatment">
     <name value="01-Retrieve-MedicationTreatment"/>
     <description
@@ -77,535 +73,7 @@
         </requestHeader>
       </operation>
     </action>
-    <!--  
-    <action>
-      <assert>
-        <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
-        <direction value="request"/>
-        <headerField value="Accept"/>
-        <operator value="contains"/>
-        <value value="application/fhir+xml"/>
-      </assert>
-    </action>
-    -->
-    <action>
-      <assert>
-        <description
-          value="Confirm that the client did not request a Content-Type. Warning only to allow for systems that automatically send Content-Type."/>
-        <direction value="request"/>
-        <headerField value="Content-Type"/>
-        <operator value="empty"/>
-        <warningOnly value="true"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-        <direction value="request"/>
-        <headerField value="Authorization"/>
-        <value value="${patient-token-id}"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the Observation query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-        <direction value="request"/>
-        <operator value="notContains"/>
-        <requestURL value="patient="/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the Observation query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-        <direction value="request"/>
-        <operator value="notContains"/>
-        <requestURL value="subject="/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned HTTP status is 200(OK)."/>
-        <direction value="response"/>
-        <responseCode value="200"/>
-      </assert>
-    </action>
-    <!-- 
-    <action>
-      <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
-      </assert>
-    </action>
-     -->
-    <action>
-      <assert>
-        <description value="Confirm that the returned resource type is Bundle."/>
-        <direction value="response"/>
-        <resource value="Bundle"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned Bundle type is searchset."/>
-        <direction value="response"/>
-        <expression value="Bundle.type"/>
-        <operator value="equals"/>
-        <value value="searchset"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the .total."/>
-        <direction value="response"/>
-        <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned searchset Bundle contains 5 entries."/>
-        <direction value="response"/>
-        <expression value="Bundle.entry.count() = 5"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
-        <direction value="response"/>
-        <validateProfileId value="Bundle-profile"/>
-      </assert>
-    </action>
-  </test>
-
-  <test id="02-Retrieve-MedicationTreatment">
-    <name value="02-Retrieve-MedicationTreatment"/>
-    <description
-      value="Test PHR Client retrieve search operation for a single medication treatment of XXX_Strengersz. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 MedicationAgreement, 1 AdministrationAgreement, 1 MedicationUse entry including Medication resource entries."/>
-    <action>
-      <operation>
-        <type>
-          <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-          <code value="search"/>
-        </type>
-        <description
-          value="PHR client retrieve search operation for all resources associated with the medication treatment."/>
-        <accept value="xml"/>
-        <contentType value="none"/>
-        <destination value="1"/>
-        <origin value="1"/>
-        <params
-          value="?medicationtreatment=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_413_2&amp;_include=MedicationRequest:medication&amp;_include=MedicationDispense:medication&amp;_include=MedicationStatement:medication"/>
-        <requestHeader>
-          <!-- 0..* Each operation can have one or more header elements -->
-          <field value="Authorization"/>
-          <!-- 1..1 HTTP header field name: OAuth access token -->
-          <value value="${patient-token-id}"/>
-          <!-- 1..1 HTTP headerfield value: UUID4 -->
-        </requestHeader>
-      </operation>
-    </action>
-    <!--  
-    <action>
-      <assert>
-        <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
-        <direction value="request"/>
-        <headerField value="Accept"/>
-        <operator value="contains"/>
-        <value value="application/fhir+xml"/>
-      </assert>
-    </action>
-    -->
-    <action>
-      <assert>
-        <description
-          value="Confirm that the client did not request a Content-Type. Warning only to allow for systems that automatically send Content-Type."/>
-        <direction value="request"/>
-        <headerField value="Content-Type"/>
-        <operator value="empty"/>
-        <warningOnly value="true"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-        <direction value="request"/>
-        <headerField value="Authorization"/>
-        <value value="${patient-token-id}"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the Observation query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-        <direction value="request"/>
-        <operator value="notContains"/>
-        <requestURL value="patient="/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the Observation query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-        <direction value="request"/>
-        <operator value="notContains"/>
-        <requestURL value="subject="/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned HTTP status is 200(OK)."/>
-        <direction value="response"/>
-        <responseCode value="200"/>
-      </assert>
-    </action>
-    <!-- 
-    <action>
-      <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
-      </assert>
-    </action>
-     -->
-    <action>
-      <assert>
-        <description value="Confirm that the returned resource type is Bundle."/>
-        <direction value="response"/>
-        <resource value="Bundle"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned Bundle type is searchset."/>
-        <direction value="response"/>
-        <expression value="Bundle.type"/>
-        <operator value="equals"/>
-        <value value="searchset"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the .total."/>
-        <direction value="response"/>
-        <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned searchset Bundle contains 5 entries."/>
-        <direction value="response"/>
-        <expression value="Bundle.entry.count() = 5"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
-        <direction value="response"/>
-        <validateProfileId value="Bundle-profile"/>
-      </assert>
-    </action>
-  </test>
-
-  <test id="03-Retrieve-MedicationTreatment">
-    <name value="03-Retrieve-MedicationTreatment"/>
-    <description
-      value="Test PHR Client retrieve search operation for a single medication treatment of XXX_Strengersz. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 MedicationAgreement, 1 AdministrationAgreement, 1 MedicationUse entry including Medication resource entries."/>
-    <action>
-      <operation>
-        <type>
-          <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-          <code value="search"/>
-        </type>
-        <description
-          value="PHR client retrieve search operation for all resources associated with the medication treatment."/>
-        <accept value="xml"/>
-        <contentType value="none"/>
-        <destination value="1"/>
-        <origin value="1"/>
-        <params
-          value="?medicationtreatment=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_413_3&amp;_include=MedicationRequest:medication&amp;_include=MedicationDispense:medication&amp;_include=MedicationStatement:medication"/>
-        <requestHeader>
-          <!-- 0..* Each operation can have one or more header elements -->
-          <field value="Authorization"/>
-          <!-- 1..1 HTTP header field name: OAuth access token -->
-          <value value="${patient-token-id}"/>
-          <!-- 1..1 HTTP headerfield value: UUID4 -->
-        </requestHeader>
-      </operation>
-    </action>
-    <!--  
-    <action>
-      <assert>
-        <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
-        <direction value="request"/>
-        <headerField value="Accept"/>
-        <operator value="contains"/>
-        <value value="application/fhir+xml"/>
-      </assert>
-    </action>
-    -->
-    <action>
-      <assert>
-        <description
-          value="Confirm that the client did not request a Content-Type. Warning only to allow for systems that automatically send Content-Type."/>
-        <direction value="request"/>
-        <headerField value="Content-Type"/>
-        <operator value="empty"/>
-        <warningOnly value="true"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-        <direction value="request"/>
-        <headerField value="Authorization"/>
-        <value value="${patient-token-id}"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the Observation query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-        <direction value="request"/>
-        <operator value="notContains"/>
-        <requestURL value="patient="/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the Observation query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-        <direction value="request"/>
-        <operator value="notContains"/>
-        <requestURL value="subject="/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned HTTP status is 200(OK)."/>
-        <direction value="response"/>
-        <responseCode value="200"/>
-      </assert>
-    </action>
-    <!-- 
-    <action>
-      <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
-      </assert>
-    </action>
-     -->
-    <action>
-      <assert>
-        <description value="Confirm that the returned resource type is Bundle."/>
-        <direction value="response"/>
-        <resource value="Bundle"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned Bundle type is searchset."/>
-        <direction value="response"/>
-        <expression value="Bundle.type"/>
-        <operator value="equals"/>
-        <value value="searchset"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the .total."/>
-        <direction value="response"/>
-        <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned searchset Bundle contains 5 entries."/>
-        <direction value="response"/>
-        <expression value="Bundle.entry.count() = 5"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
-        <direction value="response"/>
-        <validateProfileId value="Bundle-profile"/>
-      </assert>
-    </action>
-  </test>
-
-  <test id="04-Retrieve-MedicationTreatment">
-    <name value="04-Retrieve-MedicationTreatment"/>
-    <description
-      value="Test PHR Client retrieve search operation for a single medication treatment of XXX_Strengersz. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 MedicationAgreement, 1 AdministrationAgreement, 1 MedicationUse entry including Medication resource entries."/>
-    <action>
-      <operation>
-        <type>
-          <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-          <code value="search"/>
-        </type>
-        <description
-          value="PHR client retrieve search operation for all resources associated with the medication treatment."/>
-        <accept value="xml"/>
-        <contentType value="none"/>
-        <destination value="1"/>
-        <origin value="1"/>
-        <params
-          value="?medicationtreatment=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_413_4&amp;_include=MedicationRequest:medication&amp;_include=MedicationDispense:medication&amp;_include=MedicationStatement:medication"/>
-        <requestHeader>
-          <!-- 0..* Each operation can have one or more header elements -->
-          <field value="Authorization"/>
-          <!-- 1..1 HTTP header field name: OAuth access token -->
-          <value value="${patient-token-id}"/>
-          <!-- 1..1 HTTP headerfield value: UUID4 -->
-        </requestHeader>
-      </operation>
-    </action>
-    <!--  
-    <action>
-      <assert>
-        <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
-        <direction value="request"/>
-        <headerField value="Accept"/>
-        <operator value="contains"/>
-        <value value="application/fhir+xml"/>
-      </assert>
-    </action>
-    -->
-    <action>
-      <assert>
-        <description
-          value="Confirm that the client did not request a Content-Type. Warning only to allow for systems that automatically send Content-Type."/>
-        <direction value="request"/>
-        <headerField value="Content-Type"/>
-        <operator value="empty"/>
-        <warningOnly value="true"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-        <direction value="request"/>
-        <headerField value="Authorization"/>
-        <value value="${patient-token-id}"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the Observation query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-        <direction value="request"/>
-        <operator value="notContains"/>
-        <requestURL value="patient="/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the Observation query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-        <direction value="request"/>
-        <operator value="notContains"/>
-        <requestURL value="subject="/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned HTTP status is 200(OK)."/>
-        <direction value="response"/>
-        <responseCode value="200"/>
-      </assert>
-    </action>
-    <!-- 
-    <action>
-      <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
-      </assert>
-    </action>
-     -->
-    <action>
-      <assert>
-        <description value="Confirm that the returned resource type is Bundle."/>
-        <direction value="response"/>
-        <resource value="Bundle"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned Bundle type is searchset."/>
-        <direction value="response"/>
-        <expression value="Bundle.type"/>
-        <operator value="equals"/>
-        <value value="searchset"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the .total."/>
-        <direction value="response"/>
-        <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description value="Confirm that the returned searchset Bundle contains 5 entries."/>
-        <direction value="response"/>
-        <expression value="Bundle.entry.count() = 5"/>
-      </assert>
-    </action>
-    <action>
-      <assert>
-        <description
-          value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
-        <direction value="response"/>
-        <validateProfileId value="Bundle-profile"/>
-      </assert>
-    </action>
-  </test>
-
-  <test id="05-Retrieve-MedicationTreatment">
-    <name value="05-Retrieve-MedicationTreatment"/>
-    <description
-      value="Test PHR Client retrieve search operation for a single medication treatment of XXX_Strengersz. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 MedicationAgreement, 1 AdministrationAgreement, 1 MedicationUse entry including Medication resource entries."/>
-    <action>
-      <operation>
-        <type>
-          <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-          <code value="search"/>
-        </type>
-        <description
-          value="PHR client retrieve search operation for all resources associated with the medication treatment."/>
-        <accept value="xml"/>
-        <contentType value="none"/>
-        <destination value="1"/>
-        <origin value="1"/>
-        <params
-          value="?medicationtreatment=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_413_5&amp;_include=MedicationRequest:medication&amp;_include=MedicationDispense:medication&amp;_include=MedicationStatement:medication"/>
-        <requestHeader>
-          <!-- 0..* Each operation can have one or more header elements -->
-          <field value="Authorization"/>
-          <!-- 1..1 HTTP header field name: OAuth access token -->
-          <value value="${patient-token-id}"/>
-          <!-- 1..1 HTTP headerfield value: UUID4 -->
-        </requestHeader>
-      </operation>
-    </action>
-    <!--  
+    <!--
     <action>
       <assert>
         <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
@@ -663,9 +131,533 @@
     <!--
     <action>
       <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
+      </assert>
+    </action>
+     -->
+    <action>
+      <assert>
+        <description value="Confirm that the returned resource type is Bundle."/>
+        <direction value="response"/>
+        <resource value="Bundle"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle type is searchset."/>
+        <direction value="response"/>
+        <expression value="Bundle.type"/>
+        <operator value="equals"/>
+        <value value="searchset"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the .total."/>
+        <direction value="response"/>
+        <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned searchset Bundle contains 5 entries."/>
+        <direction value="response"/>
+        <expression value="Bundle.entry.count() = 5"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
+        <direction value="response"/>
+        <validateProfileId value="Bundle-profile"/>
+      </assert>
+    </action>
+  </test>
+  <test id="02-Retrieve-MedicationTreatment">
+    <name value="02-Retrieve-MedicationTreatment"/>
+    <description
+      value="Test PHR Client retrieve search operation for a single medication treatment of XXX_Strengersz. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 MedicationAgreement, 1 AdministrationAgreement, 1 MedicationUse entry including Medication resource entries."/>
+    <action>
+      <operation>
+        <type>
+          <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+          <code value="search"/>
+        </type>
+        <description
+          value="PHR client retrieve search operation for all resources associated with the medication treatment."/>
+        <accept value="xml"/>
+        <contentType value="none"/>
+        <destination value="1"/>
+        <origin value="1"/>
+        <params
+          value="?medicationtreatment=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_413_2&amp;_include=MedicationRequest:medication&amp;_include=MedicationDispense:medication&amp;_include=MedicationStatement:medication"/>
+        <requestHeader>
+          <!-- 0..* Each operation can have one or more header elements -->
+          <field value="Authorization"/>
+          <!-- 1..1 HTTP header field name: OAuth access token -->
+          <value value="${patient-token-id}"/>
+          <!-- 1..1 HTTP headerfield value: UUID4 -->
+        </requestHeader>
+      </operation>
+    </action>
+    <!--
+    <action>
+      <assert>
+        <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
+        <direction value="request"/>
+        <headerField value="Accept"/>
+        <operator value="contains"/>
+        <value value="application/fhir+xml"/>
+      </assert>
+    </action>
+    -->
+    <action>
+      <assert>
+        <description
+          value="Confirm that the client did not request a Content-Type. Warning only to allow for systems that automatically send Content-Type."/>
+        <direction value="request"/>
+        <headerField value="Content-Type"/>
+        <operator value="empty"/>
+        <warningOnly value="true"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+        <direction value="request"/>
+        <headerField value="Authorization"/>
+        <value value="${patient-token-id}"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the Observation query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+        <direction value="request"/>
+        <operator value="notContains"/>
+        <requestURL value="patient="/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the Observation query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+        <direction value="request"/>
+        <operator value="notContains"/>
+        <requestURL value="subject="/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned HTTP status is 200(OK)."/>
+        <direction value="response"/>
+        <responseCode value="200"/>
+      </assert>
+    </action>
+    <!--
+    <action>
+      <assert>
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
+      </assert>
+    </action>
+     -->
+    <action>
+      <assert>
+        <description value="Confirm that the returned resource type is Bundle."/>
+        <direction value="response"/>
+        <resource value="Bundle"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle type is searchset."/>
+        <direction value="response"/>
+        <expression value="Bundle.type"/>
+        <operator value="equals"/>
+        <value value="searchset"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the .total."/>
+        <direction value="response"/>
+        <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned searchset Bundle contains 5 entries."/>
+        <direction value="response"/>
+        <expression value="Bundle.entry.count() = 5"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
+        <direction value="response"/>
+        <validateProfileId value="Bundle-profile"/>
+      </assert>
+    </action>
+  </test>
+  <test id="03-Retrieve-MedicationTreatment">
+    <name value="03-Retrieve-MedicationTreatment"/>
+    <description
+      value="Test PHR Client retrieve search operation for a single medication treatment of XXX_Strengersz. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 MedicationAgreement, 1 AdministrationAgreement, 1 MedicationUse entry including Medication resource entries."/>
+    <action>
+      <operation>
+        <type>
+          <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+          <code value="search"/>
+        </type>
+        <description
+          value="PHR client retrieve search operation for all resources associated with the medication treatment."/>
+        <accept value="xml"/>
+        <contentType value="none"/>
+        <destination value="1"/>
+        <origin value="1"/>
+        <params
+          value="?medicationtreatment=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_413_3&amp;_include=MedicationRequest:medication&amp;_include=MedicationDispense:medication&amp;_include=MedicationStatement:medication"/>
+        <requestHeader>
+          <!-- 0..* Each operation can have one or more header elements -->
+          <field value="Authorization"/>
+          <!-- 1..1 HTTP header field name: OAuth access token -->
+          <value value="${patient-token-id}"/>
+          <!-- 1..1 HTTP headerfield value: UUID4 -->
+        </requestHeader>
+      </operation>
+    </action>
+    <!--
+    <action>
+      <assert>
+        <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
+        <direction value="request"/>
+        <headerField value="Accept"/>
+        <operator value="contains"/>
+        <value value="application/fhir+xml"/>
+      </assert>
+    </action>
+    -->
+    <action>
+      <assert>
+        <description
+          value="Confirm that the client did not request a Content-Type. Warning only to allow for systems that automatically send Content-Type."/>
+        <direction value="request"/>
+        <headerField value="Content-Type"/>
+        <operator value="empty"/>
+        <warningOnly value="true"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+        <direction value="request"/>
+        <headerField value="Authorization"/>
+        <value value="${patient-token-id}"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the Observation query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+        <direction value="request"/>
+        <operator value="notContains"/>
+        <requestURL value="patient="/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the Observation query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+        <direction value="request"/>
+        <operator value="notContains"/>
+        <requestURL value="subject="/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned HTTP status is 200(OK)."/>
+        <direction value="response"/>
+        <responseCode value="200"/>
+      </assert>
+    </action>
+    <!--
+    <action>
+      <assert>
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
+      </assert>
+    </action>
+     -->
+    <action>
+      <assert>
+        <description value="Confirm that the returned resource type is Bundle."/>
+        <direction value="response"/>
+        <resource value="Bundle"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle type is searchset."/>
+        <direction value="response"/>
+        <expression value="Bundle.type"/>
+        <operator value="equals"/>
+        <value value="searchset"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the .total."/>
+        <direction value="response"/>
+        <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned searchset Bundle contains 5 entries."/>
+        <direction value="response"/>
+        <expression value="Bundle.entry.count() = 5"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
+        <direction value="response"/>
+        <validateProfileId value="Bundle-profile"/>
+      </assert>
+    </action>
+  </test>
+  <test id="04-Retrieve-MedicationTreatment">
+    <name value="04-Retrieve-MedicationTreatment"/>
+    <description
+      value="Test PHR Client retrieve search operation for a single medication treatment of XXX_Strengersz. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 MedicationAgreement, 1 AdministrationAgreement, 1 MedicationUse entry including Medication resource entries."/>
+    <action>
+      <operation>
+        <type>
+          <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+          <code value="search"/>
+        </type>
+        <description
+          value="PHR client retrieve search operation for all resources associated with the medication treatment."/>
+        <accept value="xml"/>
+        <contentType value="none"/>
+        <destination value="1"/>
+        <origin value="1"/>
+        <params
+          value="?medicationtreatment=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_413_4&amp;_include=MedicationRequest:medication&amp;_include=MedicationDispense:medication&amp;_include=MedicationStatement:medication"/>
+        <requestHeader>
+          <!-- 0..* Each operation can have one or more header elements -->
+          <field value="Authorization"/>
+          <!-- 1..1 HTTP header field name: OAuth access token -->
+          <value value="${patient-token-id}"/>
+          <!-- 1..1 HTTP headerfield value: UUID4 -->
+        </requestHeader>
+      </operation>
+    </action>
+    <!--
+    <action>
+      <assert>
+        <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
+        <direction value="request"/>
+        <headerField value="Accept"/>
+        <operator value="contains"/>
+        <value value="application/fhir+xml"/>
+      </assert>
+    </action>
+    -->
+    <action>
+      <assert>
+        <description
+          value="Confirm that the client did not request a Content-Type. Warning only to allow for systems that automatically send Content-Type."/>
+        <direction value="request"/>
+        <headerField value="Content-Type"/>
+        <operator value="empty"/>
+        <warningOnly value="true"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+        <direction value="request"/>
+        <headerField value="Authorization"/>
+        <value value="${patient-token-id}"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the Observation query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+        <direction value="request"/>
+        <operator value="notContains"/>
+        <requestURL value="patient="/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the Observation query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+        <direction value="request"/>
+        <operator value="notContains"/>
+        <requestURL value="subject="/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned HTTP status is 200(OK)."/>
+        <direction value="response"/>
+        <responseCode value="200"/>
+      </assert>
+    </action>
+    <!--
+    <action>
+      <assert>
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
+      </assert>
+    </action>
+     -->
+    <action>
+      <assert>
+        <description value="Confirm that the returned resource type is Bundle."/>
+        <direction value="response"/>
+        <resource value="Bundle"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle type is searchset."/>
+        <direction value="response"/>
+        <expression value="Bundle.type"/>
+        <operator value="equals"/>
+        <value value="searchset"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the .total."/>
+        <direction value="response"/>
+        <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned searchset Bundle contains 5 entries."/>
+        <direction value="response"/>
+        <expression value="Bundle.entry.count() = 5"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
+        <direction value="response"/>
+        <validateProfileId value="Bundle-profile"/>
+      </assert>
+    </action>
+  </test>
+  <test id="05-Retrieve-MedicationTreatment">
+    <name value="05-Retrieve-MedicationTreatment"/>
+    <description
+      value="Test PHR Client retrieve search operation for a single medication treatment of XXX_Strengersz. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 MedicationAgreement, 1 AdministrationAgreement, 1 MedicationUse entry including Medication resource entries."/>
+    <action>
+      <operation>
+        <type>
+          <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+          <code value="search"/>
+        </type>
+        <description
+          value="PHR client retrieve search operation for all resources associated with the medication treatment."/>
+        <accept value="xml"/>
+        <contentType value="none"/>
+        <destination value="1"/>
+        <origin value="1"/>
+        <params
+          value="?medicationtreatment=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_413_5&amp;_include=MedicationRequest:medication&amp;_include=MedicationDispense:medication&amp;_include=MedicationStatement:medication"/>
+        <requestHeader>
+          <!-- 0..* Each operation can have one or more header elements -->
+          <field value="Authorization"/>
+          <!-- 1..1 HTTP header field name: OAuth access token -->
+          <value value="${patient-token-id}"/>
+          <!-- 1..1 HTTP headerfield value: UUID4 -->
+        </requestHeader>
+      </operation>
+    </action>
+    <!--
+    <action>
+      <assert>
+        <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
+        <direction value="request"/>
+        <headerField value="Accept"/>
+        <operator value="contains"/>
+        <value value="application/fhir+xml"/>
+      </assert>
+    </action>
+    -->
+    <action>
+      <assert>
+        <description
+          value="Confirm that the client did not request a Content-Type. Warning only to allow for systems that automatically send Content-Type."/>
+        <direction value="request"/>
+        <headerField value="Content-Type"/>
+        <operator value="empty"/>
+        <warningOnly value="true"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+        <direction value="request"/>
+        <headerField value="Authorization"/>
+        <value value="${patient-token-id}"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the Observation query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+        <direction value="request"/>
+        <operator value="notContains"/>
+        <requestURL value="patient="/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description
+          value="Confirm that the Observation query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+        <direction value="request"/>
+        <operator value="notContains"/>
+        <requestURL value="subject="/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned HTTP status is 200(OK)."/>
+        <direction value="response"/>
+        <responseCode value="200"/>
+      </assert>
+    </action>
+    <!--
+    <action>
+      <assert>
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
       </assert>
     </action>
     -->
@@ -709,7 +701,6 @@
       </assert>
     </action>
   </test>
-
   <test id="06-Retrieve-MedicationTreatment">
     <name value="06-Retrieve-MedicationTreatment"/>
     <description
@@ -737,7 +728,7 @@
         </requestHeader>
       </operation>
     </action>
-    <!--  
+    <!--
     <action>
       <assert>
         <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
@@ -795,9 +786,9 @@
     <!--
     <action>
       <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
       </assert>
     </action>
     -->
@@ -841,7 +832,6 @@
       </assert>
     </action>
   </test>
-
   <test id="07-Retrieve-MedicationTreatment">
     <name value="07-Retrieve-MedicationTreatment"/>
     <description
@@ -869,7 +859,7 @@
         </requestHeader>
       </operation>
     </action>
-    <!--  
+    <!--
     <action>
       <assert>
         <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
@@ -927,9 +917,9 @@
     <!--
     <action>
       <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
       </assert>
     </action>
     -->
@@ -973,7 +963,6 @@
       </assert>
     </action>
   </test>
-
   <test id="08-Retrieve-MedicationTreatment">
     <name value="08-Retrieve-MedicationTreatment"/>
     <description
@@ -1001,7 +990,7 @@
         </requestHeader>
       </operation>
     </action>
-    <!--  
+    <!--
     <action>
       <assert>
         <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
@@ -1059,9 +1048,9 @@
     <!--
     <action>
       <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
       </assert>
     </action>
     -->
@@ -1105,7 +1094,6 @@
       </assert>
     </action>
   </test>
-
   <test id="09-Retrieve-MedicationTreatment">
     <name value="09-Retrieve-MedicationTreatment"/>
     <description
@@ -1133,7 +1121,7 @@
         </requestHeader>
       </operation>
     </action>
-    <!--  
+    <!--
     <action>
       <assert>
         <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
@@ -1191,9 +1179,9 @@
     <!--
     <action>
       <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
       </assert>
     </action>
     -->
@@ -1237,7 +1225,6 @@
       </assert>
     </action>
   </test>
-
   <test id="10-Retrieve-MedicationTreatment">
     <name value="10-Retrieve-MedicationTreatment"/>
     <description
@@ -1265,7 +1252,7 @@
         </requestHeader>
       </operation>
     </action>
-    <!--  
+    <!--
     <action>
       <assert>
         <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
@@ -1323,9 +1310,9 @@
     <!--
     <action>
       <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
       </assert>
     </action>
     -->
@@ -1369,7 +1356,6 @@
       </assert>
     </action>
   </test>
-
   <test id="11-Retrieve-MedicationTreatment">
     <name value="11-Retrieve-MedicationTreatment"/>
     <description
@@ -1397,7 +1383,7 @@
         </requestHeader>
       </operation>
     </action>
-    <!--  
+    <!--
     <action>
       <assert>
         <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
@@ -1455,9 +1441,9 @@
     <!--
     <action>
       <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
       </assert>
     </action>
     -->
@@ -1501,7 +1487,6 @@
       </assert>
     </action>
   </test>
-
   <test id="12-Retrieve-MedicationTreatment">
     <name value="12-Retrieve-MedicationTreatment"/>
     <description
@@ -1529,7 +1514,7 @@
         </requestHeader>
       </operation>
     </action>
-    <!--  
+    <!--
     <action>
       <assert>
         <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
@@ -1587,9 +1572,9 @@
     <!--
     <action>
       <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
       </assert>
     </action>
     -->
@@ -1633,7 +1618,6 @@
       </assert>
     </action>
   </test>
-
   <test id="13-Retrieve-MedicationTreatment">
     <name value="13-Retrieve-MedicationTreatment"/>
     <description
@@ -1661,7 +1645,7 @@
         </requestHeader>
       </operation>
     </action>
-    <!--  
+    <!--
     <action>
       <assert>
         <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
@@ -1719,9 +1703,9 @@
     <!--
     <action>
       <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
       </assert>
     </action>
     -->
@@ -1765,7 +1749,6 @@
       </assert>
     </action>
   </test>
-
   <test id="14-Retrieve-MedicationTreatment">
     <name value="14-Retrieve-MedicationTreatment"/>
     <description
@@ -1793,7 +1776,7 @@
         </requestHeader>
       </operation>
     </action>
-    <!--  
+    <!--
     <action>
       <assert>
         <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
@@ -1851,9 +1834,9 @@
     <!--
     <action>
       <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
       </assert>
     </action>
     -->
@@ -1897,7 +1880,6 @@
       </assert>
     </action>
   </test>
-
   <test id="15-Retrieve-MedicationTreatment">
     <name value="15-Retrieve-MedicationTreatment"/>
     <description
@@ -1925,7 +1907,7 @@
         </requestHeader>
       </operation>
     </action>
-    <!--  
+    <!--
     <action>
       <assert>
         <description value="Confirm that the client requested an Accept of the FHIR XML mime type 'application/fhir+xml'."/>
@@ -1983,9 +1965,9 @@
     <!--
     <action>
       <assert>
-        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'." />
-        <direction value="response" />
-        <contentType value="xml" />
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
       </assert>
     </action>
     -->
