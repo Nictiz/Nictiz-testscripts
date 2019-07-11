@@ -104,9 +104,9 @@
         </action>  
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Patient entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Patient)).count() = 1).exists()"/>  
             </assert> 
         </action>  
         <action>
@@ -120,23 +120,21 @@
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${patient-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${patient-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -144,6 +142,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test> 
@@ -213,9 +218,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>  
     </test>
@@ -285,9 +290,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>  
     </test> 
@@ -357,9 +362,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>  
     </test>
@@ -422,9 +427,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -493,9 +498,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -565,9 +570,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -637,9 +642,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -709,9 +714,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -781,9 +786,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action> 
         <action>
@@ -853,9 +858,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -924,9 +929,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -995,9 +1000,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -1067,9 +1072,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -1139,9 +1144,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -1211,9 +1216,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action> 
         <action> 
@@ -1283,9 +1288,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -1355,9 +1360,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -1427,9 +1432,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -1499,9 +1504,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -1571,9 +1576,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -1643,9 +1648,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -1715,9 +1720,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>  
         <action>
@@ -1787,9 +1792,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>  
         <action>
@@ -1859,9 +1864,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>  
         <action>
@@ -1923,9 +1928,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>  
         <action>
@@ -1995,9 +2000,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>
@@ -2067,9 +2072,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>  
+                <description value="Confirm that the returned searchset Bundle contains 0 entries or has an OperationOutcome as first entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 0"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome)).exists()"/>  
             </assert> 
         </action>
         <action>

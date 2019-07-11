@@ -511,46 +511,44 @@
         </action>  
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 2 entries."/>  
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 2"/>  
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>  
             </assert> 
         </action>  
         <action>
             <assert>
-                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Patient and 1 Practitioner entry."/>
                 <direction value="response" />
-                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Patient) or resource.is(Practitioner)).count() = 2).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource is Patient and contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.where(meta.profile = '${patient-profile}')).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that all returned resources except OperationOutcome contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${patient-profile}"/>
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+                </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
+                <direction value="response" />
+                <validateProfileId value="Bundle-profile"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
-                <direction value="response" />
-                <validateProfileId value="Bundle-profile" />
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test> 
@@ -620,32 +618,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 4 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 2 Coverage and 1 Organization entries."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 4"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Coverage) or resource.is(Organization)).count() = 3).exists()"/>  
             </assert> 
         </action>  
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${coverage-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${coverage-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -653,6 +649,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -722,32 +725,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Consent entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Consent)).count() = 1).exists()"/>  
             </assert> 
         </action>  
         <action>
             <assert>
                 <description value="Confirm that the returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${treatmentdirective-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${treatmentdirective-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -755,6 +756,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test> 
@@ -824,32 +832,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Consent entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Consent)).count() = 1).exists()"/>  
             </assert> 
         </action>  
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${advancedirective-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${advancedirective-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -857,6 +863,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -919,32 +932,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${functionalstatus-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${functionalstatus-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -952,6 +963,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -1013,9 +1031,9 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 6 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 6 Condition entries."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 6"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Condition)).count() = 6).exists()"/>
                 <warningOnly value="true"/>
             </assert> 
         </action>
@@ -1023,23 +1041,21 @@
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${condition-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${condition-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -1047,6 +1063,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -1109,32 +1132,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${livingsituation-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${livingsituation-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -1142,6 +1163,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -1204,32 +1232,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${druguse-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${druguse-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -1237,6 +1263,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -1299,32 +1332,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${alcoholuse-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${alcoholuse-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -1332,6 +1363,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -1394,32 +1432,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>  
             </assert> 
         </action> 
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${tobaccouse-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${tobaccouse-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -1429,10 +1465,17 @@
                 <validateProfileId value="Bundle-profile" />
             </assert>
         </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
+            </assert>
+        </action>
     </test>
     <test id="11-ServeBgZ-NutritionAdvice"> 
         <name value="11-ServeBgZ-NutritionAdvice"/>  
-        <description value="Test XIS Server search operation for all known NutritionOrder resources with an active status of person 1. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 NutritionResource resource entry, returned in XML format."/>  
+        <description value="Test XIS Server search operation for all known NutritionOrder resources with an active status of person 1. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 NutritionOrder resource entry, returned in XML format."/>  
         <action> 
             <operation> 
                 <type> 
@@ -1489,32 +1532,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 NutritionOrder entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(NutritionOrder)).count() = 1).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${nutritionadvice-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${nutritionadvice-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -1522,6 +1563,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -1583,32 +1631,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 entries."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Flag)).count() = 1).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${flag-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${flag-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -1616,6 +1662,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -1677,32 +1730,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 AllergyIntolerance entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(AllergyIntolerance)).count() = 1).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${allergyintolerance-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${allergyintolerance-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -1710,6 +1761,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -1772,32 +1830,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 2 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 MedicationStatement and 1 Medication entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 2"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(MedicationStatement) or resource.is(Medication)).count() = 2).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${medicationuse-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${medicationuse-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -1805,6 +1861,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -1867,32 +1930,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 2 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 MedicationRequest and 1 Medication entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 2"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(MedicationRequest) or resource.is(Medication)).count() = 2).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${medicationagreement-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${medicationagreement-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -1900,6 +1961,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -1962,32 +2030,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 2 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 MedicationDispense and 1 Medication entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 2"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(MedicationDispense) or resource.is(Medication)).count() = 2).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${administrationagreement-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${administrationagreement-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -1997,10 +2063,17 @@
                 <validateProfileId value="Bundle-profile" />
             </assert>
         </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
+            </assert>
+        </action>
     </test>
     <test id="17-ServeBgZ-MedicalDevice"> 
         <name value="17-ServeBgZ-MedicalDevice"/>  
-        <description value="Test XIS Server search operation for all DeviceUseStatement resources of person 1, including Device resources. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 DeviceUseStatement resource entry and 1 Device resource, returned in XML format."/>  
+        <description value="Test XIS Server search operation for all DeviceUseStatement resources of person 1, including Device resources. The expected response code is 200(OK) and content is a searchset Bundle resource with 2 DeviceUseStatement resource entries and 2 Device resources, returned in XML format."/>  
         <action> 
             <operation> 
                 <type> 
@@ -2057,32 +2130,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 2 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 2 DeviceUseStatement (knee prosthesis/hearing aid) and 2 Device entries."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 2"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(DeviceUseStatement) or resource.is(Device)).count() = 4).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${medicaldeviceusestatement-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${medicaldeviceusestatement-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -2090,6 +2161,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -2152,32 +2230,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Immunization entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Immunization)).count() = 1).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${vaccination-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${vaccination-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -2185,6 +2261,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -2247,32 +2330,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${bloodpressure-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${bloodpressure-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -2280,6 +2361,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -2342,32 +2430,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${bodyweight-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${bodyweight-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -2375,6 +2461,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -2437,32 +2530,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${bodyheight-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${bodyheight-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -2470,6 +2561,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -2532,32 +2630,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 2 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation and 1 Specimen entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 2"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation) or resource.is(Specimen)).count() = 2).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${labresult-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${labresult-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -2565,6 +2661,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -2627,32 +2730,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 2 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 2 Procedure entries."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 2"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Procedure)).count() = 2).exists()"/>  
             </assert> 
         </action>  
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${procedure-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${procedure-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -2660,6 +2761,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -2722,32 +2830,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entry."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Encounter entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Encounter)).count() = 1).exists()"/>  
             </assert> 
         </action>  
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${encounter-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${encounter-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -2755,6 +2861,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -2817,32 +2930,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 ProcedureRequest entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(ProcedureRequest)).count() = 1).exists()"/>  
             </assert> 
         </action>  
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${procedurerequest-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${procedurerequest-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -2850,6 +2961,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -2904,32 +3022,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 ImmunizationRecommendation entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(ImmunizationRecommendation)).count() = 1).exists()"/>  
             </assert> 
         </action>  
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${vaccinationrequest-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${vaccinationrequest-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -2937,6 +3053,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -2999,32 +3122,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Appointment entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 1"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Appointment)).count() = 1).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${appointment-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${appointment-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -3032,6 +3153,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
@@ -3094,32 +3222,30 @@
         </action>
         <action> 
             <assert> 
-                <description value="Confirm that the returned searchset Bundle contains 2 entries."/>  
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 DeviceRequest and 1 Device entry."/>  
                 <direction value="response"/>  
-                <expression value="Bundle.entry.count() = 2"/>  
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(DeviceRequest) or resource.is(Device)).count() = 2).exists()"/>  
             </assert> 
         </action>
         <action>
             <assert>
                 <description value="Confirm that the first returned resource contains a meta.profile tag." />
                 <direction value="response" />
-                <expression value="Bundle.where(entry.empty() or entry.resource[0].meta.profile).exists()" />
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the first returned resource contains a meta.profile tag matching the expected profile." />
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource[0].meta.profile" />
-                <operator value="equals"/>
-                <value value="${devicerequest-profile}"/>
-            </assert>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = '${devicerequest-profile}')).exists()"/>
+                </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the all returned resources contain a meta.profile tag." />
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response" />
-                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()" />
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
             </assert>
         </action>
         <action>
@@ -3127,6 +3253,13 @@
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag." />
                 <direction value="response" />
                 <validateProfileId value="Bundle-profile" />
+            </assert>
+        </action>
+    <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
             </assert>
         </action>
     </test>
