@@ -101,13 +101,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
-                <direction value="response"/>
-                <validateProfileId value="Bundle-profile"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned Bundle type is searchset."/>
                 <direction value="response"/>
                 <expression value="Bundle.type"/>
@@ -127,6 +120,57 @@
                 <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Patient and 1 Practitioner entry."/>
                 <direction value="response"/>
                 <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Patient) or resource.is(Practitioner)).count() = 2).exists()"/>
+            </assert>
+        </action>
+        <!-- meta.profile tag and validation - asserts -->
+        <action>
+            <assert>
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the first returned resource contains a meta.profile tag."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that Patient resources contain a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.where(is(Patient)).count() = Bundle.entry.resource.where(is(Patient) and meta.profile = 'http://fhir.nl/fhir/StructureDefinition/nl-core-patient').count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that Patient resources contain a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.where(is(Practitioner)).count() = Bundle.entry.resource.where(is(Practitioner) and meta.profile = 'http://fhir.nl/fhir/StructureDefinition/nl-core-practitioner').count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
+                <direction value="response"/>
+                <validateProfileId value="Bundle-profile"/>
+            </assert>
+        </action>
+        <!-- specific content asserts -->
+        <action>
+            <assert>
+                <description value="Confirm that Patient resources contains a name."/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.where(is(Patient)).count() = Bundle.entry.resource.where(is(Patient) and name.exists()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that Practitioner resources contains a identifier."/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.where(is(Practitioner)).count() = Bundle.entry.resource.where(is(Practitioner) and identifier.exists()).count()"/>
             </assert>
         </action>
     </test>

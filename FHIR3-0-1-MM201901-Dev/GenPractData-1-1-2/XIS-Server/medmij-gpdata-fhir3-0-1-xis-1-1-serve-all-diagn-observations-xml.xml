@@ -92,13 +92,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
-                <direction value="response"/>
-                <validateProfileId value="Bundle-profile"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned Bundle type is searchset."/>
                 <direction value="response"/>
                 <operator value="equals"/>
@@ -113,6 +106,65 @@
                 <operator value="greaterThan"/>
                 <path value="Bundle.total"/>
                 <value value="0"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
+            </assert>
+        </action>
+        <!-- Resource count asserts -->
+        <action>
+            <assert>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
+                <direction value="response"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 15 Observation Resource entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 15).exists()"/>
+            </assert>
+        </action>
+        <!-- meta.profile tag and validation - asserts -->
+        <action>
+            <assert>
+                <description value="Confirm that all returned resources contain a meta.profile tag."/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the first returned resource contains a meta.profile tag."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry[0].resource.meta.profile).exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that Observation resources contain a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.where(is(Observation)).count() = Bundle.entry.resource.where(is(Observation) and meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/gp-DiagnosticResult').count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
+                <direction value="response"/>
+                <validateProfileId value="Bundle-profile"/>
+            </assert>
+        </action>
+        <!-- specific content asserts -->
+        <action>
+            <assert>
+                <description value="Confirm that Observation resources contains the a code and a category."/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.where(is(Observation)).count() = Bundle.entry.resource.where(is(Observation) and code.exists() and category.exists()).count()"/>
             </assert>
         </action>
     </test>
