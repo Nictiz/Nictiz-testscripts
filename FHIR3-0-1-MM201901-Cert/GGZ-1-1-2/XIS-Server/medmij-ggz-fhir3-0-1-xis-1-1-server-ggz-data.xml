@@ -30,9 +30,7 @@
         <expression value="Patient.id"/>
         <sourceId value="patient-token-fixture"/>
     </variable>
-    
     <!-- No Setup -->
-    
     <test id="01-RetrieveGGZ-Patient">
         <name value="01-RetrieveGGZ-Patient"/>
         <description value="Test PHR Client retrieve search operation for known Patient resource of XXX-Bals including the patient's general practitioner. The expected response code is 200(OK) and content is a searchset Bundle resource with 2 entries, returned in XML format."/>
@@ -83,13 +81,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -106,13 +97,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 2 entries."/>
-                <direction value="response"/>
-                <expression value="Bundle.entry.count() = 2"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
                 <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
@@ -120,9 +104,23 @@
         </action>
         <action>
             <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Patient and 1 Practitioner entry."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Patient) or resource.is(Practitioner)).count() = 2).exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://fhir.nl/fhir/StructureDefinition/nl-core-patient')).exists()"/>
             </assert>
         </action>
         <action>
@@ -140,7 +138,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="02-RetrieveGGZ-Payer">
         <name value="02-RetrieveGGZ-Payer"/>
         <description value="Test PHR Client retrieve search operation for known Coverage resource of XXX-Bals including the insurer in an Organization resource. The expected response code is 200(OK) and content is a searchset Bundle resource with 2 entries, returned in XML format."/>
@@ -191,13 +188,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -214,16 +204,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 2 entries."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 2"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Coverage and 1 Organization entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Coverage) or resource.is(Organization)).count() = 2).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-Payer')).exists()"/>
             </assert>
         </action>
         <action>
@@ -241,7 +245,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="03-RetrieveGGZ-TreatmentDirective">
         <name value="03-RetrieveGGZ-TreatmentDirective"/>
         <description value="Test PHR Client retrieve search operation for known Consent resource with a category code for TreatmentDirective of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 entry, returned in XML format."/>
@@ -292,13 +295,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -315,16 +311,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 1 entry."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 1"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Consent entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Consent)).count() = 1).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective')).exists()"/>
             </assert>
         </action>
         <action>
@@ -342,7 +352,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="04-RetrieveGGZ-AdvanceDirective">
         <name value="04-RetrieveGGZ-AdvanceDirective"/>
         <description value="Test PHR Client retrieve search operation for known Consent resource with a category code for AdvanceDirective of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 entry, returned in XML format."/>
@@ -393,13 +402,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -416,16 +418,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 1 entry."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 1"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Consent entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Consent)).count() = 1).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-AdvanceDirective')).exists()"/>
             </assert>
         </action>
         <action>
@@ -443,7 +459,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="05-RetrieveGGZ-FunctionalOrMentalStatus">
         <name value="05-RetrieveGGZ-FunctionalOrMentalStatus"/>
         <description value="Test PHR Client retrieve search operation for Observation resource with a code for FunctionalOrMentalStatus of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with 2 entries, returned in XML format."/>
@@ -494,13 +509,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -517,16 +525,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 2 entries."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 2"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 2 Observation entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 2).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-FunctionalOrMentalStatus')).exists()"/>
             </assert>
         </action>
         <action>
@@ -544,7 +566,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="06-RetrieveGGZ-Problem">
         <name value="06-RetrieveGGZ-Problem"/>
         <description value="Test PHR Client retrieve search operation for all known Condition resources of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 entry, returned in XML format."/>
@@ -594,13 +615,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -617,16 +631,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 1 entry."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 1"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Condition entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Condition)).count() = 1).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-Problem')).exists()"/>
             </assert>
         </action>
         <action>
@@ -644,7 +672,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="07-RetrieveGGZ-DrugUse">
         <name value="07-RetrieveGGZ-DrugUse"/>
         <description value="Test PHR Client retrieve search operation for all known Observation resources with a SNOMED code for DrugUse of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 entry, returned in XML format."/>
@@ -695,13 +722,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -718,16 +738,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 1 entry."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 1"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-DrugUse')).exists()"/>
             </assert>
         </action>
         <action>
@@ -745,7 +779,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="08-RetrieveGGZ-AlcoholUse">
         <name value="08-RetrieveGGZ-AlcoholUse"/>
         <description value="Test PHR Client retrieve search operation for all known Observation resources with a SNOMED code for AlcoholUse of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 entry, returned in XML format."/>
@@ -796,13 +829,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -819,16 +845,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 1 entry."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 1"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-AlcoholUse')).exists()"/>
             </assert>
         </action>
         <action>
@@ -846,7 +886,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="09-RetrieveGGZ-TobaccoUse">
         <name value="09-RetrieveGGZ-TobaccoUse"/>
         <description value="Test PHR Client retrieve search operation for all known Observation resources with a SNOMED code for TobaccoUse of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 entry, returned in XML format."/>
@@ -897,13 +936,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -920,16 +952,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 1 entries."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 1"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-TobaccoUse')).exists()"/>
             </assert>
         </action>
         <action>
@@ -947,7 +993,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="10-RetrieveGGZ-LivingSituation">
         <name value="10-RetrieveGGZ-LivingSituation"/>
         <description value="Test PHR Client retrieve search operation for the last known Observation resrouce with a SNOMED code for LivingSituation of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 entry, returned in XML format."/>
@@ -998,13 +1043,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -1021,16 +1059,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 1 entry."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 1"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-LivingSituation')).exists()"/>
             </assert>
         </action>
         <action>
@@ -1048,7 +1100,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="11-RetrieveGGZ-FamilySituation">
         <name value="11-RetrieveGGZ-FamilySituation"/>
         <description value="Test PHR Client retrieve search operation for all known Observation resources with a SNOMED code for FamilySituation of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 entry, returned in XML format."/>
@@ -1099,13 +1150,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -1122,16 +1166,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 1 entry."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 1"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-FamilySituation')).exists()"/>
             </assert>
         </action>
         <action>
@@ -1149,7 +1207,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="12-RetrieveGGZ-FamilySituationChild">
         <name value="12-RetrieveGGZ-FamilySituationChild"/>
         <description value="Test PHR Client retrieve search operation for all known Observation resources with a SNOMED code for FamilySituationChild of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with 0 entries, returned in XML format."/>
@@ -1200,13 +1257,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -1223,11 +1273,18 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 0 entries."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 0"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 0 entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 0).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
@@ -1250,7 +1307,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="13-RetrieveGGZ-ParticipationInSociety">
         <name value="13-RetrieveGGZ-ParticipationInSociety"/>
         <description value="Test PHR Client retrieve search operation for all known Observation resources with a SNOMED code for ParticipationInSociety of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 entry, returned in XML format."/>
@@ -1301,13 +1357,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -1324,16 +1373,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 1 entry."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 1"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-ParticipationInSociety')).exists()"/>
             </assert>
         </action>
         <action>
@@ -1351,7 +1414,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="14-RetrieveGGZ-HelpFromOthers">
         <name value="14-RetrieveGGZ-HelpFromOthers"/>
         <description value="Test PHR Client retrieve search operation for all known CarePlan resources with a category SNOMED code for HelpFromOthers of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 entry, returned in XML format."/>
@@ -1402,13 +1464,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -1425,16 +1480,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 1 entry."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 1"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Carplan entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(CarePlan)).count() = 1).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-HelpFromOthers')).exists()"/>
             </assert>
         </action>
         <action>
@@ -1452,7 +1521,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="15-RetrieveGGZ-LaboratoryTestResult">
         <name value="15-RetrieveGGZ-LaboratoryTestResult"/>
         <description value="Test PHR Client retrieve search operation for the last known Obervation resources with a category for LaboratoryTestResult, specific for Chemistry observations of XXX-Bals, including the referenced Specimem resource. The expected response code is 200(OK) and content is a searchset Bundle resource with at least 2 entries, returned in XML format."/>
@@ -1503,13 +1571,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -1526,16 +1587,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains at least 2 entries."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() >= 2"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains at least 2 Observation entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() >= 2).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-LaboratoryTestResult-Observation')).exists()"/>
             </assert>
         </action>
         <action>
@@ -1553,7 +1628,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="16-RetrieveGGZ-GeneralMeasurement">
         <name value="16-RetrieveGGZ-GeneralMeasurement"/>
         <description value="Test PHR Client retrieve search operation for all known Observation resources with a survey category code of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with at least 1 entry, returned in XML format."/>
@@ -1604,13 +1678,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -1627,16 +1694,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 1 entry."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 1"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Observation entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 1).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-GeneralMeasurement')).exists()"/>
             </assert>
         </action>
         <action>
@@ -1654,7 +1735,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="17-RetrieveGGZ-Procedure">
         <name value="17-RetrieveGGZ-Procedure"/>
         <description value="Test PHR Client retrieve search operation for all known Procedure resources of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with at least 1 entry, returned in XML format."/>
@@ -1704,13 +1784,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -1727,16 +1800,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains at least 1 entry."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() >= 1"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or at least 1 Procedure entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Procedure)).count() >= 1).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-Procedure')).exists()"/>
             </assert>
         </action>
         <action>
@@ -1754,7 +1841,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="18-RetrieveGGZ-TextResult">
         <name value="18-RetrieveGGZ-TextResult"/>
         <description value="Test PHR Client retrieve search operation for all known DiagnosticReport resources of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with 1 entry, returned in XML format."/>
@@ -1804,13 +1890,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -1827,16 +1906,30 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 1 entry."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 1"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or at least 1 DiagnosticReport entries."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(DiagnosticReport)).count() >= 1).exists()"/>
+            </assert>
+        </action>        
         <action>
             <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/zib-TextResult')).exists()"/>
             </assert>
         </action>
         <action>
@@ -1854,7 +1947,6 @@
             </assert>
         </action>
     </test>
-    
     <test id="19-RetrieveGGZ-CareTeam">
         <name value="19-RetrieveGGZ-CareTeam"/>
         <description value="Test PHR Client retrieve search operation for all known CareTeam resources, including the CareTeam participant information, of XXX-Bals. The expected response code is 200(OK) and content is a searchset Bundle resource with 4 entries, returned in XML format."/>
@@ -1905,13 +1997,6 @@
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
                 <resource value="Bundle"/>
@@ -1935,9 +2020,30 @@
         </action>
         <action>
             <assert>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
+                <direction value="response"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 CareTeam and 3 Practitioner entry."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(CareTeam) or resource.is(Practitioner)).count() = 4).exists()"/>
+            </assert>
+        </action> 
+        <action>
+            <assert>
                 <description value="Confirm that all returned resources contain a meta.profile tag."/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or first returned resource contains a meta.profile tag matching the expected profile."/>
+                <direction value="response"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.resource.where(meta.profile = 'http://fhir.nl/fhir/StructureDefinition/nl-core-careteam')).exists()"/>
             </assert>
         </action>
         <action>
