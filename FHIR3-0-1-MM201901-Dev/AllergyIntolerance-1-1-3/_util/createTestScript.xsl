@@ -30,21 +30,21 @@
         <xsl:variable name="xml1" select="collection(iri-to-uri(concat(resolve-uri($inputDir1), '?select=', '*.xml;recurse=yes')))/f:*"/>
         <xsl:processing-instruction name="xml-model">href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"</xsl:processing-instruction>
         <TestScript xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://hl7.org/fhir http://hl7.org/fhir/STU3/fhir-all.xsd" xmlns="http://hl7.org/fhir">
-            <id value="Medication-9-0-7-fhir3-0-1-load-resources-createupdate-xml"/>
-            <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/Medication-9-0-7-fhir3-0-1-load-resources-createupdate-xml"/>
-            <name value="NictizMedication-9-0-7 Load Test Resources - Create Update - XML"/>
+            <id value="AllergyIntolerance-fhir3-0-1-load-resources-createupdate-xml"/>
+            <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/AllergyIntolerance-fhir3-0-1-load-resources-createupdate-xml"/>
+            <name value="NictizAllergyIntoleranceLoad Test Resources - Create Update - XML"/>
             <status value="active"/>
             <date value="{current-dateTime()}"/>
             <publisher value="Nictiz"/>
             <contact>
-                <name value="Nictiz"/>
+                <name value="MedMij"/>
                 <telecom>
                     <system value="email"/>
-                    <value value="kwalificatie@nictiz.nl"/>
+                    <value value="kwalificatie@medmij.nl"/>
                     <use value="work"/>
                 </telecom>
             </contact>
-            <description value="Load Medication-9-0-7 test resources using the update (PUT) operation of the target FHIR server for use in Medication-9-0-7 qualification testing. All resource ids are pre-defined. The target XIS FHIR server is expected to support resource create via the update (PUT) operation for client assigned ids."/>
+            <description value="Load AllergyIntolerance test resources using the update (PUT) operation of the target FHIR server for use in AllergyIntolerance qualification testing. All resource ids are pre-defined. The target XIS FHIR server is expected to support resource create via the update (PUT) operation for client assigned ids. "/>
             <copyright value="© Nictiz 2019"/>
             <xsl:for-each select="$xml1">
                 <xsl:sort select="lower-case(concat(local-name(), '-', f:id/@value))"/>
@@ -103,7 +103,7 @@
             <!-- Test -->
             <test id="Step1-LoadTestResourceCreate">
                 <name value="Step1-LoadTestResourceCreate"/>
-                <description value="Load Medication test resources using the update (PUT) operation of the target FHIR server for use in Medication qualification testing. All resource ids are pre-defined. The target XIS FHIR server is expected to support resource create via the update (PUT) operation for client assigned ids. "/>
+                <description value="Load AllergyIntolerance test resources using the update (PUT) operation of the target FHIR server for use in AllergyIntolerance qualification testing. All resource ids are pre-defined. The target XIS FHIR server is expected to support resource create via the update (PUT) operation for client assigned ids. "/>
                 <xsl:for-each select="$xml1[not(contains(f:id/@value, 'Bearer'))]">
                     <xsl:sort select="lower-case(concat(local-name(), '-', f:id/@value))"/>
                     <xsl:variable name="resId" select="concat(local-name(), '-', replace(replace(f:id/@value, 'Bearer ', ''), '\s', ''))"/>
