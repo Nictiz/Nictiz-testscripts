@@ -5,7 +5,7 @@
     <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-selfmeasurements-fhir3-0-1-phr-2-1-send-most-recent-bodyweight"/>
     <name value="MedMij Self Measurements - PHR Client - Scenario 2.1 - Send Most Recent BodyWeight (Observation)"/>
     <status value="active"/>
-    <date value="2019-04"/>
+    <date value="2019-10"/>
     <publisher value="Nictiz"/>
     <contact>
         <name value="Nictiz"/>
@@ -15,8 +15,8 @@
             <use value="work"/>
         </telecom>
     </contact>
-    <description value="MedMij Self Measurements for FHIR STU3 (v3.0.1) - Scenario 2.1: - Send Most Recent BodyWeight Observation - of person 1. Response is expected to be HTTP 201 Created."/>
-    <copyright value="© Nictiz 2018"/>
+    <description value="MedMij Self Measurements for FHIR STU3 (v3.0.1) - Scenario 2.1: - Send Most Recent BodyWeight Observation - of person 2. Response is expected to be HTTP 201 Created."/>
+    <copyright value="© Nictiz 2019"/>
     <origin>
         <index value="1"/>
         <profile>
@@ -31,14 +31,14 @@
             <code value="FHIR-Server"/>
         </profile>
     </destination>
-    <fixture id="patient1-token-fixture">
+    <fixture id="patient2-token-fixture">
         <resource>
-            <reference value="../_reference/medmij-selfmeasurements-fhir3-0-1-Patient-Token-kwalificatie1.xml"/>
+            <reference value="../_reference/medmij-selfmeasurements-fhir3-0-1-Patient-Token-kwalificatie2.xml"/>
         </resource>
     </fixture>
     <fixture id="scenario-2-1-bundle-fixture">
         <resource>
-            <reference value="../_reference/resources-query-send/medmij-selfmeasurements-fhir3-0-1-scenario-2-1-bundle.xml"/>
+            <reference value="../_reference/resources-query-send/medmij-selfmeasurements-fhir3-0-1-query-send-scenario-2-1-bundle.xml"/>
         </resource>
     </fixture>
     <profile id="BodyWeight-profile">
@@ -48,9 +48,9 @@
         <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
     </profile>
     <variable>
-        <name value="patient1-token-id"/>
+        <name value="patient2-token-id"/>
         <expression value="Patient.id"/>
-        <sourceId value="patient1-token-fixture"/>
+        <sourceId value="patient2-token-fixture"/>
     </variable>
     <variable>
         <name value="patient-profile"/>
@@ -62,9 +62,14 @@
         <expression value="Bundle.entry.resource.ofType(Observation).meta.profile"/>
         <sourceId value="scenario-2-1-bundle-fixture"/>
     </variable>
+    <variable>
+        <name value="T"/>
+        <defaultValue value="${CURRENTDATE}"/>
+        <description value="Date that data and queries are expected to be relative to."/>
+    </variable>
     <test id="Scenario2.1-SendMostRecentBodyWeight">
         <name value="Scenario2.1-SendMostRecentBodyWeight"/>
-        <description value="Test XIS Client request to create/update the most recent BodyWeight Observation for known person 1. The expected response code is 201(Created)."/>
+        <description value="Test XIS Client request to create/update the most recent BodyWeight Observation for known person 2. The expected response code is 201(Created)."/>
         <action>
             <operation>
                 <type>
@@ -80,13 +85,22 @@
                     <!-- 0..* Each operation can have one or more header elements -->
                     <field value="Authorization"/>
                     <!-- 1..1 HTTP header field name: OAuth access token -->
-                    <value value="${patient1-token-id}"/>
+                    <value value="${patient2-token-id}"/>
                     <!-- 1..1 HTTP headerfield value: UUID4 -->
                 </requestHeader>
                 <sourceId value="scenario-2-1-bundle-fixture"/>
             </operation>
         </action>
         <!-- TODO: check Bundle resources against the appropriate profile -->
+        <action>
+            <assert>
+                <description value="Confirm the client is not Touchstone by checking X-Forwarded-For header."/>
+                <direction value="request"/>
+                <headerField value="X-Forwarded-For"/>
+                <operator value="notEmpty"/>
+                <warningOnly value="true"/>
+            </assert>
+        </action>
         <action>
             <assert>
                 <description value="Confirm that the returned HTTP status is 200(OK) or 201(Created)."/>
@@ -100,7 +114,7 @@
                 <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
                 <direction value="request"/>
                 <headerField value="Authorization"/>
-                <value value="${patient1-token-id}"/>
+                <value value="${patient2-token-id}"/>
             </assert>
         </action>
         <action>
