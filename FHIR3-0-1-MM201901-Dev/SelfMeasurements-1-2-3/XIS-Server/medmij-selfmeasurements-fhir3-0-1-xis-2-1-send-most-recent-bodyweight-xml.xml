@@ -5,7 +5,7 @@
     <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-selfmeasurements-fhir3-0-1-xis-2-1-send-most-recent-bodyweight-xml"/>
     <name value="MedMij Self Measurements - XIS Server - Scenario 2.1 - Send Most Recent BodyWeight (Observation) - XML"/>
     <status value="active"/>
-    <date value="2019-10"/>
+    <date value="2019-11"/>
     <publisher value="Nictiz"/>
     <contact>
         <name value="Nictiz"/>
@@ -53,9 +53,24 @@
         <sourceId value="patient2-token-fixture"/>
     </variable>
     <variable>
+        <name value="patient-profile"/>
+        <expression value="Bundle.entry.resource.ofType(Patient).meta.profile"/>
+        <sourceId value="scenario-2-1-bundle-fixture"/>
+    </variable>
+    <variable>
+        <name value="bodyweight-profile"/>
+        <expression value="Bundle.entry.resource.ofType(Observation).meta.profile"/>
+        <sourceId value="scenario-2-1-bundle-fixture"/>
+    </variable>
+    <variable>
         <name value="T"/>
         <defaultValue value="${CURRENTDATE}"/>
         <description value="Date that data and queries are expected to be relative to."/>
+    </variable>
+    <variable>
+        <name value="token-XXX-Bergzoon"/>
+        <defaultValue value="Bearer 06bbe01d-b3cb-4028-8b1c-f731d0241b57"/>
+        <description value="OAuth Token for patient XXX_Bergzoon"/>
     </variable>
     <test id="Scenario2.1-SendMostRecentBodyWeight">
         <name value="Scenario2.1-SendMostRecentBodyWeight"/>
@@ -75,7 +90,7 @@
                     <!-- 0..* Each operation can have one or more header elements -->
                     <field value="Authorization"/>
                     <!-- 1..1 HTTP header field name: OAuth access token -->
-                    <value value="${patient2-token-id}"/>
+                    <value value="${token-XXX-Bergzoon}"/>
                     <!-- 1..1 HTTP headerfield value: UUID4 -->
                 </requestHeader>
                 <sourceId value="scenario-2-1-bundle-fixture"/>
@@ -89,17 +104,91 @@
         -->
         <action>
             <assert>
-                <description value="Confirm that request body conforms to the Bundle profile."/>
-                <direction value="request"/>
-                <validateProfileId value="Bundle-profile"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
                 <description value="Confirm that the returned HTTP status is 200(OK) or 201(Created)."/>
                 <direction value="response"/>
                 <operator value="in"/>
                 <responseCode value="200,201"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+                <direction value="request"/>
+                <operator value="notContains"/>
+                <requestURL value="patient="/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+                <direction value="request"/>
+                <operator value="notContains"/>
+                <requestURL value="subject="/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that request Bundle is of type transaction."/>
+                <direction value="request"/>
+                <expression value="Bundle.type = 'batch'"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that all resources contain a meta.profile tag."/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).meta.profile.count() = Bundle.entry.resource.where(is(OperationOutcome).not()).count()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Bundle contains 1 Patient resource"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Patient).count() = 1"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Bundle contains 1 Observation resource"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).count() = 1"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Patient resource has the correct meta.profile tag."/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Patient).meta.profile"/>
+                <value value="${patient-profile}"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Observation resource has the correct meta.profile tag."/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).meta.profile"/>
+                <value value="${bodyweight-profile}"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Observation resource has a LOINC code for Bodyweight in the code element"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).code.coding.where(code = '29463-7').exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that request body conforms to the Bundle profile."/>
+                <direction value="response"/>
+                <validateProfileId value="Bundle-profile"/>
             </assert>
         </action>
     </test>
