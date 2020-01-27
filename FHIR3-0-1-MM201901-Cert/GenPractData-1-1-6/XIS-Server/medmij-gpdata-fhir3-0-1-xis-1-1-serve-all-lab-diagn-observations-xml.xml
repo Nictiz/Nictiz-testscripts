@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
 <TestScript xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://hl7.org/fhir http://hl7.org/fhir/STU3/fhir-all.xsd" xmlns="http://hl7.org/fhir">
-    <id value="xis-1-1-serve-all-diagn-observations"/>
-    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-gpdata-fhir3-0-1-xis-1-1-serve-all-diagn-observations"/>
-    <name value="MedMij General Practitioner Data - XIS Client - Scenario 1.1 - Serve All Diagnostic Observations"/>
+    <id value="xis-1-1-serve-all-lab-diagnostic-observations"/>
+    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-gpdata-fhir3-0-1-xis-1-1-serve-all-lab-observations"/>
+    <name value="MedMij General Practitioner Data - XIS Client - Scenario 1.1 - Serve All Lab and Diagnostic Observations"/>
     <status value="active"/>
-    <date value="2019-07-15"/>
+    <date value="2019-01-20"/>
     <publisher value="Nictiz"/>
     <contact>
         <name value="Nictiz"/>
@@ -15,7 +15,7 @@
             <use value="work"/>
         </telecom>
     </contact>
-    <description value="MedMij General Practitioner Data for FHIR STU3 (v3.0.1) - Scenario 1.1: Serve All Diagnostic Observations - of person 1. Response is expected to be HTTP 200 Done."/>
+    <description value="MedMij General Practitioner Data for FHIR STU3 (v3.0.1) - Scenario 1.1: Serve All Lab and Diagnostic Observations - of person 1. Response is expected to be HTTP 200 Done."/>
     <copyright value="© Nictiz 2019"/>
     <origin>
         <index value="1"/>
@@ -50,9 +50,9 @@
         <!--<defaultValue value="${patient1-token-id}"/>-->
         <description value="OAuth Token for patient XXX_Cevat"/>
     </variable>
-    <test id="Scenario1.1-ServeAllDiagnObservations">
-        <name value="Scenario1.1-ServeAllDiagnObservations"/>
-        <description value="Test XIS Server to serve all Diagnostic Observations for known person 1. The expected response code is 200(OK) and content is a search Bundle resource containing at least 1 Observation resource entry"/>
+    <test id="Scenario1.1-ServeAllLabDiagnosticObservations">
+        <name value="Scenario1.1-ServeAllLabDiagnosticObservations"/>
+        <description value="Test XIS Server to serve all Lab and Diagnostic Observations for known person 1. The expected response code is 200(OK) and content is a search Bundle resource containing at least 1 Observation resource entry"/>
         <action>
             <operation>
                 <type>
@@ -60,11 +60,11 @@
                     <code value="search"/>
                 </type>
                 <resource value="Observation"/>
-                <description value="XIS Server query search operation for known Diagnostic Observations."/>
+                <description value="XIS Server query search operation for known Lab and Diagnostic Observations."/>
                 <accept value="xml"/>
                 <contentType value="none"/>
                 <origin value="1"/>
-                <params value="?category=http://hl7.org/fhir/observation-category|vital-signs&amp;date=ge${CURRENTDATE,M,-14}"/>
+                <params value="?code=https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen&amp;_include=Observation:related-target&amp;_include=Observation:specimen&amp;date=ge${CURRENTDATE,M,-14}"/>
                 <requestHeader>
                     <!-- 0..* Each operation can have one or more header elements -->
                     <field value="Authorization"/>
@@ -112,28 +112,14 @@
                 <operator value="greaterThan"/>
                 <path value="Bundle.total"/>
                 <value value="0"/>
+                <warningOnly value="true"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 18 Observation Resource entries."/>
                 <direction value="response"/>
-                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn')).count() = 0"/>
-            </assert>
-        </action>
-        <!-- Resource count asserts -->
-        <action>
-            <assert>
-                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-                <direction value="response"/>
-                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 15 Observation Resource entries."/>
-                <direction value="response"/>
-                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 15).exists()"/>
+                <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 18).exists()"/>
             </assert>
         </action>
         <!-- meta.profile tag and validation - asserts -->
@@ -155,7 +141,7 @@
             <assert>
                 <description value="Confirm that Observation resources contain a meta.profile tag matching the expected profile."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.resource.where(is(Observation)).count() = Bundle.entry.resource.where(is(Observation) and meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/gp-DiagnosticResult').count()"/>
+                <expression value="Bundle.entry.resource.where(is(Observation)).count() = Bundle.entry.resource.where(is(Observation) and (meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/gp-LaboratoryResult' or meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/gp-DiagnosticResult')).count()"/>
             </assert>
         </action>
         <action>
@@ -168,9 +154,9 @@
         <!-- specific content asserts -->
         <action>
             <assert>
-                <description value="Confirm that Observation resources contains the a code and a category."/>
+                <description value="Confirm that Observation resources contains a context."/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.resource.where(is(Observation)).count() = Bundle.entry.resource.where(is(Observation) and code.exists() and category.exists()).count()"/>
+                <expression value="Bundle.entry.resource.where(is(Observation)).count() = Bundle.entry.resource.where(is(Observation) and context.exists()).count()"/>
             </assert>
         </action>
     </test>
