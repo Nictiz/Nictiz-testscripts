@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir">
+  <id value="geboortezorg-fhir3-0-1-xis-1-1-serve-1-condition-xml"/>
+  <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/geboortezorg-fhir3-0-1-xis-1-1-retrieve-condition-xml"/>
+  <name value="Nictiz Geboortezorg - XIS Server - Scenario 1.1 - Serve Condition resources - XML"/>
+  <status value="active"/>
+  <date value="2020-01-15"/>
+  <publisher value="Nictiz"/>
+  <contact>
+    <name value="Nictiz"/>
+    <telecom>
+      <system value="email"/>
+      <value value="kwalificatie@nictiz.nl"/>
+      <use value="work"/>
+    </telecom>
+  </contact>
+  <description value="Geboortezorg for FHIR STU3 (v3.0.1) - Scenario 1.1: Query Condition - XML Format"/> 
+  <copyright value="© Nictiz 2020"/>
+  <fixture id="condition-token-fixture">
+    <resource>
+      <reference value="../_reference/Gebz-XXX-Sara-token.xml"/>
+    </resource>
+  </fixture>  
+  <profile id="Bundle-profile">
+    <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
+  </profile>
+  <variable>
+    <name value="condition-token-id"/>
+    <expression value="Condition.id"/>
+    <sourceId value="condition-token-fixture"/>
+  </variable>
+  <variable>
+    <name value="token-XXX-Sara"/>
+    <defaultValue value="Bearer 1f5b4282-544e-4832-b370-eeb69eb758d4"/>
+    <description value="OAuth Token for condition XXX_Yong"/>
+  </variable>
+  <!-- No Setup -->
+  <test id="01-ServeCondition">
+    <name value="01-ServeCondition"/>
+    <description value="Test XIS Server query operation for Condition - XML Format."/>
+    <action>
+      <operation>
+        <type>
+          <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+          <code value="search"/>
+        </type>
+        <resource value="Condition"/>
+        <description value="Test XIS Server query operation for Condition - XML Format."/>
+        <accept value="xml"/>
+        <contentType value="none"/>
+        <requestHeader>
+          <field value="Authorization"/>
+          <value value="${token-XXX-Sara}"/>
+        </requestHeader>
+        <params value="?_revinclude=Observation:partof&amp;_revinclude=Condition:partof"/>
+      </operation>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned HTTP status is 200(OK)."/>
+        <direction value="response"/>
+        <responseCode value="200"/>
+      </assert>
+    </action>
+    <!--<action>
+      <assert>
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
+      </assert>
+    </action>-->
+    <action>
+      <assert>
+        <description value="Confirm that the returned resource type is Bundle."/>
+        <direction value="response"/>
+        <resource value="Bundle"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle type is searchset."/>
+        <direction value="response"/>
+        <expression value="Bundle.type"/>
+        <operator value="equals"/>
+        <value value="searchset"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Condition entry."/>
+        <direction value="response"/>
+        <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Condition)).count() = 1).exists()"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle total value matches or is greater than the number of entries in the Bundle."/>
+        <direction value="response"/>
+        <expression value="Bundle.total.toInteger() &gt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
+        <direction value="response"/>
+        <validateProfileId value="Bundle-profile"/>
+      </assert>
+    </action>
+  </test>
+</TestScript>
