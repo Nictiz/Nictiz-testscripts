@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir">
-    <id value="medmij-pdfa-fhir3-0-1-phr-1-3-retrieve-2-documentmanifest"/>
-    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-pdfa-fhir3-0-1-phr-1-3-retrieve-documentmanifest"/>
-    <name value="Nictiz MedMij PDFA - PHR Client - Scenario 1.3 - Retrieve 3 DocumentManifest "/>
+    <id value="medmij-pdfa-fhir3-0-1-phr-2-2-retrieve-1-documentreference"/>
+    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-pdfa-fhir3-0-1-phr-2-2-retrieve-documentreference"/>
+    <name value="Nictiz MedMij PDFA - PHR Client - Scenario 1.4 - Retrieve 1 DocumentReference "/>
     <status value="active"/>
     <date value="2018-06-13"/>
     <publisher value="Nictiz"/>
@@ -14,7 +14,7 @@
             <use value="work"/>
         </telecom>
     </contact>
-    <description value="MedMij PDFA for FHIR STU3 (v3.0.1) - Scenario 1.3: Retrieve PDF/A DocumentManifest - All PDFA DocumentManifest resources of person 2 that have a 'current' status. Response consists 2 DocumentManifest resources."/>
+    <description value="MedMij PDFA for FHIR STU3 (v3.0.1) - Scenario 2.2: Retrieve PDF/A DocumentReference - All PDFA DocumentReference resources of person 2 with a known ID. Response consists of 1 DocumentReference resource."/>
     <copyright value="© Nictiz 2018"/>
     <origin>
         <index value="1"/>
@@ -40,23 +40,13 @@
             <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-Patient-Token-kwalificatie2.xml"/>
         </resource>
     </fixture>
-    <fixture id="documentmanifest1-fixture">
+    <fixture id="documentreference1-fixture">
         <resource>
-            <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-DocumentManifest-kwalificatie1.xml"/>
+            <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-DocumentReference-kwalificatie4.xml"/>
         </resource>
     </fixture>
-    <fixture id="documentmanifest2-fixture">
-        <resource>
-            <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-DocumentManifest-kwalificatie2.xml"/>
-        </resource>
-    </fixture>
-    <fixture id="documentmanifest3-fixture">
-        <resource>
-            <reference value="../_reference/resources/medmij-pdfa-fhir3-0-1-DocumentManifest-kwalificatie3.xml"/>
-        </resource>
-    </fixture>
-    <profile id="Bundle-profile">
-        <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
+    <profile id="MHD-profile">
+        <reference value="http://ihe.net/fhir/StructureDefinition/IHE.MHD.Query.Minimal.DocumentReference"/>
     </profile>
     <variable>
         <name value="patient-id"/>
@@ -69,37 +59,32 @@
         <sourceId value="patient-token-fixture"/>
     </variable>
     <variable>
-        <name value="documentmanifest1-id"/>
-        <expression value="DocumentManifest.id"/>
-        <sourceId value="documentmanifest1-fixture"/>
+        <name value="documentreference1-id"/>
+        <expression value="DocumentReference.id"/>
+        <sourceId value="documentreference1-fixture"/>
     </variable>
     <variable>
-        <name value="documentmanifest2-id"/>
-        <expression value="DocumentManifest.id"/>
-        <sourceId value="documentmanifest2-fixture"/>
-    </variable>
-    <variable>
-        <name value="documentmanifest3-id"/>
-        <expression value="DocumentManifest.id"/>
-        <sourceId value="documentmanifest3-fixture"/>
+        <name value="T"/>
+        <defaultValue value="${CURRENTDATE}"/>
+        <description value="Date that data and queries are expected to be relative to."/>
     </variable>
     <!-- No Setup -->
-    <test id="01-RetrieveDocumentManifest">
-        <name value="01-RetrieveDocumentManifest"/>
-        <description value="Test PHR Client retrieve search operation for known DocumentManifest resources of person 2 with a current status. The expected response code is 200(OK) and content is a searchset Bundle resource where 2 entries of found DocumentReference resources are returned in XML format."/>
+    <test id="01-RetrieveDocumentReference">
+        <name value="01-RetrieveDocumentReference"/>
+        <description value="Test PHR Client retrieve read operation for known DocumentReference resource of person 2. The expected response code is 200(OK) and content is a DocumentReference returned in XML format."/>
         <action>
             <operation>
                 <type>
                     <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-                    <code value="search"/>
+                    <code value="read"/>
                 </type>
-                <resource value="DocumentManifest"/>
-                <description value="PHR Server retrieve search operation for known DocumentReference with a current status."/>
+                <resource value="DocumentReference"/>
+                <description value="PHR Server retrieve read operation for known DocumentReference."/>
                 <accept value="xml"/>
                 <contentType value="none"/>
                 <destination value="1"/>
                 <origin value="1"/>
-                <params value="?status=current"/>
+                <params value="/${documentreference1-id}"/>
                 <requestHeader>
                     <!-- 0..* Each operation can have one or more header elements -->
                     <field value="Authorization"/>
@@ -134,7 +119,7 @@
                 <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
                 <direction value="request"/>
                 <headerField value="Authorization"/>
-            <value value="${patient-token-id}"/>
+                <value value="${patient-token-id}"/>
             </assert>
         </action>
         <action>
@@ -173,55 +158,32 @@
             <assert>
                 <description value="Confirm that the returned resource type is Bundle."/>
                 <direction value="response"/>
-                <resource value="Bundle"/>
+                <resource value="DocumentReference"/>
             </assert>
         </action>
         <action>
             <assert>
                 <description value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
                 <direction value="response"/>
-                <validateProfileId value="Bundle-profile"/>
+                <validateProfileId value="MHD-profile"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned Bundle type is searchset."/>
+                <description value="Confirm that the returned Documentreference contains the expected DocumentReference resource id."/>
                 <direction value="response"/>
+                <expression value="DocumentReference.id"/>
                 <operator value="equals"/>
-                <path value="Bundle/type"/>
-                <value value="searchset"/>
+                <value value="${documentreference1-id}"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned searchset Bundle contains 3 entries."/>
+                <description value="Confirm that the returned DocumentReference has person 2 as subject"/>
                 <direction value="response"/>
-                <expression value="Bundle.entry.count() = 2"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Confirm that the returned Bundle total value matches or is greater than the number of entries in the Bundle."/>
-                <direction value="response"/>
-                <expression value="Bundle.total.toInteger() &gt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Confirm that the returned Bundle entries contain the first expected DocumentReference resource id."/>
-                <direction value="response"/>
-                <operator value="in"/>
-                <path value="Bundle/entry[1]/resource/DocumentManifest/id"/>
-                <value value="${documentmanifest1-id},${documentmanifest3-id}"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Confirm that the returned Bundle entries contain the second expected DocumentReference resource id."/>
-                <direction value="response"/>
-                <operator value="in"/>
-                <path value="Bundle/entry[2]/resource/DocumentManifest/id"/>
-                <value value="${documentmanifest1-id},${documentmanifest3-id}"/>
+                <expression value="subject.reference"/>
+                <operator value="contains"/>
+                <value value="Patient/${patient-id}"/>
             </assert>
         </action>
     </test>
