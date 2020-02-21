@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir">
+  <id value="geboortezorg-fhir3-0-1-xis-1-2-serve-dossiergegevens-voorgaande-zwangerschap-xml"/>
+  <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/geboortezorg-fhir3-0-1-xis-1-2-serve-dossiergegevens-voorgaande-zwangerschap-xml"/>
+  <name value="Nictiz Geboortezorg - XIS Server - Scenario 1.2 - Serve resources for previous pregnancy - XML"/>
+  <status value="active"/>
+  <date value="2020-01-15"/>
+  <publisher value="Nictiz"/>
+  <contact>
+    <name value="Nictiz"/>
+    <telecom>
+      <system value="email"/>
+      <value value="kwalificatie@nictiz.nl"/>
+      <use value="work"/>
+    </telecom>
+  </contact>
+  <description value="Geboortezorg for FHIR STU3 (v3.0.1) - Scenario 1.2: Query Record Of Previous Pregnancy - XML Format"/> 
+  <copyright value="© Nictiz 2020"/>
+  <fixture id="patient-token-fixture">
+    <resource>
+      <reference value="../_reference/Gebz-XXX-Sara-token.xml"/>
+    </resource>
+  </fixture>  
+  <fixture id="patient-fixture">
+    <resource>
+      <reference value="../_reference/Gebz-nl-core-patient-XXX-VDWOUDEN.xml"/>
+    </resource>
+  </fixture> 
+  <profile id="Bundle-profile">
+    <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
+  </profile>
+  <variable>
+    <name value="patient-token-id"/>
+    <expression value="Patient.id"/>
+    <sourceId value="patient-token-fixture"/>
+  </variable>
+  <variable>
+    <name value="token-XXX-Sara"/>
+    <defaultValue value="Bearer 1f5b4282-544e-4832-b370-eeb69eb758d4"/>
+    <description value="OAuth Token for patient XXX_Yong"/>
+  </variable>
+  <variable>
+    <name value="patient-id"/>
+    <expression value="Patient.id"/>
+    <sourceId value="patient-fixture"/>
+  </variable>
+  <variable>
+    <name value="eoc-id"/>
+    <defaultValue value="wouden-dossier-zwanger3"/>
+  </variable>
+  <!-- No Setup -->
+  <test id="01-ServeCondition">
+    <name value="01-ServeCondition"/>
+    <description value="Test XIS Server query operation for Condition previous pregnancy - XML Format."/>
+    <action>
+      <operation>
+        <type>
+          <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+          <code value="search"/>
+        </type>
+        <resource value="Condition"/>
+        <description value="Test XIS Server query operation for Condition - XML Format."/>
+        <accept value="xml"/>
+        <contentType value="none"/>
+        <params value="?subject=${patient-id}&amp;context=${eoc-id}"/>
+        <requestHeader>
+          <field value="Authorization"/>
+          <value value="${token-XXX-Sara}"/>
+        </requestHeader>
+      </operation>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned HTTP status is 200(OK)."/>
+        <direction value="response"/>
+        <responseCode value="200"/>
+      </assert>
+    </action>
+    <!--<action>
+      <assert>
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
+      </assert>
+    </action>-->
+    <action>
+      <assert>
+        <description value="Confirm that the returned resource type is Bundle."/>
+        <direction value="response"/>
+        <resource value="Bundle"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle type is searchset."/>
+        <direction value="response"/>
+        <expression value="Bundle.type"/>
+        <operator value="equals"/>
+        <value value="searchset"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 1 Condition entry."/>
+        <direction value="response"/>
+        <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Condition)).count() = 1).exists()"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle total value matches or is greater than the number of entries in the Bundle."/>
+        <direction value="response"/>
+        <expression value="Bundle.total.toInteger() &gt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
+        <direction value="response"/>
+        <validateProfileId value="Bundle-profile"/>
+      </assert>
+    </action>
+  </test>
+  <test id="02-ServeObservations">
+    <name value="02-ServeObservations"/>
+    <description value="Test XIS Server query operation for Observation previous pregnancy - XML Format."/>
+    <action>
+      <operation>
+        <type>
+          <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+          <code value="search"/>
+        </type>
+        <resource value="Observation"/>
+        <description value="Test XIS Server query operation for Observation - XML Format."/>
+        <accept value="xml"/>
+        <contentType value="none"/>
+        <params value="?subject=${patient-id}&amp;context=${eoc-id}"/>
+        <requestHeader>
+          <field value="Authorization"/>
+          <value value="${token-XXX-Sara}"/>
+        </requestHeader>
+      </operation>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned HTTP status is 200(OK)."/>
+        <direction value="response"/>
+        <responseCode value="200"/>
+      </assert>
+    </action>
+    <!--<action>
+      <assert>
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
+      </assert>
+    </action>-->
+    <action>
+      <assert>
+        <description value="Confirm that the returned resource type is Bundle."/>
+        <direction value="response"/>
+        <resource value="Bundle"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle type is searchset."/>
+        <direction value="response"/>
+        <expression value="Bundle.type"/>
+        <operator value="equals"/>
+        <value value="searchset"/>
+      </assert>
+    </action>
+    <!--
+    <action>
+      <assert>
+        <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains 14 Observation entry."/>
+        <direction value="response"/>
+        <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Observation)).count() = 14).exists()"/>
+      </assert>
+    </action>
+    -->
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle total value matches or is greater than the number of entries in the Bundle."/>
+        <direction value="response"/>
+        <expression value="Bundle.total.toInteger() &gt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
+        <direction value="response"/>
+        <validateProfileId value="Bundle-profile"/>
+      </assert>
+    </action>
+  </test>
+  <test id="03-ServeProcedures">
+    <name value="03-ServeProcedures"/>
+    <description value="Test XIS Server query operation for Procedures previous pregnancy - XML Format."/>
+    <action>
+      <operation>
+        <type>
+          <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+          <code value="search"/>
+        </type>
+        <resource value="Procedure"/>
+        <description value="Test XIS Server query operation for Procedure - XML Format."/>
+        <accept value="xml"/>
+        <contentType value="none"/>
+        <params value="?subject=${patient-id}&amp;context=${eoc-id}"/>
+        <requestHeader>
+          <field value="Authorization"/>
+          <value value="${token-XXX-Sara}"/>
+        </requestHeader>
+      </operation>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned HTTP status is 200(OK)."/>
+        <direction value="response"/>
+        <responseCode value="200"/>
+      </assert>
+    </action>
+    <!--<action>
+      <assert>
+        <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
+        <direction value="response"/>
+        <contentType value="xml"/>
+      </assert>
+    </action>-->
+    <action>
+      <assert>
+        <description value="Confirm that the returned resource type is Bundle."/>
+        <direction value="response"/>
+        <resource value="Bundle"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle type is searchset."/>
+        <direction value="response"/>
+        <expression value="Bundle.type"/>
+        <operator value="equals"/>
+        <value value="searchset"/>
+      </assert>
+    </action>
+    <!--
+    <action>
+      <assert>
+        <description value="Confirm that the returned searchset Bundle is empty, or contains an OperationOutcome as first resource or contains at least 1 Procedure entry."/>
+        <direction value="response"/>
+        <expression value="Bundle.where(entry.empty() or entry[0].resource.is(OperationOutcome) or entry.where(resource.is(Procedure)).count() >= 1).exists()"/>
+      </assert>
+    </action>
+    -->
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle total value matches or is greater than the number of entries in the Bundle."/>
+        <direction value="response"/>
+        <expression value="Bundle.total.toInteger() &gt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+      </assert>
+    </action>
+    <action>
+      <assert>
+        <description value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
+        <direction value="response"/>
+        <validateProfileId value="Bundle-profile"/>
+      </assert>
+    </action>
+  </test>
+</TestScript>
