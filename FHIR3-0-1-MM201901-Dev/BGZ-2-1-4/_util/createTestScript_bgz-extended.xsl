@@ -30,9 +30,9 @@
         <xsl:variable name="xml1" select="collection(iri-to-uri(concat(resolve-uri($inputDir1), '?select=', '*.xml;recurse=yes')))/f:*"/>
         <xsl:processing-instruction name="xml-model">href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"</xsl:processing-instruction>
         <TestScript xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://hl7.org/fhir http://hl7.org/fhir/STU3/fhir-all.xsd" xmlns="http://hl7.org/fhir">
-            <id value="bgz-extended-fhir3-0-1-load-resources-createupdate-xml"/>
-            <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/bgz-extended-fhir3-0-1-load-resources-createupdate-xml"/>
-            <name value="Nictizbgz-extendedLoad Test Resources - Create Update - XML"/>
+            <id value="bgz-extended-fhir3-0-1-load-resources-purgecreateupdate-xml"/>
+            <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/bgz-extended-fhir3-0-1-load-resources-purgecreateupdate-xml"/>
+            <name value="Nictiz BgZ-extended Load Test Resources - Purge Create Update - XML"/>
             <status value="active"/>
             <date value="{current-dateTime()}"/>
             <publisher value="Nictiz"/>
@@ -45,7 +45,7 @@
                 </telecom>
             </contact>
             <description value="Load bgz-extended test resources using the update (PUT) operation of the target FHIR server for use in BgZ qualification testing. All resource ids are pre-defined. The target XIS FHIR server is expected to support resource create via the update (PUT) operation for client assigned ids. "/>
-            <copyright value="© Nictiz 2019"/>
+            <copyright value="© Nictiz 2020"/>
             <xsl:for-each select="$xml1">
                 <xsl:sort select="lower-case(concat(local-name(), '-', f:id/@value))"/>
                 <xsl:variable name="resId" select="concat(local-name(), '-', replace(replace(f:id/@value, 'Bearer ', ''), '\s', ''))"/>
@@ -66,7 +66,7 @@
                 </variable>
             </xsl:for-each>
             <!-- variable T -->
-            <variable>\
+            <variable>
                 <name value="T"/>
                 <defaultValue value="${{CURRENTDATE}}"/>
                 <description value="Date that data and queries are expected to be relative to."/>
