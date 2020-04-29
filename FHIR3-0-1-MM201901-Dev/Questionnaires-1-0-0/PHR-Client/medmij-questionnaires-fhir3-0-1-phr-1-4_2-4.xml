@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<TestScript xmlns="http://hl7.org/fhir" xmlns:nictiz="http://nictiz.nl/xsl/testscript">
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
    <id value="medmij-questionnaires-fhir3-0-1-phr-1.4-2.4"/>
    <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-questionnaires-fhir3-0-1-phr-1.4-2.4"/>
    <name value="MedMij Questionnaires - PHR Client - Scenario 1.4 and 2.4"/>
    <status value="active"/>
-   <date value="2020-04-16"/>
+   <date value="2020-04-29"/>
    <publisher value="Nictiz"/>
    <contact>
       <name value="Nictiz"/>
@@ -39,9 +39,14 @@
          <reference value="../_reference/resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Bie-invalid-FAILED.xml"/>
       </resource>
    </fixture>
-   <fixture id="task-minimum-fixture">
+   <fixture id="task-minimum-fixture-xml">
       <resource>
          <reference value="../_reference/resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Bie-invalid-minimum.xml"/>
+      </resource>
+   </fixture>
+   <fixture id="task-minimum-fixture-json">
+      <resource>
+         <reference value="../_reference/resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Bie-invalid-minimum.json"/>
       </resource>
    </fixture>
    <fixture id="patient-token-fixture">
@@ -67,6 +72,11 @@
       <defaultValue value="${CURRENTDATE}"/>
       <description value="Date that data and queries are expected to be relative to."/>
    </variable>
+   <rule id="assertMinimumRequest">
+      <resource>
+         <reference value="../_reference/rule/assertMinimumRequest.groovy"/>
+      </resource>
+   </rule>
    <setup><!-- Search for open Tasks. If they are present, another test is
                  running at the moment and this test cannot proceed. -->
       <action>
@@ -231,10 +241,16 @@
          </assert>
       </action>
       <action>
-         <assert>
-            <description value="Confirm that the Task contains all the same information as the original task"/>
+         <assert><!-- There seems to be a bug in Touchstone that requires this directive to be present, although it 
+                 shouldn't be necessary from the Groovy perspective. -->
             <direction value="request"/>
-            <minimumId value="task-minimum-fixture"/>
+            <rule>
+               <ruleId value="assertMinimumRequest"/>
+               <param>
+                  <name value="minimumFixtureBase"/>
+                  <value value="task-minimum-fixture"/>
+               </param>
+            </rule>
          </assert>
       </action>
       <action>
