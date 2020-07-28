@@ -47,7 +47,7 @@
             <xsl:variable name="encounter" select="." as="element(f:Encounter)"/>
             <xsl:variable name="encounterId" select="f:id/@value" as="xs:string"/>
             
-            <xsl:variable name="compositionFilename" select="concat($ipDir1,'medmij-gpdata-fhir3-0-1-composition-', $encounterId, '.xml')"/>
+            <xsl:variable name="compositionFilename" select="concat($ipDir1,'medmij-gpdata-fhir3-0-2-composition-', $encounterId, '.xml')"/>
             
             <xsl:variable name="patientResource" as="element(f:Patient)+" select="$xml/f:Patient[f:identifier | f:name]"/>
             <xsl:if test="count($patientResource) gt 1">
