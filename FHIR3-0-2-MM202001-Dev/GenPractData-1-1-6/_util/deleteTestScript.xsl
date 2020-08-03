@@ -46,8 +46,8 @@
         
         <xsl:processing-instruction name="xml-model">href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron</xsl:processing-instruction>
         <TestScript xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://hl7.org/fhir http://hl7.org/fhir/STU3/fhir-all.xsd" xmlns="http://hl7.org/fhir">
-            <id value="medmij-gpdata-fhir3-0-1-clear-resources-delete-xml"/>
-            <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/medmij-gpdata-fhir3-0-1-clear-resources-delete-xml"/>
+            <id value="medmij-gpdata-fhir3-0-2-clear-resources-delete-xml"/>
+            <url value="http://nictiz.nl/fhir/fhir3-0-2/TestScript/medmij-gpdata-fhir3-0-2-clear-resources-delete-xml"/>
             <name value="MedMij General Practitioner Data - Clear Test Resources - Delete - XML"/>
             <status value="active"/>
             <date value="{current-dateTime()}"/>
@@ -73,7 +73,7 @@
             </xsl:for-each>
             <fixture id="patient1-token-fixture">
                 <resource>
-                    <reference value="../_reference/medmij-gpdata-fhir3-0-1-Patient-Token-kwalificatie1.xml"/>
+                    <reference value="../_reference/medmij-gpdata-fhir3-0-2-Patient-Token-kwalificatie1.xml"/>
                 </resource>
             </fixture>
             <variable>
