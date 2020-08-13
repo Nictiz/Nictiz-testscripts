@@ -10,7 +10,7 @@
 
     <xsl:output indent="yes" omit-xml-declaration="yes"/>
 
-    <xsl:param name="inputDir1">../_reference</xsl:param>
+    <xsl:param name="inputDir1">../_reference/_ServeMP</xsl:param>
 
     <xsl:variable name="ipDir1">
         <xsl:choose>
@@ -30,9 +30,9 @@
         <xsl:variable name="xml1" select="collection(iri-to-uri(concat(resolve-uri($inputDir1), '?select=', '*.xml;recurse=yes')))/f:*"/>
         <xsl:processing-instruction name="xml-model">href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"</xsl:processing-instruction>
         <TestScript xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://hl7.org/fhir http://hl7.org/fhir/STU3/fhir-all.xsd" xmlns="http://hl7.org/fhir">
-            <id value="Medication-9-0-7-fhir3-0-1-load-resources-createupdate-xml"/>
-            <url value="http://nictiz.nl/fhir/fhir3-0-1/TestScript/Medication-9-0-7-fhir3-0-1-load-resources-createupdate-xml"/>
-            <name value="NictizMedication-9-0-7 Load Test Resources - Create Update - XML"/>
+            <id value="MP-9-0-7-fhir3-0-2-load-resources-purgecreateupdate-xml"/>
+            <url value="http://nictiz.nl/fhir/fhir3-0-2/TestScript/Medication-9-0-7-fhir3-0-1-load-resources-purgecreateupdate-xml"/>
+            <name value="NictizMedication-9-0-7 Load DVZA Test Resources - Purge Create Update - XML"/>
             <status value="active"/>
             <date value="{current-dateTime()}"/>
             <publisher value="Nictiz"/>
