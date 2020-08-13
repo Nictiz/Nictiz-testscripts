@@ -15,7 +15,7 @@
             <use value="work"/>
         </telecom>
     </contact>
-    <description value="Scenario 2.5 - Read PDF/A from a non-FHIR endpoint - Serve PDFA file of person 2 based on earlier fetched DocumentReference resource. Either scenario 1.4 + 2.4 or 2.5 need to be supported for succesfull qualification."/>
+    <description value="Scenario 2.5 - Read PDF/A from a non-FHIR endpoint - Serve PDFA file of person 2 based on earlier fetched DocumentReference resource."/>
     <copyright value="© Nictiz 2020"/>
     <fixture id="patient-token-fixture">
         <resource>
@@ -31,8 +31,11 @@
         <sourceId value="patient-token-fixture"/>
     </variable>
     <variable>
-        <name value="binary-absolute-url"/>
-        <expression value="Bundle.entry.select(resource as DocumentReference).where(type.coding.where(code ='68626-1')).content[0].attachment.url"/>
+        <name value="pdfa-url"/>
+        <!-- Pick the absolute url as is or create an absolute url when a relative url is given by combining the base URL given in the Bundle self link with the relative reference.-->
+        <expression value="iif(Bundle.entry.select(resource as DocumentReference).where(type.coding.where(code ='68626-1')).content[0].attachment.url.startsWith('Binary/'),
+            Bundle.link.url.replaceMatches('DocumentReference[/?].*$','') + Bundle.entry.select(resource as DocumentReference).where(type.coding.where(code ='68626-1')).content[0].attachment.url,
+            Bundle.entry.select(resource as DocumentReference).where(type.coding.where(code ='68626-1')).content[0].attachment.url)"/>
         <sourceId value="documentreference-search-response"/>
     </variable>
     <variable>
@@ -177,6 +180,13 @@
                 <expression value="Bundle.entry.count() = 1"/>
             </assert>
         </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned Bundle contains a DocumentReference with a specific LOINC code."/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.select(resource as DocumentReference).where(type.coding.where(code ='68626-1')).exists()"/>
+            </assert>
+        </action>
     </test>
     <test id="02-ServePDFA">
         <name value="02-ServePDFA"/>
@@ -195,7 +205,7 @@
                     <field value="Authorization"/>
                     <value value="${token-XXX-Schulte}"/>
                 </requestHeader>
-                <url value="${binary-absolute-url}"/>
+                <url value="${pdfa-url}"/>
             </operation>
         </action>
         <action>
@@ -219,7 +229,7 @@
                 <description value="XIS Server read operation for a document on a known location, using the fullURL."/>
                 <accept value="xml"/>
                 <contentType value="none"/>
-                <url value="${binary-absolute-url}"/>
+                <url value="${pdfa-url}"/>
             </operation>
         </action>
         <action>
