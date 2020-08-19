@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="server">
+    
+    <id value="medmij-questionnaires-fhir3-0-1-xis-1.2-3.2"/>
+    <name value="MedMij Questionnaires - XIS Server - Scenario 1.2 and 3.2"/>
+    <description value="MedMij Questionnaires for FHIR STU3 - XIS Server - Scenario 1.2 and 3.2 - Serve QuestionnaireProvisioningTask, and receive QuestionnaireResponse"/>
+    
+    <nts:patientTokenFixture href="medmij-questionnaires-fhir3-0-1-nl-core-patient-VERKEULEN-token.xml"/>
+    <nts:fixture id="task-update-fixture" href="resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Verkeulen-PHQ9-ACCEPTED.xml"/>
+    <nts:fixture id="response-bundle-fixture" href="resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-Transaction-Verkeulen-PHQ9.xml"/>
+    
+    <nts:include value="xis-variables-happyFlow"/>
+    <nts:includeDateT value="yes"/>
+    
+    <setup>
+        <nts:fixture id="task-requested-fixture" href="resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Verkeulen-PHQ9-REQUESTED.xml" />
+        <nts:include value="xis-setup-createTask"/>            
+    </setup>
+    
+    <test id="Scenario1.2-ServeTask">
+        <name value="Scenario1.2 - Serve QuestionnaireProvisioningTask(s) for patient 1"/>
+        <description value="Test XIS server to serve a QuestionnaireProvisioningTask with status 'requested'. This Task is found using a search operation and the XIS server should return a Bundle with a single entry."/>
+        <nts:include value="xis-scenario1-serveTask"/>
+    </test>
+    
+    <test id="Scenario3.2-RecieveTaskUpdate">
+        <name value="Scenario3.2 - Handle update to QuestionnaireProvisioningTask"/>
+        <description value="Test XIS server to handle an update to the QuestionnaireProvisioningTask with status 'accepted'. This will be an update operation where the original Task is sent, with only the status element changed."/>
+        <nts:include value="xis-scenario3-receiveTaskUpdate"/>
+        <nts:include value="xis-assert-taskAccepted"/>
+    </test>
+    
+    <test id="Scenario3.2-RecieveQuestionnaireResponse">
+        <name value="Scenario3.2 - Recieve QuestionnaireResponse"/>
+        <description value="Test XIS server to handle the completion of the QuestionnaireProvisioningTask. The client will send a transaction bundle with an update to the QuestionnaireProvisioningTask with status 'completed', a newly created QuestionnaireResponse, and a reference from Task.output to this response."/>
+        <nts:include value="xis-scenario3-receiveQuestionnaireResponse"/>
+        <nts:include value="xis-assertTransactionSucces"/>
+    </test>
+            
+</TestScript>

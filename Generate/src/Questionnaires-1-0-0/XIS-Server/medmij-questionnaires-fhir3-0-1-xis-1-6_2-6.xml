@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="server">
+    
+    <id value="medmij-questionnaires-fhir3-0-1-xis-1.6-2.6"/>
+    <name value="MedMij Questionnaires - XIS Server - Scenario 1.6 and 2.6"/>
+    <description value="MedMij Questionnaires for FHIR STU3 - XIS Server - Scenario 1.6 and 2.6 - Serve QuestionnaireProvisioningTask, and accept and update with a status of 'rejected'"/>
+    
+    <nts:patientTokenFixture href="medmij-questionnaires-fhir3-0-1-nl-core-patient-BIE-token.xml"/>
+    <nts:fixture id="task-update-fixture" href="resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Bie-PHQ9E-REJECTED.xml"/>
+    
+    <nts:include value="xis-variables-taskId"/>
+    <nts:includeDateT value="yes"/>
+    
+    <setup>
+        <nts:fixture id="task-requested-fixture" href="resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Bie-PHQ9E-REQUESTED.xml" />
+        <nts:include value="xis-setup-createTask"/>            
+    </setup>
+    
+    <test id="Scenario1.6-ServeTask">
+        <name value="Scenario1.6 - Serve QuestionnaireProvisioningTask for patient 3"/>
+        <description value="Test XIS server to serve a QuestionnaireProvisioningTask with status 'requested'. This Task is found using a search operation and the XIS server should return a Bundle with a single entry. The Questionnaire referenced in this Task is assumed to be too complex to render for the client."/>
+        <nts:include value="xis-scenario1-serveTask"/>
+    </test>
+    
+    <test id="Scenario2.6-RejectTask">
+        <name value="Scenario2.6 - Handle update to the QuestionnaireProvisioningTask with status 'rejected'"/>
+        <description value="Test XIS server to handle an update to the QuestionnaireProvisioningTask where the status is set to 'rejected'. This will be an update operation where the original Task is sent, with only the status element changed."/>
+        <nts:include value="xis-scenario3-receiveTaskUpdate"/>
+        <action>
+            <assert>
+                <description value="Confirm that Task.status is 'rejected'"/>
+                <direction value="response"/>
+                <expression value="Task.status = 'rejected'"/>
+            </assert>
+        </action>
+    </test>
+    
+</TestScript>

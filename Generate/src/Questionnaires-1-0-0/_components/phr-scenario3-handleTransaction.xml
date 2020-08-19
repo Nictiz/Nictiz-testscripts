@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <action>
+        <operation>
+            <type>
+                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                <code value="transaction"/>
+            </type>
+            <description value="Test PHR client to send a transaction Bundle at the XIS base."/>
+            <destination value="1"/>
+            <origin value="1"/>
+            <requestHeader>
+                <!-- 0..* Each operation can have one or more header elements -->
+                <field value="Authorization"/>
+                <!-- 1..1 HTTP header field name: OAuth access token -->
+                <value value="${patient-token-id}"/>
+                <!-- 1..1 HTTP headerfield value: UUID4 -->
+            </requestHeader>
+            <responseId value="transaction-response"/>
+            <sourceId value="response-bundle-fixture"/>
+        </operation>
+    </action>
+    <nts:include scope="common" value="assert-authorizationHeader"/>
+    <action>
+        <assert>
+            <description value="Confirm that the client posted a Bundle"/>
+            <direction value="request"/>
+            <resource value="Bundle"/>
+        </assert>    
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the Bundle is of type 'transaction'"/>
+            <direction value="request"/>
+            <expression value="Bundle.type = 'transaction'"/>
+        </assert>
+    </action>
+    <nts:include value="assert-requestBundleContent" scope="common"/>
+    <action>
+        <assert>
+            <description value="Confirm that the Bundle contains a Task and a QuestionnaireResponse"/>
+            <direction value="request"/>
+            <expression value="entry.where(resource as Task).exists() and entry.where(resource as QuestionnaireResponse).exists()"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the Task instance declares its profile"/>
+            <direction value="request"/>
+            <expression value="entry.where(resource as Task).resource.meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask'"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the Task operation is 'update'"/>
+            <direction value="request"/>
+            <expression value="entry.where(resource as Task).request.method = 'PUT' and entry.where(resource as Task).resource.id = '${task-id}'"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the status of the Task is 'completed'"/>
+            <direction value="request"/>
+            <expression value="entry.where(resource as Task).resource.status = 'completed'"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the QuestionnaireResponse operation is 'create'"/>
+            <direction value="request"/>
+            <expression value="entry.where(resource as QuestionnaireResponse).request.method = 'POST'"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the QuestionnaireResponse instance declares its profile"/>
+            <direction value="request"/>
+            <expression value="entry.where(resource as QuestionnaireResponse).resource.meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireResponse'"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the QuestionnaireResponse contains references to the Questionnaire and the Subject"/>
+            <direction value="request"/>
+            <expression value="entry.where(resource as QuestionnaireResponse).resource.questionnaire.exists() and entry.where(resource as QuestionnaireResponse).resource.subject.exists()"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the QuestionnaireResponse contains the 'authored' element"/>
+            <direction value="request"/>
+            <expression value="entry.where(resource as QuestionnaireResponse).resource.authored.exists()"/>
+        </assert>
+    </action>
+    <!-- TODO: This doesn't seem to work -->
+    <!--        <action>
+                <assert>
+                    <description value="Confirm that the Task contains all the same information as the original task"/>
+                    <direction value="request"/>
+                    <minimumId value="task-requested-fixture"/>
+                </assert>
+            </action>
+    -->
+    <action>
+        <assert>
+            <description value="Confirm that the QuestionnaireResponse is referenced from the Task"/>
+            <direction value="request"/>
+            <expression value="entry.where(resource as Task).resource.output.where(type.text = 'QuestionnaireResponse').value.reference = entry.where(resource as QuestionnaireResponse).fullUrl"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the transaction was succesful"/>
+            <operator value="in"/>
+            <responseCode value="200"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that Task is succesfully updated"/>
+            <direction value="response"/>
+            <expression value="entry.where(resource as Task).response.status.startsWith('200')"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that QuestionnaireResponse is created"/>
+            <direction value="response"/>
+            <expression value="entry.where(resource as QuestionnaireResponse).response.status.startsWith('201')"/>
+        </assert>
+    </action>
+</nts:component>

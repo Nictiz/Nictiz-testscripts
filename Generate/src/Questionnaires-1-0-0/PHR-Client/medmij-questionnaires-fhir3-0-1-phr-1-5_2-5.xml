@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="client">
+    <id value="medmij-questionnaires-fhir3-0-1-phr-1.5-2.5"/>
+    <name value="MedMij Questionnaires - PHR Client - Scenario 1.5 and 2.5"/>
+    <description value="MedMij Questionnaires for FHIR STU3 - PHR Client - Scenario 1.5 and 2.5 - Retrieve QuestionnaireProvisioningTask with reference to Questionnaire that cannot be rendered, and reject QuestionnaireProvisioningTask"/>
+    
+    <nts:patientTokenFixture href="medmij-questionnaires-fhir3-0-1-nl-core-patient-BIE-token.xml"/>
+    <nts:fixture id="task-requested-fixture" href="resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Bie-PHQ9E-REQUESTED.xml"/>
+    <nts:fixture id="task-update-fixture" href="resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Bie-PHQ9E-REJECTED.xml"/>
+    <nts:fixture id="task-minimum-fixture-xml" href="resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Bie-PHQ9E-minimum.xml"/>
+    <nts:fixture id="task-minimum-fixture-json" href="resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Bie-PHQ9E-minimum.json"/>
+    
+    
+    <nts:include value="phr-variables-taskId"/>
+    <nts:includeDateT value="yes"/>
+    
+    <setup>
+        <nts:include value="phr-setup-checkForOpenTasks"/>
+        <nts:include value="phr-setup-createTask"/>
+    </setup>
+    
+    <test id="Scenario1.5-SearchTask">
+        <name value="Scenario1.5 - Search QuestionnaireProvisioningTask(s) for patient 3"/>
+        <description value="Test PHR client to search for QuestionnaireProvisioningTasks with status 'requested'. The return value should be a Bundle with a single entry."/>
+        <nts:include value="phr-scenario1-searchTask"/>
+    </test>
+    <test id="Scenario2.5-RejectTask">
+        <name value="Scenario2.5 - Set QuestionnaireProvisioningTask to 'rejected'"/>
+        <description value="Test PHR client to set the status of the QuestionnaireProvisioningTask to 'rejected' when the Questionnaire cannot be rendered."/>
+        <nts:include value="phr-operation-updateTask"/>
+        <nts:include value="phr-assert-checkTaskUpdate"/>
+        <action>
+            <assert>
+                <description value="Confirm that the status of the Task is 'rejected'"/>
+                <direction value="request"/>
+                <expression value="Task.status = 'rejected'"/>
+            </assert>
+        </action>
+    </test>            
+    
+    <teardown>
+        <nts:include value="phr-teardown-deleteTask"/>
+    </teardown>
+</TestScript>
