@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." name="generateTestScripts" default="build">
+    <property name="testscripttools.version" value="1.0.0-test"/>
+    <property name="lib.dir" value="${basedir}/lib/ant-dependencies"/>
+    <property name="testscripttools.dir" value="${lib.dir}/Nictiz-tooling-testscripts/${testscripttools.version}"/>
+    
+    <!-- Check to see if we have the Nictiz-tooling-testscripts repo, by checking if a directory with the proper name
+         exists -->
+    <target name="checkTestScriptTools">
+        <condition property="testscriptTools.available">
+            <or>
+                <available file="${testscripttools.dir}"/>
+            </or>
+        </condition>
+    </target>
+    
+    <!-- Download and extract the Nictiz testscript tools from Github if we don't have them already --> 
+    <target name="getTestScriptTools" depends="checkTestScriptTools" unless="testscriptTools.available">
+        <sequential>
+            <echo message="${testscriptTools.available}"/>
+            <mkdir dir="${testscripttools.dir}/"/>
+            <local name="zip.name"/>
+            <property name="zip.name" value="${testscripttools.dir}/package.zip"/>
+            <get src="https://github.com/Nictiz/Nictiz-tooling-testscripts/archive/${testscripttools.version}.zip"
+                dest="${zip.name}"/>
+            <unzip src="${zip.name}" dest="${testscripttools.dir}" failOnEmptyArchive="true">
+                <patternset>
+                    <include name="*/generate/**"/>
+                </patternset>
+                <mapper type="regexp" from="^.*?/generate/(.*)" to="\1"/>
+            </unzip>
+            <delete file="${zip.name}"/>
+            <property name="hastestscripttools" value="true" />
+        </sequential>
+    </target>
+    
+    <!-- Call the build script from the tooling repo -->
+    <target name="build" depends="getTestScriptTools">
+        <ant antfile="${testscripttools.dir}/ant/build.xml" target="clean"/>
+    </target>
+</project>

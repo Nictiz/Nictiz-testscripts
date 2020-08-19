@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="client">
+    <id value="medmij-questionnaires-fhir3-0-1-phr-1.3-2.3-3.3"/>
+    <name value="MedMij Questionnaires - PHR Client - Scenario 1.3, 2.3, 3.3"/>
+    <description value="MedMij Questionnaires for FHIR STU3 - PHR Client - Scenario 1.3, 2.3, 3.3 - Retrieve QuestionnaireProvisioningTask, retrieve Questionnaire, and send QuestionnaireResponse"/>
+    
+    <nts:patientTokenFixture href="medmij-questionnaires-fhir3-0-1-nl-core-patient-BIE-VERKEULEN-token.xml"/>
+    <nts:fixture id="task-requested-fixture" href="resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Bie-Verkeulen-Intake-REQUESTED.xml"/>
+    <nts:fixture id="task-update-fixture" href="resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Bie-Verkeulen-Intake-ACCEPTED.xml"/>
+    <nts:fixture id="task-minimum-fixture-xml" href="resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Bie-Verkeulen-Intake-minimum.xml"/>
+    <nts:fixture id="task-minimum-fixture-json" href="resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-QuestionnaireProvisioningTask-Bie-Verkeulen-Intake-minimum.json"/>
+    <nts:fixture id="questionnaire-fixture" href="resources/resources-questionnaires/medmij-questionnaires-fhir3-0-1-vl-Questionnaire-INTAKE-NIEUWE-PATIENT.xml"/>
+    <nts:fixture id="response-bundle-fixture" href="resources/resources-specific/medmij-questionnaires-fhir3-0-1-vl-Transaction-Bie-Verkeulen-Intake.xml"/>
+    
+    <nts:include value="phr-variables-happyFlow"/>
+    <nts:includeDateT value="yes"/>
+    
+    <setup>
+        <nts:include value="phr-setup-checkForOpenTasks"/>
+        <nts:include value="phr-setup-createTask"/>
+    </setup>
+    
+    <test id="Scenario1.3-SearchTask">
+        <name value="Scenario1.3 - Search QuestionnaireProvisioningTask(s) for patient 2"/>
+        <description value="Test PHR client to search for QuestionnaireProvisioningTasks with status 'requested'. The return value should be a Bundle with a single entry."/>
+        <nts:include value="phr-scenario1-searchTask"/>
+    </test>
+    <test id="Scenario2.3-RetrieveQuestionnaire">
+        <name value="Scenario2.3 - Retrieve Questionnaire"/>
+        <description value="Test PHR client to retrieve the Questionnaire resource specified in the QuestionnaireProvisioningTask.output:Questionnaire.reference. This should be a single GET on the Questionnaire resource."/>
+        <nts:include value="phr-scenario2-retrieveQuestionnaire"/>
+    </test>
+    <test id="Scenario3.3-part1-SendQuestionnaireResponse">
+        <name value="Scenario3.3 - Part 1 - Accept QuestionnaireProvisioningTask"/>
+        <description value="Test PHR client to send an update of the QuestionnaireProvisioningTask with status='accepted'. The body of the request should otherwise be the same as the original Task as received from the server."/>
+        <nts:include value="phr-scenario3-acceptTaskUpdate"/>
+    </test>
+    <test id="Scenario3.3-part2-SendQuestionnaireResponse">
+        <name value="Scenario3.3 - Part 2 - Send QuestionnaireResponse"/>
+        <description value="Test PHR client to complete the QuestionnaireProvisioningTask with a QuestionnaireResponse instance. This should be a transaction where Task status is set to 'completed', the QuestionnaireResponse is created and the QuestionnaireResponse is linked in Task.output."/>
+        <nts:include value="phr-scenario3-handleTransaction"/>
+        <nts:include value="phr-assert-checkQRIsAlgemeneIntake"/>
+    </test>
+    
+    <teardown>
+        <nts:include value="phr-teardown-deleteTask"/>
+        <nts:include value="phr-teardown-deleteQuestionnaireResponse"/>
+    </teardown>
+</TestScript>

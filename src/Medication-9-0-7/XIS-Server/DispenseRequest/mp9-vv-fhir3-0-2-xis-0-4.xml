@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="server">
+   <id value="mp9-vv-fhir3-0-2-xis-0-4"/>
+   <name value="Medication Process 9.0.7 - DispenseRequest (NL: VerstrekkingsVerzoek) - XIS Server - Scenario 0.4"/>
+   <description value="Scenario 0.4 - Verstrekkingsverzoeken met een specifieke medicamenteuze behandeling als filter (in kwalificatiesimulator het id van &#34;MBH_907_QA1&#34; invoeren)&#xA;(Antwoord: bericht met 1 verstrekkingsverzoek)"/>
+   <nts:patientTokenFixture href="mp9-nl-core-patient-XXX-JANKIE-token.xml"/>
+   
+   <variable>
+      <name value="filter-identifier"/>
+      <defaultValue value="urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_907_QA1"/>
+      <description value="Filter on specific MedicationTreatment identifier"/>
+   </variable>
+   <test id="mg-mgr-mg-VV-Scenarioset0-0-4">
+      <name value="Scenario 0.4"/>
+      <description value="Scenario 0.4 - Verstrekkingsverzoeken met een specifieke medicamenteuze behandeling als filter (in kwalificatiesimulator het id van &#34;MBH_907_QA1&#34; invoeren)&#xA;(Antwoord: bericht met 1 verstrekkingsverzoek)"/>
+      <nts:include value="xis-ma-vv-operation-search">
+         <nts:with-parameter name="description"
+                       value="Test XIS server to serve DispenseRequest (NL: VerstrekkingsVerzoek) - Verstrekkingsverzoeken met een specifieke medicamenteuze behandeling als filter (in kwalificatiesimulator het id van &#34;MBH_907_QA1&#34; invoeren)&#xA;(Antwoord: bericht met 1 verstrekkingsverzoek)"/>
+         <nts:with-parameter name="accept" value="xml"/>
+         <nts:with-parameter name="params"
+            value="?category=http://snomed.info/sct|52711000146108&amp;medicationtreatment=${filter-identifier}&amp;_include=MedicationRequest:medication"/>
+      </nts:include>
+      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
+      <nts:include value="assert-responseBundleContent" scope="common"/>
+      <nts:include value="assert-returnCount" scope="project">
+         <nts:with-parameter name="description"
+                       value="Confirm that the returned searchset Bundle contains 1 DispenseRequest."/>
+         <nts:with-parameter name="expression"
+                       value="Bundle.entry.where(resource.is(MedicationRequest)).count() = 1"/>
+      </nts:include>
+   </test>
+</TestScript>

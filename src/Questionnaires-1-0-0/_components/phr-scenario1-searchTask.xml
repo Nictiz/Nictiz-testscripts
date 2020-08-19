@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <action>
+        <operation>
+            <type>
+                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                <code value="search"/>
+            </type>
+            <resource value="Task"/>
+            <description value="Test PHR client to search for QuestionnaireReferenceTask resources with status 'requested'."/>
+            <destination value="1"/>
+            <origin value="1"/>
+            <params value="?code=http://loinc.org|74468-0&amp;status=requested"/>
+            <requestHeader>
+                <!-- 0..* Each operation can have one or more header elements -->
+                <field value="Authorization"/>
+                <!-- 1..1 HTTP header field name: OAuth access token -->
+                <value value="${patient-token-id}"/>
+                <!-- 1..1 HTTP headerfield value: UUID4 -->
+            </requestHeader>
+            <responseId value="search-response"/>
+        </operation>
+    </action>
+    <nts:include scope="common" value="assert-authorizationHeader"/>
+    <action>
+        <assert>
+            <description value="Confirm that query parameter 'owner=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="owner="/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the search returns a Bundle with one entry."/>
+            <direction value="response"/>
+            <expression value="Bundle.total = 1"/>
+        </assert>
+    </action>
+</nts:component>
