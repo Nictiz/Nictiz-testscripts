@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir">
-    <id value="medmij-pdfa-fhir3-0-2-xis-1-4-serve-2-binary-xml"/>
-    <url value="http://nictiz.nl/fhir/fhir3-0-2/TestScript/medmij-pdfa-fhir3-0-2-xis-1-4-serve-binary-xml"/>
-    <name value="Nictiz MedMij PDFA - XIS Server - Scenario 1.4 - Serve 2 times 1 Binary - XML"/>
+    <id value="medmij-pdfa-fhir3-0-2-xis-1-4-serve-2-pdfa-xml"/>
+    <url value="http://nictiz.nl/fhir/fhir3-0-2/TestScript/medmij-pdfa-fhir3-0-2-xis-1-4-serve-pdfa-xml"/>
+    <name value="Nictiz MedMij PDFA - XIS Server - Scenario 1.4 - Serve 2 times 1 PDFA - XML"/>
     <status value="active"/>
-    <date value="2018-05-23"/>
+    <date value="2020-08-13"/>
     <publisher value="Nictiz"/>
     <contact>
         <name value="Nictiz"/>
@@ -14,8 +14,8 @@
             <use value="work"/>
         </telecom>
     </contact>
-    <description value="MedMij PDFA for FHIR STU3 (v3.0.2) - Scenario 1.4: Read PDF/A Binary - XML Format - read two times a PDFA Binary resources of person 1 based on a relative reference in the DocumentReference.content.attachment.url element, obtained from requested DocumentReference resources."/>
-    <copyright value="© Nictiz 2018"/>
+    <description value="Scenario 1.4 - Read PDF/A - Serve two times a PDFA of person 1 based on a absolute or relative reference in the DocumentReference.content.attachment.url element."/>
+    <copyright value="© Nictiz 2020"/>
     <fixture id="patient-token-fixture">
         <resource>
             <reference value="../_reference/resources/medmij-pdfa-fhir3-0-2-Patient-Token-kwalificatie1.xml"/>
@@ -39,19 +39,20 @@
         <description value="OAuth Token for patient XXX_Baltus"/>
     </variable>   
     <variable>
-        <name value="binary1-url"/>
-        <expression value="Bundle.entry.select(resource as DocumentReference).where(type.coding.where(code ='68688-1')).content[0].attachment.url.substring(7)"/>
+        <name value="pdfa1-url"/>
+        <!-- Pick the absolute url as is or create an absolute url when a relative url is given by combining the base URL given in the Bundle self link with the relative reference.-->
+        <expression value="iif(Bundle.entry.select(resource as DocumentReference).where(type.coding.where(code ='68688-1')).content[0].attachment.url.startsWith('Binary/'),
+            Bundle.link.url.replaceMatches('DocumentReference[/?].*$','') + Bundle.entry.select(resource as DocumentReference).where(type.coding.where(code ='68688-1')).content[0].attachment.url,
+            Bundle.entry.select(resource as DocumentReference).where(type.coding.where(code ='68688-1')).content[0].attachment.url)"/>
         <sourceId value="documentreference-search-response"/>
     </variable>
     <variable>
-        <name value="binary2-url"/>
-        <expression value="Bundle.entry.select(resource as DocumentReference).where(type.coding.where(code ='34781-5')).content[0].attachment.url.substring(7)"/>
+        <name value="pdfa2-url"/>
+        <!-- Pick the absolute url as is or create an absolute url when a relative url is given by combining the base URL given in the Bundle self link with the relative reference.-->
+        <expression value="iif(Bundle.entry.select(resource as DocumentReference).where(type.coding.where(code ='34781-5')).content[0].attachment.url.startsWith('Binary/'),
+            Bundle.link.url.replaceMatches('DocumentReference[/?].*$','') + Bundle.entry.select(resource as DocumentReference).where(type.coding.where(code ='34781-5')).content[0].attachment.url,
+            Bundle.entry.select(resource as DocumentReference).where(type.coding.where(code ='34781-5')).content[0].attachment.url)"/>
         <sourceId value="documentreference-search-response"/>
-    </variable>
-    <variable>
-        <name value="T"/>
-        <defaultValue value="${CURRENTDATE}"/>
-        <description value="Date that data and queries are expected to be relative to."/>
     </variable>
     <test id="01-ServeDocumentReference">
         <name value="01-ServeDocumentReference"/>
@@ -81,34 +82,89 @@
                 <responseCode value="200"/>
             </assert>
         </action>
-        <!--<action>
-            <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>-->
         <action>
             <assert>
-                <description value="Confirm that the returned resource type is Bundle."/>
+                <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
                 <direction value="response"/>
-                <resource value="Bundle"/>
+                <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
             </assert>
         </action>
         <action>
             <assert>
-                <description value="Confirm that the returned Bundle conforms to the base FHIR specification."/>
+                <description value="Confirm that the returned Bundle contains a self link."/>
+                <direction value="response"/>
+                <expression value="Bundle.link.relation.exists() and Bundle.link.relation = 'self' and Bundle.link.url.exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn').where(value.empty())).count() = 0"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) in the self link."/>
+                <direction value="response"/>
+                <expression value="Bundle.link.url.contains('http://fhir.nl/fhir/NamingSystem/bsn') = false"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that all returned resources except OperationOutcome contain a meta.profile tag."/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).where(meta.profile.empty()).empty()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that all returned resources contain an Resource.id except when temporary ids are used in the Bundle. The only time that a resource does not have an id is when it is being submitted to the server using a create operation: https://www.hl7.org/fhir/STU3/resource-definitions.html#Resource.id "/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.all( $this.fullUrl.matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or $this.fullUrl.matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or $this.resource.id.exists())"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the fullUrl does not disagree with the id in the resource, see http://hl7.org/fhir/stu3/bundle-definitions.html#Bundle.entry.fullUrl"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.all($this.fullUrl.endsWith($this.resource.id) or $this.fullUrl.startsWith('urn:'))"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the fullUrl is an absolute URL, an uuid or an oid."/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.fullUrl.all( startsWith('http://') or startsWith('https://') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that literal References (Reference.reference) are an absolute URL, a relative URL or an internal fragment reference (contained), see: http://hl7.org/fhir/stu3/references.html#literal."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().reference.all( startsWith('http://') or startsWith('https://') or startsWith('#') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or (startsWith('urn:').not() and startsWith('#').not() and matches('^[A-Za-z]{3,}/[^/]+$')) )"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2020.01/FHIR_IG#Use_of_the_reference_datatype."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().where($this.is(Reference)).all(display.exists())"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that all CodeableConcept elements contain a coding.display or a text value if no Coding exists, see https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2019.01_FHIR_IG#Use_of_coded_concepts."/>
+                <direction value="response"/>
+                <expression value="Bundle.descendants().where($this.is(CodeableConcept)).all( coding.display.exists() or (coding.exists().not() and text.exists()))"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
                 <direction value="response"/>
                 <validateProfileId value="Bundle-profile"/>
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Confirm that the returned Bundle type is searchset."/>
-                <direction value="response"/>
-                <operator value="equals"/>
-                <path value="Bundle/type"/>
-                <value value="searchset"/>
+                <warningOnly value="false"/>
             </assert>
         </action>
         <action>
@@ -126,9 +182,9 @@
             </assert>
         </action>
     </test>    
-    <test id="02-ServeBinary">
-        <name value="02-ServeBinary"/>
-        <description value="Test XIS Server read operation for known Binary resource of person 1. The id of the Binary is obtained from a relative reference in the DocumentReference.content.attachment.url. The expected response code is 200(OK) and content is a Binary resource returned in XML format containing a PDF/A document."/>
+    <test id="02-ServePDFA">
+        <name value="02-ServePDFA"/>
+        <description value="Test XIS Server read operation for known PDFA of person 1. The expected response code is 200(OK) and content is a PDFA file or a Binary resource returned in XML format."/>
         <action>
             <operation>
                 <type>
@@ -139,11 +195,11 @@
                 <description value="XIS Server read operation for known Binary resource."/>
                 <accept value="xml"/>
                 <contentType value="none"/>
-                <params value="/${binary1-url}"/>
                 <requestHeader>  <!-- 0..* Each operation can have one or more header elements -->
                     <field value="Authorization"/><!-- 1..1 HTTP header field name: OAuth access token -->
                     <value value="${token-XXX-Baltus}"/><!-- 1..1 HTTP headerfield value: UUID4 -->
                 </requestHeader>
+                <url value="${pdfa1-url}"/>
             </operation>
         </action>
         <action>
@@ -197,7 +253,7 @@
                 <description value="XIS Server read operation for known Binary resource without an authorization header."/>
                 <accept value="xml"/>
                 <contentType value="none"/>
-                <params value="/${binary1-url}"/>
+                <url value="${pdfa1-url}"/>
             </operation>
         </action>
         <action>
@@ -218,9 +274,9 @@
             </assert>
         </action>
     </test>
-    <test id="04-ServeBinary">
-        <name value="04-ServeBinary"/>
-        <description value="Test XIS Server read operation for known Binary resource of person 1. The id of the Binary is obtained from a relative reference in the DocumentReference.content.attachment.url. The expected response code is 200(OK) and content is a Binary resource returned in XML format containing a PDF/A document."/>
+    <test id="04-ServePDFA">
+        <name value="04-ServePDFA"/>
+        <description value="Test XIS Server read operation for known PDFA of person 1. The expected response code is 200(OK) and content is a PDFA file or a Binary resource returned in XML format."/>
         <action>
             <operation>
                 <type>
@@ -231,11 +287,11 @@
                 <description value="XIS Server read operation for known Binary resource."/>
                 <accept value="xml"/>
                 <contentType value="none"/>
-                <params value="/${binary2-url}"/>
                 <requestHeader>  <!-- 0..* Each operation can have one or more header elements -->
                     <field value="Authorization"/><!-- 1..1 HTTP header field name: OAuth access token -->
                     <value value="${token-XXX-Baltus}"/><!-- 1..1 HTTP headerfield value: UUID4 -->
                 </requestHeader>
+                <url value="${pdfa2-url}"/>
             </operation>
         </action>
         <action>
@@ -245,13 +301,6 @@
                 <responseCode value="200"/>
             </assert>
         </action>
-        <!--<action>
-            <assert>
-                <description value="Confirm that the returned HTTP Header Content-Type contains the FHIR mime-type 'application/fhir+xml'."/>
-                <direction value="response"/>
-                <contentType value="xml"/>
-            </assert>
-        </action>-->
         <action>
             <assert>
                 <description value="Confirm that the returned resource type is Binary."/>
@@ -289,7 +338,7 @@
                 <description value="XIS Server read operation for known Binary resource without an authorization header."/>
                 <accept value="xml"/>
                 <contentType value="none"/>
-                <params value="/${binary2-url}"/>
+                <url value="${pdfa2-url}"/>
             </operation>
         </action>
         <action>
