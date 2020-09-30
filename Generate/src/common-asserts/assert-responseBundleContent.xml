@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
-    <nts:parameter name="warningOnly" value="false"/>
+    <nts:parameter name="warningOnly" value="true"/>
     <action>
         <assert>
             <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
@@ -17,9 +17,9 @@
     </action>
     <action>
         <assert>
-            <description value="Confirm that all returned resources except OperationOutcome contain a meta.profile tag."/>
+            <description value="Confirm that all returned resources except OperationOutcome and Binary contain a meta.profile tag."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).where(meta.profile.empty()).empty()"/>
+            <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).where(is(Binary).not()).where(meta.profile.empty()).empty()"/>
         </assert>
     </action>
     <action>
@@ -68,21 +68,19 @@
     </action>
     <action>
         <assert>
-            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2019.01_FHIR_IG#Use_of_the_reference_datatype."/>
+            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2020.01/FHIR_IG#Use_of_the_reference_datatype."/>
             <direction value="response"/>
             <expression value="Bundle.descendants().where($this.is(Reference)).all(display.exists())"/>
         </assert>
     </action> 
     <action>
         <assert>
-            <description value="Confirm that all CodeableConcept elements contain a coding.display or a text value if no Coding exists, see https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2019.01_FHIR_IG#Use_of_coded_concepts."/>
+            <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2020.01/FHIR_IG#Use_of_coded_concepts."/>
             <direction value="response"/>
-            <expression value="Bundle.descendants().where($this.is(CodeableConcept)).all(
-                coding.display.exists() or 
-                (coding.exists().not() and text.exists()))"/>
+            <expression value="Bundle.descendants().where($this.is(CodeableConcept))
+                .all((coding.display.exists() or (coding.exists().not() and text.exists())) or extension.exists())"/>
         </assert>
     </action>
-    
     <nts:profile id="Bundle-profile" value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
     <action>
         <assert>
