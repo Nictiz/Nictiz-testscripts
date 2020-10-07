@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="server">
+    <id value="xis-1-1-receive-image"/>
+    <version value="stu3-2.0"/>
+    <name value="Images - XIS Server - Scenario 1.1 - Receive One Image"/>
+    <description value="Scenario 1.1 - Receive One Image"/>
+    <nts:patientTokenFixture href="images-nl-core-patient-XXX-TEST-C-token.xml"/>
+    <nts:fixture id="scenario-1-1-bundle-fixture" href="transaction-bundles/images-scenario-1-1-Bundle-one-image.xml"/>
+    <variable>
+        <name value="T"/>
+        <defaultValue value="${CURRENTDATETIME}"/>
+        <description value="Date that data and queries are expected to be relative to."/>
+    </variable>
+    
+    <test id="scenario1-1-receive-one-image">
+        <name value="Scenario 1.1"/>
+        <description value="Receive one image in a Bundle transaction"/>
+        <nts:include value="operation-create-bundle-transaction">
+            <nts:with-parameter name="contentType" value="xml"/>
+            <nts:with-parameter name="sourceId" value="scenario-1-1-bundle-fixture"/>
+        </nts:include>
+        <nts:include value="assert-responseSuccess" scope="common"/>
+        <nts:include value="assert-responseBundleContent.xml" scope="common"/>
+        <nts:include value="assert-returnCount" scope="project">
+            <nts:with-parameter name="description" value="Confirm that the returned searchset Bundle contains 1 Media resource."/>
+            <nts:with-parameter name="expression" value="Bundle.entry.where(resource.is(Media)).count() = 1"/>
+        </nts:include>
+        <nts:include value="assert-returnCount" scope="project">
+            <nts:with-parameter name="description" value="Confirm that the returned searchset Bundle contains 1 Binary resource."/>
+            <nts:with-parameter name="expression" value="Bundle.entry.where(resource.is(Binary)).count() = 1"/>
+        </nts:include>
+        <nts:include value="assert-returnCount" scope="project">
+            <nts:with-parameter name="description" value="Confirm that the returned searchset Bundle contains 1 Patient resource."/>
+            <nts:with-parameter name="expression" value="Bundle.entry.where(resource.is(Patient)).count() = 1"/>
+        </nts:include>
+        <nts:include value="assert-returnCount" scope="project">
+            <nts:with-parameter name="description" value="Confirm that the returned searchset Bundle contains 1 Practitioner resource."/>
+            <nts:with-parameter name="expression" value="Bundle.entry.where(resource.is(Practitioner)).count() = 1"/>
+        </nts:include>
+        <action>
+            <assert>
+                <description value="Confirm that request Bundle is of type transaction."/>
+                <direction value="request"/>
+                <expression value="Bundle.type = 'transaction'"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that all resources contain a meta.profile tag, minus the Bundle and Binary resource."/>
+                <direction value="request"/>
+                <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()-1"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Media resource has a recipient extension with a value."/>
+                <direction value="request"/>
+                <expression value="Bundle.entry.resource.ofType(List).extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/images-recipient').value.exists()"/>
+            </assert>
+        </action>
+    </test>
+</TestScript>
