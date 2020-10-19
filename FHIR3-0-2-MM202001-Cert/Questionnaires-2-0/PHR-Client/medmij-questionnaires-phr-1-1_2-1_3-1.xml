@@ -5,7 +5,7 @@
    <version value="stu3-2.0"/>
    <name value="MedMij Questionnaires - PHR Client - Scenario 1.1, 2.1, 3.1"/>
    <status value="active"/>
-   <date value="2020-04-29"/>
+   <date value="2020-10-15"/>
    <publisher value="Nictiz"/>
    <contact>
       <name value="Nictiz"/>
@@ -30,24 +30,29 @@
          <code value="FHIR-Server"/>
       </profile>
    </destination>
+   <fixture id="patient-token-fixture">
+      <resource>
+         <reference value="../_reference/medmij-questionnaires-nl-core-patient-XXX_Vink-token.xml"/>
+      </resource>
+   </fixture>
    <fixture id="task-requested-fixture">
       <resource>
-         <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-Verkeulen-Intake-REQUESTED.xml"/>
+         <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Vink-Intake-REQUESTED.xml"/>
       </resource>
    </fixture>
    <fixture id="task-update-fixture">
       <resource>
-         <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-Verkeulen-Intake-ACCEPTED.xml"/>
+         <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Vink-Intake-ACCEPTED.xml"/>
       </resource>
    </fixture>
    <fixture id="task-minimum-fixture-xml">
       <resource>
-         <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-Verkeulen-Intake-minimum.xml"/>
+         <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Vink-Intake-minimum.xml"/>
       </resource>
    </fixture>
    <fixture id="task-minimum-fixture-json">
       <resource>
-         <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-Verkeulen-Intake-minimum.json"/>
+         <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Vink-Intake-minimum.json"/>
       </resource>
    </fixture>
    <fixture id="questionnaire-fixture">
@@ -57,12 +62,7 @@
    </fixture>
    <fixture id="response-bundle-fixture">
       <resource>
-         <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-Transaction-Verkeulen-Intake.xml"/>
-      </resource>
-   </fixture>
-   <fixture id="patient-token-fixture">
-      <resource>
-         <reference value="../_reference/medmij-questionnaires-nl-core-patient-VERKEULEN-token.xml"/>
+         <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-Transaction-XXX_Vink-Intake.xml"/>
       </resource>
    </fixture>
    <profile id="Task-profile">
@@ -71,6 +71,11 @@
    <profile id="Bundle-profile">
       <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
    </profile>
+   <variable>
+      <name value="patient-token-id"/>
+      <expression value="Patient.id"/>
+      <sourceId value="patient-token-fixture"/>
+   </variable>
    <variable>
       <name value="task-id"/>
       <expression value="Task.id"/>
@@ -94,15 +99,8 @@
    </variable>
    <variable>
       <name value="server-base"/>
-      <!-- TouchStone's replaceMatches() seems to be broken, as it returns a 
-             boolean. So we have to do it the hardcoded way. -->
-      <expression value="link.url.replace('Task?code=http%3A%2F%2Floinc.org%7C74468-0&amp;status=requested', '')"/>
+      <expression value="link.url.replaceMatches('(.*/)Task.*', '$1')"/>
       <sourceId value="search-response"/>
-   </variable>
-   <variable>
-      <name value="patient-token-id"/>
-      <expression value="Patient.id"/>
-      <sourceId value="patient-token-fixture"/>
    </variable>
    <variable>
       <name value="T"/>
@@ -188,7 +186,7 @@
       </action>
       <action>
          <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token {$patient-token-id}"/>
+            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
@@ -242,7 +240,7 @@
       </action>
       <action>
          <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token {$patient-token-id}"/>
+            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
@@ -280,7 +278,7 @@
       </action>
       <action>
          <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token {$patient-token-id}"/>
+            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
@@ -359,7 +357,7 @@
       </action>
       <action>
          <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token {$patient-token-id}"/>
+            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
@@ -381,9 +379,87 @@
       </action>
       <action>
          <assert>
-            <description value="Confirm that the Bundle conforms to the required profile"/>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+            <direction value="request"/>
+            <expression value="Bundle.descendants().select(identifier.where(system.toString() = 'http://fhir.nl/fhir/NamingSystem/bsn').where(value.empty())).count() = 0"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that all posted resources contain a meta.profile tag."/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.where(meta.profile.empty()).empty()"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that all resources that are updated contain a Resource.id and a fullUrl."/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.where(request.method='PUT').all( $this.fullUrl.exists() and $this.resource.id.exists())"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that all resources that are created don't contain a Resource.id."/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.where(request.method='POST').all($this.resource.id.exists().not())"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that all resources that are created don't have a RESTful fullUrl."/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.where(request.method='POST').all( $this.fullUrl.startsWith('http://').not() and $this.fullUrl.startsWith('https://').not() )"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that all resources that are created contain no fullUrl or a UUID or OID based fullUrl."/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.where(request.method='POST').fullUrl.all( exists().not or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the fullUrl does not disagree with the id in the resource, see http://hl7.org/fhir/stu3/bundle-definitions.html#Bundle.entry.fullUrl"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.where(fullUrl.exists() and resource.id.exists()).all($this.fullUrl.endsWith($this.resource.id))"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the fullUrl is an absolute URL, an uuid or an oid."/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.fullUrl.all( startsWith('http://') or startsWith('https://') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that literal References (Reference.reference) are an absolute URL, a relative URL or an internal fragment reference (contained), see: http://hl7.org/fhir/stu3/references.html#literal."/>
+            <direction value="request"/>
+            <expression value="Bundle.descendants().reference.all( startsWith('http://') or startsWith('https://') or startsWith('#') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or (startsWith('urn:').not() and startsWith('#').not() and matches('^[A-Za-z]{3,}/[^/]+$')) )"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2019.01_FHIR_IG#Use_of_the_reference_datatype."/>
+            <direction value="request"/>
+            <expression value="Bundle.descendants().where($this.is(Reference)).all(display.exists())"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that all CodeableConcept elements contain a coding.display or a text value if no Coding exists, see https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2019.01_FHIR_IG#Use_of_coded_concepts."/>
+            <direction value="request"/>
+            <expression value="Bundle.descendants().where($this.is(CodeableConcept)).all( coding.display.exists() or (coding.exists().not() and text.exists()))"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
             <direction value="request"/>
             <validateProfileId value="Bundle-profile"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
