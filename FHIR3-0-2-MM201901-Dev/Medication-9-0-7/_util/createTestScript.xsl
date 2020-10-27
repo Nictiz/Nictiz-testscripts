@@ -31,7 +31,7 @@
         <xsl:processing-instruction name="xml-model">href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"</xsl:processing-instruction>
         <TestScript xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://hl7.org/fhir http://hl7.org/fhir/STU3/fhir-all.xsd" xmlns="http://hl7.org/fhir">
             <id value="MP-9-0-7-fhir3-0-2-load-resources-purgecreateupdate-xml"/>
-            <url value="http://nictiz.nl/fhir/fhir3-0-2/TestScript/Medication-9-0-7-fhir3-0-1-load-resources-purgecreateupdate-xml"/>
+            <url value="http://nictiz.nl/fhir/fhir3-0-2/TestScript/Medication-9-0-7-fhir3-0-2-load-resources-purgecreateupdate-xml"/>
             <name value="NictizMedication-9-0-7 Load DVZA Test Resources - Purge Create Update - XML"/>
             <status value="active"/>
             <date value="{current-dateTime()}"/>
