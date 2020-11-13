@@ -4,7 +4,7 @@
 cd src
 for /d %%i in (%cd%\*) do (
    set "project=%%~nxi"
-   if /i not "!project!"==common-asserts (
+   if /i not !project!==common-asserts (
       cd "%%i"
       echo ------
       echo !project!
