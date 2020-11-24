@@ -5,4 +5,4 @@
  rule.param.searchparam2.required=true
 */
 
-assert contains("${param.searchparam1}", request.getURL()) || contains("${param.searchparam2}", request.getURL()): "The search URL did not contain one of the expected search parameters: ${param.searchparam1} or ${param.searchparam2})"
+assert contains("${param.searchparam1}", request.getURL()) || contains("${param.searchparam2}", request.getURL()): "The search URL did not contain one of the expected search parameters: ${param.searchparam1} or ${param.searchparam2}"
