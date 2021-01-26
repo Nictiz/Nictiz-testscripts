@@ -14,6 +14,7 @@
         </xsl:copy>
     </xsl:template>
     
+    <!-- Only used in medmij-bglz-xis-1-1-serve-bglz at the moment -->
     <xsl:template match="f:TestScript/f:test[@id='08-serve-CarePlan']/f:action/f:assert[f:label/@value='internalCount']">
         <assert>
             <label value="externalCount"/>
