@@ -1,7 +1,7 @@
 # Nictiz-STU3-testscripts
-HL7 FHIR STU3 testscripts for Nictiz projects
+HL7 FHIR STU3 testscripts for Nictiz projects.
 
-This repository contains HL7 FHIR STU3 testscripts. The FHIR testscripts in this repository are based on the various Nictiz FHIR projects.
+This repository contains HL7 FHIR STU3 testscripts. The FHIR testscripts in this repository are based on the various Nictiz FHIR projects. The source materials for these testscripts are maintained [in a separate repository](https://github.com/Nictiz/Nictiz-STU3-testscripts-src).
 
 The Dutch National ICT institute in the Netherlands (Nictiz) maintains this repository and its contents.
 
