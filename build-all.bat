@@ -9,7 +9,13 @@ for /d %%i in (%cd%\*) do (
       echo ------
       echo !project!
       echo ------
-      echo | call "build-!project!.bat"
+      for /d %%j in (%cd%\!project!\*) do (
+         set "folder=%%~nxj"
+         cd "%%j"
+         echo --- !folder! ---
+         echo | call "build-!project!-!folder!.bat"
+         cd ..
+      )
       cd ..
    )
 )
