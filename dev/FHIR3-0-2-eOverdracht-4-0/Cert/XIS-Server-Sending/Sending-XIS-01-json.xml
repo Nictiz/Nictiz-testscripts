@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="Sending-xis-1.1-.1-json"/>
+   <meta>
+      <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
+   </meta>
+   <url value="http://nictiz.nl/fhir/TestScript/Sending-xis-1.1-.1-json"/>
+   <version value="stu3-2.0"/>
+   <name value="TO DO  - JSON Format"/>
+   <status value="active"/>
+   <date value="2021-03-01"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="TO DO"/>
+   <origin>
+      <index value="1"/>
+      <profile>
+         <system value="http://hl7.org/fhir/testscript-profile-origin-types"/>
+         <code value="FHIR-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <index value="1"/>
+      <profile>
+         <system value="http://hl7.org/fhir/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <fixture id="task-update-fixture">
+      <resource>
+         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-volwassenen-ACCEPTED.xml"/>
+      </resource>
+   </fixture>
+   <fixture id="task-update-overdrachtbericht-fixture">
+      <resource>
+         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-volwassenen-ACCEPTED-Overdrachtbericht.xml"/>
+      </resource>
+   </fixture>
+   <fixture id="task-requested-fixture">
+      <resource>
+         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-volwassenen-REQUESTED.xml"/>
+      </resource>
+   </fixture>
+   <variable>
+      <name value="patient-token-id"/>
+      <defaultValue value="Bearer 0b8cd98a-d1da-4d0a-bd55-3549931e3860"/>
+      <description value="OAuth Token for current patient"/>
+   </variable>
+   <variable>
+      <name value="T"/>
+      <defaultValue value="${CURRENTDATE}"/>
+      <description value="Date that data and queries are expected to be relative to."/>
+   </variable>
+   <variable>
+      <name value="task-initial-id"/>
+      <expression value="Task.id"/>
+      <sourceId value="task-requested-fixture"/>
+   </variable>
+   <setup>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="updateCreate"/>
+            </type>
+            <resource value="Task"/>
+            <label value="CreateQuestionnaireProvisioningTask"/>
+            <description value="Reset the Nictiz MedMij Questionnaires test Task resources to initial status, using the update (PUT) operation of the target FHIR server for use in MedMij Questionnaires qualification testing. The target XIS FHIR server is expected to support resource create via the update (PUT) operation for client assigned ids."/>
+            <accept value="xml"/>
+            <contentType value="xml"/>
+            <params value="/${task-initial-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+            <sourceId value="task-requested-fixture"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned HTTP status is 200(OK) or 201(Created)."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+         </assert>
+      </action>
+   </setup>
+   <test id="Scenario1.1-ServeTask">
+      <name value="Scenario1.1 - Serve eOverdracht-REQUESTED Task for patient XXX_Altenborg"/>
+      <description value="Test XIS server to serve a eOverdracht Task with status 'requested'. This Task is found using a search operation and the XIS server should return a Bundle with a single entry."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Task"/>
+            <description value="Test XIS server to serve eOverdracht Task resources with status 'requested'."/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <origin value="1"/>
+            <params value="?code=http://snomed.info/sct|308292007&amp;status=requested"/>
+            <requestHeader><!-- 0..* Each operation can have one or more header elements -->
+               <field value="Authorization"/>
+               <!-- 1..1 HTTP header field name: OAuth access token -->
+               <value value="${patient-token-id}"/>
+               <!-- 1..1 HTTP headerfield value: UUID4 -->
+            </requestHeader>
+            <responseId value="search-response"/>
+         </operation>
+      </action>
+      <!-- <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>-->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 entry."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.count() = 1"/>
+         </assert>
+      </action>
+      <!--<nts:include value="assert-responseBundleContent" scope="common"/>-->
+   </test>
+   <test id="Scenario1.1-RecieveTaskUpdate">
+      <name value="Scenario3.1 - Handle update to QuestionnaireProvisioningTask"/>
+      <description value="Test XIS server to handle an update to the QuestionnaireProvisioningTask with status 'accepted'. This will be an update operation where the original Task is sent, with only the status element changed."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="update"/>
+            </type>
+            <resource value="Task"/>
+            <description value="Test XIS server to handle an update to the eOverdracht-volwassenen Task"/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <origin value="1"/>
+            <params value="/${task-id}"/>
+            <requestHeader><!-- 0..* Each operation can have one or more header elements -->
+               <field value="Authorization"/>
+               <!-- 1..1 HTTP header field name: OAuth access token -->
+               <value value="${patient-token-id}"/>
+               <!-- 1..1 HTTP headerfield value: UUID4 -->
+            </requestHeader>
+            <sourceId value="task-update-fixture"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the update is succesful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Task.status is 'accepted'"/>
+            <direction value="response"/>
+            <expression value="Task.status = 'accepted'"/>
+         </assert>
+      </action>
+   </test>
+   <test id="Scenario1.1-ServeTaskUpdate">
+      <name value="Scenario1.1 - Serve eOverdracht-ACCEPTED-Overdrachtsbericht Task for patient XXX_Altenborg"/>
+      <description value="Test XIS server to serve a eOverdracht Task with input.Overdrachtbericht. This Task is found using a search operation and the XIS server should return a Bundle with a single entry."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="update"/>
+            </type>
+            <resource value="Task"/>
+            <description value="Test PHR client to update the status of the QuestionnaireProvisioningTask."/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <origin value="1"/>
+            <params value="/${task-id}"/>
+            <requestHeader><!-- 0..* Each operation can have one or more header elements -->
+               <field value="Authorization"/>
+               <!-- 1..1 HTTP header field name: OAuth access token -->
+               <value value="${patient-token-id}"/>
+               <!-- 1..1 HTTP headerfield value: UUID4 -->
+            </requestHeader>
+            <sourceId value="task-update-overdrachtbericht-fixture"/>
+         </operation>
+      </action>
+   </test>
+</TestScript>
