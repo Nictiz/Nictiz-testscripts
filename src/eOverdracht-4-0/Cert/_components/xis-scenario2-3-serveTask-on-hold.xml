@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Update a previously retrieved Task. This depends on a fixture called 'task-update-fixture' to be present. --> 
 <nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
     <action>
         <operation>
             <type>
                 <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-                <code value="update"/>
+                <code value="search"/>
             </type>
             <resource value="Task"/>
-            <description value="Test XIS client to update the status of the eOverdracht Task."/>
+            <description value="Test XIS server to serve eOverdracht Task resources with status 'on-hold'."/>
             <destination value="1"/>
             <origin value="1"/>
-            <params value="/${task-id}"/>
+            <params value="?code=http://snomed.info/sct|308292007&amp;status=on-hold"/>
             <requestHeader>
                 <!-- 0..* Each operation can have one or more header elements -->
                 <field value="Authorization"/>
@@ -19,14 +18,17 @@
                 <value value="${patient-token-id}"/>
                 <!-- 1..1 HTTP headerfield value: UUID4 -->
             </requestHeader>
-            <sourceId value="task-update-fixture"/>
+            <responseId value="search-response"/>
         </operation>
     </action>
+   <!-- <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>-->
     <action>
-        <assert nts:stopTestOnFail="true">
-            <description value="Confirm that the update is succesful"/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
+        <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 entry."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.count() = 1"/>
         </assert>
     </action>
+    <!--<nts:include value="assert-responseBundleContent" scope="common"/>-->
+    
 </nts:component>
