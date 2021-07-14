@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
-   <id value="xis-2-3-send-observations-from-period-json"/>
+   <id value="xis-2-1-receive-most-recent-bodyweight-xml"/>
    <meta>
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
-   <url value="http://nictiz.nl/fhir/TestScript/xis-2-3-send-observations-from-period-json"/>
+   <url value="http://nictiz.nl/fhir/TestScript/xis-2-1-receive-most-recent-bodyweight-xml"/>
    <version value="stu3-2.0- patchlevel 2021-06"/>
-   <name value="SelfMeasurements - XIS Server - Scenario 2.3 - Send multiple type of Observation resources from period T-30 - T-0 - JSON Format"/>
+   <name value="SelfMeasurements - XIS Server - Scenario 2.1 - Receive most recent BodyWeight Observation resource - XML Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -17,7 +17,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 2.3 - Send multiple type of Observation resources from period T-30 - T-0"/>
+   <description value="Scenario 2.1 - Receive most recent BodyWeight Observation resource"/>
    <origin>
       <index value="1"/>
       <profile>
@@ -32,9 +32,9 @@
          <code value="FHIR-Server"/>
       </profile>
    </destination>
-   <fixture id="scenario-2-3-bundle-fixture">
+   <fixture id="scenario-2-1-bundle-fixture">
       <resource>
-         <reference value="../_reference/resources-serve-receive/medmij-selfmeasurements-serve-receive-scenario-2-3-bundle.xml"/>
+         <reference value="../_reference/resources-serve-receive/medmij-selfmeasurements-serve-receive-scenario-2-1-bundle.xml"/>
       </resource>
    </fixture>
    <profile id="Bundle-profile">
@@ -50,9 +50,9 @@
       <defaultValue value="${CURRENTDATE}"/>
       <description value="Date that data and queries are expected to be relative to."/>
    </variable>
-   <test id="scenario2-3-send-observations-from-period">
-      <name value="Scenario 2.3"/>
-      <description value="Send multiple type of Observation resources from period T-30 - T-0"/>
+   <test id="scenario2-1-receive-most-recent-bodyweight">
+      <name value="Scenario 2.1"/>
+      <description value="Receive most recent BodyWeight Observation resource"/>
       <action>
          <operation>
             <type>
@@ -60,7 +60,7 @@
                <code value="batch"/>
             </type>
             <description value="Test PHR client to POST a Bundle of type batch."/>
-            <accept value="json"/>
+            <accept value="xml"/>
             <contentType value="xml"/>
             <destination value="1"/>
             <origin value="1"/>
@@ -68,7 +68,7 @@
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
             </requestHeader>
-            <sourceId value="scenario-2-3-bundle-fixture"/>
+            <sourceId value="scenario-2-1-bundle-fixture"/>
          </operation>
       </action>
       <action>
@@ -241,9 +241,40 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains 13 Observation resources"/>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the Bundle contains 1 Patient resource"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.ofType(Observation).count() = 13"/>
+            <expression value="Bundle.entry.resource.ofType(Patient).count() = 1"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the Bundle contains 1 Observation resource"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).count() = 1"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the Observation resource has a LOINC code for Bodyweight in the code element"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).code.coding.where(code = '29463-7').exists()"/>
          </assert>
       </action>
    </test>
