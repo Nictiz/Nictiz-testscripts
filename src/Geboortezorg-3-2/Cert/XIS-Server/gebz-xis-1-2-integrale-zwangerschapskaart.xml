@@ -13,28 +13,25 @@
    <nts:variable name="child-id" expression="Patient.id" sourceId="child-fixture"/>
    <nts:variable name="T" defaultValue="${CURRENTDATE}"/>
    
+   <!-- Zwangere vrouw -->
    <test id="01-ServeWoman">
       <name value="01-ServeWoman"/>
-      <description value="Serve Patient resource for HCIM Patient"/>
+      <description value="Query Patient resource for HCIM Patient"/>
       <nts:include value="gbz-operation-search-xis">
          <nts:with-parameter name="resource" value="Patient"/>
          <nts:with-parameter name="params" value="?_id=${patient-id}"/>
       </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="assert-responseBundleContent" scope="common"/>
-      <nts:include value="assert-returnCount" scope="common">
-         <nts:with-parameter name="resource" value="Patient"/>
-         <nts:with-parameter name="count" value="1"/>
-      </nts:include>
+      <nts:include value="assert-authorizationHeader" scope="common"/>
+      <nts:include value="assert-responseSuccess" scope="common"/>
    </test>
 
    <!--1e zwangerschap-->
    <test id="02-ServeMaternalRecord">
       <name value="02-ServeMaternalRecord"/>
-      <description value="Test Client Serve operation for MaternalRecord (EpisodeOfCare)"/>
+      <description value="Test Client query operation for MaternalRecord (EpisodeOfCare) including managing organization (Organization) and care manager (Practitioner)"/>
       <nts:include value="gbz-operation-search-xis">
          <nts:with-parameter name="resource" value="EpisodeOfCare"/>
-         <nts:with-parameter name="params" value="?_id=${dossier-id}&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
+         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;type=http://snomed.info/sct|364320009&amp;status=finished&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
       </nts:include>
       <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
       <nts:include value="gbz-assert-responseBundleContent">
@@ -49,19 +46,15 @@
          <nts:with-parameter name="resource" value="Practitioner"></nts:with-parameter>
          <nts:with-parameter name="n" value="1"></nts:with-parameter>
       </nts:include>
-      <nts:include value="assert-returnCount" scope="common">
-         <nts:with-parameter name="resource" value="Practitioner"/>
-         <nts:with-parameter name="count" value="1"/>
-      </nts:include>
    </test>
    
-   <!--1e zwangerschap $lastn - $firstn -->
+   <!--1e zwangerschap-->
    <test id="03-ServePregnancy">
       <name value="03-ServePregnancy"/>
-      <description value="Test Client Serve operation for Pregnancy (Condition)"/>
+      <description value="Test Client query operation for Pregnancy (Condition)"/>
       <nts:include value="gbz-operation-search-xis">
          <nts:with-parameter name="resource" value="Condition"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://snomed.info/sct|364320009&amp;context=EpisodeOfCare/${dossier-id}"/>
+         <nts:with-parameter name="params" value="?code=http://snomed.info/sct|364320009&amp;context=EpisodeOfCare/${dossier-id}"/>
       </nts:include>
       <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
       <nts:include value="gbz-assert-responseBundleContent">
@@ -69,13 +62,14 @@
          <nts:with-parameter name="n" value="1"></nts:with-parameter>
       </nts:include>
    </test>
-   
-   <test id="04-ServeBodyWeight">
-      <name value="04-ServeBodyWeight"/>
-      <description value="Test Client Serve operation for BodyWeight (Observation)"/>
+     
+   <!-- Observaties bij de zwangerschap -->
+   <test id="04-ServeGravidity">
+      <name value="04-ServeGravidity"/>
+      <description value="Test Client query operation for Gravidity (Observation)"/>
       <nts:include value="gbz-operation-search-xis">
          <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://loinc.org|29463-7&amp;context=EpisodeOfCare/${dossier-id}"/>
+         <nts:with-parameter name="params" value="?code=http://snomed.info/sct|161732006&amp;context=EpisodeOfCare/${dossier-id}"/>
       </nts:include>
       <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
       <nts:include value="gbz-assert-responseBundleContent">
@@ -84,10 +78,209 @@
       </nts:include>
    </test>
    
-   <!--   todo: verplaatsten, gaat om geboortelengte kind -->
-   <test id="05-ServeBodyHeight">
-      <name value="05-ServeBodyHeight"/>
-      <description value="Test Client Serve operation for BodyHeight (Observation)"/>
+   <test id="05-ServeParity">
+      <name value="05-ServeParity"/>
+      <description value="Test Client query operation for Parity (Observation)"/>
+      <nts:include value="gbz-operation-search-xis">
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="params" value="?code=http://snomed.info/sct|364325004&amp;context=EpisodeOfCare/${dossier-id}"/>
+      </nts:include>
+      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
+      <nts:include value="gbz-assert-responseBundleContent">
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+      </nts:include>
+   </test>
+   
+   <test id="06-ServeEstTermDate">
+      <name value="06-ServeEstTermDate"/>
+      <description value="Test Client query operation for Estimated TermDate (Observation)"/>
+      <nts:include value="gbz-operation-search-xis">
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="params" value="?code=http://snomed.info/sct|161714006&amp;context=EpisodeOfCare/${dossier-id}"/>
+      </nts:include>
+      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
+      <nts:include value="gbz-assert-responseBundleContent">
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+      </nts:include>
+   </test>
+   
+   <test id="07-ServeDefTermDate">
+      <name value="07-ServeDefTermDate"/>
+      <description value="Test Client query operation for Definitive TermDate (Observation)"/>
+      <nts:include value="gbz-operation-search-xis">
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="params" value="?code=http://snomed.info/sct|147781000146105&amp;context=EpisodeOfCare/${dossier-id}"/>
+      </nts:include>
+      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
+      <nts:include value="gbz-assert-responseBundleContent">
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+      </nts:include>
+   </test>
+   
+   <!-- Metingen bij de vrouw / prenatale controles -->  
+   <test id="08-ServeBloodPressure">
+      <name value="08-ServeBloodPressure"/>
+      <description value="Test Client query operation for BloodPressure (Observation)"/>
+      <nts:include value="gbz-operation-search-xis">
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="params" value="?code=http://loinc.org|85354-9&amp;context=EpisodeOfCare/${dossier-id}"/>
+      </nts:include>
+      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
+      <nts:include value="gbz-assert-responseBundleContent">
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+      </nts:include>
+   </test>
+   
+   <!-- Alle verrichtingen -->
+   <test id="09-ServeObstetricProcedures">
+      <name value="09-ServeObstetricProcedures"/>
+      <description value="Test Client query operation for (Obstetric) Procedures"/>
+      <nts:include value="gbz-operation-search-xis">
+         <nts:with-parameter name="resource" value="Procedure"/>
+         <nts:with-parameter name="params" value="?category=http://snomed.info/sct|386637004&amp;context=EpisodeOfCare/${dossier-id}"/>
+      </nts:include>
+      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
+      <nts:include value="gbz-assert-responseBundleContent">
+         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
+         <nts:with-parameter name="n" value="3"></nts:with-parameter>
+      </nts:include>
+      <!-- Delivery -->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Delivery)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="236973005"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>
+      <!--   todo: voor nu nemen we gegevens kind niet mee, wellicht in aparte test ivm afwijkend subject -->
+      <!-- Birth -->
+      <!--      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Birth)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="42857002"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>-->
+      <!-- Episiotomie -->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Episiotomie)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="236992007"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>
+   </test>
+   
+   <!-- Observaties bij de bevalling -->
+   <test id="10-ServeOnsetFirstStageOfLabor">
+      <name value="10-ServeOnsetFirstStageOfLabor"/>
+      <description value="Test Client query operation for OnsetFirstStageOfLabor (Observation)"/>
+      <nts:include value="gbz-operation-search-xis">
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="params" value="?code=http://snomed.info/sct|439771001&amp;context=EpisodeOfCare/${dossier-id}"/>
+      </nts:include>
+      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
+      <nts:include value="gbz-assert-responseBundleContent">
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+      </nts:include>
+   </test>
+   
+   <test id="11-ServeTypeFirstStageOfLabor">
+      <name value="11-ServeTypeFirstStageOfLabor"/>
+      <description value="Test Client query operation for TypeFirstStageOfLabor (Observation)"/>
+      <nts:include value="gbz-operation-search-xis">
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="params" value="?code=http://snomed.info/sct|249120008&amp;context=EpisodeOfCare/${dossier-id}"/>
+      </nts:include>
+      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
+      <nts:include value="gbz-assert-responseBundleContent">
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+      </nts:include>
+   </test>
+   
+   <test id="12-ServeNumberOfOffspring">
+      <name value="12-ServeNumberOfOffspring"/>
+      <description value="Test Client query operation for NumberOfOffspring (Observation)"/>
+      <nts:include value="gbz-operation-search-xis">
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="params" value="?code=http://snomed.info/sct|118861000146102&amp;context=EpisodeOfCare/${dossier-id}"/>
+      </nts:include>
+      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
+      <nts:include value="gbz-assert-responseBundleContent">
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+      </nts:include>
+   </test>
+   
+   <test id="13-ServePlaceOfBirth">
+      <name value="13-ServePlaceOfBirth"/>
+      <description value="Test Client query operation for PlaceOfBirth (Observation)"/>
+      <nts:include value="gbz-operation-search-xis">
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="params" value="?code=http://snomed.info/sct|169812000&amp;context=EpisodeOfCare/${dossier-id}"/>
+      </nts:include>
+      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
+      <nts:include value="gbz-assert-responseBundleContent">
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+      </nts:include>
+   </test>
+   
+   <!-- Observaties bij de geboorte (kindspecifiek) -->
+   <test id="14-ServeParturitionType">
+      <name value="14-ServeParturitionType"/>
+      <description value="Test Client query operation for ParturitionType (Observation)"/>
+      <nts:include value="gbz-operation-search-xis">
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="params" value="?code=http://snomed.info/sct|364336006&amp;context=EpisodeOfCare/${dossier-id}"/>
+      </nts:include>
+      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
+      <nts:include value="gbz-assert-responseBundleContent">
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+      </nts:include>>
+   </test>
+   
+   <test id="15-ServeFetalDistress">
+      <name value="15-ServeFetalDistress"/>
+      <description value="Test Client query operation for FetalDistress (Condition)"/>
+      <nts:include value="gbz-operation-search-xis">
+         <nts:with-parameter name="resource" value="Condition"/>
+         <nts:with-parameter name="params" value="?code=http://snomed.info/sct|288274003&amp;context=EpisodeOfCare/${dossier-id}"/>
+      </nts:include>
+      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
+      <nts:include value="gbz-assert-responseBundleContent">
+         <nts:with-parameter name="resource" value="Condition"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+      </nts:include>>
+   </test>            
+    
+   <!-- Kind - voor nu nemen we gegevens kind niet mee -->
+<!--   <test id="16-ServeChild">
+      <name value="16-ServeChild"/>
+      <description value="Test Client query operation for Child (Patient)"/>
+      <nts:include value="gbz-operation-search-xis">
+         <nts:with-parameter name="resource" value="Patient"/>
+         <nts:with-parameter name="params" value="?_id=${child-id}"/> <!-\- ?_has:Procedure:patient:code=http://snomed.info/sct|3950001 -\->
+         <!-\- context.condition = pregnancyId -\->
+      </nts:include>
+      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
+      <nts:include value="gbz-assert-responseBundleContent">
+         <nts:with-parameter name="resource" value="Patient"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+      </nts:include>
+   </test>-->
+   
+   <!-- Observaties bij het kind - voor nu nemen we gegevens kind niet mee -->
+<!--   <test id="17-ServeChildObservations">
+      <name value="17-ServeChildObservations"/>
+      <description value="Test Client query operation for Child Observations"/>
       <nts:include value="gbz-operation-search-xis">
          <nts:with-parameter name="resource" value="Observation"/>
          <nts:with-parameter name="params" value="?code=http://loinc.org|89269-5&amp;context=EpisodeOfCare/${dossier-id}"/>
@@ -95,292 +288,57 @@
       <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
       <nts:include value="gbz-assert-responseBundleContent">
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+         <nts:with-parameter name="n" value="6"></nts:with-parameter>
       </nts:include>
-   </test>
+      <!-\- Lichaamslengte -\->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Lichaamslengte)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="89269-5"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+      </nts:include>
+      <!-\- Apgar Score 1-minuut -\->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Apgar Score 1-minuut)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="9272-6"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+      </nts:include>
+      <!-\- Apgar Score 5-minuten -\->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Apgar Score 5-minuten)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="9274-2"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+      </nts:include>
+      <!-\- Apgar Score 10-minuten -\->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Apgar Score 10-minuten)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="9271-8"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+      </nts:include>
+      <!-\- Geboortegewicht -\->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Geboortegewicht)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="8339-4"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+      </nts:include>
+      <!-\- Hoofdomtrek -\->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Hoofdomtrek)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="169876006"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>
+   </test>  --> 
    
-   <test id="06-ServeBloodPressure">
-      <name value="06-ServeBloodPressure"/>
-      <description value="Test Client Serve operation for BloodPressure (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://loinc.org|85354-9&amp;context=EpisodeOfCare/${dossier-id}"/>
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-      
-   <test id="07-ServeGravidity">
-      <name value="07-ServeGravidity"/>
-      <description value="Test Client Serve operation for Gravidity (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://snomed.info/sct|161732006&amp;context=EpisodeOfCare/${dossier-id}"/>
-         <!-- &amp;context=EpisodeOfCare.status=active&amp;context=EpisodeOfCare.type=http://snomed.info/sct|364320009" -->  
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-   
-   <test id="08-ServeParity">
-      <name value="08-ServeParity"/>
-      <description value="Test Client Serve operation for Parity (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://snomed.info/sct|364325004&amp;context=EpisodeOfCare/${dossier-id}"/>
-         <!-- &amp;context=EpisodeOfCare.status=active&amp;context=EpisodeOfCare.type=http://snomed.info/sct|364320009" -->  
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-   
-   <test id="09-ServeEstTermDate">
-      <name value="09-ServeEstTermDate"/>
-      <description value="Test Client Serve operation for Estimated TermDate (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://snomed.info/sct|161714006&amp;context=EpisodeOfCare/${dossier-id}"/>
-         <!-- &amp;context=EpisodeOfCare.status=active&amp;context=EpisodeOfCare.type=http://snomed.info/sct|364320009" -->  
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-   
-   <test id="10-ServeDefTermDate">
-      <name value="10-ServeDefTermDate"/>
-      <description value="Test Client Serve operation for Definitive TermDate (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://snomed.info/sct|147781000146105&amp;context=EpisodeOfCare/${dossier-id}"/>
-         <!-- &amp;context=EpisodeOfCare.status=active&amp;context=EpisodeOfCare.type=http://snomed.info/sct|364320009" -->  
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-    
-   <test id="11-ServeDeliveryProcedure">
-      <name value="11-ServeDeliveryProcedure"/>
-      <description value="Test Client Serve operation for DeliveryProcedure (Procedure)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Procedure"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://snomed.info/sct|236973005&amp;context=EpisodeOfCare/${dossier-id}"/>
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-     
-   <test id="12-ServeOnsetFirstStageOfLabor">
-      <name value="12-ServeOnsetFirstStageOfLabor"/>
-      <description value="Test Client Serve operation for OnsetFirstStageOfLabor (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://snomed.info/sct|249120008&amp;context=EpisodeOfCare/${dossier-id}"/>
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="2"></nts:with-parameter><!-- gaat nu nog niet goed, want dit is dezelfde code als onderstaande -->
-      </nts:include>
-   </test>
-   
-   <test id="13-ServeTypeFirstStageOfLabor">
-      <name value="13-ServeTypeFirstStageOfLabor"/>
-      <description value="Test Client Serve operation for TypeFirstStageOfLabor (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://snomed.info/sct|249120008&amp;context=EpisodeOfCare/${dossier-id}"/>
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="2"></nts:with-parameter><!-- gaat nu nog niet goed, want dit is dezelfde code als bovenstaande -->
-      </nts:include>
-   </test>
-   
-   <test id="14-ServeNumberOfOffspring">
-      <name value="14-ServeNumberOfOffspring"/>
-      <description value="Test Client Serve operation for NumberOfOffspring (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://snomed.info/sct|118861000146102&amp;context=EpisodeOfCare/${dossier-id}"/>
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-   
-   <test id="15-ServePlaceOfBirth">
-      <name value="15-ServePlaceOfBirth"/>
-      <description value="Test Client Serve operation for PlaceOfBirth (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://snomed.info/sct|169812000&amp;context=EpisodeOfCare/${dossier-id}"/>
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-   
-   <test id="16-ServeBirth">
-      <name value="16-ServeBirth"/>
-      <description value="Test Client Serve operation for Birth (Procedure)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Procedure"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://snomed.info/sct|42857002&amp;context=EpisodeOfCare/${dossier-id}"/>
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-     
-   <test id="17-ServeParturitionType">
-      <name value="17-ServeParturitionType"/>
-      <description value="Test Client Serve operation for ParturitionType (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://snomed.info/sct|364336006&amp;context=EpisodeOfCare/${dossier-id}"/>
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-   
-   <test id="18-ServeEpisiotomy">
-      <name value="18-ServeEpisiotomy"/>
-      <description value="Test Client Serve operation for Episiotomy (Procedure)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Procedure"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://snomed.info/sct|236992007&amp;context=EpisodeOfCare/${dossier-id}"/>
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-   
-   <test id="19-ServeFetalDistress">
-      <name value="19-ServeFetalDistress"/>
-      <description value="Test Client Serve operation for FetalDistress (Condition)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Condition"/>
-         <nts:with-parameter name="params" value="?patient=${patient-id}&amp;code=http://snomed.info/sct|288274003&amp;context=EpisodeOfCare/${dossier-id}"/>
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Condition"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-   
-   <test id="20-ServeChild">
-      <name value="20-ServeChild"/>
-      <description value="Test Client Serve operation for Child (Patient)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Patient"/>
-         <nts:with-parameter name="params" value="?_id=${child-id}"/>
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Patient"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-   
-   <test id="21-ServeApgarScore1M">
-      <name value="21-ServeApgarScore1M"/>
-      <description value="Test Client Serve operation for ApgarScore5M (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?code=http://loinc.org|9272-6&amp;context=EpisodeOfCare/${dossier-id}"/> 
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-
-   <test id="22-ServeApgarScore5M">
-      <name value="22-ServeApgarScore5M"/>
-      <description value="Test Client Serve operation for ApgarScore5M (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?code=http://loinc.org|9274-2&amp;context=EpisodeOfCare/${dossier-id}"/> 
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-   
-   <test id="23-ServeApgarScore10M">
-      <name value="23-ServeApgarScore10M"/>
-      <description value="Test Client Serve operation for ApgarScore5M (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?code=http://loinc.org|9271-8&amp;context=EpisodeOfCare/${dossier-id}"/> 
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-   
-   <test id="24-ServeBirthWeight">
-      <name value="24-ServeBirthWeight"/>
-      <description value="Test Client Serve operation for BirthWeight (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?code=http://loinc.org|8339-4&amp;context=EpisodeOfCare/${dossier-id}"/> 
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
-
-   <test id="25-ServeHeadCircumFerence">
-      <name value="25-ServeHeadCircumFerence"/>
-      <description value="Test Client Serve operation for HeadCircumFerence (Observation)"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?code=http://snomed.info/sct|169876006&amp;context=EpisodeOfCare/${dossier-id}"/> 
-      </nts:include>
-      <nts:include value="assert-responseSearchBundleSuccess" scope="common"/>
-      <nts:include value="gbz-assert-responseBundleContent">
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="n" value="1"></nts:with-parameter>
-      </nts:include>
-   </test>
    
 </TestScript>

@@ -6,7 +6,7 @@
    </meta>
    <url value="http://nictiz.nl/fhir/TestScript/gbz-fhir3-0-2-ikz-phr-1-2"/>
    <version value="stu3-3.0- patchlevel 2021-09"/>
-   <name value="Nictiz Geboortezorg - Client - Scenario 1.2 - Retrieve Integrale Zwangerschapskaart resources of current pregnancy of Hanna Kooij"/>
+   <name value="Nictiz Geboortezorg - Client - Scenario 1.2 - Retrieve Integrale Zwangerschapskaart resources of first pregnancy of Hanna Kooij"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -17,7 +17,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 1.2: Retrieve Integrale Zwangerschapskaart resources of current pregnancy of Hanna Kooij"/>
+   <description value="Scenario 1.2: Retrieve Integrale Zwangerschapskaart resources of first pregnancy of Hanna Kooij"/>
    <origin>
       <index value="1"/>
       <profile>
@@ -44,17 +44,12 @@
    </fixture>
    <fixture id="episodeofcare-fixture">
       <resource>
-         <reference value="../_reference/Vrouw1-Kaart2/Gebz-med_mij_01_beschikbaarstellen_integrale_zwangerschapskaart-bc-MaternalRecord-0d479b8b-2063-11ec-1751-020000000000.xml"/>
+         <reference value="../_reference/Vrouw1-Kaart2/Gebz-med_mij_01_beschikbaarstellen_integrale_zwangerschapskaart-bc-MaternalRecord-d735bfeb-2062-11ec-2089-020000000000.xml"/>
       </resource>
    </fixture>
-   <fixture id="encounter-T-6-fixture">
+   <fixture id="child-fixture">
       <resource>
-         <reference value="../_reference/Vrouw1-Kaart2/Gebz-med_mij_01_beschikbaarstellen_integrale_zwangerschapskaart-bc-Encounter-0d47afea-2063-11ec-1751-020000000000.xml"/>
-      </resource>
-   </fixture>
-   <fixture id="encounter-T-139-fixture">
-      <resource>
-         <reference value="../_reference/Vrouw1-Kaart2/Gebz-med_mij_01_beschikbaarstellen_integrale_zwangerschapskaart-bc-Encounter-0d47afdc-2063-11ec-1751-020000000000.xml"/>
+         <reference value="../_reference/Vrouw1-Kaart2/Gebz-med_mij_01_beschikbaarstellen_integrale_zwangerschapskaart-nl-core-patient-d735d407-2062-11ec-2089-020000000000.xml"/>
       </resource>
    </fixture>
    <variable>
@@ -73,14 +68,9 @@
       <sourceId value="episodeofcare-fixture"/>
    </variable>
    <variable>
-      <name value="encounter-T-6-id"/>
-      <expression value="Encounter.id"/>
-      <sourceId value="encounter-T-6-fixture"/>
-   </variable>
-   <variable>
-      <name value="encounter-T-139-id"/>
-      <expression value="Encounter.id"/>
-      <sourceId value="encounter-T-139-fixture"/>
+      <name value="child-id"/>
+      <expression value="Patient.id"/>
+      <sourceId value="child-fixture"/>
    </variable>
    <variable>
       <name value="T"/>
@@ -128,7 +118,7 @@
    </test>
    <test id="02-RetrieveMaternalRecord">
       <name value="02-RetrieveMaternalRecord"/>
-      <description value="Test Client query operation for MaternalRecord (EpisodeOfCare)"/>
+      <description value="Test Client query operation for MaternalRecord (EpisodeOfCare) including managing organization (Organization) and care manager (Practitioner)"/>
       <action>
          <operation>
             <type>
@@ -137,7 +127,7 @@
             </type>
             <resource value="EpisodeOfCare"/>
             <description value="Test PHR client to retrieve EpisodeOfCare resources."/>
-            <params value="?_id=${dossier-id}&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
+            <params value="?patient=${patient-id}&amp;type=http://snomed.info/sct|364320009&amp;status=finished&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -225,17 +215,6 @@
             <expression value="Bundle.where(entry.where(resource.is(Practitioner)).count() = 1).exists()"/>
          </assert>
       </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Practitioner resource(s). "/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Practitioner)).count() = 1"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
    </test>
    <test id="03-RetrievePregnancy">
       <name value="03-RetrievePregnancy"/>
@@ -248,7 +227,7 @@
             </type>
             <resource value="Condition"/>
             <description value="Test PHR client to retrieve Condition resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|364320009&amp;context=EpisodeOfCare/${dossier-id}"/>
+            <params value="?code=http://snomed.info/sct|364320009&amp;context=EpisodeOfCare/${dossier-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -297,608 +276,8 @@
          </assert>
       </action>
    </test>
-   <test id="04-RetrievePrenatalVisits">
-      <name value="04-RetrievePrenatalVisits"/>
-      <description value="Test Client query operation for PrenatalVisits (Encounter)"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
-            </type>
-            <resource value="Encounter"/>
-            <description value="Test PHR client to retrieve Encounter resources."/>
-            <params value="?patient=${patient-id}&amp;type=http://snomed.info/sct|18114009&amp;episodeofcare=${dossier-id}"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${patient-token-id}"/>
-            </requestHeader>
-         </operation>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <value value="${patient-token-id}"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="true"/>
-            </extension>
-            <description value="Confirm that the operation was succesful"/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 2 Encounter entry."/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Encounter)).count() = 2).exists()"/>
-         </assert>
-      </action>
-   </test>
-   <test id="05-RetrieveTobaccoUse">
-      <name value="05-RetrieveTobaccoUse"/>
-      <description value="Test Client query operation for TobaccoUse (Observation)"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
-            </type>
-            <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|365980008&amp;context=Encounter/${encounter-T-139-id}"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${patient-token-id}"/>
-            </requestHeader>
-         </operation>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <value value="${patient-token-id}"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="true"/>
-            </extension>
-            <description value="Confirm that the operation was succesful"/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
-         </assert>
-      </action>
-   </test>
-   <test id="06-RetrieveAlcoholUse">
-      <name value="06-RetrieveAlcoholUse"/>
-      <description value="Test Client query operation for AlcoholUse (Observation)"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
-            </type>
-            <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|228273003&amp;context=Encounter/${encounter-T-139-id}"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${patient-token-id}"/>
-            </requestHeader>
-         </operation>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <value value="${patient-token-id}"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="true"/>
-            </extension>
-            <description value="Confirm that the operation was succesful"/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
-         </assert>
-      </action>
-   </test>
-   <test id="07-RetrieveDrugUse">
-      <name value="07-RetrieveDrugUse"/>
-      <description value="Test Client query operation for DrugUse (Observation)"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
-            </type>
-            <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|228366006&amp;context=Encounter/${encounter-T-139-id}"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${patient-token-id}"/>
-            </requestHeader>
-         </operation>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <value value="${patient-token-id}"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="true"/>
-            </extension>
-            <description value="Confirm that the operation was succesful"/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
-         </assert>
-      </action>
-   </test>
-   <test id="08-RetrieveFoliumAccidIntake">
-      <name value="08-RetrieveFoliumAccidIntake"/>
-      <description value="Test Client query operation for FoliumAccidIntake (Observation)"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
-            </type>
-            <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|792807003&amp;context=EpisodeOfCare/${dossier-id}"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${patient-token-id}"/>
-            </requestHeader>
-         </operation>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <value value="${patient-token-id}"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="true"/>
-            </extension>
-            <description value="Confirm that the operation was succesful"/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
-         </assert>
-      </action>
-   </test>
-   <test id="09-RetrieveLabRhesusD">
-      <name value="09-RetrieveLabRhesusD"/>
-      <description value="Test Client query operation for LabRhesusD (Observation)"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
-            </type>
-            <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://loinc.org|1305-2&amp;context=EpisodeOfCare/${dossier-id}"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${patient-token-id}"/>
-            </requestHeader>
-         </operation>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <value value="${patient-token-id}"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="true"/>
-            </extension>
-            <description value="Confirm that the operation was succesful"/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
-         </assert>
-      </action>
-   </test>
-   <test id="10-RetrieveLabRhesusC">
-      <name value="10-RetrieveLabRhesusC"/>
-      <description value="Test Client query operation for LabRhesusD (Observation)"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
-            </type>
-            <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://loinc.org|1159-3&amp;context=EpisodeOfCare/${dossier-id}"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${patient-token-id}"/>
-            </requestHeader>
-         </operation>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <value value="${patient-token-id}"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="true"/>
-            </extension>
-            <description value="Confirm that the operation was succesful"/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
-         </assert>
-      </action>
-   </test>
-   <test id="11-RetrieveLabBloodType">
-      <name value="11-RetrieveBloodType"/>
-      <description value="Test Client query operation for BloodType (Observation)"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
-            </type>
-            <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://loinc.org|883-9&amp;context=EpisodeOfCare/${dossier-id}"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${patient-token-id}"/>
-            </requestHeader>
-         </operation>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <value value="${patient-token-id}"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="true"/>
-            </extension>
-            <description value="Confirm that the operation was succesful"/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
-         </assert>
-      </action>
-   </test>
-   <test id="12-RetrieveBodyWeight">
-      <name value="12-RetrieveBodyWeight"/>
-      <description value="Test Client query operation for BodyWeight (Observation)"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
-            </type>
-            <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://loinc.org|29463-7&amp;context=Encounter/${encounter-T-6-id},Encounter/${encounter-T-139-id}"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${patient-token-id}"/>
-            </requestHeader>
-         </operation>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <value value="${patient-token-id}"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="true"/>
-            </extension>
-            <description value="Confirm that the operation was succesful"/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 2 Observation entry."/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 2).exists()"/>
-         </assert>
-      </action>
-   </test>
-   <test id="13-RetrieveBloodPressure">
-      <name value="13-RetrieveBloodPressure"/>
-      <description value="Test Client query operation for BloodPressure (Observation)"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
-            </type>
-            <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://loinc.org|29463-7&amp;context=Encounter/${encounter-T-6-id},Encounter/${encounter-T-139-id}"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${patient-token-id}"/>
-            </requestHeader>
-         </operation>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <value value="${patient-token-id}"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="true"/>
-            </extension>
-            <description value="Confirm that the operation was succesful"/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 2 Observation entry."/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 2).exists()"/>
-         </assert>
-      </action>
-   </test>
-   <test id="14-RetrieveGravidity">
-      <name value="14-RetrieveGravidity"/>
+   <test id="04-RetrieveGravidity">
+      <name value="04-RetrieveGravidity"/>
       <description value="Test Client query operation for Gravidity (Observation)"/>
       <action>
          <operation>
@@ -908,7 +287,7 @@
             </type>
             <resource value="Observation"/>
             <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|161732006&amp;context=EpisodeOfCare/${dossier-id}"/>
+            <params value="?code=http://snomed.info/sct|161732006&amp;context=EpisodeOfCare/${dossier-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -957,8 +336,8 @@
          </assert>
       </action>
    </test>
-   <test id="15-RetrieveParity">
-      <name value="15-RetrieveParity"/>
+   <test id="05-RetrieveParity">
+      <name value="05-RetrieveParity"/>
       <description value="Test Client query operation for Parity (Observation)"/>
       <action>
          <operation>
@@ -968,7 +347,7 @@
             </type>
             <resource value="Observation"/>
             <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|364325004&amp;context=EpisodeOfCare/${dossier-id}"/>
+            <params value="?code=http://snomed.info/sct|364325004&amp;context=EpisodeOfCare/${dossier-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -1017,8 +396,8 @@
          </assert>
       </action>
    </test>
-   <test id="16-RetrieveEstTermDate">
-      <name value="16-RetrieveEstTermDate"/>
+   <test id="06-RetrieveEstTermDate">
+      <name value="06-RetrieveEstTermDate"/>
       <description value="Test Client query operation for Estimated TermDate (Observation)"/>
       <action>
          <operation>
@@ -1028,7 +407,7 @@
             </type>
             <resource value="Observation"/>
             <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|161714006&amp;context=EpisodeOfCare/${dossier-id}"/>
+            <params value="?code=http://snomed.info/sct|161714006&amp;context=EpisodeOfCare/${dossier-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -1077,8 +456,8 @@
          </assert>
       </action>
    </test>
-   <test id="17-RetrieveDefTermDate">
-      <name value="17-RetrieveDefTermDate"/>
+   <test id="07-RetrieveDefTermDate">
+      <name value="07-RetrieveDefTermDate"/>
       <description value="Test Client query operation for Definitive TermDate (Observation)"/>
       <action>
          <operation>
@@ -1088,7 +467,7 @@
             </type>
             <resource value="Observation"/>
             <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|147781000146105&amp;context=EpisodeOfCare/${dossier-id}"/>
+            <params value="?code=http://snomed.info/sct|147781000146105&amp;context=EpisodeOfCare/${dossier-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -1137,9 +516,9 @@
          </assert>
       </action>
    </test>
-   <test id="18-RetrieveNumberOfLivingOffSpring">
-      <name value="18-RetrieveNumberOfLivingOffSpring"/>
-      <description value="Test Client query operation for NumberOfLivingOffSpring (Observation)"/>
+   <test id="08-RetrieveBloodPressure">
+      <name value="08-RetrieveBloodPressure"/>
+      <description value="Test Client query operation for BloodPressure (Observation)"/>
       <action>
          <operation>
             <type>
@@ -1148,7 +527,7 @@
             </type>
             <resource value="Observation"/>
             <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|143881000146107&amp;context=EpisodeOfCare/${dossier-id}"/>
+            <params value="?code=http://loinc.org|85354-9&amp;context=EpisodeOfCare/${dossier-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -1197,189 +576,9 @@
          </assert>
       </action>
    </test>
-   <test id="19-RetrieveFetalMovement">
-      <name value="19-RetrieveFetalMovement"/>
-      <description value="Test Client query operation for FetalMovement (Observation)"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
-            </type>
-            <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|364618000&amp;context=Encounter/${encounter-T-6-id}"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${patient-token-id}"/>
-            </requestHeader>
-         </operation>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <value value="${patient-token-id}"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="true"/>
-            </extension>
-            <description value="Confirm that the operation was succesful"/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
-         </assert>
-      </action>
-   </test>
-   <test id="20-RetrieveAbortionHistory">
-      <name value="20-RetrieveAbortionHistory"/>
-      <description value="Test Client query operation for AbortionHistory (Observation)"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
-            </type>
-            <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|713651007&amp;context=EpisodeOfCare/${dossier-id}"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${patient-token-id}"/>
-            </requestHeader>
-         </operation>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <value value="${patient-token-id}"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="true"/>
-            </extension>
-            <description value="Confirm that the operation was succesful"/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
-         </assert>
-      </action>
-   </test>
-   <test id="21-RetrieveFetalHeartRate">
-      <name value="21-RetrieveFetalHeartRate"/>
-      <description value="Test Client query operation for FetalHeartRate (Observation)"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
-            </type>
-            <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://loinc.org|55283-6&amp;context=Encounter/${encounter-T-6-id}"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${patient-token-id}"/>
-            </requestHeader>
-         </operation>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <value value="${patient-token-id}"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="true"/>
-            </extension>
-            <description value="Confirm that the operation was succesful"/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
-         </assert>
-      </action>
-   </test>
-   <test id="22-RetrieveEducationMaterial">
-      <name value="22-RetrieveEducationMaterial"/>
-      <description value="Test Client query operation for EducationMaterial (Procedure)"/>
+   <test id="09-RetrieveObstetricProcedures">
+      <name value="09-RetrieveObstetricProcedures"/>
+      <description value="Test Client query operation for (Obstetric) Procedures"/>
       <action>
          <operation>
             <type>
@@ -1388,7 +587,7 @@
             </type>
             <resource value="Procedure"/>
             <description value="Test PHR client to retrieve Procedure resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|445283009&amp;context=EpisodeOfCare/${dossier-id}"/>
+            <params value="?category=http://snomed.info/sct|386637004&amp;context=EpisodeOfCare/${dossier-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -1431,24 +630,57 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Procedure entry."/>
+            <description value="Confirm that the returned searchset Bundle contains 3 Procedure entry."/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Procedure)).count() = 1).exists()"/>
+            <expression value="Bundle.where(entry.where(resource.is(Procedure)).count() = 3).exists()"/>
+         </assert>
+      </action>
+      <!-- Delivery -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 236973005. (Delivery)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Procedure)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '236973005').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!--   todo: voor nu nemen we gegevens kind niet mee, wellicht in aparte test ivm afwijkend subject -->
+      <!-- Birth -->
+      <!--      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Birth)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
+         <nts:with-parameter name="n" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="42857002"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>-->
+      <!-- Episiotomie -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 236992007. (Episiotomie)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Procedure)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '236992007').count()=1).exists()"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>
-   <test id="23-RetrieveFetalHeartMonitoring">
-      <name value="23-RetrieveFetalHeartMonitoring"/>
-      <description value="Test Client query operation for FetalHeartMonitoring (Procedure)"/>
+   <test id="10-RetrieveOnsetFirstStageOfLabor">
+      <name value="10-RetrieveOnsetFirstStageOfLabor"/>
+      <description value="Test Client query operation for OnsetFirstStageOfLabor (Observation)"/>
       <action>
          <operation>
             <type>
                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
                <code value="search"/>
             </type>
-            <resource value="Procedure"/>
-            <description value="Test PHR client to retrieve Procedure resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|281568006&amp;context=EpisodeOfCare/${dossier-id}"/>
+            <resource value="Observation"/>
+            <description value="Test PHR client to retrieve Observation resources."/>
+            <params value="?code=http://snomed.info/sct|439771001&amp;context=EpisodeOfCare/${dossier-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -1491,24 +723,24 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Procedure entry."/>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Procedure)).count() = 1).exists()"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
          </assert>
       </action>
    </test>
-   <test id="24-RetrieveEcho">
-      <name value="24-RetrieveEcho"/>
-      <description value="Test Client query operation for Echo (Procedure)"/>
+   <test id="11-RetrieveTypeFirstStageOfLabor">
+      <name value="11-RetrieveTypeFirstStageOfLabor"/>
+      <description value="Test Client query operation for TypeFirstStageOfLabor (Observation)"/>
       <action>
          <operation>
             <type>
                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
                <code value="search"/>
             </type>
-            <resource value="Procedure"/>
-            <description value="Test PHR client to retrieve Procedure resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|241491007&amp;context=EpisodeOfCare/${dossier-id}"/>
+            <resource value="Observation"/>
+            <description value="Test PHR client to retrieve Observation resources."/>
+            <params value="?code=http://snomed.info/sct|249120008&amp;context=EpisodeOfCare/${dossier-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -1551,15 +783,195 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Procedure entry."/>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Procedure)).count() = 1).exists()"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
          </assert>
       </action>
    </test>
-   <test id="25-RetrieveWeakFetalMovement">
-      <name value="25-RetrieveWeakFetalMovement"/>
-      <description value="Test Client query operation for WeakFetalMovement (Condition)"/>
+   <test id="12-RetrieveNumberOfOffspring">
+      <name value="12-RetrieveNumberOfOffspring"/>
+      <description value="Test Client query operation for NumberOfOffspring (Observation)"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test PHR client to retrieve Observation resources."/>
+            <params value="?code=http://snomed.info/sct|118861000146102&amp;context=EpisodeOfCare/${dossier-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <value value="${patient-token-id}"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was succesful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned resource type is Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
+         </assert>
+      </action>
+   </test>
+   <test id="13-RetrievePlaceOfBirth">
+      <name value="13-RetrievePlaceOfBirth"/>
+      <description value="Test Client query operation for PlaceOfBirth (Observation)"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test PHR client to retrieve Observation resources."/>
+            <params value="?code=http://snomed.info/sct|169812000&amp;context=EpisodeOfCare/${dossier-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <value value="${patient-token-id}"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was succesful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned resource type is Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
+         </assert>
+      </action>
+   </test>
+   <test id="14-RetrieveParturitionType">
+      <name value="14-RetrieveParturitionType"/>
+      <description value="Test Client query operation for ParturitionType (Observation)"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test PHR client to retrieve Observation resources."/>
+            <params value="?code=http://snomed.info/sct|364336006&amp;context=EpisodeOfCare/${dossier-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <value value="${patient-token-id}"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was succesful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned resource type is Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation entry."/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).count() = 1).exists()"/>
+         </assert>
+      </action>
+   </test>
+   <test id="15-RetrieveFetalDistress">
+      <name value="15-RetrieveFetalDistress"/>
+      <description value="Test Client query operation for FetalDistress (Condition)"/>
       <action>
          <operation>
             <type>
@@ -1568,7 +980,7 @@
             </type>
             <resource value="Condition"/>
             <description value="Test PHR client to retrieve Condition resources."/>
-            <params value="?patient=${patient-id}&amp;code=http://snomed.info/sct|276372004&amp;context=EpisodeOfCare/${dossier-id}"/>
+            <params value="?code=http://snomed.info/sct|288274003&amp;context=EpisodeOfCare/${dossier-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
