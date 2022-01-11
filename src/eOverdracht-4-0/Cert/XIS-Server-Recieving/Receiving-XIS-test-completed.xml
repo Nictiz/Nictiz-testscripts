@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir"
+    xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="server">
+
+    <id value="Recieving-xis-test"/>
+    <version value="stu3-2.0"/>
+    <name value="TO DO "/>
+    <description value="TO DO"/>
+
+    <nts:patientTokenFixture href="eOverdracht-patient-XXX_Altenborg-token.xml"/>
+    <nts:fixture id="task-update-fixture" href="resources/resources-specific/eOverdracht-test-COMPLETED.xml"/>
+    <!--nts:includeDateT value="yes"/>
+-->
+    <setup>
+        <nts:fixture id="task-fixture" href="resources/resources-specific/eOverdracht-test.xml" />
+        <variable>
+            <name value="task-id" />
+            <expression value="Task.id"/>
+            <sourceId value="task-fixture"/>
+        </variable>
+        <variable>
+            <name value="task-status" />
+            <expression value="Task.status:completed"/>
+            <sourceId value="task-status-fixture"/>
+        </variable>
+        <action>
+            <operation>
+                <type>
+                    <system value="http://hl7.org/fhir/testscript-operation-codes" />
+                    <code value="updateCreate" />
+                </type>
+                <resource value="Task"/>
+                <label value="Create Task in 'accepted' state"/>
+                <accept value="xml" />
+                <contentType value="xml" />
+                <params value="/${task-id}"/>
+                <requestHeader>
+                    <field value="Authorization" />
+                    <value value="${patient-token-id}" />
+                </requestHeader>
+                <responseId value="updateCreate-response"/>
+                <sourceId value="task-fixture"/>
+            </operation>
+        </action>
+    </setup>
+
+    <test>
+        <name value="Test1"/>
+        <variable>
+            <name value="time-since-lastUpdated"/>
+            <expression value="Task.meta.lastUpdated.replaceMatches('\\.[0-9]+','')"/>
+            <sourceId value="updateCreate-response"/>
+        </variable>
+        <action>
+            <operation>
+                <type>
+                    <system value="http://hl7.org/fhir/testscript-operation-codes" />
+                    <code value="search" />
+                </type>
+                <resource value="Task"/>
+                <label value="Search Task resources for eOverdracht"/>
+                <accept value="xml" />
+                <contentType value="xml" />
+                <destination value="1"/>
+                <origin value="1"/>
+                <params value="?code=http://snomed.info/sct|308292007&amp;_lastUpdated=ge${time-since-lastUpdated}"/>
+                <requestHeader>
+                    <field value="Authorization" />
+                    <value value="${patient-token-id}" />
+                </requestHeader>
+            </operation>
+        </action>
+    </test>
+
+    <test>
+        <name value="CheckForHandoff"/>
+        <action>
+            <operation>
+                <type>
+                    <system value="http://hl7.org/fhir/testscript-operation-codes" />
+                    <code value="read" />
+                </type>
+                <resource value="Composition"/>
+                <accept value="xml" />
+                <contentType value="xml" />
+                <destination value="1"/>
+                <origin value="1"/>
+                <params value="/eOverdracht-NursingHandoff-Adults-01"/>
+                <requestHeader>
+                    <field value="Authorization" />
+                    <value value="${patient-token-id}" />
+                </requestHeader>
+            </operation>
+            <assert>
+                <description value="Confirm that the operation was succesful"/>
+                <operator value="in"/>
+                <responseCode value="200,201"/>
+            </assert>
+        </action>
+    </test>
+    <test>
+        <name value="UpdateTask"/>
+        <description value="Test XIS server to handle the completion of the Task. The client will send a transaction bundle with an update to the Task with status 'completed', a newly created Response, and a reference from Task.output to this response."/>
+        <action>
+            <operation>
+                <type>
+                    <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                    <code value="update"/>
+                </type>
+                <resource value="Task"/>
+                <description value="Test XIS server to handle the transaction bundle."/>
+                <accept value="xml"/>
+                <destination value="1"/>
+                <origin value="1"/>
+                <params value = "/${task-id}" />
+                <requestHeader>                    <!-- 0..* Each operation can have one or more header elements -->
+                    <field value="Authorization"/>
+                    <!-- 1..1 HTTP header field name: OAuth access token -->
+                    <value value="${patient-token-id}"/>
+                    <!-- 1..1 HTTP headerfield value: UUID4 -->
+                </requestHeader>
+                <sourceId value="task-update-fixture"/>
+            </operation>
+        </action>
+        <action>
+            <assert>
+                <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+                    <valueBoolean value="false"/>
+                </extension>
+                <description value="Confirm that the returned Task status is completed."/>
+                <direction value="request"/>
+                <expression value="Task.status"/>
+                <operator value="equals"/>
+                <value value="completed"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+                    <valueBoolean value="false"/>
+                </extension>
+                <description value="Confirm that the Task resource contains 1 agent practitioner reference"/>
+                <direction value="request"/>
+                <expression value="Task.for"/>
+                <operator value="notEmpty"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+                    <valueBoolean value="false"/>
+                </extension>
+                <description value="Confirm that the Task resource contains 1 agent practitioner reference"/>
+                <direction value="request"/>
+                <expression value="Task.requester.agent"/>
+                <operator value="notEmpty"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+                    <valueBoolean value="false"/>
+                </extension>
+                <description value="Confirm that the returned Task status is completed."/>
+                <direction value="request"/>
+                <expression value="Task.status"/>
+                <operator value="equals"/>
+                <value value="completed"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+                    <valueBoolean value="false"/>
+                </extension>
+                <description value="Confirm that the Task resource contains 1 Composition reference"/>
+                <direction value="request"/>
+                <expression value="Task.input.type.coding.code"/>
+                <operator value="equals"/>
+                <value value="371535009" />
+            </assert>
+        </action>
+    </test>
+
+</TestScript>
