@@ -8,39 +8,61 @@
     <description value="TO DO"/>
     
     <nts:patientTokenFixture href="eOverdracht-patient-XXX_Altenborg-token.xml"/>
-    <nts:fixture id="task-update-fixture" href="resources/resources-specific/eOverdracht-Task-volwassenen-ACCEPTED.xml"/>
     <nts:includeDateT value="yes"/>
-    <variable>
-        <name value="notifcationEndpoint"/>
-    </variable>
     
-    <setup>   
+    <setup>
+        <nts:fixture id="initial-task-fixture"
+            href="resources/resources-specific/eOverdracht-Task-volwassenen-REQUESTED-happy-flow.xml"/>
+        <nts:include value="setup-initializeTask"/>
+    </setup>
+
+    <test id="Scenario1.1-SearchTask">
+        <name value="Scenario1.1 - Search for eOverdracht-REQUESTED Task for patient XXX_Altenborg"/>
+        <description value="Test receiving XIS to search for eOverdracht Tasks which are new or changed since the last time the search was performed. A notification will be sent to the endpoint specified during the setup."/>
+        <nts:include value="sendNotification"/>
+        <nts:include value="test-searchTasks"/>
+    </test>
+
+    <test>
+        <name value="Scenario1.1-RetrieveNursingHandoff"/>
+        <description value="Scenario 1.1 - Test receiving XIS to retrieve the nursing handoff Composition referenced in the eOverdracht Task."/>
+        
+        <variable>
+            <name value="nursing-handoff-reference"/>
+            <expression value="Task.input.where(type.coding.system = 'http://snomed.info/sct' and type.coding.code = '371535009').valueReference.value"/>
+            <sourceId value="setup-task-response"/>
+        </variable>
+        
         <action>
             <operation>
                 <type>
-                    <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-                    <code value="create"/>
+                    <system value="http://hl7.org/fhir/testscript-operation-codes" />
+                    <code value="read" />
                 </type>
-                <resource value="Endpoint"/>
-                <params value="${notifcationEndpoint}"/>
-                <description value="Creates an Endpoint to use for the revieving XIS"/>
+                <resource value="Composition"/>
+                <label value="RetrieveNursingHandoff"/>
+                <accept value="xml" />
+                <contentType value="xml" />
+                <destination value="1"/>
+                <origin value="1"/>
+                <params value="/${nursing-handoff-reference}"/>
+                <requestHeader>
+                    <field value="Authorization" />
+                    <value value="${patient-token-id}" />
+                </requestHeader>
             </operation>
         </action>
-          <nts:fixture id="task-requested-fixture" href="resources/resources-specific/eOverdracht-Task-volwassenen-REQUESTED-happy-flow.xml" />
-            <nts:include value="xis-setup-createTask"/>  
-    </setup>
-       
-    <test id="Scenario1.1-RetrieveTask">
-        <name value="Scenario1.1 - Search for eOverdracht-REQUESTED Task for patient XXX_Altenborg"/>
-        <description value="Test XIS server to retrieve a eOverdracht Task with status 'requested'. This Task is found using a search operation and the XIS server should return a Bundle with a single entry."/>
-        <nts:include value="xis-scenario1-RetrieveTask-requested"/>
     </test>
-       
+    
     <test id="Scenario1.1-RecieveTaskUpdate">
-        <name value="Scenario1.1 - Handle update to eOverdracht Task"/>
-        <description value="Test XIS server to handle an update to the eOverdracht Task with status 'accepted'. This will be an update operation where the original Task is sent, with only the status element changed."/>
-        <nts:include value="xis-scenario1-receiveTaskUpdate"/>
-        <nts:include value="xis-assert-taskAccepted"/>
+        <name value="Scenario1.1 - Update eOverdracht Task"/>
+        <description value="Test receiving XIS to send an update to the eOverdracht Task with status 'accepted'. This will be an update operation where the original Task is sent, with only the status element changed."/>
+        <nts:include value="test-updateTask">
+            <nts:with-parameter name="expected-status" value="accepted"/>
+            <nts:with-parameter
+                name="task-update-fixture" 
+                value="resources/resources-specific/eOverdracht-Task-volwassenen-ACCEPTED.xml"/>
+        </nts:include>
     </test>
     
     </TestScript>
