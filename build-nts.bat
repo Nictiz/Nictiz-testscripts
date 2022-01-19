@@ -1,3 +1,5 @@
+REM Build all NTS projects
+
 @setlocal enabledelayedexpansion
 @echo off
 
@@ -19,6 +21,5 @@ for /d %%i in (%cd%\*) do (
       cd ..
    )
 )
-
 
 pause
