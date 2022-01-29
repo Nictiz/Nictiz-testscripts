@@ -21,10 +21,11 @@
     </nts:include>
     
     <test id="Scenario1.1-SearchTask">
-        <name value="Scenario1.1 - Search for eOverdracht-REQUESTED Task for patient XXX_Altenborg"/>
+        <name value="Scenario1.1 - Search for eOverdracht Task for patient XXX_Altenborg"/>
         <description value="Test receiving XIS to search for eOverdracht Tasks which are new or changed since the last time the search was performed. A notification will be sent to the endpoint specified during the setup."/>
-        <nts:include value="test-searchTasks">
+        <nts:include value="test.searchTasks.receivingxis">
             <nts:with-parameter name="expectedStatus" value="accepted"/>
+            <nts:with-parameter name="responseId" value="search-accepted-tasks-response"/>
         </nts:include>
     </test>
 
@@ -32,11 +33,10 @@
         <name value="Scenario1.1-RetrieveNursingHandoff"/>
         <description value="Scenario 1.1 - Test receiving XIS to retrieve the nursing handoff Composition referenced in the eOverdracht Task."/>
         
-        <variable>
-            <name value="nursing-handoff-reference"/>
-            <expression value="input.where(type.coding.system = 'http://snomed.info/sct' and type.coding.code = '371535009').value.reference.replace('Composition/', '')"/>
-            <sourceId value="setup-task-response"/>
-        </variable>
+        <nts:include value="variable.nursingHandoffIdFromTaskBundle.general">
+            <nts:with-parameter name="taskStatus" value="accepted"/>
+            <nts:with-parameter name="sourceId" value="search-accepted-tasks-response"/>
+        </nts:include>
         
         <action>
             <operation>
@@ -48,7 +48,7 @@
                 <label value="RetrieveNursingHandoff"/>
                 <destination value="1"/>
                 <origin value="1"/>
-                <params value="/${nursing-handoff-reference}"/>
+                <params value="/${nursing-handoff-id}"/>
                 <requestHeader>
                     <field value="Authorization" />
                     <value value="${patient-token-id}" />
@@ -65,8 +65,8 @@
             id="completed-task-fixture"
             href="resources/resources-specific/eOverdracht-Task-scenario1_1-COMPLETED.xml"/>
         <nts:include value="test-updateTask">
-            <nts:with-parameter name="expected-status" value="completed"/>
-            <nts:with-parameter name="task-update-fixture-id" value="completed-task-fixture"/>
+            <nts:with-parameter name="expectedStatus" value="completed"/>
+            <nts:with-parameter name="taskUpdateFixtureId" value="completed-task-fixture"/>
         </nts:include>
         <nts:include value="assert-responseSuccess" scope="common"/>
         
