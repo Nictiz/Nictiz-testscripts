@@ -32,6 +32,18 @@
          <code value="FHIR-Server"/>
       </profile>
    </destination>
+   <fixture id="patient-token-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
+      <resource>
+         <reference value="../../_reference/nl-core-Patient-mp9-B-XXX-Blik-token.xml"/>
+      </resource>
+   </fixture>
+   <variable>
+      <name value="patient-token-id"/>
+      <expression value="Patient.id"/>
+      <sourceId value="patient-token-fixture"/>
+   </variable>
    <variable>
       <name value="T"/>
       <defaultValue value="${CURRENTDATE}"/>
@@ -52,11 +64,12 @@
             <encodeRequestUrl value="true"/>
             <method value="get"/>
             <origin value="1"/>
-            <params value="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999900389&amp;category=http://snomed.info/sct|373784005&amp;period-of-use=ge${DATE, T, D,-21}&amp;period-of-use=le${DATE, T, D,-7}&amp;_include=MedicationDispense:medication"/>
+            <params value="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999900389&amp;category=http://snomed.info/sct|373784005&amp;whenhandedover=ge${DATE, T, D,-21}&amp;whenhandedover=le${DATE, T, D,-7}&amp;_include=MedicationDispense:medication"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
             </requestHeader>
+            <responseId value="searchset-response"/>
          </operation>
       </action>
       <action>
@@ -86,9 +99,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 6 entry(-ies). (Consists of 3 MedicationDispense and 3 Medication resources.)"/>
+            <description value="Confirm that the returned searchset Bundle contains at least 6 entries. (Consists of 3 MedicationDispense and 3 Medication resources.)"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.count() = 6"/>
+            <expression value="Bundle.entry.count() &gt;= 6"/>
             <warningOnly value="false"/>
          </assert>
       </action>
