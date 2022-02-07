@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
-   <id value="mp9-ma-serve-1-4-json"/>
+   <id value="mp9-ma-serve-3-2-json"/>
    <meta>
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
-   <url value="http://nictiz.nl/fhir/TestScript/mp9-ma-serve-1-4-json"/>
+   <url value="http://nictiz.nl/fhir/TestScript/mp9-ma-serve-3-2-json"/>
    <version value="r4-mp9-2.0.0- patchlevel 2021-11"/>
-   <name value="Medication Process 9 2.0.0  - MedicationAgreement (NL: MedicatieAfspraak) - Serve - Scenario 1.4 - JSON Format"/>
+   <name value="Medication Process 9 2.0.0  - MedicationAgreement (NL: MedicatieAfspraak) - Serve - Scenario 3.2 - JSON Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -17,7 +17,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 1.4 - Medicatieafspraak met eenheid 'dosis/stuks'"/>
+   <description value="Scenario 3.2 - Wijziging medicatieafspraak, met reden wijziging (stop-ma + nieuwe ma), LET OP: wijziging medicatieafspraak van scenario 2.2"/>
    <origin>
       <index value="1"/>
       <profile>
@@ -38,12 +38,12 @@
    <variable>
       <name value="scenario-resource-id"/>
       <description value="Resource.id of the focal resource of this subscenario, used by Nictiz for quality checks"/>
-      <expression value="Bundle.entry.select(resource as MedicationRequest).where($this.medication.resolve().code.coding.where(code = '45624' and system = 'urn:oid:2.16.840.1.113883.2.4.4.10')).id"/>
+      <expression value="Bundle.entry.select(resource as MedicationRequest).where($this.medication.resolve().code.coding.where(code = '5967' and system = 'urn:oid:2.16.840.1.113883.2.4.4.10')).id"/>
       <sourceId value="searchset-response"/>
    </variable>
-   <test id="Scenario-1-4">
-      <name value="Scenario 1.4"/>
-      <description value="Medicatieafspraak met eenheid 'dosis/stuks'"/>
+   <test id="Scenario-3-2">
+      <name value="Scenario 3.2"/>
+      <description value="Wijziging medicatieafspraak, met reden wijziging (stop-ma + nieuwe ma), LET OP: wijziging medicatieafspraak van scenario 2.2"/>
       <action>
          <operation>
             <type>
@@ -57,7 +57,7 @@
             <encodeRequestUrl value="true"/>
             <method value="get"/>
             <origin value="1"/>
-            <params value="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999900419&amp;category=http://snomed.info/sct|16076005&amp;_include=MedicationRequest:medication"/>
+            <params value="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999900420&amp;category=http://snomed.info/sct|16076005&amp;_include=MedicationRequest:medication"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -215,9 +215,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 MedicationRequest resource(s). "/>
+            <description value="Confirm that the returned searchset Bundle contains 2 MedicationRequest resource(s). "/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(MedicationRequest)).count() = 1"/>
+            <expression value="Bundle.entry.where(resource.is(MedicationRequest)).count() = 2"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -226,9 +226,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains at least 2 entries. (Consists of at least 1 MedicationRequest and 1 Medication resources.)"/>
+            <description value="Confirm that the returned searchset Bundle contains at least 3 entries. (Consists of at least 2 MedicationRequest and 1 Medication resources.)"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.count() &gt;= 2"/>
+            <expression value="Bundle.entry.count() &gt;= 3"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -242,7 +242,7 @@
             </extension>
             <description value="Confirm that the returned searchset Bundle contains the MedicationRequest resource for this specific subscenario."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.select(resource as MedicationRequest).medication.resolve().code.coding.where(code = '45624' and system = 'urn:oid:2.16.840.1.113883.2.4.4.10').exists()"/>
+            <expression value="Bundle.entry.select(resource as MedicationRequest).medication.resolve().code.coding.where(code = '5967' and system = 'urn:oid:2.16.840.1.113883.2.4.4.10').exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -268,9 +268,13 @@
             </extension>
             <description value="Confirm that the returned searchset Bundle contains the Medication resource for this specific subscenario. Test: ${scenario-resource-id}"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.select(resource as Medication).code.coding.where(code = '45624' and system = 'urn:oid:2.16.840.1.113883.2.4.4.10').exists()"/>
+            <expression value="Bundle.entry.select(resource as Medication).code.coding.where(code = '5967' and system = 'urn:oid:2.16.840.1.113883.2.4.4.10').exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!--<nts:include value="assert-returnMedicationRequestMedication-doReasonOrStop" scope="project">
+            <nts:with-parameter name="productCode" value="5967"/>
+            <nts:with-parameter name="productSystem" value="urn:oid:2.16.840.1.113883.2.4.4.10"/>
+        </nts:include>-->
    </test>
 </TestScript>
