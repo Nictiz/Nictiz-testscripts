@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
-   <id value="mp9-ta-serve-1-x-xml"/>
+   <id value="mp9-ma-serve-3-1-json"/>
    <meta>
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
-   <url value="http://nictiz.nl/fhir/TestScript/mp9-ta-serve-1-x-xml"/>
+   <url value="http://nictiz.nl/fhir/TestScript/mp9-ma-serve-3-1-json"/>
    <version value="r4-mp9-2.0.0- patchlevel 2021-11"/>
-   <name value="Medication Process 9 2.0.0  - AdmininstrationAgreement (NL: ToedieningsAfspraak) - Serve - Scenario 1.x - XML Format"/>
+   <name value="Medication Process 9 2.0.0  - MedicationAgreement (NL: MedicatieAfspraak) - Serve - Scenario 3.1 - JSON Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -17,7 +17,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 1.x - Stop-toedieningsafspraken (staken, wijzigen, onderbreken), alle subscenario's (Antwoord: bericht met 11 toedieningsafspraken, inclusief de toedieningsafspraken van scenarioset 2)"/>
+   <description value="Scenario 3.1 - Stop-toedienafspraak, met reden staken LET OP: stop afspraakvan scenario 2.1"/>
    <origin>
       <index value="1"/>
       <profile>
@@ -35,9 +35,15 @@
    <profile id="Bundle-profile">
       <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
    </profile>
-   <test id="Scenario-1-x">
-      <name value="Scenario 1.x"/>
-      <description value="Stop-toedieningsafspraken (staken, wijzigen, onderbreken), alle subscenario's (Antwoord: bericht met 11 toedieningsafspraken, inclusief de toedieningsafspraken van scenarioset 2)"/>
+   <variable>
+      <name value="scenario-resource-id"/>
+      <description value="Resource.id of the focal resource of this subscenario, used by Nictiz for quality checks"/>
+      <expression value="Bundle.entry.select(resource as MedicationDispense).where($this.medication.resolve().code.coding.where(code = '1110837' and system = 'urn:oid:2.16.840.1.113883.2.4.4.7')).id"/>
+      <sourceId value="searchset-response"/>
+   </variable>
+   <test id="Scenario-3-1">
+      <name value="Scenario 3.1"/>
+      <description value="Stop-toedienafspraak, met reden staken LET OP: stop afspraakvan scenario 2.1"/>
       <action>
          <operation>
             <type>
@@ -46,7 +52,7 @@
             </type>
             <resource value="MedicationDispense"/>
             <description value="Test server to serve MedicationDispense resource(s) for AdministrationAgreement"/>
-            <accept value="xml"/>
+            <accept value="json"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <method value="get"/>
@@ -245,6 +251,46 @@
             <description value="Confirm that the returned searchset Bundle contains at least 17 entries. (Consists of 11 MedicationDispense and 6 Medication resources.)"/>
             <direction value="response"/>
             <expression value="Bundle.entry.count() &gt;= 17"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains the MedicationDispense resource for this specific subscenario."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.select(resource as MedicationDispense).medication.resolve().code.coding.where(code = '1110837' and system = 'urn:oid:2.16.840.1.113883.2.4.4.7').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!--<action>
+        <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+                <valueBoolean value="false"/>
+            </extension>
+            <description value="Mock assert, intended to show the Resource.id of the MedicationDispense resource, used for this specific subscenario, to the left."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.select(resource as MedicationDispense).where($this.id = '${scenario-resource-id}').id"/>
+            <value value="${scenario-resource-id}"/>
+            <warningOnly value="{$warningOnly}"/>
+        </assert>
+    </action>-->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains the Medication resource for this specific subscenario. Test: ${scenario-resource-id}"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.select(resource as Medication).code.coding.where(code = '1110837' and system = 'urn:oid:2.16.840.1.113883.2.4.4.7').exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
