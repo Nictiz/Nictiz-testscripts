@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
-   <id value="mp9-mve-serve-0-4"/>
+   <id value="mp9-mve-serve-0-8-xml"/>
    <meta>
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
-   <url value="http://nictiz.nl/fhir/TestScript/mp9-mve-serve-0-4"/>
+   <url value="http://nictiz.nl/fhir/TestScript/mp9-mve-serve-0-8-xml"/>
    <version value="r4-mp9-2.0.0- patchlevel 2021-11"/>
-   <name value="Medication Process 9 2.0.0  - MedicationDispense (NL: MedicatieVErstrekking) - Serve - Scenario 0.4"/>
+   <name value="Medication Process 9 2.0.0  - MedicationDispense (NL: MedicatieVErstrekking) - Serve - Scenario 0.8 - XML Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -17,7 +17,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 0.4 - Verstrekking met een filter op verstrekkingsperiode – ingangsdatum (alles vanaf T-21) (Antwoord: bericht met 4 verstrekkingen)"/>
+   <description value="Scenario 0.8 - Een antwoord zonder verstrekking (filter op verstrekkingsperiode – einddatum (alles voor T-110)) (Antwoord: bericht zonder verstrekking)"/>
    <origin>
       <index value="1"/>
       <profile>
@@ -40,9 +40,9 @@
       <defaultValue value="${CURRENTDATE}"/>
       <description value="Date that data and queries are expected to be relative to."/>
    </variable>
-   <test id="Scenario-0-4">
-      <name value="Scenario 0.4"/>
-      <description value="Verstrekking met een filter op verstrekkingsperiode – ingangsdatum (alles vanaf T-21) (Antwoord: bericht met 4 verstrekkingen)"/>
+   <test id="Scenario-0-8">
+      <name value="Scenario 0.8"/>
+      <description value="Een antwoord zonder verstrekking (filter op verstrekkingsperiode – einddatum (alles voor T-110)) (Antwoord: bericht zonder verstrekking)"/>
       <action>
          <operation>
             <type>
@@ -51,11 +51,12 @@
             </type>
             <resource value="MedicationDispense"/>
             <description value="Test server to serve MedicationDispense resource(s) for MedicationDispense"/>
+            <accept value="xml"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <method value="get"/>
             <origin value="1"/>
-            <params value="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999900389&amp;category=http://snomed.info/sct|373784005&amp;whenhandedover=ge${DATE, T, D,-21}&amp;_include=MedicationDispense:medication"/>
+            <params value="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999900389&amp;category=http://snomed.info/sct|373784005&amp;whenhandedover=le${DATE, T, D,-110}&amp;_include=MedicationDispense:medication"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -147,17 +148,6 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
-            <direction value="response"/>
-            <validateProfileId value="Bundle-profile"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
             <description value="Confirm that all returned resources except OperationOutcome and Binary contain a meta.profile tag."/>
             <direction value="response"/>
             <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).where(is(Binary).not()).where(meta.profile.empty()).empty()"/>
@@ -235,9 +225,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 4 MedicationDispense resource(s). "/>
+            <description value="Confirm that the returned searchset Bundle contains 0 MedicationDispense resource(s). "/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(MedicationDispense)).count() = 4"/>
+            <expression value="Bundle.entry.where(resource.is(MedicationDispense)).count() = 0"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -246,9 +236,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains at least 8 entries. (Consists of 4 MedicationDispense and 4 Medication resources.)"/>
+            <description value="Confirm that the returned searchset Bundle contains at least 0 entries. (Consists of no resources.)"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.count() &gt;= 8"/>
+            <expression value="Bundle.entry.count() &gt;= 0"/>
             <warningOnly value="false"/>
          </assert>
       </action>
