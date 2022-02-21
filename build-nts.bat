@@ -6,7 +6,7 @@ REM Build all NTS projects
 cd src
 for /d %%i in (%cd%\*) do (
    set "project=%%~nxi"
-   if /i not !project!==common-asserts (
+   if /i not !project!==common-components (
       cd "%%i"
       echo ------
       echo !project!
