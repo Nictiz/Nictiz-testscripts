@@ -16,34 +16,19 @@
         <expression value="Task.meta.lastUpdated.replaceMatches('\\.[0-9]+','')"/>
         <sourceId value="setup-task-response"/>
     </variable>
-        
-    <action>
-        <operation>
-            <type>
-                <system value="http://hl7.org/fhir/testscript-operation-codes" />
-                <code value="search" />
-            </type>
-            <resource value="Task"/>
-            <label value="Search Task resources for eOverdracht"/>
-            <accept value="xml" />
-            <contentType value="xml" />
-            <destination value="1"/>
-            <origin value="1"/>
-            <params value="?code=http://snomed.info/sct|308292007&amp;_lastUpdated=ge${workflowStartDateTime}"/>
-            <requestHeader>
-                <field value="Authorization" />
-                <value value="${patient-token-id}" />
-            </requestHeader>
-            <responseId value="{$responseId}"/>
-        </operation>
-    </action>
+    
+    <nts:include value="test.server.search" scope="common"
+        description="Search Task resources for eOverdracht"
+        resource="Task"
+        params="?code=http://snomed.info/sct|308292007&amp;_lastUpdated=ge${workflowStartDateTime}"
+        useToken="yes"/>
     <variable>
         <name value="task-{$expectedStatus}"/>
         <expression value="Bundle.entry.where(resource is Task).resource.where(status = '{$expectedStatus}')"/>
         <sourceId value="search-{$expectedStatus}-tasks-response"/>
     </variable>
-    <nts:include value="assert-responseSuccess" scope="common"/>
-    <nts:include value="assert-responseBundleContent" scope="common"/>
+    <nts:include value="assert.response.success" scope="common"/>
+    <nts:include value="assert.response.bundleContent" scope="common"/>
     <action>
         <assert>
             <label value="Sanity check to see if the result contains a single Task with status=requested. If this is not the case, there are multiple tests being performed which interfere with each other. Please try again at a later time."/>
