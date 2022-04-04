@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Test a sending XIS to serve new and updated eOverdracht Tasks.
+    @param expectedStatus - The expected status of the Task. This is needed for the sanity check that a single Task with the specified status is returned at this time in the process.
+-->
+
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <nts:include value="test.server.read" scope="common"
+        resource="Task"
+        params="${task-id}"
+        useToken="yes"/>
+    <variable>
+        <name value="task-{$expectedStatus}"/>
+        <expression value="Bundle.entry.where(resource is Task).resource.where(status = '{$expectedStatus}')"/>
+        <sourceId value="search-{$expectedStatus}-tasks-response"/>
+    </variable>
+    <nts:include value="assert.response.success" scope="common"/>
+    <action>
+        <assert>
+            <label value="Make sure that a Task is returned."/>
+            <resource value="Task"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <label value="Make sure that the Task has status={$expectedStatus}."/>
+            <expression value="Task.status = '{$expectedStatus}'"/>
+        </assert>
+    </action>
+</nts:component>
+
