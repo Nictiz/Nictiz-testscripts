@@ -61,13 +61,13 @@
       <sourceId value="initial-task-fixture"/>
    </variable>
    <variable>
-      <name value="notifcationEndpoint"/>
-      <hint value="The optional notification endpoint that the sending XIS can use to notify the receiving XIS"/>
+      <name value="notificationEndpoint"/>
+      <hint value="The notification endpoint that the sending XIS can use to notify the receiving XIS, _without_ the trailing slash."/>
    </variable>
    <variable>
       <name value="nursing-handoff-id"/>
       <expression value="Bundle.entry.where(resource is Task).resource.where(status = 'accepted').input.where(type.coding.system = 'http://snomed.info/sct' and type.coding.code = '371535009').value.reference.replace('Composition/', '')"/>
-      <sourceId value="search-accepted-tasks-response"/>
+      <sourceId value="get-accepted-tasks-response"/>
    </variable>
    <setup>
       <action>
@@ -110,31 +110,7 @@
             <resource value="Resource"/>
             <label value="Notify receiving XIS"/>
             <description value="Send a notification to the specified endpoint of the receiving XIS."/>
-            <url value="${notifcationEndpoint}"/>
-         </operation>
-      </action>
-   </test>
-   <test id="Scenario1.11b-SearchTask">
-      <name value="Scenario1.11b - Search for eOverdracht Task for patient van XXX_Hondius"/>
-      <description value="Test receiving XIS to search for eOverdracht Tasks which are new or changed since the last time the search was performed. A notification will be sent to the endpoint specified during the setup."/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
-            </type>
-            <resource value="Task"/>
-            <label value="Search Task resources for eOverdracht"/>
-            <accept value="xml"/>
-            <contentType value="xml"/>
-            <destination value="1"/>
-            <origin value="1"/>
-            <params value="?code=http://snomed.info/sct|308292007"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${patient-token-id}"/>
-            </requestHeader>
-            <responseId value="search-accepted-tasks-response"/>
+            <url value="${notificationEndpoint}/${task-id}"/>
          </operation>
       </action>
       <action>
@@ -142,10 +118,34 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <label value="Check if the request URL contains the _lastUpdated parameter with the ge modifier"/>
-            <operator value="contains"/>
-            <requestURL value="query: ?_lastUpdated=ge"/>
+            <label value="Check that the response code is 202 Accepted."/>
+            <description value="It is advised that the receiving XIS responds to the notification with '202 Accepted'."/>
+            <responseCode value="202"/>
+            <warningOnly value="true"/>
          </assert>
+      </action>
+   </test>
+   <test id="Scenario1.11b-GetTask">
+      <name value="Scenario1.11b - Get eOverdracht Task for patient XXX_Hondius"/>
+      <description value="Test receiving XIS to get the eOverdracht Task. A notification will be sent to the endpoint specified during the setup."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="read"/>
+            </type>
+            <resource value="Task"/>
+            <label value="Get Task resource for eOverdracht"/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <origin value="1"/>
+            <params value="/${task-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+            <responseId value="get-accepted-task-response"/>
+         </operation>
       </action>
       <action>
          <assert>
@@ -162,8 +162,17 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <label value="Sanity check to see if the result contains a single Task with status=requested. If this is not the case, there are multiple tests being performed which interfere with each other. Please try again at a later time."/>
-            <expression value="Bundle.entry.where(resource is Task).resource.where(status = 'accepted').count() = 1"/>
+            <label value="Sanity check to see if the result is a Task."/>
+            <resource value="Task"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="Sanity check to see if the Task has status=accepted."/>
+            <expression value="Task.status = 'accepted'"/>
          </assert>
       </action>
    </test>
@@ -310,8 +319,19 @@
             <resource value="Resource"/>
             <label value="Notify receiving XIS"/>
             <description value="Send a notification to the specified endpoint of the receiving XIS."/>
-            <url value="${notifcationEndpoint}"/>
+            <url value="${notificationEndpoint}/${task-id}"/>
          </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="Check that the response code is 202 Accepted."/>
+            <description value="It is advised that the receiving XIS responds to the notification with '202 Accepted'."/>
+            <responseCode value="202"/>
+            <warningOnly value="true"/>
+         </assert>
       </action>
    </test>
 </TestScript>

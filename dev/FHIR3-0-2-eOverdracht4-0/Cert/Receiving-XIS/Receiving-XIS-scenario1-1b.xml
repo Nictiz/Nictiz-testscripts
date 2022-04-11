@@ -39,12 +39,12 @@
    </fixture>
    <fixture id="initial-task-fixture">
       <resource>
-         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-cert-1-1b-01-ACCEPTED.xml"/>
+         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-cert-1_1b-01-ACCEPTED.xml"/>
       </resource>
    </fixture>
    <fixture id="completed-task-fixture">
       <resource>
-         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-cert-1-1b-01-COMPLETED.xml"/>
+         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-cert-1_1b-01-COMPLETED.xml"/>
       </resource>
    </fixture>
    <profile id="eOverdracht-Task">
@@ -67,7 +67,7 @@
    <variable>
       <name value="nursing-handoff-id"/>
       <expression value="Bundle.entry.where(resource is Task).resource.where(status = 'accepted').input.where(type.coding.system = 'http://snomed.info/sct' and type.coding.code = '371535009').value.reference.replace('Composition/', '')"/>
-      <sourceId value="search-accepted-tasks-response"/>
+      <sourceId value="get-accepted-tasks-response"/>
    </variable>
    <setup>
       <action>
@@ -114,38 +114,27 @@
          </operation>
       </action>
    </test>
-   <test id="Scenario1.1b-SearchTask">
-      <name value="Scenario1.1b - Search for eOverdracht Task for patient XXX_Molog"/>
-      <description value="Test receiving XIS to search for eOverdracht Tasks which are new or changed since the last time the search was performed. A notification will be sent to the endpoint specified during the setup."/>
+   <test id="Scenario1.1b-GetTask">
+      <name value="Scenario1.1b - Get eOverdracht Task for patient XXX_Molog"/>
+      <description value="Test receiving XIS to get the eOverdracht Task. A notification will be sent to the endpoint specified during the setup."/>
       <action>
          <operation>
             <type>
                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
+               <code value="read"/>
             </type>
             <resource value="Task"/>
-            <label value="Search Task resources for eOverdracht"/>
+            <label value="Get Task resource for eOverdracht"/>
             <accept value="xml"/>
-            <contentType value="xml"/>
             <destination value="1"/>
             <origin value="1"/>
-            <params value="?code=http://snomed.info/sct|308292007"/>
+            <params value="/${task-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
             </requestHeader>
-            <responseId value="search-accepted-tasks-response"/>
+            <responseId value="get-accepted-task-response"/>
          </operation>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <label value="Check if the request URL contains the _lastUpdated parameter with the ge modifier"/>
-            <operator value="contains"/>
-            <requestURL value="query: ?_lastUpdated=ge"/>
-         </assert>
       </action>
       <action>
          <assert>
@@ -162,8 +151,17 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <label value="Sanity check to see if the result contains a single Task with status=requested. If this is not the case, there are multiple tests being performed which interfere with each other. Please try again at a later time."/>
-            <expression value="Bundle.entry.where(resource is Task).resource.where(status = 'accepted').count() = 1"/>
+            <label value="Sanity check to see if the result is a Task."/>
+            <resource value="Task"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="Sanity check to see if the Task has status=accepted."/>
+            <expression value="Task.status = 'accepted'"/>
          </assert>
       </action>
    </test>
