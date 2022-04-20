@@ -2,39 +2,40 @@
 <?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="client">
     
-    <id value="Receiving-XIS-scenario1.1-handoff"/>
+    <id value="Receiving-XIS-scenario1.1b-handoff"/>
     <version value="stu3-4.0"/>
-    <description value="Scenario 1.1, test 2/2 for eOverdracht receiving systems. This test focuses on the handoff phase ('overdrachtfase'). In a normal scenario, the test for the negotiation phase ('aanmeldfase') has been completed before running this test, although it may be performed in isolation."/>
+    <name value="Receiving-XIS-scenario1.1b-handoff"/>
+    <description value="Scenario 1.1b, test 2/2 for eOverdracht receiving systems. This test focuses on the handoff phase ('overdrachtfase'). In a normal scenario, the test for the negotiation phase ('aanmeldfase') has been completed before running this test, although it may be performed in isolation."/>
     
     <nts:patientTokenFixture href="eOverdracht-patient-XXX_Altenborg-token.xml"/>
     
     <setup>
         <nts:fixture
             id="initial-task-fixture"
-            href="resources/resources-specific/eOverdracht-Task-eov-test-1-1-IN-PROGRESS2.xml"/>
+            href="resources/resources-specific/eOverdracht-Task-eov-test-1_1b-IN-PROGRESS2.xml"/>
         <nts:include value="setup.general.initializeTask"
             description="At the sending XIS, the Task resulting from the negotiation phase is updated with a reference to the nursing handoff Composition on Task.input."/>
     </setup>
 
     <nts:include value="action.receivingxis.awaitNotification"
-        name="Notify nursing handoff addition"
+        name="Await nursing handoff addition notification"
         description="The sending XIS sends a notification to the receiving XIS because the Task has been updated with a reference to the nursing handoff Composition."/>
     
     <test>
         <name value="Read Task with nursing handoff"/>
         <description value="The receiving XIS should perform a read on the Task after receiving a notification that the Task has been updated."/>
         
-        <nts:include value="step.receivingxis.readTask"
+        <nts:include value="test.receivingxis.readTask"
             taskStatus="in-progress"
-            responseId="read-in-progress-task-response"/>
+            responseId="in-progress-task-response"/>
     </test>
     
     <test>
         <name value="Read nursing handoff"/>
         <description value="After reading the Task, the receiving XIS should detect that a reference to the nursing handoff Composition has been added and subsequently perform a read to retrieve this Composition."/>
         
-        <nts:include value="step.receivingxis.readComposition"
-            taskFixtureId="read-in-progress-task-response"
+        <nts:include value="test.receivingxis.readComposition"
+            taskFixtureId="in-progress-task-response"
             sliceSystem="http://snomed.info/sct" sliceCode="371535009"/>
     </test>
             
@@ -44,9 +45,9 @@
         
         <nts:fixture
             id="completed-task-fixture"
-            href="resources/resources-specific/eOverdracht-Task-eov-test-1-1-COMPLETED.xml"/>
+            href="resources/resources-specific/eOverdracht-Task-eov-test-1_1b-COMPLETED.xml"/>
         
-        <nts:include value="step.receivingxis.updateTask"
+        <nts:include value="test.receivingxis.updateTask"
             taskStatus="completed"
             taskFixtureId="completed-task-fixture"/>
         
@@ -54,9 +55,7 @@
             <assert>
                 <description value="Confirm that the Task resource contains 1 Composition reference for the nursing handoff."/>
                 <direction value="request"/>
-                <expression value="Task.input.type.coding.code"/>
-                <operator value="equals"/>
-                <value value="371535009" />
+                <expression value="Task.input.where(type.coding.system = 'http://snomed.info/sct'  and type.coding.code = '371535009').exists()"/>
             </assert>
         </action>
     </test>
