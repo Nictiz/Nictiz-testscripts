@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir=".." name="generateTestScriptsForProject" default="build">
+    <!--
+        Add narratives to all fixtures in a _references/resources (sub)folder, beneath the root defined by:
+        * generate.narratives.pattern - A wildcard pattern relative to the root of the repo with folders containing fixtures.    
+    -->
+    
+    <property name="tool.reponame"    value="HL7-mappings"/>
+    <property name="tool.name"        value="fhir-narrativegenerator"/>
+    <property name="tool.version"     value="fhir-narrativegenerator-0.9.0"/>
+    <property name="tool.antfile"     value="build/build.xml"/>
+    
+    <dirset id="in.dirs" dir="${basedir}">
+        <include name="${generate.narratives.pattern}/**/_reference/resources"/>
+    </dirset>
+        
+    <!-- 
+        Overwrite the target to download and install the tool because it is based on a release instead of a folder
+        structure in the target repor.
+    -->
+    <target name="get.toolrepo" depends="checkForRepoDownload" if="download.repo">
+        <sequential>
+            <echo>Downloading the testscript tools repo from Github</echo>
+            <echo>If you want to use a local copy for debugging, specifiy it with the -Dtestscripttools.local=... parameter</echo>
+            <echo/>
+            <mkdir dir="${testscripttools.dir}/"/>
+            <local name="zip.name"/>
+            <property name="zip.name" value="${testscripttools.dir}/package.zip"/>
+            <get src="https://github.com/Nictiz/${tool.reponame}/releases/download/${tool.version}/${tool.version}.zip"
+                dest="${zip.name}"/>
+            <unzip src="${zip.name}" dest="${testscripttools.dir}" failOnEmptyArchive="true">
+                <mapper type="regexp" from="^.*?/(.*)" to="\1"/>
+            </unzip>
+            <delete file="${zip.name}"/>
+            <property name="hastestscripttools" value="true" />
+        </sequential>
+    </target>
+    
+    <import file="bootstrap-from-github.xml"/>
+    <extension-point name="build" depends="bootstrapFromGithub.build"/>
+</project>
