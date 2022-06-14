@@ -5,7 +5,7 @@
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
    <url value="http://nictiz.nl/fhir/TestScript/xis-2-5-serve-1-pdfa-json"/>
-   <version value="stu3-2.0- patchlevel 2022-05"/>
+   <version value="stu3-2.0 - patchlevel 2022-05"/>
    <name value="PDFA - XIS Server - Scenario 2.5 - Serve one PDFA document - JSON Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -56,7 +56,7 @@
    </rule>
    <rule id="assertPDFOrBinary">
       <resource>
-         <reference value="../_reference/rule/assertPDFOrBinary.groovy"/>
+         <reference value="../_reference/rules/assertPDFOrBinary.groovy"/>
       </resource>
    </rule>
    <test id="scenario2-5-serve-1-documentreference">
@@ -284,10 +284,19 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the response Bundle contains 1 DocumentReference resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 DocumentReference resource, or 2 if the server doesn't support the 'entered-in-error' status and defaults to 'current'."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(DocumentReference)).count() = 1"/>
-            <warningOnly value="false"/>
+            <expression value="Bundle.entry.where(resource.is(DocumentReference)).count() in (1 | 2)"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all the DocumentReference resources in the Bundle have the status 'current'. This check is needed to make sure that servers which don't support the 'entered-in-error' status and default to 'current' actually only return DocumentReferences with this status."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(DocumentReference)).all(resource.status = 'current')"/>
          </assert>
       </action>
       <action>
@@ -352,7 +361,7 @@
    </test>
    <test id="scenario2-5-serve-pdfa-document-control">
       <name value="Scenario 2.5 - Read without authorization header"/>
-      <description value="Test XIS Server to have control over the reference obtained from the DocumentReference.content.attachment.url. This test resolves the fullURL withouth an authorization header. The request should fail to confirm that the XIS has control over the context. The expected response code is not 200 (OK) but should be 401, 403 or 404."/>
+      <description value="Test XIS Server to have control over the reference obtained from the DocumentReference.content.attachment.url. This test resolves the fullURL withouth an authorization header. The request should fail to confirm that the XIS has control over the context. The expected response code is not 200(OK) but should be 401, 403 or 404.  "/>
       <action>
          <operation>
             <type>
@@ -386,7 +395,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Check if the returned HTTP status is 401 (Unauthorized), 403 (Forbidden) or 404 (Not Found). Assert is set to warning only becasue other HTTP failure codes may be expected as well."/>
+            <description value="Check if the returned HTTP status is 401(Unauthorized), 403(Forbidden) or 404(Not Found). Assert is set to warning only becasue other HTTP failure codes may be expected as well."/>
             <direction value="response"/>
             <operator value="in"/>
             <responseCode value="401,403,404"/>
