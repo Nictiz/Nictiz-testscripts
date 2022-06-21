@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="server">
+    
+    <id value="Sending-XIS-scenario1.1"/>
+    <version value="stu3-4.0"/>
+    <name value="eOverdracht receiving system - scenario 1.1 "/>
+    <description value="Test for eOverdracht sending systems according to qualification scenario 1.1"/>
+    
+    <nts:patientTokenFixture href="eOverdracht-patient-Altenborg-token.xml"/>
+    
+    <setup in-targets="internal">
+        <nts:fixture
+            id="initial-task-fixture"
+            href="resources/resources-specific/eOverdracht-Task-eov-test-1_1-01-ACCEPTED.xml"/>
+        <nts:include value="setup.initializeTask.general"/>
+    </setup>
+    
+    <nts:include value="step.serveAcceptedTask.sendingxis"
+        scenarioId="Scenario-1.1"
+        patientName="XXX_Altenborg"/>
+    
+    <test id="Scenario1.1-ServeNursingHandoff">
+        <name value="Scenario1.1 - Serve NursingHandoff Composition"/>
+        <description value="Scenario 1.1 - Test sending XIS to serve the nursing handoff Composition referenced in the eOverdracht Task."/>
+        
+        <nts:include value="variable.nursingHandoffIdFromTaskBundle.general">
+            <nts:with-parameter name="taskStatus" value="accepted"/>
+            <nts:with-parameter name="sourceId" value="get-accepted-task-response"/>
+        </nts:include>
+
+        <nts:include value="test.server.successfulRead" scope="common"
+            resource="Composition"
+            params="/${nursing-handoff-id}"
+            useToken="true"/>
+        <nts:profile id="eOverdracht-NursingHandoff" value="http://nictiz.nl/fhir/StructureDefinition/eOverdracht-NursingHandoff-Adults"/>
+        <action>
+            <assert>
+                <description value="Confirm that the Composition conforms to the eOverdracht Nursing Handoff profile"/>
+                <direction value="response"/>
+                <validateProfileId value="eOverdracht-NursingHandoff"/>
+            </assert>
+        </action>
+    </test>
+
+    <test id="Scenario1.1-RecieveTaskUpdate">
+        <name value="Scenario1.1 - Handle update to eOverdracht Task"/>
+        <description value="Test XIS server to handle an update to the eOverdracht Task with status 'completed'. This will be an update operation where the original Task is sent, with only the status element changed."/>
+
+        <nts:fixture
+            id="completed-task-fixture"
+            href="resources/resources-specific/eOverdracht-Task-eov-test-1_1-01-COMPLETED.xml"/>
+        <nts:include value="test.handleTaskUpdate.sendingxis">
+            <nts:with-parameter name="expectedStatus" value="completed"/>
+            <nts:with-parameter name="taskUpdateFixtureId" value="completed-task-fixture"/>
+        </nts:include>
+    </test>
+    
+</TestScript>

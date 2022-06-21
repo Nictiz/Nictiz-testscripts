@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="client">
+    
+    <id value="Receiving-XIS-scenario1.1"/>
+    <version value="stu3-4.0"/>
+    <name value="eOverdracht receiving system - scenario 1.1"/>
+    <description value="Test for eOverdracht receiving systems according to qualification scenario 1.1"/>
+    
+    <nts:patientTokenFixture href="eOverdracht-patient-Altenborg-token.xml"/>
+    
+    <setup>
+        <nts:fixture
+            id="initial-task-fixture"
+            href="resources/resources-specific/eOverdracht-Task-eov-test-1_1-01-ACCEPTED.xml"/>
+        <nts:include value="setup.initializeTask.general"/>
+    </setup>
+
+    <nts:include value="step.readAcceptedTask.receivingxis"
+        scenarioId="Scenario1.1"
+        patientName="XXX_Altenborg"/>
+
+    <test>
+        <name value="Scenario1.1-RetrieveNursingHandoff"/>
+        <description value="Scenario 1.1 - Test receiving XIS to retrieve the nursing handoff Composition referenced in the eOverdracht Task."/>
+        
+        <nts:include value="variable.nursingHandoffIdFromTaskBundle.general">
+            <nts:with-parameter name="taskStatus" value="accepted"/>
+            <nts:with-parameter name="sourceId" value="read-accepted-tasks-response"/>
+        </nts:include>
+        
+        <nts:include value="test.client.successfulRead" scope="common"
+            resource="Composition"
+            params="/${nursing-handoff-id}"
+            useToken="true"/>
+    </test>
+    
+    <test id="Scenario1.1-SendTaskUpdate">
+        <name value="Scenario1.1 - Update eOverdracht Task"/>
+        <description value="Test receiving XIS to send an update to the eOverdracht Task with status 'completed'. This will be an update operation where the original Task is sent, with only the status element changed."/>
+        <nts:fixture
+            id="completed-task-fixture"
+            href="resources/resources-specific/eOverdracht-Task-eov-test-1_1-01-COMPLETED.xml"/>
+        <nts:include value="test-updateTask">
+            <nts:with-parameter name="expectedStatus" value="completed"/>
+            <nts:with-parameter name="taskUpdateFixtureId" value="completed-task-fixture"/>
+        </nts:include>
+        <nts:include value="assert.response.success" scope="common"/>
+        
+        <!-- Test some of the content of the Task sent. This should actually be done using a minimumId assert,
+            but at the moment Touchstone's support is too limited. -->
+        <action>
+            <assert>
+                <description value="Confirm that the Task resource contains 1 agent practitioner reference."/>
+                <direction value="request"/>
+                <expression value="Task.for"/>
+                <operator value="notEmpty"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Task resource contains 1 agent practitioner reference."/>
+                <direction value="request"/>
+                <expression value="Task.requester.agent"/>
+                <operator value="notEmpty"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Task resource contains 1 Composition reference for the nursing handoff."/>
+                <direction value="request"/>
+                <expression value="Task.input.type.coding.code"/>
+                <operator value="equals"/>
+                <value value="371535009" />
+            </assert>
+        </action>
+    </test>
+    
+    <nts:include value="action.sendNotification.receivingxis">
+        <nts:with-parameter name="name" value="Send notification for completed Task"/>
+    </nts:include>
+    
+</TestScript>
