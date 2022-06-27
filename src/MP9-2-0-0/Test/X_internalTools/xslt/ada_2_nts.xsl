@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/util/constants.xsl"/>
     <xsl:output method="xml" indent="yes" omit-xml-declaration="yes"/>
+    
     <xsl:strip-space elements="*"/>
 
     <xsl:param name="mappingsUrl4FhirFixtures">https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/mp/9.2.0/4TouchstoneMPServe</xsl:param>
-    <xsl:variable name="bsnSystem">http://fhir.nl/fhir/NamingSystem/bsn</xsl:variable>
+    <xsl:param name="ntsInclude">mp9-ta-retrieve</xsl:param>
+    
+    <xsl:variable name="bsnSystem" select="$oidMap[@oid=$oidBurgerservicenummer]/@uri"/>
 
     <xsl:template match="/">
 
@@ -24,11 +28,9 @@
                     <xsl:value-of select="concat(count(current-group()), ' ', current-group()[1]/local-name())"/>                    
                 </xsl:for-each-group>
              </xsl:variable>
-            
-            
 
             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="client">
-                <nts:include value="mp9-ta-retrieve">
+                <nts:include value="{$ntsInclude}">
                     <nts:with-parameter name="scenarioset" value="{replace(scenario-nr/@value, '(\d+)\.?(\d*)', '$1')}"/>
                     <nts:with-parameter name="scenario" value="{replace(scenario-nr/@value, '(\d+)\.?(\d*)', '$2')}"/>
                     <nts:with-parameter name="scenarioDescription" value="{replace(@desc, '(&lt;.+?&gt;)', '')}"/>
