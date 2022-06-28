@@ -18,6 +18,7 @@
     <property name="github.mp92.dir.local" value="${build.dir}/../../../../../HL7-mappings-dev/ada_2_fhir-r4/mp/9.2.0"/>
     
     <property name="usecase.mg.input" value="beschikbaarstellen_medicatiegegevens"/>
+    <property name="usecase.mg.rp.input" value="raadplegen_medicatiegegevens"/>
     <property name="usecase.mg.output" value="MedicationData"/>
     
 
@@ -25,31 +26,51 @@
 
         <echo>the MP stuff for version 9.2.0</echo>
         <echo/>
-        <echo>beschikbaarstellen_medicatiegegevens TA</echo>
+        <echo>beschikbaarstellen_medicatiegegevens TA scenario 0</echo>
         <property name="xsl.input.mg" value="${github.mp92.dir.local}/${usecase.mg.input}/ada_instance_repo"/>
         <property name="xsl.output.mg" value="${build.dir}/${usecase.mg.output}"/>
 
         <antcall target="convert_ada_2_nts_sub">
             <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
             <param name="xsl.in" value="${xsl.input.mg}"/>
-            <param name="xsl.in.include" value="*-TA-*.xml"/>
+            <param name="xsl.in.include" value="*-TA-Scenarioset0*.xml"/>
             <param name="xsl.out" value="${xsl.output.mg}/Retrieve/AdministrationAgreement"/>
         </antcall>
+        
+        <echo>beschikbaarstellen_medicatiegegevens TA overige scenario's</echo>
+        <property name="xsl.input.mg.rp" value="${github.mp92.dir.local}/${usecase.mg.rp.input}/ada_instance_response"/>
+         
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.mg.rp}"/>
+            <param name="xsl.in.include" value="*-TA-*.xml"/>
+            <param name="xsl.in.exclude" value="*-TA-Scenarioset0*.xml"/>
+            <param name="xsl.out" value="${xsl.output.mg}/Retrieve/AdministrationAgreement"/>
+        </antcall>
+        
    
     </target>
 
     <target name="convert_ada_2_nts_sub">
         
-        <!-- make dir if it does not exist (anymore) -->
+        <!-- make dir if it does not exist (anymore) -->        
         <mkdir dir="${xsl.out}"/>
         <echo>Deleting previous results, if any</echo>
+        
+        <fileset id="outputFiles"  dir="${xsl.out}">
+            <include name="${xsl.in.include}" if="xsl.in.include"/>
+            <exclude name="${xsl.in.exclude}" if="xsl.in.exclude"/>
+        </fileset>
+        
         <delete>
-            <fileset dir="${xsl.out}" includes="*.xml"/>
+            <fileset refid="outputFiles"/>
         </delete>
         
-        
-        <fileset id="inputFiles"  dir="${xsl.in}" includes="${xsl.in.include}"/>
-                
+        <fileset id="inputFiles"  dir="${xsl.in}">
+            <include name="${xsl.in.include}" if="xsl.in.include"/>
+            <exclude name="${xsl.in.exclude}" if="xsl.in.exclude"/>
+        </fileset>        
+                   
         <echo/>
         <echo>${echo.label} input files ${xsl.in}/${xsl.in.include}, to be converted with: ${xsl.convert}</echo>
         <xslt force="true" style="${xsl.convert}" destdir="${xsl.out}" extension=".xml" useImplicitFileset="false">
