@@ -139,7 +139,7 @@
                     </xsl:when>
                     <!--WDS-->
                 </xsl:choose>
-            </xsl:variable> 
+            </xsl:variable>
 
             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="client">
                 <nts:include value="{$ntsInclude}">
@@ -147,6 +147,11 @@
                     <nts:with-parameter name="scenario" value="{replace(scenario-nr/@value, '(\d+)\.?(\d*)', '$2')}"/>
                     <nts:with-parameter name="scenarioDescription" value="{replace(@desc, '(&lt;.+?&gt;)', '')}"/>
                     <nts:with-parameter name="scenarioPatient" value="{$fixturePatient/f:id/@value}"/>
+                    <xsl:choose>
+                        <xsl:when test="$buildingBlockShort = ('TA', 'MA', 'MVE', 'MGB') and scenario-nr/@value = ('0.4', '0.5', '0.6', '0.8')">
+                            <nts:with-parameter name="scenarioDateT" value="yes"/>
+                        </xsl:when>
+                    </xsl:choose>
                     <nts:with-parameter name="scenarioParams" value="?patient.identifier={$bsnSystem}|{$fixturePatient/f:identifier[f:system/@value=$bsnSystem]/f:value/@value}&amp;category={$matchCategory/f:system/@value}|{$matchCategory/f:code/@value}{$additionalScenarioParams}&amp;_include={local-name($matchResources[1])}:medication"/>
                     <nts:with-parameter name="returnCount" value="{count($matchResources)}"/>
                     <nts:with-parameter name="returnEntryCount" value="{count($fhirFixture/f:Bundle/f:entry)}"/>
