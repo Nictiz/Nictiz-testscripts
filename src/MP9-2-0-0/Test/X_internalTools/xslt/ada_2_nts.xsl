@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/util/constants.xsl"/>
+    <!--Import mp specific constants (and package for underlying imports)-->
+    <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/mp/9.2.0/payload/mp_latest_package.xsl"/>
+    <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/util/mp-functions.xsl"/>
     <xsl:output method="xml" indent="yes" omit-xml-declaration="yes"/>
     
     <xsl:strip-space elements="*"/>
@@ -21,13 +23,54 @@
             <xsl:variable name="fhirFixture" select="document(concat($mappingsUrl4FhirFixtures, '/', @id, '.xml'))"/>
             <xsl:variable name="fixturePatient" select="$fhirFixture//f:Patient[1]"/>
             <xsl:variable name="matchResources" select="$fhirFixture/f:Bundle/f:entry[f:search/f:mode/@value='match']/f:resource/*"/>
-            <!-- We assume the first 'match' resource found in the Bundle is the resource that was queried for, we also assume the first category is applicable for the query -->
-            <xsl:variable name="matchCategory" select="$matchResources[1]/f:category[1]/f:coding"/>
+            
+            <xsl:variable name="matchCategoryCode">
+                <xsl:choose>
+                    <xsl:when test="$buildingBlockShort = 'TA'">
+                        <xsl:value-of select="$taCode"/>
+                    </xsl:when>
+                    <xsl:when test="$buildingBlockShort = 'VV'">
+                        <xsl:value-of select="$vvCode"/>
+                    </xsl:when>
+                    <xsl:when test="$buildingBlockShort = 'MTD'">
+                        <xsl:value-of select="$mtdCode"/>
+                    </xsl:when>
+                    <xsl:when test="$buildingBlockShort = 'MA'">
+                        <xsl:value-of select="$maCodeMP920"/>
+                    </xsl:when>
+                    <xsl:when test="$buildingBlockShort = 'MVE'">
+                        <xsl:value-of select="$mveCode"/>
+                    </xsl:when>
+                    <xsl:when test="$buildingBlockShort = 'MGB'">
+                        <xsl:value-of select="$mgbCode"/>
+                    </xsl:when>
+                    <xsl:when test="$buildingBlockShort = 'WDS'">
+                        <xsl:value-of select="$wdsCode"/>
+                    </xsl:when>
+                </xsl:choose>
+            </xsl:variable>
+            
+            <xsl:variable name="matchResource">
+                <xsl:choose>
+                    <xsl:when test="$buildingBlockShort = ('TA', 'MVE')">
+                        <xsl:value-of select="'MedicationDispense'"/>
+                    </xsl:when>
+                    <xsl:when test="$buildingBlockShort = ('VV', 'MA', 'WDS')">
+                        <xsl:value-of select="'MedicationRequest'"/>
+                    </xsl:when>
+                    <xsl:when test="$buildingBlockShort = 'MGB'">
+                        <xsl:value-of select="'MedicationStatement'"/>
+                    </xsl:when>
+                    <xsl:when test="$buildingBlockShort = 'MTD'">
+                        <xsl:value-of select="'MedicationAdministration'"/>
+                    </xsl:when>
+                </xsl:choose>
+            </xsl:variable>
             
             <!-- Construct the string that lists the breakdown, such as (Consists of 6 MedicationDispense and 6 Medication resources.) -->
-            <xsl:variable name="breakDown" as="xs:string*">               
+            <xsl:variable name="breakDown" as="xs:string*">
                 <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/*" group-by="local-name()">
-                    <xsl:value-of select="concat(count(current-group()), ' ', current-group()[1]/local-name())"/>                    
+                    <xsl:value-of select="concat(count(current-group()), ' ', current-group()[1]/local-name())"/>
                 </xsl:for-each-group>
              </xsl:variable>
             
@@ -152,7 +195,7 @@
                             <nts:with-parameter name="scenarioDateT" value="yes"/>
                         </xsl:when>
                     </xsl:choose>
-                    <nts:with-parameter name="scenarioParams" value="?patient.identifier={$bsnSystem}|{$fixturePatient/f:identifier[f:system/@value=$bsnSystem]/f:value/@value}&amp;category={$matchCategory/f:system/@value}|{$matchCategory/f:code/@value}{$additionalScenarioParams}&amp;_include={local-name($matchResources[1])}:medication"/>
+                    <nts:with-parameter name="scenarioParams" value="?patient.identifier={$bsnSystem}|{$fixturePatient/f:identifier[f:system/@value=$bsnSystem]/f:value/@value}&amp;category=http://snomed.info/sct|{$matchCategoryCode}{$additionalScenarioParams}&amp;_include={$matchResource}:medication"/>
                     <nts:with-parameter name="returnCount" value="{count($matchResources)}"/>
                     <nts:with-parameter name="returnEntryCount" value="{count($fhirFixture/f:Bundle/f:entry)}"/>
                     <nts:with-parameter name="returnEntryBreakdown" value="(Consists of {string-join($breakDown, ', ')} resources.)"/>
