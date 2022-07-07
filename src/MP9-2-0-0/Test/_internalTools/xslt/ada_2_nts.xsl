@@ -186,8 +186,8 @@
 
             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="client">
                 <nts:include value="{$ntsInclude}">
-                    <nts:with-parameter name="scenarioset" value="{replace(scenario-nr/@value, '(\d+)\.?(\d*)', '$1')}"/>
-                    <nts:with-parameter name="scenario" value="{replace(scenario-nr/@value, '(\d+)\.?(\d*)', '$2')}"/>
+                    <nts:with-parameter name="scenarioset" value="{replace(scenario-nr/@value, '(\d+)\.?(\d*)\s?[a-z]*', '$1')}"/>
+                    <nts:with-parameter name="scenario" value="{replace(scenario-nr/@value, '(\d+)\.?(\d*)\s?[a-z]*', '$2')}"/>
                     <nts:with-parameter name="scenarioDescription" value="{replace(@desc, '(&lt;.+?&gt;)', '')}"/>
                     <nts:with-parameter name="scenarioPatient" value="{$fixturePatient/f:id/@value}"/>
                     <xsl:choose>
