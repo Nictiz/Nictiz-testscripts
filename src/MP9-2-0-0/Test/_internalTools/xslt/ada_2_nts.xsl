@@ -9,8 +9,9 @@
 
     <xsl:param name="mappingsUrl4FhirFixtures">https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/mp/9.2.0/4TouchstoneMPServe</xsl:param>
     <xsl:param name="buildingBlockShort"/>
+    <xsl:param name="transactionType"></xsl:param>
     
-    <xsl:variable name="ntsInclude" select="concat('mp9-', lower-case($buildingBlockShort), '-retrieve')"/>
+    <xsl:variable name="ntsInclude" select="concat('mp9-', lower-case($buildingBlockShort), '-', lower-case($transactionType))"/>
     
     <xsl:variable name="bsnSystem" select="$oidMap[@oid=$oidBurgerservicenummer]/@uri"/>
 
