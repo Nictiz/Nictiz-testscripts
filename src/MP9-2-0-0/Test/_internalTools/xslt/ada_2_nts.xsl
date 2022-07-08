@@ -7,11 +7,9 @@
     
     <xsl:strip-space elements="*"/>
 
-    <xsl:param name="mappingsUrl4FhirFixtures">https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/mp/9.2.0/4TouchstoneMPServe</xsl:param>
+    <xsl:param name="mappingsUrl4FhirFixtures"/>
     <xsl:param name="buildingBlockShort"/>
-    <xsl:param name="transactionType"></xsl:param>
-    
-    <xsl:variable name="ntsInclude" select="concat('mp9-', lower-case($buildingBlockShort), '-', lower-case($transactionType))"/>
+    <xsl:param name="transactionType"/>
     
     <xsl:variable name="bsnSystem" select="$oidMap[@oid=$oidBurgerservicenummer]/@uri"/>
 
@@ -184,8 +182,30 @@
                     <!--WDS-->
                 </xsl:choose>
             </xsl:variable>
+            
+            <xsl:variable name="ntsInclude">
+                <xsl:choose>
+                    <xsl:when test="$transactionType = 'Retrieve' or ($transactionType = 'Serve' and starts-with(scenario-nr/@value, '0'))">
+                        <xsl:value-of select="concat('mp9-', lower-case($buildingBlockShort), '-', lower-case($transactionType))"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:value-of select="concat('mp9-', lower-case($buildingBlockShort), '-', lower-case($transactionType), '-testmedication')"/>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:variable>
+            
+            <xsl:variable name="ntsScenario">
+                <xsl:choose>
+                    <xsl:when test="$transactionType = 'Retrieve'">
+                        <xsl:value-of select="'client'"/>
+                    </xsl:when>
+                    <xsl:when test="$transactionType = 'Serve'">
+                        <xsl:value-of select="'server'"/>
+                    </xsl:when>
+                </xsl:choose>
+            </xsl:variable>
 
-            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="client">
+            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                 <nts:include value="{$ntsInclude}">
                     <nts:with-parameter name="scenarioset" value="{replace(scenario-nr/@value, '(\d+)\.?(\d*)\s?[a-z]*', '$1')}"/>
                     <nts:with-parameter name="scenario" value="{replace(scenario-nr/@value, '(\d+)\.?(\d*)\s?[a-z]*', '$2')}"/>
