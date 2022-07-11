@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl"  xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <!--Import mp specific constants (and package for underlying imports)-->
     <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/mp/9.2.0/payload/mp_latest_package.xsl"/>
     <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/util/mp-functions.xsl"/>
@@ -13,6 +13,9 @@
 
     <xsl:variable name="bsnSystem" select="$oidMap[@oid = $oidBurgerservicenummer]/@uri"/>
 
+    <xd:doc>
+        <xd:desc>Start template. Handles some ada transactions, converts them to nts. Very specific for each transaction.</xd:desc>
+    </xd:doc>
     <xsl:template match="/">
 
         <xsl:variable name="adaTransaction" select="adaxml/data/*" as="element()*"/>
@@ -234,7 +237,7 @@
                 <xsl:when test="$adaTransaction/self::sturen_medicatievoorschrift">
                     <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                         <id value="mp9-prescr-send-{$scenarioset}-{$scenario}"/>
-                        <name value="PDFA - PHR Client - Scenario {$scenarioset}.{$scenario} - Send Prescription"/>
+                        <name value="MP9 - Client - Scenario {$scenarioset}.{$scenario} - Send Prescription"/>
                         <description value="Scenario {$scenarioset}.{$scenario} - Send Prescription for {$fixturePatient/f:name/f:text/@value}."/>
 
                         <nts:fixture id="{@id}" href="fixtures/{@id}.xml"/>
