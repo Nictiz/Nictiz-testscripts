@@ -10,98 +10,145 @@
     <ant antfile="../../../../../../HL7-mappings/_ant-buildfiles/ant-include/ant.ivy.xml" inheritall="true" usenativebasedir="true"/>
     <property name="xsl.saxon" value="${saxon.path}"/>
     <property name="xsl.saxon.class" value="net.sf.saxon.TransformerFactoryImpl"/>
-    
+
     <property name="build.dir" value=".."/>
-    
+
     <property name="github.mp92.dir" value="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/mp/9.2.0"/>
     <!-- don't know how to create fileset or resource collection from online dir, workaround: use local dir -->
     <property name="github.mp92.dir.local" value="${build.dir}/../../../../../HL7-mappings-dev/ada_2_fhir-r4/mp/9.2.0"/>
-    
+
     <property name="usecase.mg.input" value="beschikbaarstellen_medicatiegegevens"/>
     <property name="usecase.mg.rp.input" value="raadplegen_medicatiegegevens"/>
     <property name="usecase.mg.output" value="MedicationData"/>
-    
+
     <target name="convert_ada2nts_prescription_920">
-        <!-- target for medication prescription, should be integrated / rationalised later on -->
-        
-        <property name="xsl.input.mv" value="${github.mp92.dir.local}/sturen_medicatievoorschrift/ada_instance"/>
-        <property name="xsl.output.mv" value="${build.dir}/MedicationPrescription"/>
+        <!-- target for medication prescription -->
+        <antcall target="convert_push_usecase_920">
+            <param name="xsl.input.usecase" value="${github.mp92.dir.local}/sturen_medicatievoorschrift/ada_instance"/>
+            <param name="xsl.output.usecase" value="${build.dir}/MedicationPrescription"/>
+        </antcall>
+    </target>
+
+    <target name="convert_ada2nts_prescription_processing_920">
+        <!-- target for medication prescription processing -->
+        <antcall target="convert_push_usecase_920">
+            <param name="xsl.input.usecase" value="${github.mp92.dir.local}/sturen_afhandeling_medicatievoorschrift/ada_instance"/>
+            <param name="xsl.output.usecase" value="${build.dir}/PrescrProcessing"/>
+        </antcall>
+    </target>
+
+    <target name="convert_ada2nts_prop_ma_920">
+        <!-- target for proposal medication agreement -->
+        <antcall target="convert_push_usecase_920">
+            <param name="xsl.input.usecase" value="${github.mp92.dir.local}/sturen_voorstel_medicatieafspraak/ada_instance"/>
+            <param name="xsl.output.usecase" value="${build.dir}/ProposalMA"/>
+        </antcall>
+    </target>
+
+    <target name="convert_ada2nts_reply_prop_ma_920">
+        <!-- target for reply proposal medication agreement -->
+        <antcall target="convert_push_usecase_920">
+            <param name="xsl.input.usecase" value="${github.mp92.dir.local}/sturen_antwoord_voorstel_medicatieafspraak/ada_instance"/>
+            <param name="xsl.output.usecase" value="${build.dir}/ReplyProposalMA"/>
+        </antcall>
+    </target>
+
+    <target name="convert_ada2nts_prop_vv_920">
+        <!-- target for proposal dispense request (verstrekkingsverzoek) -->
+        <antcall target="convert_push_usecase_920">
+            <param name="xsl.input.usecase" value="${github.mp92.dir.local}/sturen_voorstel_verstrekkingsverzoek/ada_instance"/>
+            <param name="xsl.output.usecase" value="${build.dir}/ProposalVV"/>
+        </antcall>
+    </target>
+    
+    <target name="convert_ada2nts_reply_prop_vv_920">
+        <!-- target for reply proposal dispense request (verstrekkingsverzoek) -->
+        <antcall target="convert_push_usecase_920">
+            <param name="xsl.input.usecase" value="${github.mp92.dir.local}/sturen_voorstel_verstrekkingsverzoek/ada_instance"/>
+            <param name="xsl.output.usecase" value="${build.dir}/ReplyProposalVV"/>
+        </antcall>
+    </target>
+
+
+    <target name="convert_push_usecase_920">
+
         <property name="mappingsUrl4FhirFixtures" value="${github.mp92.dir}/4TouchstoneMPServe"/>
-        
+
         <!-- Send -->
         <antcall target="convert_ada_2_nts_sub">
             <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
-            <param name="xsl.in" value="${xsl.input.mv}"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
             <param name="xsl.in.include" value="*.xml"/>
-            <param name="xsl.out" value="../${xsl.output.mv}/Send"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Send"/>
             <param name="transaction.type" value="Send"/>
         </antcall>
-        
+
         <!-- Receive -->
         <antcall target="convert_ada_2_nts_sub">
             <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
-            <param name="xsl.in" value="${xsl.input.mv}"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
             <param name="xsl.in.include" value="*.xml"/>
-            <param name="xsl.out" value="../${xsl.output.mv}/Receive"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Receive"/>
             <param name="transaction.type" value="Receive"/>
         </antcall>
-        
-        
+
     </target>
-    
+
+
     <target name="convert_ada_2_nts_920">
-        
+        <!-- retrieve/serve interaction -->
+
         <antcall target="convert_ada_2_nts_920_transaction">
             <param name="transaction.type" value="Retrieve"/>
         </antcall>
-        
+
         <antcall target="convert_ada_2_nts_920_transaction">
             <param name="transaction.type" value="Serve"/>
         </antcall>
-        
+
     </target>
-    
+
     <target name="convert_ada_2_nts_920_transaction">
-        
+
         <echo>Building blocks MTD and WDS don't contain tests w.r.t. filter criteria (scenario 0)</echo>
-        
+
         <antcall target="convert_ada_2_nts_920_bb">
             <param name="buildingblock.short" value="TA"/>
             <param name="buildingblock" value="AdministrationAgreement"/>
         </antcall>
-        
+
         <antcall target="convert_ada_2_nts_920_bb">
             <param name="buildingblock.short" value="VV"/>
             <param name="buildingblock" value="DispenseRequest"/>
         </antcall>
-        
+
         <antcall target="convert_ada_2_nts_920_bb_otherscenarios">
             <param name="buildingblock.short" value="MTD"/>
             <param name="buildingblock" value="MedicationAdministration"/>
         </antcall>
-        
+
         <antcall target="convert_ada_2_nts_920_bb">
             <param name="buildingblock.short" value="MA"/>
             <param name="buildingblock" value="MedicationAgreement"/>
         </antcall>
-        
+
         <antcall target="convert_ada_2_nts_920_bb">
             <param name="buildingblock.short" value="MVE"/>
             <param name="buildingblock" value="MedicationDispense"/>
         </antcall>
-        
+
         <antcall target="convert_ada_2_nts_920_bb">
             <param name="buildingblock.short" value="MGB"/>
             <param name="buildingblock" value="MedicationUse"/>
         </antcall>
-        
+
         <antcall target="convert_ada_2_nts_920_bb_otherscenarios">
             <param name="buildingblock.short" value="WDS"/>
             <param name="buildingblock" value="VariableDosingRegimen"/>
         </antcall>
-    
+
     </target>
-        
+
     <target name="convert_ada_2_nts_920_bb">
 
         <echo>Scenario 0 (filter criteria)</echo>
@@ -109,29 +156,29 @@
 
         <echo>Other scenarios</echo>
         <antcall target="convert_ada_2_nts_920_bb_otherscenarios"/>
-   
+
     </target>
-    
+
     <target name="convert_ada_2_nts_920_bb_scenario0">
-        
+
         <property name="xsl.input.mg" value="${github.mp92.dir.local}/${usecase.mg.input}/ada_instance_repo"/>
         <property name="xsl.output.mg" value="${build.dir}/${usecase.mg.output}"/>
-        
+
         <antcall target="convert_ada_2_nts_sub">
             <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
             <param name="xsl.in" value="${xsl.input.mg}"/>
             <param name="xsl.in.include" value="*-${buildingblock.short}-Scenarioset0*.xml"/>
             <param name="xsl.out" value="${xsl.output.mg}/${transaction.type}/${buildingblock}"/>
         </antcall>
-        
+
     </target>
-    
+
     <target name="convert_ada_2_nts_920_bb_otherscenarios">
-        
+
         <property name="xsl.input.mg" value="${github.mp92.dir.local}/${usecase.mg.rp.input}/ada_instance_response"/>
         <property name="xsl.output.mg" value="${build.dir}/${usecase.mg.output}"/>
         <property name="mappingsUrl4FhirFixtures" value="${github.mp92.dir}/${usecase.mg.rp.input}/fhir_instance_response"/>
-        
+
         <antcall target="convert_ada_2_nts_sub">
             <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
             <param name="xsl.in" value="${xsl.input.mg}"/>
@@ -139,28 +186,28 @@
             <param name="xsl.in.exclude" value="*-${buildingblock.short}-Scenarioset0*.xml"/>
             <param name="xsl.out" value="${xsl.output.mg}/${transaction.type}/${buildingblock}"/>
         </antcall>
-        
+
     </target>
 
     <target name="convert_ada_2_nts_sub">
-        
-        <!-- Make dir if it does not exist (anymore) -->        
+
+        <!-- Make dir if it does not exist (anymore) -->
         <mkdir dir="${xsl.out}"/>
         <echo>Deleting previous results, if any</echo>
-        
-        <fileset id="outputFiles"  dir="${xsl.out}">
+
+        <fileset id="outputFiles" dir="${xsl.out}">
             <include name="${xsl.in.include}" if="xsl.in.include"/>
             <exclude name="${xsl.in.exclude}" if="xsl.in.exclude"/>
         </fileset>
-        
+
         <delete>
             <fileset refid="outputFiles"/>
         </delete>
-        
+
         <fileset id="inputFiles" dir="${xsl.in}">
             <include name="${xsl.in.include}" if="xsl.in.include"/>
             <exclude name="${xsl.in.exclude}" if="xsl.in.exclude"/>
-        </fileset>        
+        </fileset>
 
         <echo>${echo.label} input files ${xsl.in}/${xsl.in.include}, to be converted with: ${xsl.convert}</echo>
         <xslt force="true" style="${xsl.convert}" destdir="${xsl.out}" extension=".xml" useImplicitFileset="false">
@@ -171,7 +218,7 @@
             <param name="buildingBlockShort" expression="${buildingblock.short}"/>
             <param name="transactionType" expression="${transaction.type}"/>
         </xslt>
-        
+
     </target>
 
 </project>

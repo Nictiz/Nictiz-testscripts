@@ -21,8 +21,9 @@
         <xsl:variable name="adaTransaction" select="adaxml/data/*" as="element()*"/>
 
         <xsl:for-each select="$adaTransaction">
-            <!-- find corresponding FHIR fixture based on filename -->
-            <xsl:variable name="fhirFixture" select="document(concat($mappingsUrl4FhirFixtures, '/', @id, '.xml'))"/>
+            <!-- find corresponding FHIR fixture based on adaId / filename -->
+            <xsl:variable name="adaTransId" select="nf:removeSpecialCharacters(@id)"/>
+            <xsl:variable name="fhirFixture" select="document(concat($mappingsUrl4FhirFixtures, '/', $adaTransId, '.xml'))"/>
             <xsl:variable name="fixturePatient" select="$fhirFixture//f:Patient[1]"/>
 
             <xsl:variable name="scenarioset" select="replace(scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$1')"/>
@@ -90,7 +91,7 @@
                         </xsl:for-each-group>
                     </xsl:variable>
 
-                    <xsl:variable name="adaId" select="self::beschikbaarstellen_medicatiegegevens/@id"/>
+                    <xsl:variable name="adaId" select="self::beschikbaarstellen_medicatiegegevens/nf:removeSpecialCharacters(@id)"/>
 
                     <!-- scenario 0 is a bit of a headache to construct the query -->
                     <xsl:variable name="additionalScenarioParams">
@@ -239,7 +240,7 @@
                                 <id value="mp9-prescr-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
                                 <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Prescription"/>
                                 <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Prescription for {$fixturePatient/f:name/f:text/@value}."/>
-                                <nts:fixture id="{@id}" href="fixtures/{@id}.xml"/>
+                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
                                 <nts:includeDateT value="yes"/>
 
                                 <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-prescription">
@@ -256,7 +257,7 @@
                                             <contentType value="xml"/>
                                             <destination value="1"/>
                                             <origin value="1"/>
-                                              <requestHeader>
+                                            <requestHeader>
                                                 <field value="MP9-Request-ID"/>
                                                 <value value="${{UUID}}"/>
                                             </requestHeader>
@@ -264,7 +265,7 @@
                                                 <field value="Prefer"/>
                                                 <value value="return=representation"/>
                                             </requestHeader>
-                                            <sourceId value="{@id}"/>
+                                            <sourceId value="{$adaTransId}"/>
                                         </operation>
                                     </action>
 
@@ -280,7 +281,7 @@
                                 <id value="mp9-prescr-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
                                 <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Prescription"/>
                                 <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Prescription for {$fixturePatient/f:name/f:text/@value}."/>
-                                <nts:fixture id="{@id}" href="fixtures/{@id}.xml"/>
+                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
                                 <nts:includeDateT value="yes"/>
 
                                 <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-prescription">
@@ -299,7 +300,7 @@
                                                 <field value="MP9-Request-ID"/>
                                                 <value value="${UUID}"/>
                                             </requestHeader>
-                                            <sourceId value="{@id}"/>
+                                            <sourceId value="{$adaTransId}"/>
                                         </operation>
                                     </action>
                                     <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
@@ -314,6 +315,419 @@
 
 
                 </xsl:when>
+                <xsl:when test="$adaTransaction/self::sturen_afhandeling_medicatievoorschrift">
+                    <xsl:choose>
+                        <!-- Receive -->
+                        <xsl:when test="$ntsScenario = 'server'">
+                            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                                <id value="mp9-prescr-proc-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
+                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Prescription Processing"/>
+                                <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Prescription Processing for {$fixturePatient/f:name/f:text/@value}."/>
+                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
+                                <nts:includeDateT value="yes"/>
+
+                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-prescription-processing">
+                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
+                                    <description value="{nf:first-cap($transactionType)} Prescription Processing in a transaction Bundle"/>
+                                    <action>
+                                        <operation>
+                                            <type>
+                                                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                                                <code value="transaction"/>
+                                            </type>
+                                            <description value="Test server to handle a Bundle of type transaction."/>
+                                            <accept value="xml"/>
+                                            <contentType value="xml"/>
+                                            <destination value="1"/>
+                                            <origin value="1"/>
+                                            <requestHeader>
+                                                <field value="MP9-Request-ID"/>
+                                                <value value="${{UUID}}"/>
+                                            </requestHeader>
+                                            <requestHeader>
+                                                <field value="Prefer"/>
+                                                <value value="return=representation"/>
+                                            </requestHeader>
+                                            <sourceId value="{$adaTransId}"/>
+                                        </operation>
+                                    </action>
+
+                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
+                                        <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
+                                    </xsl:for-each-group>
+                                </test>
+                            </TestScript>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <!-- assume Send -->
+                            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                                <id value="mp9-prescr-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
+                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Prescription Processing"/>
+                                <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Prescription Processing for {$fixturePatient/f:name/f:text/@value}."/>
+                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
+                                <nts:includeDateT value="yes"/>
+
+                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-prescription-processing">
+                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
+                                    <description value="{nf:first-cap($transactionType)} Prescription Processing in a transaction Bundle"/>
+                                    <action>
+                                        <operation>
+                                            <type>
+                                                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                                                <code value="transaction"/>
+                                            </type>
+                                            <description value="Test client to POST a Bundle of type transaction."/>
+                                            <destination value="1"/>
+                                            <origin value="1"/>
+                                            <requestHeader>
+                                                <field value="MP9-Request-ID"/>
+                                                <value value="${UUID}"/>
+                                            </requestHeader>
+                                            <sourceId value="{$adaTransId}"/>
+                                        </operation>
+                                    </action>
+                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
+                                        <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
+                                    </xsl:for-each-group>
+                                </test>
+                            </TestScript>
+
+
+                        </xsl:otherwise>
+                    </xsl:choose>
+
+
+                </xsl:when>
+                <xsl:when test="$adaTransaction/self::sturen_voorstel_medicatieafspraak">
+                    <xsl:choose>
+                        <!-- Receive -->
+                        <xsl:when test="$ntsScenario = 'server'">
+                            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                                <id value="mp9-prescr-proc-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
+                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Proposal medication agreement"/>
+                                <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Proposal medication agreement for {$fixturePatient/f:name/f:text/@value}."/>
+                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
+                                <nts:includeDateT value="yes"/>
+                                
+                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-proposal-ma">
+                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
+                                    <description value="{nf:first-cap($transactionType)} Proposal medication agreement in a transaction Bundle"/>
+                                    <action>
+                                        <operation>
+                                            <type>
+                                                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                                                <code value="transaction"/>
+                                            </type>
+                                            <description value="Test server to handle a Bundle of type transaction."/>
+                                            <accept value="xml"/>
+                                            <contentType value="xml"/>
+                                            <destination value="1"/>
+                                            <origin value="1"/>
+                                            <requestHeader>
+                                                <field value="MP9-Request-ID"/>
+                                                <value value="${{UUID}}"/>
+                                            </requestHeader>
+                                            <requestHeader>
+                                                <field value="Prefer"/>
+                                                <value value="return=representation"/>
+                                            </requestHeader>
+                                            <sourceId value="{$adaTransId}"/>
+                                        </operation>
+                                    </action>
+                                    
+                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
+                                        <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
+                                    </xsl:for-each-group>
+                                </test>
+                            </TestScript>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <!-- assume Send -->
+                            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                                <id value="mp9-prescr-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
+                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Proposal medication agreement"/>
+                                <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Proposal medication agreement for {$fixturePatient/f:name/f:text/@value}."/>
+                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
+                                <nts:includeDateT value="yes"/>
+                                
+                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-proposal-ma">
+                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
+                                    <description value="{nf:first-cap($transactionType)} Proposal medication agreement in a transaction Bundle"/>
+                                    <action>
+                                        <operation>
+                                            <type>
+                                                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                                                <code value="transaction"/>
+                                            </type>
+                                            <description value="Test client to POST a Bundle of type transaction."/>
+                                            <destination value="1"/>
+                                            <origin value="1"/>
+                                            <requestHeader>
+                                                <field value="MP9-Request-ID"/>
+                                                <value value="${UUID}"/>
+                                            </requestHeader>
+                                            <sourceId value="{$adaTransId}"/>
+                                        </operation>
+                                    </action>
+                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
+                                        <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
+                                    </xsl:for-each-group>
+                                </test>
+                            </TestScript>
+                            
+                            
+                        </xsl:otherwise>
+                    </xsl:choose>
+                    
+                    
+                </xsl:when>
+                <xsl:when test="$adaTransaction/self::sturen_antwoord_voorstel_medicatieafspraak">
+                    <xsl:choose>
+                        <!-- Receive -->
+                        <xsl:when test="$ntsScenario = 'server'">
+                            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                                <id value="mp9-prescr-proc-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
+                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Reply proposal medication agreement"/>
+                                <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Reply proposal medication agreement for {$fixturePatient/f:name/f:text/@value}."/>
+                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
+                                <nts:includeDateT value="yes"/>
+                                
+                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-reply-proposal-ma">
+                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
+                                    <description value="{nf:first-cap($transactionType)} Reply proposal medication agreement in a transaction Bundle"/>
+                                    <action>
+                                        <operation>
+                                            <type>
+                                                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                                                <code value="transaction"/>
+                                            </type>
+                                            <description value="Test server to handle a Bundle of type transaction."/>
+                                            <accept value="xml"/>
+                                            <contentType value="xml"/>
+                                            <destination value="1"/>
+                                            <origin value="1"/>
+                                            <requestHeader>
+                                                <field value="MP9-Request-ID"/>
+                                                <value value="${{UUID}}"/>
+                                            </requestHeader>
+                                            <requestHeader>
+                                                <field value="Prefer"/>
+                                                <value value="return=representation"/>
+                                            </requestHeader>
+                                            <sourceId value="{$adaTransId}"/>
+                                        </operation>
+                                    </action>
+                                    
+                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
+                                        <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
+                                    </xsl:for-each-group>
+                                </test>
+                            </TestScript>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <!-- assume Send -->
+                            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                                <id value="mp9-prescr-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
+                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Reply proposal medication agreement"/>
+                                <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Reply proposal medication agreement for {$fixturePatient/f:name/f:text/@value}."/>
+                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
+                                <nts:includeDateT value="yes"/>
+                                
+                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-reply-proposal-ma">
+                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
+                                    <description value="{nf:first-cap($transactionType)} Reply proposal medication agreement in a transaction Bundle"/>
+                                    <action>
+                                        <operation>
+                                            <type>
+                                                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                                                <code value="transaction"/>
+                                            </type>
+                                            <description value="Test client to POST a Bundle of type transaction."/>
+                                            <destination value="1"/>
+                                            <origin value="1"/>
+                                            <requestHeader>
+                                                <field value="MP9-Request-ID"/>
+                                                <value value="${UUID}"/>
+                                            </requestHeader>
+                                            <sourceId value="{$adaTransId}"/>
+                                        </operation>
+                                    </action>
+                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
+                                        <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
+                                    </xsl:for-each-group>
+                                </test>
+                            </TestScript>
+                            
+                            
+                        </xsl:otherwise>
+                    </xsl:choose>
+                    
+                    
+                </xsl:when>
+                <xsl:when test="$adaTransaction/self::sturen_voorstel_verstrekkingsverzoek">
+                    <xsl:choose>
+                        <!-- Receive -->
+                        <xsl:when test="$ntsScenario = 'server'">
+                            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                                <id value="mp9-prescr-proc-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
+                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Proposal dispense request (verstrekkingsverzoek)"/>
+                                <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Proposal dispense request (verstrekkingsverzoek) for {$fixturePatient/f:name/f:text/@value}."/>
+                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
+                                <nts:includeDateT value="yes"/>
+                                
+                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-proposal-vv">
+                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
+                                    <description value="{nf:first-cap($transactionType)} Proposal dispense request (verstrekkingsverzoek) in a transaction Bundle"/>
+                                    <action>
+                                        <operation>
+                                            <type>
+                                                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                                                <code value="transaction"/>
+                                            </type>
+                                            <description value="Test server to handle a Bundle of type transaction."/>
+                                            <accept value="xml"/>
+                                            <contentType value="xml"/>
+                                            <destination value="1"/>
+                                            <origin value="1"/>
+                                            <requestHeader>
+                                                <field value="MP9-Request-ID"/>
+                                                <value value="${{UUID}}"/>
+                                            </requestHeader>
+                                            <requestHeader>
+                                                <field value="Prefer"/>
+                                                <value value="return=representation"/>
+                                            </requestHeader>
+                                            <sourceId value="{$adaTransId}"/>
+                                        </operation>
+                                    </action>
+                                    
+                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
+                                        <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
+                                    </xsl:for-each-group>
+                                </test>
+                            </TestScript>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <!-- assume Send -->
+                            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                                <id value="mp9-prescr-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
+                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Proposal dispense request (verstrekkingsverzoek)"/>
+                                <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Proposal dispense request (verstrekkingsverzoek) for {$fixturePatient/f:name/f:text/@value}."/>
+                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
+                                <nts:includeDateT value="yes"/>
+                                
+                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-proposal-vv">
+                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
+                                    <description value="{nf:first-cap($transactionType)} Proposal dispense request (verstrekkingsverzoek) in a transaction Bundle"/>
+                                    <action>
+                                        <operation>
+                                            <type>
+                                                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                                                <code value="transaction"/>
+                                            </type>
+                                            <description value="Test client to POST a Bundle of type transaction."/>
+                                            <destination value="1"/>
+                                            <origin value="1"/>
+                                            <requestHeader>
+                                                <field value="MP9-Request-ID"/>
+                                                <value value="${UUID}"/>
+                                            </requestHeader>
+                                            <sourceId value="{$adaTransId}"/>
+                                        </operation>
+                                    </action>
+                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
+                                        <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
+                                    </xsl:for-each-group>
+                                </test>
+                            </TestScript>
+                            
+                            
+                        </xsl:otherwise>
+                    </xsl:choose>
+                    
+                    
+                </xsl:when>
+                <xsl:when test="$adaTransaction/self::sturen_antwoord_voorstel_verstrekkingsverzoek">
+                    <xsl:choose>
+                        <!-- Receive -->
+                        <xsl:when test="$ntsScenario = 'server'">
+                            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                                <id value="mp9-prescr-proc-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
+                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Reply proposal dispense request (verstrekkingsverzoek)"/>
+                                <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Reply proposal dispense request (verstrekkingsverzoek) for {$fixturePatient/f:name/f:text/@value}."/>
+                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
+                                <nts:includeDateT value="yes"/>
+                                
+                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-reply-proposal-vv">
+                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
+                                    <description value="{nf:first-cap($transactionType)} Reply proposal dispense request (verstrekkingsverzoek) in a transaction Bundle"/>
+                                    <action>
+                                        <operation>
+                                            <type>
+                                                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                                                <code value="transaction"/>
+                                            </type>
+                                            <description value="Test server to handle a Bundle of type transaction."/>
+                                            <accept value="xml"/>
+                                            <contentType value="xml"/>
+                                            <destination value="1"/>
+                                            <origin value="1"/>
+                                            <requestHeader>
+                                                <field value="MP9-Request-ID"/>
+                                                <value value="${{UUID}}"/>
+                                            </requestHeader>
+                                            <requestHeader>
+                                                <field value="Prefer"/>
+                                                <value value="return=representation"/>
+                                            </requestHeader>
+                                            <sourceId value="{$adaTransId}"/>
+                                        </operation>
+                                    </action>
+                                    
+                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
+                                        <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
+                                    </xsl:for-each-group>
+                                </test>
+                            </TestScript>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <!-- assume Send -->
+                            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                                <id value="mp9-prescr-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
+                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Reply proposal dispense request (verstrekkingsverzoek)"/>
+                                <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} Reply proposal dispense request (verstrekkingsverzoek) for {$fixturePatient/f:name/f:text/@value}."/>
+                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
+                                <nts:includeDateT value="yes"/>
+                                
+                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-reply-proposal-vv">
+                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
+                                    <description value="{nf:first-cap($transactionType)} Reply proposal dispense request (verstrekkingsverzoek) in a transaction Bundle"/>
+                                    <action>
+                                        <operation>
+                                            <type>
+                                                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                                                <code value="transaction"/>
+                                            </type>
+                                            <description value="Test client to POST a Bundle of type transaction."/>
+                                            <destination value="1"/>
+                                            <origin value="1"/>
+                                            <requestHeader>
+                                                <field value="MP9-Request-ID"/>
+                                                <value value="${UUID}"/>
+                                            </requestHeader>
+                                            <sourceId value="{$adaTransId}"/>
+                                        </operation>
+                                    </action>
+                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
+                                        <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
+                                    </xsl:for-each-group>
+                                </test>
+                            </TestScript>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                    
+                    
+                </xsl:when>
                 <xsl:otherwise>
                     <xsl:call-template name="util:logMessage">
                         <xsl:with-param name="level" select="$logWARN"/>
@@ -325,14 +739,14 @@
 
         </xsl:for-each>
     </xsl:template>
-    
+
     <xd:doc>
         <xd:desc>Capitalize first letter of a string</xd:desc>
         <xd:param name="in">The string to be handled</xd:param>
     </xd:doc>
     <xsl:function name="nf:first-cap" as="xs:string?">
-        <xsl:param name="in" as="xs:string?"/>        
-        <xsl:sequence select="concat(upper-case(substring($in,1,1)), substring($in,2))"/>
+        <xsl:param name="in" as="xs:string?"/>
+        <xsl:sequence select="concat(upper-case(substring($in, 1, 1)), substring($in, 2))"/>
     </xsl:function>
 
 </xsl:stylesheet>
