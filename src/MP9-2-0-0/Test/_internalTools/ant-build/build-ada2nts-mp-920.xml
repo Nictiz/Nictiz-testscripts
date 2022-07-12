@@ -21,6 +21,31 @@
     <property name="usecase.mg.rp.input" value="raadplegen_medicatiegegevens"/>
     <property name="usecase.mg.output" value="MedicationData"/>
 
+    <target name="convert_ada2nts_meddata_920">
+        <!-- target for medication data push -->
+        <property name="xsl.input.usecase" value="${github.mp92.dir.local}/beschikbaarstellen_medicatiegegevens/ada_instance"/>
+        <property name="xsl.output.usecase" value="${build.dir}/MedicationData"/>
+        <property name="mappingsUrl4FhirFixtures" value="${github.mp92.dir}/4TouchstoneMPServe"/>
+
+        <!-- Send -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Send"/>
+            <param name="transaction.type" value="Send"/>
+        </antcall>
+
+        <!-- Receive -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Receive"/>
+            <param name="transaction.type" value="Receive"/>
+        </antcall>
+    </target>
+
     <target name="convert_ada2nts_prescription_920">
         <!-- target for medication prescription -->
         <antcall target="convert_push_usecase_920">
@@ -60,7 +85,7 @@
             <param name="xsl.output.usecase" value="${build.dir}/ProposalVV"/>
         </antcall>
     </target>
-    
+
     <target name="convert_ada2nts_reply_prop_vv_920">
         <!-- target for reply proposal dispense request (verstrekkingsverzoek) -->
         <antcall target="convert_push_usecase_920">
@@ -70,29 +95,6 @@
     </target>
 
 
-    <target name="convert_push_usecase_920">
-
-        <property name="mappingsUrl4FhirFixtures" value="${github.mp92.dir}/4TouchstoneMPServe"/>
-
-        <!-- Send -->
-        <antcall target="convert_ada_2_nts_sub">
-            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
-            <param name="xsl.in" value="${xsl.input.usecase}"/>
-            <param name="xsl.in.include" value="*.xml"/>
-            <param name="xsl.out" value="../${xsl.output.usecase}/Send"/>
-            <param name="transaction.type" value="Send"/>
-        </antcall>
-
-        <!-- Receive -->
-        <antcall target="convert_ada_2_nts_sub">
-            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
-            <param name="xsl.in" value="${xsl.input.usecase}"/>
-            <param name="xsl.in.include" value="*.xml"/>
-            <param name="xsl.out" value="../${xsl.output.usecase}/Receive"/>
-            <param name="transaction.type" value="Receive"/>
-        </antcall>
-
-    </target>
 
 
     <target name="convert_ada_2_nts_920">
@@ -161,7 +163,7 @@
 
     <target name="convert_ada_2_nts_920_bb_scenario0">
 
-        <property name="xsl.input.mg" value="${github.mp92.dir.local}/${usecase.mg.input}/ada_instance_repo"/>
+        <property name="xsl.input.mg" value="${github.mp92.dir.local}/${usecase.mg.input}/ada_instance"/>
         <property name="xsl.output.mg" value="${build.dir}/${usecase.mg.output}"/>
 
         <antcall target="convert_ada_2_nts_sub">
@@ -188,6 +190,35 @@
         </antcall>
 
     </target>
+
+    <target name="convert_push_usecase_920">
+        
+        <!-- we use xsl.in.exclude which is not (yet) supported in target convert_push_usecase_920, so call the underlying target twice here instead -->
+
+        <property name="mappingsUrl4FhirFixtures" value="${github.mp92.dir}/4TouchstoneMPServe"/>
+
+        <!-- Send -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Send"/>
+            <param name="transaction.type" value="Send"/>
+        </antcall>
+
+        <!-- Receive -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Receive"/>
+            <param name="transaction.type" value="Receive"/>
+        </antcall>
+
+    </target>
+
 
     <target name="convert_ada_2_nts_sub">
 
