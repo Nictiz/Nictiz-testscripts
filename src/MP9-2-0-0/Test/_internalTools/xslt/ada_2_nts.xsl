@@ -28,7 +28,6 @@
             <xsl:variable name="scenarioset" select="replace(scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$1')"/>
             <xsl:variable name="scenario" select="replace(scenario-nr/@value, '(\d+)\.(\d*[a-z]?)\*?\s?.*', '$2')"/>
 
-
             <xsl:variable name="ntsScenario" as="xs:string?">
                 <xsl:choose>
                     <xsl:when test="normalize-space(upper-case($transactionType)) = ('RETRIEVE', 'SEND')">client</xsl:when>
