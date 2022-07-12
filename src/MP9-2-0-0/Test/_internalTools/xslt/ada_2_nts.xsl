@@ -25,8 +25,8 @@
             <xsl:variable name="fhirFixture" select="document(concat($mappingsUrl4FhirFixtures, '/', @id, '.xml'))"/>
             <xsl:variable name="fixturePatient" select="$fhirFixture//f:Patient[1]"/>
 
-            <xsl:variable name="scenarioset" select="replace(scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*\s?[a-z]*', '$1')"/>
-            <xsl:variable name="scenario" select="replace(scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?[a-z]*', '$2')"/>
+            <xsl:variable name="scenarioset" select="replace(scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$1')"/>
+            <xsl:variable name="scenario" select="replace(scenario-nr/@value, '(\d+)\.(\d*[a-z]?)\*?\s?.*', '$2')"/>
 
 
             <xsl:variable name="ntsScenario" as="xs:string?">
