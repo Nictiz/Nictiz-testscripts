@@ -4,6 +4,14 @@
    <meta>
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
+   <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-rule">
+      <extension url="ruleId">
+         <valueId value="assertMinimumRequest"/>
+      </extension>
+      <extension url="path">
+         <valueString value="../_reference/rules/assertMinimumRequest.groovy"/>
+      </extension>
+   </extension>
    <url value="http://nictiz.nl/fhir/TestScript/medmij-questionnaires-phr-1.3-2.3-3.3"/>
    <version value="stu3-2.0-patchlevel 2022-06"/>
    <name value="MedMij Questionnaires - PHR Client - Scenario 1.3, 2.3, 3.3"/>
@@ -33,6 +41,8 @@
       </profile>
    </destination>
    <fixture id="patient-token-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
       <resource>
          <reference value="../_reference/medmij-questionnaires-nl-core-patient-XXX_Repscher-token.xml"/>
       </resource>
@@ -109,17 +119,12 @@
       <defaultValue value="${CURRENTDATE}"/>
       <description value="Date that data and queries are expected to be relative to."/>
    </variable>
-   <rule id="assertMinimumRequest">
-      <resource>
-         <reference value="../_reference/rules/assertMinimumRequest.groovy"/>
-      </resource>
-   </rule>
    <setup><!-- Search for open Tasks. If they are present, another test is
                  running at the moment and this test cannot proceed. -->
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Task"/>
@@ -150,7 +155,7 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="updateCreate"/>
             </type>
             <resource value="Task"/>
@@ -177,12 +182,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Task"/>
             <description value="Test PHR client to search for QuestionnaireReferenceTask resources with status 'requested'."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://loinc.org|74468-0&amp;status=requested"/>
             <requestHeader><!-- 0..* Each operation can have one or more header elements -->
@@ -207,6 +213,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -218,6 +225,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="owner="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -229,6 +237,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -239,6 +248,7 @@
             <description value="Confirm that the search returns a Bundle with one entry."/>
             <direction value="response"/>
             <expression value="Bundle.total = 1"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>
@@ -248,12 +258,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="read"/>
             </type>
             <resource value="Questionnaire"/>
             <description value="Test PHR client to retrieve the Questionnaire resource."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/${questionnaire-id}"/>
             <requestHeader><!-- 0..* Each operation can have one or more header elements -->
@@ -277,6 +288,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -286,6 +298,7 @@
             </extension>
             <description value="Confirm that a Questionnaire instance is returned"/>
             <resource value="Questionnaire"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>
@@ -295,12 +308,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="update"/>
             </type>
             <resource value="Task"/>
             <description value="Test PHR client to update the status of the QuestionnaireProvisioningTask."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/${task-id}"/>
             <requestHeader><!-- 0..* Each operation can have one or more header elements -->
@@ -325,6 +339,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -335,6 +350,7 @@
             <description value="Confirm that the request body is a Task"/>
             <direction value="request"/>
             <resource value="Task"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -345,6 +361,7 @@
             <description value="Confirm that the Task instance declares its profile"/>
             <direction value="request"/>
             <expression value="meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -355,6 +372,7 @@
             <description value="Confirm that the operation was successful"/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -365,6 +383,7 @@
             <description value="Confirm that the Task conforms to the required profile"/>
             <direction value="request"/>
             <validateProfileId value="Task-profile"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -374,14 +393,21 @@
             </extension>
             <!-- There seems to be a bug in Touchstone that requires this directive to be present, although it 
                  shouldn't be necessary from the Groovy perspective. -->
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="assertMinimumRequest"/>
+               </extension>
+               <extension url="param">
+                  <extension url="name">
+                     <valueString value="minimumFixtureBase"/>
+                  </extension>
+                  <extension url="value">
+                     <valueString value="task-minimum-fixture"/>
+                  </extension>
+               </extension>
+            </extension>
             <direction value="request"/>
-            <rule>
-               <ruleId value="assertMinimumRequest"/>
-               <param>
-                  <name value="minimumFixtureBase"/>
-                  <value value="task-minimum-fixture"/>
-               </param>
-            </rule>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -392,6 +418,7 @@
             <description value="Confirm that the status of the Task is 'accepted'"/>
             <direction value="request"/>
             <expression value="Task.status = 'accepted'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>
@@ -401,11 +428,12 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="transaction"/>
             </type>
             <description value="Test PHR client to send a transaction Bundle at the XIS base."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <requestHeader><!-- 0..* Each operation can have one or more header elements -->
                <field value="Authorization"/>
@@ -430,6 +458,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -440,6 +469,7 @@
             <description value="Confirm that the client posted a Bundle"/>
             <direction value="request"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -450,6 +480,7 @@
             <description value="Confirm that the Bundle is of type 'transaction'"/>
             <direction value="request"/>
             <expression value="Bundle.type = 'transaction'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -460,6 +491,7 @@
             <description value="Confirm that all resources that are updated contain a Resource.id and a fullUrl."/>
             <direction value="request"/>
             <expression value="Bundle.entry.where(request.method='PUT').all( $this.fullUrl.exists() and $this.resource.id.exists())"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -481,6 +513,7 @@
             <description value="Confirm that all resources that are created don't have a RESTful fullUrl."/>
             <direction value="request"/>
             <expression value="Bundle.entry.where(request.method='POST').all( $this.fullUrl.startsWith('http://').not() and $this.fullUrl.startsWith('https://').not() )"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -491,6 +524,7 @@
             <description value="Confirm that all resources that are created don't have a fullUrl or have a UUID or OID based fullUrl."/>
             <direction value="request"/>
             <expression value="Bundle.entry.where(request.method='POST').fullUrl.all( exists().not or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -501,6 +535,7 @@
             <description value="Confirm that all posted resources except Binary contain a meta.profile tag."/>
             <direction value="request"/>
             <expression value="Bundle.entry.resource.where(is(Binary).not()).where(meta.profile.empty()).empty()"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -511,6 +546,7 @@
             <description value="Confirm that the fullUrl does not disagree with the id in the resource, see http://hl7.org/fhir/stu3/bundle-definitions.html#Bundle.entry.fullUrl"/>
             <direction value="request"/>
             <expression value="Bundle.entry.where(fullUrl.exists() and resource.id.exists()).all($this.fullUrl.endsWith($this.resource.id))"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -521,6 +557,7 @@
             <description value="Confirm that the fullUrl is an absolute URL, an uuid or an oid."/>
             <direction value="request"/>
             <expression value="Bundle.entry.fullUrl.all( startsWith('http://') or startsWith('https://') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -531,6 +568,7 @@
             <description value="Confirm that literal References (Reference.reference) are an absolute URL, a relative URL or an internal fragment reference (contained), see: http://hl7.org/fhir/stu3/references.html#literal."/>
             <direction value="response"/>
             <expression value="Bundle.descendants().where($this as Reference).reference.all( startsWith('http://') or startsWith('https://') or startsWith('#') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or (startsWith('urn:').not() and startsWith('#').not() and matches('^[A-Za-z]{3,}/[^/]+$')) )"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -552,6 +590,7 @@
             <description value="Confirm that the OID of the zib valueset is not used for the system of a coding element."/>
             <direction value="request"/>
             <expression value="Bundle.descendants().where($this.is(coding)).system.startsWith('urn:oid:2.16.840.1.113883.2.4.3.11.60.40.2').not()"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -562,6 +601,7 @@
             <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
             <direction value="request"/>
             <expression value="Bundle.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -572,6 +612,7 @@
             <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3#Use_of_the_reference_datatype."/>
             <direction value="request"/>
             <expression value="Bundle.descendants().where($this.is(Reference)).all(display.exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/iso21090-nullFlavor').exists())"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -582,6 +623,7 @@
             <description value="Confirm that all Identifiers have both a .system and a .value. In rare cases where a general category of identifiers can be used, .type can replace .system. Edge cases for both .system and .type to be unknown are not applicable to Nictiz. For more information, see https://www.hl7.org/fhir/stu3/datatypes.html#Identifier."/>
             <direction value="request"/>
             <expression value="Bundle.descendants().where($this.is(Identifier)).all((system.exists() or type.exists()) and value.exists())"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -592,6 +634,7 @@
             <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
             <direction value="request"/>
             <expression value="Bundle.descendants().select(identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/bsn').where(value.empty().not() and value.extension.exists().not())).count() = 0"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -602,6 +645,7 @@
             <description value="Confirm that the Bundle contains a Task and a QuestionnaireResponse"/>
             <direction value="request"/>
             <expression value="entry.where(resource as Task).exists() and entry.where(resource as QuestionnaireResponse).exists()"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -612,6 +656,7 @@
             <description value="Confirm that the Task instance declares its profile"/>
             <direction value="request"/>
             <expression value="entry.where(resource as Task).resource.meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -622,6 +667,7 @@
             <description value="Confirm that the Task operation is 'update'"/>
             <direction value="request"/>
             <expression value="entry.where(resource as Task).request.method = 'PUT' and entry.where(resource as Task).resource.id = '${task-id}'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -632,6 +678,7 @@
             <description value="Confirm that the status of the Task is 'completed'"/>
             <direction value="request"/>
             <expression value="entry.where(resource as Task).resource.status = 'completed'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -642,6 +689,7 @@
             <description value="Confirm that the QuestionnaireResponse operation is 'create'"/>
             <direction value="request"/>
             <expression value="entry.where(resource as QuestionnaireResponse).request.method = 'POST'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -652,6 +700,7 @@
             <description value="Confirm that the QuestionnaireResponse instance declares its profile"/>
             <direction value="request"/>
             <expression value="entry.where(resource as QuestionnaireResponse).resource.meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireResponse'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -662,6 +711,7 @@
             <description value="Confirm that the QuestionnaireResponse contains references to the Questionnaire and the Subject"/>
             <direction value="request"/>
             <expression value="entry.where(resource as QuestionnaireResponse).resource.questionnaire.exists() and entry.where(resource as QuestionnaireResponse).resource.subject.exists()"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -672,6 +722,7 @@
             <description value="Confirm that the QuestionnaireResponse contains the 'authored' element"/>
             <direction value="request"/>
             <expression value="entry.where(resource as QuestionnaireResponse).resource.authored.exists()"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <!-- TODO: This doesn't seem to work -->
@@ -691,6 +742,7 @@
             <description value="Confirm that the QuestionnaireResponse is referenced from the Task"/>
             <direction value="request"/>
             <expression value="entry.where(resource as Task).resource.output.where(type.text = 'QuestionnaireResponse').value.reference = entry.where(resource as QuestionnaireResponse).fullUrl"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -701,6 +753,7 @@
             <description value="Confirm that the transaction was succesful"/>
             <operator value="in"/>
             <responseCode value="200"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -711,6 +764,7 @@
             <description value="Confirm that QuestionnaireProvisioningTask is succesfully updated"/>
             <direction value="response"/>
             <expression value="entry.response.where(location.contains('Task')).status.startsWith('200')"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -721,6 +775,7 @@
             <description value="Confirm that QuestionnaireResponse is created"/>
             <direction value="response"/>
             <expression value="entry.response.where(location.contains('QuestionnaireResponse')).status.startsWith('201')"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -731,6 +786,7 @@
             <description value="Confirm that the values of the top level linkId items match the Questionnaire 'Algemene intake'"/>
             <direction value="request"/>
             <expression value="entry.where(resource as QuestionnaireResponse).resource.item.where(linkId = 'algemeen').exists() and entry.where(resource as QuestionnaireResponse).resource.item.where(linkId = 'voorgeschiedenis').exists() and entry.where(resource as QuestionnaireResponse).resource.item.where(linkId = 'socialemedia').exists() and entry.where(resource as QuestionnaireResponse).resource.item.where(linkId = 'contactgegevens').exists() and entry.where(resource as QuestionnaireResponse).resource.item.where(linkId = 'belafspraak').exists()"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>
@@ -739,7 +795,7 @@
          <operation><!-- Delete the (now modified) Task resource.
                          Note: the "autodelete" option can't be used because it misses the authorization headers -->
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="delete"/>
             </type>
             <resource value="Task"/>
@@ -761,7 +817,7 @@
       <action>
          <operation><!-- Delete the created QuestionnaireResponse. -->
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="delete"/>
             </type>
             <resource value="QuestionnaireResponse"/>

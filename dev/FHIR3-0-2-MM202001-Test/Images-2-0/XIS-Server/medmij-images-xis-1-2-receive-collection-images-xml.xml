@@ -56,13 +56,14 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="transaction"/>
             </type>
             <description value="Test XIS server to handle a Bundle of type transaction with all the required FHIR resources."/>
             <accept value="xml"/>
             <contentType value="xml"/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <requestHeader>
                <field value="Authorization"/>
@@ -87,6 +88,7 @@
             <description value="Confirm that the operation was successful"/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -97,6 +99,7 @@
             <description value="Confirm that the returned resource type is Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -109,6 +112,7 @@
             <expression value="Bundle.type"/>
             <operator value="equals"/>
             <value value="transaction-response"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -119,6 +123,7 @@
             <description value="Confirm that all returned resources contain an Resource.id except when temporary ids are used in the Bundle. The only time that a resource does not have an id is when it is being submitted to the server using a create operation: https://www.hl7.org/fhir/STU3/resource-definitions.html#Resource.id "/>
             <direction value="response"/>
             <expression value="Bundle.entry.all( $this.fullUrl.matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or $this.fullUrl.matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or $this.resource.id.exists())"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -129,6 +134,7 @@
             <description value="Confirm that all returned resources except OperationOutcome and Binary contain a meta.profile tag."/>
             <direction value="response"/>
             <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).where(is(Binary).not()).where(meta.profile.empty()).empty()"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -139,6 +145,7 @@
             <description value="Confirm that the fullUrl does not disagree with the id in the resource, see http://hl7.org/fhir/stu3/bundle-definitions.html#Bundle.entry.fullUrl"/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(fullUrl.exists() and resource.id.exists()).all($this.fullUrl.endsWith($this.resource.id))"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -149,6 +156,7 @@
             <description value="Confirm that the fullUrl is an absolute URL, an uuid or an oid."/>
             <direction value="response"/>
             <expression value="Bundle.entry.fullUrl.all( startsWith('http://') or startsWith('https://') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -159,6 +167,7 @@
             <description value="Confirm that literal References (Reference.reference) are an absolute URL, a relative URL or an internal fragment reference (contained), see: http://hl7.org/fhir/stu3/references.html#literal."/>
             <direction value="response"/>
             <expression value="Bundle.descendants().where($this as Reference).reference.all( startsWith('http://') or startsWith('https://') or startsWith('#') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or (startsWith('urn:').not() and startsWith('#').not() and matches('^[A-Za-z]{3,}/[^/]+$')) )"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -180,6 +189,7 @@
             <description value="Confirm that all coding elements contain both a .system and a .code."/>
             <direction value="response"/>
             <expression value="Bundle.descendants().where($this.is(coding)).all(system.exists() and code.exists())"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -190,6 +200,7 @@
             <description value="Confirm that the OID of the zib valueset is not used for the system of a coding element."/>
             <direction value="response"/>
             <expression value="Bundle.descendants().where($this.is(coding)).system.startsWith('urn:oid:2.16.840.1.113883.2.4.3.11.60.40.2').not()"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -200,6 +211,7 @@
             <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
             <direction value="response"/>
             <expression value="Bundle.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -210,6 +222,7 @@
             <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3#Use_of_the_reference_datatype."/>
             <direction value="response"/>
             <expression value="Bundle.descendants().where($this.is(Reference)).all(display.exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/iso21090-nullFlavor').exists())"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -220,6 +233,7 @@
             <description value="Confirm that all Identifiers have both a .system and a .value. In rare cases where a general category of identifiers can be used, .type can replace .system. Edge cases for both .system and .type to be unknown are not applicable to Nictiz. For more information, see https://www.hl7.org/fhir/stu3/datatypes.html#Identifier."/>
             <direction value="response"/>
             <expression value="Bundle.descendants().where($this.is(Identifier)).all((system.exists() or type.exists()) and value.exists())"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -230,6 +244,7 @@
             <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
             <direction value="response"/>
             <expression value="Bundle.descendants().select(identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/bsn').where(value.empty().not() and value.extension.exists().not())).count() = 0"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -284,6 +299,7 @@
             <description value="Confirm that request Bundle is of type transaction."/>
             <direction value="request"/>
             <expression value="Bundle.type = 'transaction'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -294,6 +310,7 @@
             <description value="Confirm that all resources contain a meta.profile tag, minus the Bundle and Binary resource."/>
             <direction value="request"/>
             <expression value="Bundle.entry.resource.meta.profile.count() = Bundle.entry.resource.count()-3"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -304,6 +321,7 @@
             <description value="Confirm that the Media resource has a recipient extension with a value."/>
             <direction value="request"/>
             <expression value="Bundle.entry.resource.ofType(List).extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/images-recipient').value.exists()"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>

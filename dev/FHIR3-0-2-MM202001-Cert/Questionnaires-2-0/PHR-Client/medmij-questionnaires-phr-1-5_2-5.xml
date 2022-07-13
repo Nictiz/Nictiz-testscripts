@@ -4,6 +4,14 @@
    <meta>
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
+   <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-rule">
+      <extension url="ruleId">
+         <valueId value="assertMinimumRequest"/>
+      </extension>
+      <extension url="path">
+         <valueString value="../_reference/rules/assertMinimumRequest.groovy"/>
+      </extension>
+   </extension>
    <url value="http://nictiz.nl/fhir/TestScript/medmij-questionnaires-phr-1.5-2.5"/>
    <version value="stu3-2.0-patchlevel 2022-06"/>
    <name value="MedMij Questionnaires - PHR Client - Scenario 1.5 and 2.5"/>
@@ -33,6 +41,8 @@
       </profile>
    </destination>
    <fixture id="patient-token-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
       <resource>
          <reference value="../_reference/medmij-questionnaires-nl-core-patient-XXX_Boumann-token.xml"/>
       </resource>
@@ -75,17 +85,12 @@
       <defaultValue value="${CURRENTDATE}"/>
       <description value="Date that data and queries are expected to be relative to."/>
    </variable>
-   <rule id="assertMinimumRequest">
-      <resource>
-         <reference value="../_reference/rules/assertMinimumRequest.groovy"/>
-      </resource>
-   </rule>
    <setup><!-- Search for open Tasks. If they are present, another test is
                  running at the moment and this test cannot proceed. -->
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Task"/>
@@ -116,7 +121,7 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="updateCreate"/>
             </type>
             <resource value="Task"/>
@@ -143,12 +148,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Task"/>
             <description value="Test PHR client to search for QuestionnaireReferenceTask resources with status 'requested'."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://loinc.org|74468-0&amp;status=requested"/>
             <requestHeader><!-- 0..* Each operation can have one or more header elements -->
@@ -173,6 +179,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -184,6 +191,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="owner="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -195,6 +203,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -205,6 +214,7 @@
             <description value="Confirm that the search returns a Bundle with one entry."/>
             <direction value="response"/>
             <expression value="Bundle.total = 1"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>
@@ -214,12 +224,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="update"/>
             </type>
             <resource value="Task"/>
             <description value="Test PHR client to update the status of the QuestionnaireProvisioningTask."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/${task-id}"/>
             <requestHeader><!-- 0..* Each operation can have one or more header elements -->
@@ -244,6 +255,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -254,6 +266,7 @@
             <description value="Confirm that the request body is a Task"/>
             <direction value="request"/>
             <resource value="Task"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -264,6 +277,7 @@
             <description value="Confirm that the Task instance declares its profile"/>
             <direction value="request"/>
             <expression value="meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -274,6 +288,7 @@
             <description value="Confirm that the operation was successful"/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -284,6 +299,7 @@
             <description value="Confirm that the Task conforms to the required profile"/>
             <direction value="request"/>
             <validateProfileId value="Task-profile"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -293,14 +309,21 @@
             </extension>
             <!-- There seems to be a bug in Touchstone that requires this directive to be present, although it 
                  shouldn't be necessary from the Groovy perspective. -->
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="assertMinimumRequest"/>
+               </extension>
+               <extension url="param">
+                  <extension url="name">
+                     <valueString value="minimumFixtureBase"/>
+                  </extension>
+                  <extension url="value">
+                     <valueString value="task-minimum-fixture"/>
+                  </extension>
+               </extension>
+            </extension>
             <direction value="request"/>
-            <rule>
-               <ruleId value="assertMinimumRequest"/>
-               <param>
-                  <name value="minimumFixtureBase"/>
-                  <value value="task-minimum-fixture"/>
-               </param>
-            </rule>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -311,6 +334,7 @@
             <description value="Confirm that the status of the Task is 'failed'"/>
             <direction value="request"/>
             <expression value="Task.status = 'failed'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>
@@ -319,7 +343,7 @@
          <operation><!-- Delete the (now modified) Task resource.
                          Note: the "autodelete" option can't be used because it misses the authorization headers -->
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="delete"/>
             </type>
             <resource value="Task"/>
