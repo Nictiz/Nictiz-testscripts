@@ -42,8 +42,8 @@
                     <xsl:message terminate="yes">Pull medication data should call a separate XSLT</xsl:message>
                 </xsl:when>
             
-                <!-- push beschikbaarstellen_medicatiegegevens -->
-                <xsl:when test="$adaTransaction/local-name() = ('beschikbaarstellen_medicatiegegevens') and normalize-space(upper-case($transactionType)) =  ('SEND', 'RECEIVE')">
+                <!-- push sturen_medicatiegegevens -->
+                <xsl:when test="$adaTransaction/local-name() = ('sturen_medicatiegegevens') and normalize-space(upper-case($transactionType)) =  ('SEND', 'RECEIVE')">
                     <xsl:choose>
                         <!-- Receive -->
                         <xsl:when test="$ntsScenario = 'server'">
