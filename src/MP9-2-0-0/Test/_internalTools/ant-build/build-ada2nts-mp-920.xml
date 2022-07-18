@@ -15,13 +15,56 @@
 
     <property name="github.mp92.dir" value="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/mp/9.2.0"/>
     <!-- don't know how to create fileset or resource collection from online dir, workaround: use local dir -->
-    <property name="github.mp92.dir.local" value="${build.dir}/../../../../../HL7-mappings-dev/ada_2_fhir-r4/mp/9.2.0"/>
+    <property name="github.mp92.dir.local" value="${build.dir}/../../../../../HL7-mappings/ada_2_fhir-r4/mp/9.2.0"/>
 
     <property name="usecase.mg.input" value="beschikbaarstellen_medicatiegegevens"/>
     <property name="usecase.mg.rp.input" value="raadplegen_medicatiegegevens"/>
     <property name="usecase.mg.output" value="MedicationData"/>
+    
+    <target name="convert_ada_2_nts_920">
+        <!-- this would be the umbrella target to build all scenarios -->
+    </target>
+    
+    <target name="convert_ada2nts_serve_meddata_920">
+        <!-- target for serve medication data (pull) -->
+        
+        <!-- Medication data (pull) requires a more complex analysis of files, scenarios and subscenarios, so we call a separate XSL for this  -->
+        
+        <property name="xsl.input.mg" value="${github.mp92.dir.local}/${usecase.mg.input}/ada_instance"/>
+        <property name="xsl.input.mg.abs" location="${xsl.input.mg}"/>
+        <property name="xsl.output.mg" value="${build.dir}/${usecase.mg.output}"/>
+        <property name="xsl.output.mg.abs" location="${xsl.output.mg}"/>
+        <!--<property name="mappingsUrl4FhirFixtures" value="${github.mp92.dir}/${usecase.mg.rp.input}/fhir_instance_response"/>-->
+        
+        <!-- Retrieve -->
+        <!-- MedicationAgreement -->
+        <antcall target="convert_ada_2_nts_medicationdata-pull_sub">
+            <param name="xsl.out" value="${xsl.output.dummy}"/>
+            <param name="transaction.type" value="Retrieve"/>
+            <param name="output.dir" value="${xsl.output.mg.abs}"/>
+            <param name="input.dir" value="${xsl.input.mg.abs}"/>
+        </antcall>
+        
+        <!-- Serve TO-DO -->
+    </target>
+    
+    <target name="convert_ada_2_nts_medicationdata-pull_sub">
+        
+        <property name="xsl.output.dummy" value="${build.dir}/xslt/dummy.xml"/>
+        
+        <xslt force="true" style="${build.dir}/xslt/ada_2_nts-medicationdata-pull.xsl" in="${build.dir}/xslt/ada_2_nts-medicationdata-pull.xsl" out="${xsl.output.dummy}" useImplicitFileset="false">
+            <factory name="${xsl.saxon.class}"/>
+            <classpath location="${xsl.saxon}"/>
+            <param name="transactionType" expression="${transaction.type}"/>
+            <param name="outputDir" expression="${output.dir}" if="output.dir"/>
+            <param name="inputDir" expression="${input.dir}" if="input.dir"/>
+        </xslt>
+        
+        <delete file="${xsl.output.dummy}"/>
+        
+    </target>
 
-    <target name="convert_ada2nts_meddata_920">
+    <target name="convert_ada2nts_send_meddata_920">
         <!-- target for medication data push -->
         <property name="xsl.input.usecase" value="${github.mp92.dir.local}/beschikbaarstellen_medicatiegegevens/ada_instance"/>
         <property name="xsl.output.usecase" value="${build.dir}/MedicationData"/>
@@ -93,24 +136,8 @@
             <param name="xsl.output.usecase" value="${build.dir}/ReplyProposalVV"/>
         </antcall>
     </target>
-
-
-
-
-    <target name="convert_ada_2_nts_920">
-        <!-- retrieve/serve interaction -->
-
-        <antcall target="convert_ada_2_nts_920_transaction">
-            <param name="transaction.type" value="Retrieve"/>
-        </antcall>
-
-        <antcall target="convert_ada_2_nts_920_transaction">
-            <param name="transaction.type" value="Serve"/>
-        </antcall>
-
-    </target>
-
-    <target name="convert_ada_2_nts_920_transaction">
+    
+    <!--<target name="convert_ada_2_nts_920_transaction">
 
         <echo>Building blocks MTD and WDS don't contain tests w.r.t. filter criteria (scenario 0)</echo>
 
@@ -190,7 +217,7 @@
         </antcall>
 
     </target>
-
+-->
     <target name="convert_push_usecase_920">
         
         <!-- we use xsl.in.exclude which is not (yet) supported in target convert_push_usecase_920, so call the underlying target twice here instead -->
@@ -222,8 +249,8 @@
 
     <target name="convert_ada_2_nts_sub">
 
-        <!-- Make dir if it does not exist (anymore) -->
-        <mkdir dir="${xsl.out}"/>
+        <!--<!-\- Make dir if it does not exist (anymore) -\->
+        <mkdir dir="${output.dir}"/>
         <echo>Deleting previous results, if any</echo>
 
         <fileset id="outputFiles" dir="${xsl.out}">
@@ -233,7 +260,7 @@
 
         <delete>
             <fileset refid="outputFiles"/>
-        </delete>
+        </delete>-->
 
         <fileset id="inputFiles" dir="${xsl.in}">
             <include name="${xsl.in.include}" if="xsl.in.include"/>
@@ -246,8 +273,9 @@
             <factory name="${xsl.saxon.class}"/>
             <classpath location="${xsl.saxon}"/>
             <param name="mappingsUrl4FhirFixtures" expression="${mappingsUrl4FhirFixtures}"/>
-            <param name="buildingBlockShort" expression="${buildingblock.short}"/>
+            <!--<param name="buildingBlockShort" expression="${buildingblock.short}"/>-->
             <param name="transactionType" expression="${transaction.type}"/>
+            <param name="outputDir" expression="${output.dir}" if="output.dir"/>
         </xslt>
 
     </target>
