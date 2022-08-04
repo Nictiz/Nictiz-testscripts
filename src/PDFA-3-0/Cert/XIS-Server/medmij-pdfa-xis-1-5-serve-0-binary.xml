@@ -4,16 +4,20 @@
     nts:scenario="server">
     <id value="xis-1-5-serve-0-binary"/>
     <version value="stu3-2.0"/>
-    <name value="PDFA - XIS Server - Scenario 1.5 - Serve zero Binary resources"/>
-    <description value="Scenario 1.5 - Serve no Binary resources of XXX-Baltus."/>
+    <name value="PDFA - XIS Server - Scenario 1.5 - Serve zero Binary resources and one OperationOutcome resource"/>
+    <description value="Scenario 1.5 - Serve OperationOutome resource for a request with an unknown id."/>
     <nts:patientTokenFixture href="pdfa-nl-core-patient-XXX-Baltus-token.xml"/>
+    
+    <profile id="OperationOutcome-profile">
+        <reference value="http://hl7.org/fhir/StructureDefinition/OperationOutcome"/>
+    </profile>
 
     <test id="scenario1-5-serve-0-binary">
         <name value="Scenario 1.5"/>
-        <description
-            value="Serve no Binary resources because the id of the requested read should not exist at the XIS server."/>
+        <description value="Serve OperationOutcome resource because the id of the requested read should not exist at the XIS server."/>
         <nts:include value="medmij/test.xis.read" scope="common"
-            resource="Binary" params="/example-pdfa-binary3"/>
+            resource="Binary" 
+            params="/example-pdfa-binary3"/>
         <action>
             <assert nts:stopTestOnFail="true">
                 <description
@@ -21,6 +25,20 @@
                 <direction value="response"/>
                 <operator value="in"/>
                 <responseCode value="404,410"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned resource type is OperationOutcome."/>
+                <direction value="response"/>
+                <resource value="OperationOutcome"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the returned OperationOutcome conforms to the base FHIR specification."/>
+                <direction value="response"/>
+                <validateProfileId value="OperationOutcome-profile"/>
             </assert>
         </action>
     </test>
