@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Test a receiving XIS to read the eOverdracht Task after getting a notification with the Task.id.
+    @param taskStatus - The expected status of the Task. This is needed for the sanity check that a Task with the
+    specified status is returned at this time in the process.
+-->
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <action>
+        <operation>
+            <type>
+                <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes" />
+                <code value="read" />
+            </type>
+            <resource value="Task"/>
+            <label value="Get Task resource for eOverdracht"/>
+            <accept value="xml" />
+            <destination value="1"/>
+            <origin value="1"/>
+            <params value="/${task-id}"/>
+            <nts:include value="header.request.PatientToken" scope="common"/>
+            <responseId nts:ifset="responseId" value="{$responseId}"/>
+        </operation>
+    </action>
+    
+    <nts:include value="assert.response.success" scope="common"/>
+    <action>
+        <assert>
+            <label value="Sanity check to see if the result is a Task."/>
+            <resource value="Task"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <label value="Sanity check to see if the Task has status={$taskStatus}."/>
+            <expression value="Task.status = '{$taskStatus}'"/>
+        </assert>
+    </action>
+</nts:component>
+

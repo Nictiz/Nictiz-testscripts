@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Check the response of a server that doesn't support a specific resource. The server should respond with a 
+    404 Not Found response code and a properly formatted OperationOutcome.
+-->
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <action>
+        <assert nts:stopTestOnFail="true">
+            <description value="Confirm that the server responds with a 404 not found"/>
+            <operator value="equals"/>
+            <responseCode value="404"/>
+        </assert>
+    </action>
+    <action>
+        <assert nts:stopTestOnFail="true">
+            <description value="Confirm that the server returns a single OperationOutcome resource"/>
+            <direction value="response"/>
+            <resource value="OperationOutcome"/>
+        </assert>
+    </action>
+    <nts:profile id="OperationOutcome-profile" value="http://hl7.org/fhir/StructureDefinition/OperationOutcome"/>
+    <action>
+        <assert>
+            <description value="Validate the OperationOutcome resource against the base definition"/>
+            <direction value="response"/>
+            <validateProfileId value="OperationOutcome-profile"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the OperationOutcome has .code set to not-supported"/>
+            <direction value="response"/>
+            <expression value="OperationOutcome.issue.code = 'not-supported'"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the OperationOutcome has .severity set to fatal or error"/>
+            <direction value="response"/>
+            <expression value="OperationOutcome.issue.severity = 'fatal' or OperationOutcome.issue.severity = 'error'"/>
+        </assert>
+    </action>
+    <action nts:stopTestOnFail="false">
+        <assert>
+            <description value="Although not required, a human-readable description of the problem is strongly encouraged"/>
+            <direction value="response"/>
+            <expression value="OperationOutcome.issue.diagnostics.exists() or OperationOutcome.issue.details.text.exists()"/>
+            <warningOnly value="true"/>
+        </assert>
+    </action>
+</nts:component>
