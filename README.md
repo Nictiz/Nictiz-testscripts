@@ -10,4 +10,4 @@ To transform the source NTS materials to their output, [Apache ANT](https://ant.
 * Adding narratives to the fixtures.
 * Centralizing loadscripts to a common folder.
 
-Apart from building each project folder separately, the `buildscripts` folder contains scripts to build sets of projects that should be release together. 
+In addition to building each project folder individually, the `buildscripts` folder contains scripts to build sets of projects that should be released together. 
