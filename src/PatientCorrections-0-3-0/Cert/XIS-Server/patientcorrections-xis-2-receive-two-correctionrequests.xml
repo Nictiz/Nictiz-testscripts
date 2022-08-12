@@ -1,27 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
-    nts:scenario="client">
-    <id value="phr-2-send-two-correctionrequests"/>
+    nts:scenario="server">
+    <id value="xis-2-receive-two-correctionrequests"/>
     <version value="r4-0.3.0"/>
     <name
-        value="PatientCorrections - PHR Client - Scenario 2 - Send two correction requests"/>
-    <description value="Scenario 2 - Send two correction requests"/>
-    <nts:patientTokenFixture href="dwv-nl-core-patient-WIJZIGER-token.xml"/>
+        value="PatientCorrections - XIS Server - Scenario 2 - Receive two correction requests"/>
+    <description value="Scenario 2 - Receive two correction requests"/>
+    <nts:patientTokenFixture href="nl-core-patient-1285290-token.xml"/>
     <nts:fixture id="scenario-2-bundle-fixture"
-        href="resources-send/dwv-Transaction-Scenario-2.xml"/>
+        href="resources-specific/dwv-Transaction-Scenario-2.xml"/>
     <nts:includeDateT value="yes"/>
 
-    <test id="scenario2-send-two-correctionrequests">
+    <test id="scenario2-receive-two-correctionrequests">
         <name value="Scenario2"/>
-        <description value="Send two correction requests"/>
-        <nts:include value="medmij/test.phr.successfulTransaction" scope="common"
+        <description value="Receive two correction requests"/>
+        <nts:include value="medmij/test.xis.successfulTransaction" scope="common"
             sourceId="scenario-2-bundle-fixture"/>
-        <nts:include value="assert.request.numResources" scope="common"
+        <nts:include value="assert.response.numResources" scope="common"
             resource="Patient" count="1"/>
-        <nts:include value="assert.request.numResources" scope="common"
+        <nts:include value="assert.response.numResources" scope="common"
             resource="Organization" count="1"/>
-        <nts:include value="assert.request.numResources" scope="common"
+        <nts:include value="assert.response.numResources" scope="common"
             resource="Communication" count="2"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="OperationOutcome" count="1"/>
+        <action>
+            <assert>
+                <description value="Confirm that that the OperationOutcome contains severity value 'information' and code value 'informational.'"/>
+                <direction value="response"/>
+                <expression value="entry.where(resource as OperationOutcome).resource.issue.where(severity = 'information').where(code = 'informational').exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that that the OperationOutcome contains the actual message of the acknowledgement of receipt."/>
+                <direction value="response"/>
+                <expression value="entry.where(resource as OperationOutcome).resource.issue.details.text.exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that that the HTTP Prefer header with value 'return=representation' is present."/>
+                <direction value="response"/>
+                <headerField value="Prefer"/>
+                <value value="return=representation"/>
+            </assert>
+        </action>
     </test>
 </TestScript>
