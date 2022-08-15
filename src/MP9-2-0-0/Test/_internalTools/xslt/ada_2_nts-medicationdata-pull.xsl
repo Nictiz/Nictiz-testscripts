@@ -32,7 +32,7 @@
             2. By scenarioset
             3. By scenario -->
         
-        <xsl:for-each-group select="collection(concat($inputDirNormalized, '?select=*.xml'))" group-by="substring-before(substring-after(./adaxml/data/beschikbaarstellen_medicatiegegevens/@id, 'mg-mp-mg-tst-'), '-Scenarioset')">
+        <xsl:for-each-group select="collection(concat($inputDirNormalized, '?select=mg-mp-mg-tst-*.xml'))" group-by="substring-before(substring-after(./adaxml/data/beschikbaarstellen_medicatiegegevens/@id, 'mg-mp-mg-tst-'), '-Scenarioset')">
             <xsl:variable name="buildingBlockShort" select="current-grouping-key()"/>
             <xsl:for-each-group select="current-group()" group-by="replace(./adaxml/data/beschikbaarstellen_medicatiegegevens/scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$1')">
                 <xsl:variable name="scenarioset" select="xs:integer(current-grouping-key())"/>
@@ -86,7 +86,7 @@
                     <xsl:value-of select="'VariableDosingRegimen'"/>
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:message terminate="yes">Could not determine building block.</xsl:message>
+                    <xsl:message terminate="yes">Could not determine building block: <xsl:value-of select="$buildingBlockShort"/></xsl:message>
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
@@ -101,6 +101,10 @@
             </xsl:choose>
         </xsl:variable>
         <xsl:variable name="newFilename" select="concat('mp9-',lower-case($buildingBlockShort),'-',$transactionTypeNormalized,'-',$scenarioset,'-',$scenario,'.xml')"/>
+        <xsl:call-template name="util:logMessage">
+            <xsl:with-param name="level" select="$logINFO"/>
+            <xsl:with-param name="msg">processing <xsl:value-of select="$newFilename"/></xsl:with-param>
+        </xsl:call-template>
         
         <xsl:variable name="ntsScenario" as="xs:string?">
             <xsl:choose>
@@ -162,113 +166,9 @@
                 </xsl:when>
             </xsl:choose>
         </xsl:variable>
-        <xsl:variable name="additionalScenarioParams">
-            <xsl:variable name="adaId" select="$adaInstance/nf:removeSpecialCharacters(@id)"/>
-            <xsl:choose>
-                <!--TA-->
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-TA-Scenarioset0-v20-0-2'">
-                    <xsl:value-of select="'&amp;identifier=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.422037009.1|MBH_200_QA1_TA'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-TA-Scenarioset0-v20-0-3optioneel'">
-                    <xsl:value-of select="'&amp;medication.code=urn:oid:2.16.840.1.113883.2.4.4.10|3956'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-TA-Scenarioset0-v20-0-4'">
-                    <xsl:value-of select="'&amp;period-of-use=ge${DATE, T, D,-21}'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-TA-Scenarioset0-v20-0-5'">
-                    <xsl:value-of select="'&amp;period-of-use=lt${DATE, T, D,-22}'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-TA-Scenarioset0-v20-0-6'">
-                    <xsl:value-of select="'&amp;period-of-use=ge${DATE, T, D,-21}&amp;period-of-use=le${DATE, T, D,-7}'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-TA-Scenarioset0-v20-0-7'">
-                    <xsl:value-of select="'&amp;pharmaceutical-treatment-identifier=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_200_QA1'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-TA-Scenarioset0-v20-0-8'">
-                    <xsl:value-of select="'&amp;period-of-use=le${DATE, T, D,-110}'"/>
-                </xsl:when>
-                <!--VV-->
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-VV-Scenarioset0-v20-0-2'">
-                    <xsl:value-of select="'&amp;identifier=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.52711000146108.1|MBH_200_QA1_VV'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-VV-Scenarioset0-v20-0-3optioneel'">
-                    <xsl:value-of select="'&amp;medication.code=urn:oid:2.16.840.1.113883.2.4.4.10|3956'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-VV-Scenarioset0-v20-0-4'">
-                    <xsl:value-of select="'&amp;medicationtreatment=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_200_QA1'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-VV-Scenarioset0-v20-0-5'">
-                    <xsl:value-of select="'&amp;identifier=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.52711000146108.1|MBH_200_QAnietaanwezig'"/>
-                </xsl:when>
-                <!--MTD-->
-                <!--MA-->
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MA-Scenarioset0-v20-0-2'">
-                    <xsl:value-of select="'&amp;identifier=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.16076005.1|MBH_200_QA1_MA'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MA-Scenarioset0-v20-0-3optioneel'">
-                    <xsl:value-of select="'&amp;medication.code=urn:oid:2.16.840.1.113883.2.4.4.10|3956'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MA-Scenarioset0-v20-0-4'">
-                    <xsl:value-of select="'&amp;period-of-use=ge${DATE, T, D,-21}'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MA-Scenarioset0-v20-0-5'">
-                    <xsl:value-of select="'&amp;period-of-use=lt${DATE, T, D,-22}'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MA-Scenarioset0-v20-0-6'">
-                    <xsl:value-of select="'&amp;period-of-use=ge${DATE, T, D,-21}&amp;period-of-use=le${DATE, T, D,-7}'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MA-Scenarioset0-v20-0-7'">
-                    <xsl:value-of select="'&amp;pharmaceutical-treatment-identifier=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_200_QA1'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MA-Scenarioset0-v20-0-8'">
-                    <xsl:value-of select="'&amp;period-of-use=le${DATE, T, D,-110}'"/>
-                </xsl:when>
-                <!--MVE-->
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MVE-Scenarioset0-v20-0-2'">
-                    <xsl:value-of select="'&amp;identifier=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.373784005.1|MBH_200_QA1_MVE'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MVE-Scenarioset0-v20-0-3optioneel'">
-                    <xsl:value-of select="'&amp;medication.code=urn:oid:2.16.840.1.113883.2.4.4.10|3956'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MVE-Scenarioset0-v20-0-4'">
-                    <xsl:value-of select="'&amp;whenhandedover=ge${DATE, T, D,-21}'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MVE-Scenarioset0-v20-0-5'">
-                    <xsl:value-of select="'&amp;whenhandedover=lt${DATE, T, D,-22}'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MVE-Scenarioset0-v20-0-6'">
-                    <xsl:value-of select="'&amp;whenhandedover=ge${DATE, T, D,-21}&amp;whenhandedover=le${DATE, T, D,-7}'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MVE-Scenarioset0-v20-0-7'">
-                    <xsl:value-of select="'&amp;pharmaceutical-treatment-identifier=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_200_QA1'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MVE-Scenarioset0-v20-0-8'">
-                    <xsl:value-of select="'&amp;whenhandedover=le${DATE, T, D,-110}'"/>
-                </xsl:when>
-                <!--MGB-->
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MGB-Scenarioset0-v20-0-2'">
-                    <xsl:value-of select="'&amp;identifier=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.6.1|MBH_200_QA1_MGB'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MGB-Scenarioset0-v20-0-3optioneel'">
-                    <xsl:value-of select="'&amp;medication.code=urn:oid:2.16.840.1.113883.2.4.4.10|3956'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MGB-Scenarioset0-v20-0-4'">
-                    <xsl:value-of select="'&amp;period-of-use=ge${DATE, T, D,-21}'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MGB-Scenarioset0-v20-0-5'">
-                    <xsl:value-of select="'&amp;period-of-use=lt${DATE, T, D,-22}'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MGB-Scenarioset0-v20-0-6'">
-                    <xsl:value-of select="'&amp;period-of-use=ge${DATE, T, D,-21}&amp;period-of-use=le${DATE, T, D,-7}'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MGB-Scenarioset0-v20-0-7'">
-                    <xsl:value-of select="'&amp;pharmaceutical-treatment-identifier=urn:oid:2.16.840.1.113883.2.4.3.11.999.77.1.1|MBH_200_QA1'"/>
-                </xsl:when>
-                <xsl:when test="$adaId = 'mg-mp-mg-tst-MGB-Scenarioset0-v20-0-8'">
-                    <xsl:value-of select="'&amp;period-of-use=le${DATE, T, D,-110}'"/>
-                </xsl:when>
-                <!--WDS-->
-            </xsl:choose>
+        
+        <xsl:variable name="additionalScenarioParams" select="document('queryDescription.xml')/Output/*[local-name() = nf:first-cap($transactionTypeNormalized)]/TestScript[@fileName = $newFilename]/@params">
+            
         </xsl:variable>
         <xsl:variable name="patientId" select="nf:removeSpecialCharacters($adaInstance[1]/patient/naamgegevens/concat(initialen/@value,geslachtsnaam/achternaam/@value))"/>
         <xsl:variable name="patientBsn" select="$adaInstance[1]/patient/identificatienummer/@value"/>
@@ -278,28 +178,7 @@
         <xsl:variable name="returnEntryCount" select="$returnCount + $returnMedicationCount"/>
         <xsl:variable name="returnEntryBreakdown" select="concat('(Consists of ', $returnCount, ' ', $matchResource, ' and ', $returnMedicationCount, ' Medication resources.)')"/>
         
-        <xsl:variable name="description">
-            <xsl:choose>
-                <xsl:when test="count(current-group()) gt 1">
-                    <xsl:variable name="in1" select="nf:normalize-description($adaInstance[1]/@desc)"/>
-                    <xsl:variable name="in2" select="nf:normalize-description($adaInstance[2]/@desc)"/>
-                    
-                    <xsl:variable name="compare12" select="nf:compare-strings($in1, $in2, 1)"/>
-                    <xsl:choose>
-                        <xsl:when test="string-length(nf:normalize-description($adaInstance[3]/@desc)) gt 0">
-                            <xsl:value-of select="nf:compare-strings($compare12, nf:normalize-description($adaInstance[3]/@desc), 1)"/>
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <xsl:value-of select="$compare12"/>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:variable name="in" select="$adaInstance/@desc"/>
-                    <xsl:value-of select="nf:normalize-description($in)"/>
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
+        <xsl:variable name="description"/>
         
         <!-- Some hard-coded exclusions, until we think of somethinig smarter to exclude these files -->
         <xsl:choose>
@@ -311,6 +190,10 @@
                 <xsl:message>Scenario <xsl:value-of select="$buildingBlockShort"/>-<xsl:value-of select="$scenarioset"/>-<xsl:value-of select="$scenario"/> excluded from output</xsl:message>
             </xsl:when>
             <xsl:otherwise>
+                <xsl:call-template name="util:logMessage">
+                    <xsl:with-param name="level" select="$logINFO"/>
+                    <xsl:with-param name="msg">outputting <xsl:value-of select="$newFilename"/></xsl:with-param>
+                </xsl:call-template>
                 <xsl:result-document href="{concat($outputDirNormalized,nf:first-cap($transactionTypeNormalized),'/',$buildingBlockLong,'/',$newFilename)}">
                     <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                         <nts:include value="{$ntsInclude}">
@@ -381,7 +264,7 @@
         <xsl:value-of select="$trailingSlash"/>
     </xsl:function>
     
-    <xsl:function name="nf:normalize-description" as="xs:string?">
+    <!--<xsl:function name="nf:normalize-description" as="xs:string?">
         <xsl:param name="in" as="xs:string?"/>
         
         <xsl:variable name="replaceNewline" select="replace($in, '&#xA;', ' ')"/>
@@ -399,7 +282,7 @@
             </xsl:choose>
         </xsl:variable>
         <xsl:value-of select="$removeId"/>
-    </xsl:function>
+    </xsl:function>-->
     
     <xsl:function name="nf:compare-strings" as="xs:string?">
         <xsl:param name="in1" as="xs:string?"/>
