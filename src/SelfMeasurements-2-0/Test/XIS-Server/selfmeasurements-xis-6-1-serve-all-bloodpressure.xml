@@ -8,6 +8,7 @@
         value="SelfMeasurements - XIS Server - Test Scenario 6.1 - Serve all bloodpressure Observation resources"/>
     <description value="Scenario 6.1 - Serve all bloodpressure Observation resources"/>
     <nts:patientTokenFixture href="selfmeasurements-XXX-Smorenburg-token.xml"/>
+    <nts:includeDateT value="yes"/>
 
     <test id="scenario6-1-serve-all-bloodpressure">
         <name value="Scenario 6.1"/>
@@ -17,5 +18,65 @@
             params="?code=http://loinc.org|85354-9"/>
         <nts:include value="assert.response.numResources" scope="common"
             resource="Observation" count="5"/>
+    </test>
+
+    <test id="scenario6-2-serve-all-bloodpressure">
+        <name value="Scenario 6.2"/>
+        <description value="Serve latest bloodpressure Observation resources"/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common"
+            resource="Observation"
+            params="/$lastn?code=http://loinc.org|85354-9"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+
+        <action>
+            <assert>
+                <description value="Confirm that the latest observation resource has the correct bloodpressure value"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).component.where(code.coding.code='8480-6').value.where(value=123 and unit='mmHg').exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the latest observation resource has the correct bloodpressure value"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).component.where(code.coding.code='8462-4').value.where(value=82 and unit='mmHg').exists()"/>
+            </assert>
+        </action>
+    </test>
+
+    <test id="scenario6-3-serve-all-bloodpressures">
+        <name value="Scenario 6.3"/>
+        <description value="Serve period bloodpressure Observation resources"/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common"
+            resource="Observation"
+            params="?code=http://loinc.org|85354-9&amp;date=ge${DATE, T, D,-14}&amp;date=le${DATE, T, D,-1}"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+
+            <action>
+                <assert>
+                    <description value="Confirm that the latest observation resource has the correct bloodpressure value"/>
+                    <direction value="response"/>
+                    <expression value="Bundle.entry.resource.ofType(Observation).component.where(code.coding.code='8480-6').value.where(value=123 and unit='mmHg').exists()"/>
+                </assert>
+            </action>
+            <action>
+                <assert>
+                    <description value="Confirm that the latest observation resource has the correct bloodpressure value"/>
+                    <direction value="response"/>
+                    <expression value="Bundle.entry.resource.ofType(Observation).component.where(code.coding.code='8462-4').value.where(value=82 and unit='mmHg').exists()"/>
+                </assert>
+            </action>
+    </test>
+
+    <test id="scenario6-4-serve-all-bloodpressures">
+        <name value="Scenario 6.4"/>
+        <description value="Serve period bloodpressure Observation resources"/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common"
+            resource="Observation"
+            params="?code=http://loinc.org|85354-9&amp;date=ge${DATE, T, D,-100}&amp;date=le${DATE, T, D,-50}"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="0"/>
     </test>
 </TestScript>

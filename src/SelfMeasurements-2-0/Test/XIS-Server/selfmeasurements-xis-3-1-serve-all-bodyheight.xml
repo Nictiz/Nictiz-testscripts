@@ -8,6 +8,7 @@
         value="SelfMeasurements - XIS Server - Test Scenario 3.1 - Serve all bodyheight Observation resources"/>
     <description value="Scenario 3.1 - Serve all bodyheight Observation resources"/>
     <nts:patientTokenFixture href="selfmeasurements-XXX-Smorenburg-token.xml"/>
+    <nts:includeDateT value="yes"/>
 
     <test id="scenario3-1-serve-all-bodyheight">
         <name value="Scenario 3.1"/>
@@ -17,5 +18,58 @@
             params="?code=http://loinc.org|8302-2"/>
         <nts:include value="assert.response.numResources" scope="common"
             resource="Observation" count="7"/>
+    </test>
+
+    <test id="scenario3-2-serve-all-bodyheight">
+        <name value="Scenario 3.2"/>
+        <description value="Serve latest bodyheight Observation resources"/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common"
+            resource="Observation"
+            params="/$lastn?code=http://loinc.org|8302-2"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+
+        <action>
+            <assert>
+                <description value="Confirm that the latest observation resource has the correct bodyheight value"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).value.where(value=187 and unit='cm').exists()"/>
+            </assert>
+        </action>
+    </test>
+
+    <test id="scenario3-3-serve-all-bodyheights">
+        <name value="Scenario 3.3"/>
+        <description value="Serve period bodyheight Observation resources"/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common"
+            resource="Observation"
+            params="?code=http://loinc.org|8302-2&amp;date=ge${DATE, T, D,-800}&amp;date=le${DATE, T, D,-350}"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="2"/>
+
+        <action>
+            <assert>
+                <description value="Confirm that both returned values are correct"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).value.where(value=173 and unit='cm').exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that both returned values are correct"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).value.where(value=182 and unit='cm').exists()"/>
+            </assert>
+        </action>
+    </test>
+
+    <test id="scenario3-4-serve-all-bodyheights">
+        <name value="Scenario 3.4"/>
+        <description value="Serve period bodyheight Observation resources"/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common"
+            resource="Observation"
+            params="?code=http://loinc.org|8302-2&amp;date=ge${DATE, T, D,-100}&amp;date=le${DATE, T, D,-50}"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="0"/>
     </test>
 </TestScript>

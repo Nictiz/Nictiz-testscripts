@@ -8,6 +8,7 @@
         value="SelfMeasurements - XIS Server - Test Scenario 9.1 - Serve all heartrate Observation resources"/>
     <description value="Scenario 9.1 - Serve all heartrate Observation resources"/>
     <nts:patientTokenFixture href="selfmeasurements-XXX-Smorenburg-token.xml"/>
+    <nts:includeDateT value="yes"/>
 
     <test id="scenario9-1-serve-all-heartrate">
         <name value="Scenario 9.1"/>
@@ -17,5 +18,58 @@
             params="?code=http://loinc.org|8867-4"/>
         <nts:include value="assert.response.numResources" scope="common"
             resource="Observation" count="5"/>
+    </test>
+
+    <test id="scenario9-2-serve-all-heartrate">
+        <name value="Scenario 9.2"/>
+        <description value="Serve latest heartrate Observation resources"/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common"
+            resource="Observation"
+            params="/$lastn?code=http://loinc.org|8867-4"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+
+        <action>
+            <assert>
+                <description value="Confirm that the latest observation resource has the correct heartrate value"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).value.where(value=63 and unit='/min').exists()"/>
+            </assert>
+        </action>
+    </test>
+
+    <test id="scenario9-3-serve-all-heartrates">
+        <name value="Scenario 9.3"/>
+        <description value="Serve period heartrate Observation resources"/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common"
+            resource="Observation"
+            params="?code=http://loinc.org|8867-4&amp;date=ge${DATE, T, D,-15}&amp;date=le${DATE, T, D,-1}"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="2"/>
+
+        <action>
+            <assert>
+                <description value="Confirm that both returned values are correct"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).value.where(value=63 and unit='/min').exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that both returned values are correct"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).value.where(value=96 and unit='/min').exists()"/>
+            </assert>
+        </action>        
+    </test>
+
+    <test id="scenario9-4-serve-all-heartrates">
+        <name value="Scenario 9.4"/>
+        <description value="Serve period heartrate Observation resources"/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common"
+            resource="Observation"
+            params="?code=http://loinc.org|8867-4&amp;date=ge${DATE, T, D,-100}&amp;date=le${DATE, T, D,-50}"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="0"/>
     </test>
 </TestScript>

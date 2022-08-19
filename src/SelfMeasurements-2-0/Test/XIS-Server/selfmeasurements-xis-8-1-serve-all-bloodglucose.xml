@@ -8,6 +8,7 @@
         value="SelfMeasurements - XIS Server - Test Scenario 8.1 - Serve all bloodglucose Observation resources"/>
     <description value="Scenario 8.1 - Serve all bloodglucose Observation resources"/>
     <nts:patientTokenFixture href="selfmeasurements-XXX-Smorenburg-token.xml"/>
+    <nts:includeDateT value="yes"/>
 
     <test id="scenario8-1-serve-all-bloodglucose">
         <name value="Scenario 8.1"/>
@@ -17,5 +18,65 @@
             params="?category=http://snomed.info/sct|49581000146104"/>
         <nts:include value="assert.response.numResources" scope="common"
             resource="Observation" count="6"/>
+    </test>
+
+    <test id="scenario8-2-serve-all-bloodglucose">
+        <name value="Scenario 8.2"/>
+        <description value="Serve latest bloodglucose Observation resources"/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common"
+            resource="Observation"
+            params="/$lastn?category=http://snomed.info/sct|49581000146104"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+
+        <action>
+            <assert>
+                <description value="Confirm that the latest observation resource has the correct bloodglucose value"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).value.where(value=5.2 and unit='mmol/l').exists()"/>
+            </assert>
+        </action>
+    </test>
+
+    <test id="scenario8-3-serve-all-bloodglucoses">
+        <name value="Scenario 8.3"/>
+        <description value="Serve period bloodglucose Observation resources"/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common"
+            resource="Observation"
+            params="?category=http://snomed.info/sct|49581000146104&amp;date=ge${DATE, T, D,-12}&amp;date=le${DATE, T, D,-1}"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="3"/>
+
+        <action>
+            <assert>
+                <description value="Confirm that both returned values are correct"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).value.where(value=5.2 and unit='mmol/l').exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that both returned values are correct"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).value.where(value=7.4 and unit='mmol/l').exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that both returned values are correct"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).value.where(value=7.3 and unit='mmol/l').exists()"/>
+            </assert>
+        </action>
+    </test>
+
+    <test id="scenario8-4-serve-all-bloodglucoses">
+        <name value="Scenario 8.4"/>
+        <description value="Serve period bloodglucose Observation resources"/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common"
+            resource="Observation"
+            params="?category=http://snomed.info/sct|49581000146104&amp;date=ge${DATE, T, D,-100}&amp;date=le${DATE, T, D,-50}"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="0"/>
     </test>
 </TestScript>
