@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:nf="http://www.nictiz.nl/functions" xmlns:nts="http://nictiz.nl/xsl/testscript" xmlns:f="http://hl7.org/fhir"
-    exclude-result-prefixes="xs"
-    version="2.0">
-    
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:nf="http://www.nictiz.nl/functions" xmlns:nts="http://nictiz.nl/xsl/testscript" xmlns:f="http://hl7.org/fhir" exclude-result-prefixes="xs" version="2.0">
+
     <xsl:import href="ada_2_nts-medicationdata-pull.xsl"/>
-    
+
+    <!-- AWE: don't understand this XSLT, a file is created from test script nts, which are the files we are really generating here? 
+         if this was a one off to start with, fair enough, but the input should come from ada not from files we will be overwriting?
+    I don't like the queryDescription.xml in itself, too much hassle to maintain, but may serve purpose for scenario 0 -->
     <xsl:param name="inputDirR" select="'C:\Users\144189-ADM\Documents\Git\Nictiz-testscripts\src\MP9-2-0-0\Test\MedicationData\Retrieve'"/>
     <xsl:variable name="inputDirRNormalized" select="nf:normalize-path($inputDirR)"/>
-    
+
     <xsl:param name="inputDirS" select="'C:\Users\144189-ADM\Documents\Git\Nictiz-testscripts\src\MP9-2-0-0\Test\MedicationData\Serve'"/>
     <xsl:variable name="inputDirSNormalized" select="nf:normalize-path($inputDirS)"/>
-    
+
     <xsl:template match="/">
         <!--<xsl:call-template name="util:logMessage">
             <xsl:with-param name="level" select="$logINFO"/>
             <xsl:with-param name="msg">transactionType: <xsl:value-of select="$transactionTypeNormalized"/> - inputDir: <xsl:value-of select="$inputDirNormalized"/> - outputDir: <xsl:value-of select="$outputDirNormalized"/></xsl:with-param>
         </xsl:call-template>-->
-        
+
         <!-- Multiple steps of sorting:
             1. By building block
             2. By scenarioset
@@ -26,11 +26,11 @@
             <Retrieve input="{$inputDirRNormalized}">
                 <xsl:for-each select="collection(concat($inputDirRNormalized, '?select=*.xml;recurse=yes'))">
                     <xsl:variable name="documentUri" select="document-uri(.)"/>
-                    <xsl:variable name="buildingBlock" select="tokenize($documentUri,'/')[last()-1]"/>
-                    <xsl:variable name="fileName" select="tokenize($documentUri,'/')[last()]"/>
-                    
+                    <xsl:variable name="buildingBlock" select="tokenize($documentUri, '/')[last() - 1]"/>
+                    <xsl:variable name="fileName" select="tokenize($documentUri, '/')[last()]"/>
+
                     <xsl:variable name="description">
-                        <xsl:variable name="value" select="./f:TestScript/(nts:include/nts:with-parameter[@name = 'scenarioDescription']/@value,f:description/@value)[1]"/>
+                        <xsl:variable name="value" select="./f:TestScript/(nts:include/nts:with-parameter[@name = 'scenarioDescription']/@value, f:description/@value)[1]"/>
                         <xsl:choose>
                             <xsl:when test="string-length($value) gt 0">
                                 <xsl:value-of select="$value"/>
@@ -40,9 +40,9 @@
                             </xsl:otherwise>
                         </xsl:choose>
                     </xsl:variable>
-                    
+
                     <xsl:variable name="params">
-                        <xsl:variable name="value" select="./f:TestScript/(nts:include/nts:with-parameter[@name = 'scenarioParams']/@value,f:test/nts:include[@value = 'operation-search']/nts:with-parameter[@name = 'params']/@value)[1]"/>
+                        <xsl:variable name="value" select="./f:TestScript/(nts:include/nts:with-parameter[@name = 'scenarioParams']/@value, f:test/nts:include[@value = 'operation-search']/nts:with-parameter[@name = 'params']/@value)[1]"/>
                         <xsl:choose>
                             <xsl:when test="string-length($value) gt 0">
                                 <xsl:value-of select="$value"/>
@@ -58,11 +58,11 @@
             <Serve>
                 <xsl:for-each select="collection(concat($inputDirSNormalized, '?select=*.xml;recurse=yes'))">
                     <xsl:variable name="documentUri" select="document-uri(.)"/>
-                    <xsl:variable name="buildingBlock" select="tokenize($documentUri,'/')[last()-1]"/>
-                    <xsl:variable name="fileName" select="tokenize($documentUri,'/')[last()]"/>
-                    
+                    <xsl:variable name="buildingBlock" select="tokenize($documentUri, '/')[last() - 1]"/>
+                    <xsl:variable name="fileName" select="tokenize($documentUri, '/')[last()]"/>
+
                     <xsl:variable name="description">
-                        <xsl:variable name="value" select="./f:TestScript/(nts:include/nts:with-parameter[@name = 'scenarioDescription']/@value,f:description/@value)[1]"/>
+                        <xsl:variable name="value" select="./f:TestScript/(nts:include/nts:with-parameter[@name = 'scenarioDescription']/@value, f:description/@value)[1]"/>
                         <xsl:choose>
                             <xsl:when test="string-length($value) gt 0">
                                 <xsl:value-of select="$value"/>
@@ -72,9 +72,9 @@
                             </xsl:otherwise>
                         </xsl:choose>
                     </xsl:variable>
-                    
+
                     <xsl:variable name="params">
-                        <xsl:variable name="value" select="./f:TestScript/(nts:include/nts:with-parameter[@name = 'scenarioParams']/@value,f:test/nts:include/nts:with-parameter[@name = 'params']/@value)[1]"/>
+                        <xsl:variable name="value" select="./f:TestScript/(nts:include/nts:with-parameter[@name = 'scenarioParams']/@value, f:test/nts:include/nts:with-parameter[@name = 'params']/@value)[1]"/>
                         <xsl:choose>
                             <xsl:when test="string-length($value) gt 0">
                                 <xsl:value-of select="$value"/>
@@ -88,7 +88,7 @@
                 </xsl:for-each>
             </Serve>
         </Output>
-        
+
         <!--<xsl:for-each select="collection(concat($inputDirNormalized, '?select=*.xml'))" group-by="substring-before(substring-after(./adaxml/data/beschikbaarstellen_medicatiegegevens/@id, 'mg-mp-mg-tst-'), '-Scenarioset')">
             <xsl:variable name="buildingBlockShort" select="current-grouping-key()"/>
             <xsl:for-each-group select="current-group()" group-by="replace(./adaxml/data/beschikbaarstellen_medicatiegegevens/scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$1')">
@@ -112,5 +112,5 @@
             </xsl:for-each-group>
         </xsl:for-each>-->
     </xsl:template>
-    
+
 </xsl:stylesheet>
