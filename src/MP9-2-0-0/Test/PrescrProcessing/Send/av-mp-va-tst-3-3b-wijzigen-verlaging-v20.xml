@@ -1,15 +1,40 @@
 <TestScript xmlns:nts="http://nictiz.nl/xsl/testscript"
             xmlns="http://hl7.org/fhir"
             nts:scenario="client">
-   <id value="mp9-prescr-send-3-3b"/>
-   <name value="MP9 - Client - Scenario 3.3b - Send Prescription Processing"/>
-   <description value="Scenario 3.3b - Send Prescription Processing for J. de XXX_Luzac."/>
+   <id value="mp9-prescrproc-send-3-3b"/>
+   <name value="MP9 - Client - Scenario 3.3b - Send PrescrProcessing"/>
+   <description value="Scenario 3.3b - Send PrescrProcessing for J. de XXX_Luzac."/>
    <nts:fixture id="av-mp-va-tst-3-3b-wijzigen-verlaging-v20"
                 href="fixtures/av-mp-va-tst-3-3b-wijzigen-verlaging-v20.xml"/>
    <nts:includeDateT value="yes"/>
-   <test id="scenario3-3b-send-prescription-processing">
+   <variable>
+      <name value="patient-id"/>
+      <expression value="(Bundle.entry.resource as Patient).id"/>
+      <sourceId value="transaction-response-fixture"/>
+   </variable>
+   <variable>
+      <name value="MedicationDispense-1"/>
+      <expression value="(Bundle.entry.resource as MedicationDispense).id[0]"/>
+      <sourceId value="transaction-response-fixture"/>
+   </variable>
+   <variable>
+      <name value="MedicationDispense-2"/>
+      <expression value="(Bundle.entry.resource as MedicationDispense).id[1]"/>
+      <sourceId value="transaction-response-fixture"/>
+   </variable>
+   <variable>
+      <name value="Organization-1"/>
+      <expression value="(Bundle.entry.resource as Organization).id[0]"/>
+      <sourceId value="transaction-response-fixture"/>
+   </variable>
+   <variable>
+      <name value="Medication-1"/>
+      <expression value="(Bundle.entry.resource as Medication).id[0]"/>
+      <sourceId value="transaction-response-fixture"/>
+   </variable>
+   <test id="scenario3-3b-send-prescrproc">
       <name value="Scenario 3.3b"/>
-      <description value="Send Prescription Processing in a transaction Bundle"/>
+      <description value="Send PrescrProcessing in a transaction Bundle"/>
       <action>
          <operation>
             <type>
@@ -19,10 +44,7 @@
             <description value="Test client to POST a Bundle of type transaction."/>
             <destination value="1"/>
             <origin value="1"/>
-            <requestHeader>
-               <field value="MP9-Request-ID"/>
-               <value value="$"/>
-            </requestHeader>
+            <responseId value="transaction-response-fixture"/>
             <sourceId value="av-mp-va-tst-3-3b-wijzigen-verlaging-v20"/>
          </operation>
       </action>
@@ -43,4 +65,61 @@
                    resource="Medication"
                    count="1"/>
    </test>
+   <teardown>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="delete"/>
+            </type>
+            <resource value="MedicationDispense"/>
+            <encodeRequestUrl value="true"/>
+            <params value="${MedicationDispense-1}"/>
+         </operation>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="delete"/>
+            </type>
+            <resource value="MedicationDispense"/>
+            <encodeRequestUrl value="true"/>
+            <params value="${MedicationDispense-2}"/>
+         </operation>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="delete"/>
+            </type>
+            <resource value="Organization"/>
+            <encodeRequestUrl value="true"/>
+            <params value="${Organization-1}"/>
+         </operation>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="delete"/>
+            </type>
+            <resource value="Medication"/>
+            <encodeRequestUrl value="true"/>
+            <params value="${Medication-1}"/>
+         </operation>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://touchstone.com/fhir/extended-operation-codes"/>
+               <code value="purge"/>
+            </type>
+            <resource value="Patient"/>
+            <encodeRequestUrl value="true"/>
+            <params value="${patient-id}/$purge"/>
+         </operation>
+      </action>
+   </teardown>
 </TestScript>

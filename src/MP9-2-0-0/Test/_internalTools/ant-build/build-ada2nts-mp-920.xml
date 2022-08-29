@@ -17,6 +17,8 @@
     <!-- don't know how to create fileset or resource collection from online dir, workaround: use local dir -->
 <!--    <property name="github.mp92.dir.local" value="${build.dir}/../../../../../HL7-mappings/ada_2_fhir-r4/mp/9.2.0"/>-->
     <property name="github.mp92.dir.local" value="${build.dir}/../../../../../HL7-mappings-dev/ada_2_fhir-r4/mp/9.2.0"/>
+    <property name="mappings.url.4.fhir.fixtures" value="${github.mp92.dir}/4TouchstoneMPServe"/>
+    
     
     <property name="usecase.mg.input" value="beschikbaarstellen_medicatiegegevens"/>
     <property name="usecase.mg.rp.input" value="raadplegen_medicatiegegevens"/>
@@ -24,6 +26,8 @@
     
     <target name="convert_ada_2_nts_920">
         <!-- this would be the umbrella target to build all scenarios -->
+        <!-- all push scenario's -->
+        <antcall target="convert_ada2nts_push_all_920"/>
     </target>
     
     <target name="convert_ada2nts_pull_meddata_920">
@@ -35,7 +39,6 @@
         <property name="xsl.input.mg.abs" location="${xsl.input.mg}"/>
         <property name="xsl.output.mg" value="${build.dir}/../${usecase.mg.output}"/>
         <property name="xsl.output.mg.abs" location="${xsl.output.mg}"/>
-        <!--<property name="mappingsUrl4FhirFixtures" value="${github.mp92.dir}/${usecase.mg.rp.input}/fhir_instance_response"/>-->
         
         <!-- Retrieve -->
         <!-- MedicationAgreement -->
@@ -72,35 +75,37 @@
         <delete file="${xsl.output.dummy}"/>
         
     </target>
-
-    <target name="convert_ada2nts_send_meddata_920">
-        <!-- target for medication data push -->
-        <property name="xsl.input.usecase" value="${github.mp92.dir.local}/beschikbaarstellen_medicatiegegevens/ada_instance"/>
-        <property name="xsl.output.usecase" value="${build.dir}/MedicationData"/>
-        <property name="mappingsUrl4FhirFixtures" value="${github.mp92.dir}/4TouchstoneMPServe"/>
-
-        <!-- Send -->
-        <antcall target="convert_ada_2_nts_sub">
-            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
-            <param name="xsl.in" value="${xsl.input.usecase}"/>
-            <param name="xsl.in.include" value="mg-mp-*.xml"/>
-            <param name="xsl.out" value="../${xsl.output.usecase}/Send"/>
-            <param name="transaction.type" value="Send"/>
-        </antcall>
-
-        <!-- Receive -->
-        <antcall target="convert_ada_2_nts_sub">
-            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
-            <param name="xsl.in" value="${xsl.input.usecase}"/>
-            <param name="xsl.in.include" value="mg-mp-*.xml"/>
-            <param name="xsl.out" value="../${xsl.output.usecase}/Receive"/>
-            <param name="transaction.type" value="Receive"/>
-        </antcall>
+    
+    <target name="convert_ada2nts_push_all_920">
+        <!-- medication data push -->
+        <antcall target="convert_ada2nts_push_meddata_920"/>        
+        <!-- prescription -->
+        <antcall target="convert_ada2nts_prescription_920"/>
+        <!-- medication prescription processing -->        
+        <antcall target="convert_ada2nts_prescription_processing_920"/>
+        <!-- proposal medication agreement -->
+        <antcall target="convert_ada2nts_prop_ma_920"/>
+        <!-- dispense request (verstrekkingsverzoek) -->
+        <antcall target="convert_ada2nts_prop_vv_920"/>
+        <!-- target for reply proposal medication agreement -->
+        <antcall target="convert_ada2nts_reply_prop_ma_920"/>
+        <!-- target for proposal dispense request (verstrekkingsverzoek) -->
+        <antcall target="convert_ada2nts_prop_vv_920"/>
+        
+    </target>
+    
+    <target name="convert_ada2nts_push_meddata_920">
+        <!-- medication data push -->
+        <antcall target="convert_push_usecase_920_sub">
+            <param name="xsl.input.usecase" value="${github.mp92.dir.local}/beschikbaarstellen_medicatiegegevens/ada_instance"/>
+            <param name="xsl.output.usecase" value="${build.dir}/MedicationData"/>
+        </antcall>  
+        
     </target>
 
     <target name="convert_ada2nts_prescription_920">
         <!-- target for medication prescription -->
-        <antcall target="convert_push_usecase_920">
+        <antcall target="convert_push_usecase_920_sub">
             <param name="xsl.input.usecase" value="${github.mp92.dir.local}/sturen_medicatievoorschrift/ada_instance"/>
             <param name="xsl.output.usecase" value="${build.dir}/MedicationPrescription"/>
         </antcall>
@@ -108,7 +113,7 @@
 
     <target name="convert_ada2nts_prescription_processing_920">
         <!-- target for medication prescription processing -->
-        <antcall target="convert_push_usecase_920">
+        <antcall target="convert_push_usecase_920_sub">
             <param name="xsl.input.usecase" value="${github.mp92.dir.local}/sturen_afhandeling_medicatievoorschrift/ada_instance"/>
             <param name="xsl.output.usecase" value="${build.dir}/PrescrProcessing"/>
         </antcall>
@@ -116,7 +121,7 @@
 
     <target name="convert_ada2nts_prop_ma_920">
         <!-- target for proposal medication agreement -->
-        <antcall target="convert_push_usecase_920">
+        <antcall target="convert_push_usecase_920_sub">
             <param name="xsl.input.usecase" value="${github.mp92.dir.local}/sturen_voorstel_medicatieafspraak/ada_instance"/>
             <param name="xsl.output.usecase" value="${build.dir}/ProposalMA"/>
         </antcall>
@@ -124,7 +129,7 @@
 
     <target name="convert_ada2nts_reply_prop_ma_920">
         <!-- target for reply proposal medication agreement -->
-        <antcall target="convert_push_usecase_920">
+        <antcall target="convert_push_usecase_920_sub">
             <param name="xsl.input.usecase" value="${github.mp92.dir.local}/sturen_antwoord_voorstel_medicatieafspraak/ada_instance"/>
             <param name="xsl.output.usecase" value="${build.dir}/ReplyProposalMA"/>
         </antcall>
@@ -132,7 +137,7 @@
 
     <target name="convert_ada2nts_prop_vv_920">
         <!-- target for proposal dispense request (verstrekkingsverzoek) -->
-        <antcall target="convert_push_usecase_920">
+        <antcall target="convert_push_usecase_920_sub">
             <param name="xsl.input.usecase" value="${github.mp92.dir.local}/sturen_voorstel_verstrekkingsverzoek/ada_instance"/>
             <param name="xsl.output.usecase" value="${build.dir}/ProposalVV"/>
         </antcall>
@@ -140,7 +145,7 @@
 
     <target name="convert_ada2nts_reply_prop_vv_920">
         <!-- target for reply proposal dispense request (verstrekkingsverzoek) -->
-        <antcall target="convert_push_usecase_920">
+        <antcall target="convert_push_usecase_920_sub">
             <param name="xsl.input.usecase" value="${github.mp92.dir.local}/sturen_voorstel_verstrekkingsverzoek/ada_instance"/>
             <param name="xsl.output.usecase" value="${build.dir}/ReplyProposalVV"/>
         </antcall>
@@ -215,8 +220,7 @@
 
         <property name="xsl.input.mg" value="${github.mp92.dir.local}/${usecase.mg.rp.input}/ada_instance_response"/>
         <property name="xsl.output.mg" value="${build.dir}/${usecase.mg.output}"/>
-        <property name="mappingsUrl4FhirFixtures" value="${github.mp92.dir}/${usecase.mg.rp.input}/fhir_instance_response"/>
-
+  
         <antcall target="convert_ada_2_nts_sub">
             <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
             <param name="xsl.in" value="${xsl.input.mg}"/>
@@ -227,17 +231,13 @@
 
     </target>
 -->
-    <target name="convert_push_usecase_920">
+    <target name="convert_push_usecase_920_sub">
         
-        <!-- we use xsl.in.exclude which is not (yet) supported in target convert_push_usecase_920, so call the underlying target twice here instead -->
-
-        <property name="mappingsUrl4FhirFixtures" value="${github.mp92.dir}/4TouchstoneMPServe"/>
-
         <!-- Send -->
         <antcall target="convert_ada_2_nts_sub">
             <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
             <param name="xsl.in" value="${xsl.input.usecase}"/>
-            <param name="xsl.in.include" value="*.xml"/>
+            <param name="xsl.in.include" value="*mp-*.xml"/>
             <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
             <param name="xsl.out" value="../${xsl.output.usecase}/Send"/>
             <param name="transaction.type" value="Send"/>
@@ -247,7 +247,7 @@
         <antcall target="convert_ada_2_nts_sub">
             <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
             <param name="xsl.in" value="${xsl.input.usecase}"/>
-            <param name="xsl.in.include" value="*.xml"/>
+            <param name="xsl.in.include" value="*mp-*.xml"/>
             <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
             <param name="xsl.out" value="../${xsl.output.usecase}/Receive"/>
             <param name="transaction.type" value="Receive"/>
@@ -259,7 +259,7 @@
     <target name="convert_ada_2_nts_sub">
 
         <!-- Make dir if it does not exist (anymore) -->
-        <mkdir dir="${output.dir}"/>
+        <mkdir dir="${xsl.out}"/>
         <echo>Deleting previous results, if any</echo>
 
         <fileset id="outputFiles" dir="${xsl.out}">
@@ -281,10 +281,10 @@
             <fileset refid="inputFiles"/>
             <factory name="${xsl.saxon.class}"/>
             <classpath location="${xsl.saxon}"/>
-            <param name="mappingsUrl4FhirFixtures" expression="${mappingsUrl4FhirFixtures}"/>
+            <param name="mappingsUrl4FhirFixtures" expression="${mappings.url.4.fhir.fixtures}"/>
             <!--<param name="buildingBlockShort" expression="${buildingblock.short}"/>-->
             <param name="transactionType" expression="${transaction.type}"/>
-            <param name="outputDir" expression="${output.dir}" if="output.dir"/>
+<!--            <param name="outputDir" expression="${output.dir}" if="output.dir"/>-->
         </xslt>
 
     </target>
