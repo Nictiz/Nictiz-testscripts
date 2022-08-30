@@ -12,9 +12,6 @@
     <xsl:param name="inputDir"/>
     <xsl:param name="outputDir"/>
 
-    <!-- usecase param is needed for the proper patient id generation -->
-    <xsl:param name="usecase">mp9</xsl:param>
-
     <xsl:variable name="transactionTypeNormalized" select="normalize-space(lower-case($transactionType))"/>
     <xsl:variable name="inputDirNormalized" select="nf:normalize-path($inputDir)"/>
     <xsl:variable name="outputDirNormalized" select="nf:normalize-path($outputDir)"/>
@@ -69,29 +66,19 @@
 
         <xsl:variable name="buildingBlockLong">
             <xsl:choose>
-                <xsl:when test="$buildingBlockShort = 'MA'">
-                    <xsl:value-of select="'MedicationAgreement'"/>
-                </xsl:when>
-                <xsl:when test="$buildingBlockShort = 'MGB'">
-                    <xsl:value-of select="'MedicationUse'"/>
-                </xsl:when>
-                <xsl:when test="$buildingBlockShort = 'TA'">
-                    <xsl:value-of select="'AdministrationAgreement'"/>
-                </xsl:when>
-                <xsl:when test="$buildingBlockShort = 'VV'">
-                    <xsl:value-of select="'DispenseRequest'"/>
-                </xsl:when>
-                <xsl:when test="$buildingBlockShort = 'MTD'">
-                    <xsl:value-of select="'MedicationAdministration'"/>
-                </xsl:when>
-                <xsl:when test="$buildingBlockShort = 'MVE'">
-                    <xsl:value-of select="'MedicationDispense'"/>
-                </xsl:when>
-                <xsl:when test="$buildingBlockShort = 'WDS'">
-                    <xsl:value-of select="'VariableDosingRegimen'"/>
-                </xsl:when>
+                <xsl:when test="$buildingBlockShort = 'MA'">MedicationAgreement</xsl:when>
+                <xsl:when test="$buildingBlockShort = 'MGB'">MedicationUse</xsl:when>
+                <xsl:when test="$buildingBlockShort = 'TA'">AdministrationAgreement</xsl:when>
+                <xsl:when test="$buildingBlockShort = 'VV'">DispenseRequest</xsl:when>
+                <xsl:when test="$buildingBlockShort = 'MTD'">MedicationAdministration</xsl:when>
+                <xsl:when test="$buildingBlockShort = 'MVE'">MedicationDispense</xsl:when>
+                <xsl:when test="$buildingBlockShort = 'WDS'">VariableDosingRegimen</xsl:when>
                 <xsl:otherwise>
-                    <xsl:message terminate="yes">Could not determine building block: <xsl:value-of select="$buildingBlockShort"/></xsl:message>
+                    <xsl:call-template name="util:logMessage">
+                        <xsl:with-param name="level" select="$logFATAL"/>
+                        <xsl:with-param name="msg">Could not determine building block: <xsl:value-of select="$buildingBlockShort"/></xsl:with-param>
+                        <xsl:with-param name="terminate" select="true()"/>
+                    </xsl:call-template>
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
@@ -166,21 +153,22 @@
             <xsl:apply-templates select="$adaInstance[1]/patient" mode="_generateId"/>
         </xsl:variable>
         <xsl:variable name="patientBsn" select="$adaInstance[1]/patient/identificatienummer/@value"/>
-        
+
 
         <!-- AWE: don't like this, too much repetition, the query params are the same per building block except for BSN and scenario 0 -->
         <xsl:variable name="additionalScenarioParams" select="document('queryDescription.xml')/Output/*[local-name() = nf:first-cap($transactionTypeNormalized)]/TestScript[@fileName = $newFilename]/@params"/>
         <xsl:variable name="theScenarioParams">
             <xsl:choose>
-                <xsl:when test="string-length($additionalScenarioParams) gt 0"><xsl:value-of select="$additionalScenarioParams"/></xsl:when>
+                <xsl:when test="string-length($additionalScenarioParams) gt 0">
+                    <xsl:value-of select="$additionalScenarioParams"/>
+                </xsl:when>
                 <xsl:otherwise>
                     <xsl:value-of select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;category=http://snomed.info/sct|', $matchCategoryCode, '&amp;_include=', $matchResource, ':medication')"/>
                 </xsl:otherwise>
             </xsl:choose>
-            
         </xsl:variable>
 
-        <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(local-name() = 'identificatie')])"/>
+        <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
         <xsl:variable name="returnMedicationCount" select="count($adaInstance/bouwstenen/farmaceutisch_product)"/>
         <xsl:variable name="returnEntryCount" select="$returnCount + $returnMedicationCount"/>
         <xsl:variable name="returnEntryBreakdown" select="concat('(Consists of ', $returnCount, ' ', $matchResource, ' and ', $returnMedicationCount, ' Medication resources.)')"/>
@@ -199,50 +187,37 @@
             </xsl:choose>
         </xsl:variable>
 
-        <!-- Some hard-coded exclusions, until we think of somethinig smarter to exclude these files -->
-        <xsl:choose>
-            <xsl:when test="
-                    $buildingBlockShort = 'MA' and $scenarioset = (4, 5, 8, 9, 11, 13)
-                    or $buildingBlockShort = 'TA' and $scenarioset = (4, 5, 8, 9, 11)
-                    or $buildingBlockShort = 'VV' and $scenarioset = (3, 4, 5, 6, 11, 13)
-                    or $buildingBlockShort = 'MTD' and $scenarioset = 13
-                    or $buildingBlockShort = 'MVE' and $scenarioset = (3, 4, 5, 6, 8, 11)">
-                <xsl:message>Scenario <xsl:value-of select="$buildingBlockShort"/>-<xsl:value-of select="$scenarioset"/>-<xsl:value-of select="$scenario"/> excluded from output</xsl:message>
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:call-template name="util:logMessage">
-                    <xsl:with-param name="level" select="$logINFO"/>
-                    <xsl:with-param name="msg">outputting <xsl:value-of select="$newFilename"/></xsl:with-param>
-                </xsl:call-template>
-                <xsl:result-document href="{concat($outputDirNormalized,nf:first-cap($transactionTypeNormalized),'/',$buildingBlockLong,'/',$newFilename)}">
-                    <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
-                        <nts:include value="{$ntsInclude}">
-                            <nts:with-parameter name="scenarioset" value="{$scenarioset}"/>
-                            <nts:with-parameter name="scenario" value="{$scenario}"/>
-                            <nts:with-parameter name="scenarioDescription" value="{$description}"/>
-                            <nts:with-parameter name="scenarioPatient" value="{$patientId}"/>
-                            <xsl:choose>
-                                <xsl:when test="$buildingBlockShort = ('TA', 'MA', 'MVE', 'MGB') and $adaInstance/scenario-nr/@value = ('0.4', '0.5', '0.6', '0.8')">
-                                    <nts:with-parameter name="scenarioDateT" value="yes"/>
-                                </xsl:when>
-                            </xsl:choose>
-<!--                            <nts:with-parameter name="scenarioParams" value="?patient.identifier={$bsnSystem}|{$patientBsn}&amp;category=http://snomed.info/sct|{$matchCategoryCode}{$additionalScenarioParams}&amp;_include={$matchResource}:medication"/>-->
-                            <nts:with-parameter name="scenarioParams" value="{$theScenarioParams}"/>
-                            <nts:with-parameter name="returnCount" value="{$returnCount}"/>
-                            <nts:with-parameter name="returnEntryCount" value="{$returnEntryCount}"/>
-                            <xsl:choose>
-                                <xsl:when test="$returnEntryCount gt 0">
-                                    <nts:with-parameter name="returnEntryBreakdown" value="{$returnEntryBreakdown}"/>
-                                </xsl:when>
-                                <xsl:otherwise>
-                                    <nts:with-parameter name="returnEntryBreakdown" value="(Consists of no resources.)"/>
-                                </xsl:otherwise>
-                            </xsl:choose>
-                        </nts:include>
-                    </TestScript>
-                </xsl:result-document>
-            </xsl:otherwise>
-        </xsl:choose>
+        <xsl:call-template name="util:logMessage">
+            <xsl:with-param name="level" select="$logINFO"/>
+            <xsl:with-param name="msg">outputting <xsl:value-of select="$newFilename"/></xsl:with-param>
+        </xsl:call-template>
+        <xsl:result-document href="{concat($outputDirNormalized,nf:first-cap($transactionTypeNormalized),'/',$buildingBlockLong,'/',$newFilename)}">
+            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                <nts:include value="{$ntsInclude}">
+                    <nts:with-parameter name="scenarioset" value="{$scenarioset}"/>
+                    <nts:with-parameter name="scenario" value="{$scenario}"/>
+                    <nts:with-parameter name="scenarioDescription" value="{$description}"/>
+                    <nts:with-parameter name="scenarioPatient" value="{$patientId}"/>
+                    <xsl:choose>
+                        <xsl:when test="$buildingBlockShort = ('TA', 'MA', 'MVE', 'MGB') and $adaInstance/scenario-nr/@value = ('0.4', '0.5', '0.6', '0.8')">
+                            <nts:with-parameter name="scenarioDateT" value="yes"/>
+                        </xsl:when>
+                    </xsl:choose>
+                    <!--                            <nts:with-parameter name="scenarioParams" value="?patient.identifier={$bsnSystem}|{$patientBsn}&amp;category=http://snomed.info/sct|{$matchCategoryCode}{$additionalScenarioParams}&amp;_include={$matchResource}:medication"/>-->
+                    <nts:with-parameter name="scenarioParams" value="{$theScenarioParams}"/>
+                    <nts:with-parameter name="returnCount" value="{$returnCount}"/>
+                    <nts:with-parameter name="returnEntryCount" value="{$returnEntryCount}"/>
+                    <xsl:choose>
+                        <xsl:when test="$returnEntryCount gt 0">
+                            <nts:with-parameter name="returnEntryBreakdown" value="{$returnEntryBreakdown}"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <nts:with-parameter name="returnEntryBreakdown" value="(Consists of no resources.)"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </nts:include>
+            </TestScript>
+        </xsl:result-document>
 
     </xsl:template>
 

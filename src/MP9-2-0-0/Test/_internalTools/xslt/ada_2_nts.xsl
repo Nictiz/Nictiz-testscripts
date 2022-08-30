@@ -143,11 +143,13 @@
                             <!-- variable to prepare TestScript variable and accompanying delete/purge actions for cleanup of push stuff -->
                             <xsl:variable name="deleteStuff" as="element()">
                                 <deleteStuff xmlns="http://hl7.org/fhir">
-                                    <!-- for each resource type in the request bundle, for each resource from that type create a variable to store the id from the response Bundle -->
+                                    <!-- for each resource type in the request bundle, for each resource from that type 
+                                         create a variable to store the id from the response Bundle and a corresponding delete action -->
                                     <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/*[not(self::f:Patient)]" group-by="local-name()">
                                         <xsl:for-each select="current-group()">
+                                            <xsl:variable name="varName" select="concat(current-grouping-key(), '-', position())"/>
                                             <variable>
-                                                <name value="{current-grouping-key()}-{position()}"/>
+                                                <name value="{$varName}"/>
                                                 <expression value="(Bundle.entry.resource as {current-grouping-key()}).id[{position()-1}]"/>
                                                 <sourceId value="transaction-response-fixture"/>
                                             </variable>
@@ -159,7 +161,7 @@
                                                     </type>
                                                     <resource value="{current-grouping-key()}"/>
                                                     <encodeRequestUrl value="true"/>
-                                                    <params value="{concat('${', current-grouping-key(), '-',position(), '}')}"/>
+                                                    <params value="{concat('${', $varName, '}')}"/>
                                                 </operation>
                                             </action>
                                         </xsl:for-each>
@@ -202,10 +204,11 @@
                                 <teardown>
                                     <!-- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -->
                                     <xsl:copy-of select="$deleteStuff/f:action"/>
-                                    <!-- we do a patient purge for extra security, we don't know if whoever sent this Bundle sent the exact same number of resources as we expect -->
+                                    <!-- we do a patient purge for extra certainty, we don't know if whoever sent this Bundle sent the exact same number of resources that we expect 
+                                         and this way we will at least get rid of patient related resources which pollute BSN-based query's -->
                                     <action>
                                         <operation>
-                                            <!-- Purge the created Patient and all its associated resources that have been sent. -->
+                                            <!-- Purge the created Patient and all its remaining associated resources that have been sent. -->
                                             <type>
                                                 <system value="http://touchstone.com/fhir/extended-operation-codes"/>
                                                 <code value="purge"/>
