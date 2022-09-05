@@ -149,11 +149,7 @@
                 </xsl:when>
             </xsl:choose>
         </xsl:variable>
-        <xsl:variable name="patientId">
-            <xsl:apply-templates select="$adaInstance[1]/patient" mode="_generateId"/>
-        </xsl:variable>
         <xsl:variable name="patientBsn" select="$adaInstance[1]/patient/identificatienummer/@value"/>
-
 
         <!-- AWE: don't like this, too much repetition, the query params are the same per building block except for BSN and scenario 0 -->
         <xsl:variable name="additionalScenarioParams" select="document('queryDescription.xml')/Output/*[local-name() = nf:first-cap($transactionTypeNormalized)]/TestScript[@fileName = $newFilename]/@params"/>
@@ -197,7 +193,6 @@
                     <nts:with-parameter name="scenarioset" value="{$scenarioset}"/>
                     <nts:with-parameter name="scenario" value="{$scenario}"/>
                     <nts:with-parameter name="scenarioDescription" value="{$description}"/>
-                    <nts:with-parameter name="scenarioPatient" value="{$patientId}"/>
                     <xsl:choose>
                         <xsl:when test="$buildingBlockShort = ('TA', 'MA', 'MVE', 'MGB') and $adaInstance/scenario-nr/@value = ('0.4', '0.5', '0.6', '0.8')">
                             <nts:with-parameter name="scenarioDateT" value="yes"/>
