@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <!--Import mp specific constants (and package for underlying imports)-->
     <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/mp/9.2.0/payload/mp_latest_package.xsl"/>
     <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/util/mp-functions.xsl"/>
@@ -100,6 +100,40 @@
 
                 <!-- push all transactions -->
                 <xsl:when test="normalize-space(upper-case($transactionType)) = ('SEND', 'RECEIVE')">
+                    <!-- variable to prepare TestScript variable and accompanying delete/purge actions for cleanup of push stuff -->
+                    <xsl:variable name="deleteStuff" as="element()">
+                        <deleteStuff xmlns="http://hl7.org/fhir">
+                            <variable>
+                                <name value="patient-id"/>
+                                <expression value="(Bundle.entry.resource as Patient).id"/>
+                                <sourceId value="transaction-response-fixture"/>
+                            </variable>
+                            <!-- for each resource type in the request bundle, for each resource from that type 
+                                         create a variable to store the id from the response Bundle and a corresponding delete action -->
+                            <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/*[not(self::f:Patient)]" group-by="local-name()">
+                                <xsl:for-each select="current-group()">
+                                    <xsl:variable name="varName" select="concat(current-grouping-key(), '-', position())"/>
+                                    <variable>
+                                        <name value="{$varName}"/>
+                                        <expression value="(Bundle.entry.resource as {current-grouping-key()}).id[{position()-1}]"/>
+                                        <sourceId value="transaction-response-fixture"/>
+                                    </variable>                                    
+                                    <action>
+                                        <operation>
+                                            <type>
+                                                <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+                                                <code value="delete"/>
+                                            </type>
+                                            <resource value="{current-grouping-key()}"/>
+                                            <encodeRequestUrl value="true"/>
+                                            <params value="{concat('${', $varName, '}')}"/>
+                                        </operation>
+                                    </action>
+                                </xsl:for-each>
+                            </xsl:for-each-group>
+                        </deleteStuff>
+                    </xsl:variable>
+                    
                     <xsl:choose>
                         <!-- Receive -->
                         <xsl:when test="$ntsScenario = 'server'">
@@ -109,7 +143,7 @@
                                 <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} for {$fixturePatient/f:name/f:text/@value}."/>
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
                                 <nts:includeDateT value="yes"/>
-
+                                <xsl:apply-templates select="$deleteStuff/f:variable" mode="Nictiz-intern"/>
                                 <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}">
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
                                     <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
@@ -136,51 +170,37 @@
                                         <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
                                     </xsl:for-each-group>
                                 </test>
-                            </TestScript>
+                                <teardown nts:in-targets="Nictiz-intern">
+                                    <!-- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -->
+                                    <xsl:copy-of select="$deleteStuff/f:action"/>
+                                    <!-- we do a patient purge for extra certainty, we don't know if whoever sent this Bundle sent the exact same number of resources that we expect 
+                                         and this way we will at least get rid of patient related resources which pollute BSN-based query's -->
+                                    <action>
+                                        <operation>
+                                            <!-- Purge the created Patient and all its remaining associated resources that have been sent. -->
+                                            <type>
+                                                <system value="http://touchstone.com/fhir/extended-operation-codes"/>
+                                                <code value="purge"/>
+                                            </type>
+                                            <resource value="Patient"/>
+                                            <encodeRequestUrl value="true"/>
+                                            <params>
+                                                <xsl:attribute name="value">${patient-id}/$purge</xsl:attribute>
+                                            </params>
+                                        </operation>
+                                    </action>
+                                </teardown>
+                             </TestScript>
                         </xsl:when>
                         <xsl:otherwise>
-                            <!-- assume Send -->
-                            <!-- variable to prepare TestScript variable and accompanying delete/purge actions for cleanup of push stuff -->
-                            <xsl:variable name="deleteStuff" as="element()">
-                                <deleteStuff xmlns="http://hl7.org/fhir">
-                                    <!-- for each resource type in the request bundle, for each resource from that type 
-                                         create a variable to store the id from the response Bundle and a corresponding delete action -->
-                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/*[not(self::f:Patient)]" group-by="local-name()">
-                                        <xsl:for-each select="current-group()">
-                                            <xsl:variable name="varName" select="concat(current-grouping-key(), '-', position())"/>
-                                            <variable>
-                                                <name value="{$varName}"/>
-                                                <expression value="(Bundle.entry.resource as {current-grouping-key()}).id[{position()-1}]"/>
-                                                <sourceId value="transaction-response-fixture"/>
-                                            </variable>
-                                            <action>
-                                                <operation>
-                                                    <type>
-                                                        <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
-                                                        <code value="delete"/>
-                                                    </type>
-                                                    <resource value="{current-grouping-key()}"/>
-                                                    <encodeRequestUrl value="true"/>
-                                                    <params value="{concat('${', $varName, '}')}"/>
-                                                </operation>
-                                            </action>
-                                        </xsl:for-each>
-                                    </xsl:for-each-group>
-                                </deleteStuff>
-                            </xsl:variable>
-
+                            <!-- assume Send -->                  
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                                 <id value="mp9-{$testScriptString/@short}-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
                                 <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long}"/>
                                 <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} for {$fixturePatient/f:name/f:text/@value}."/>
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
                                 <nts:includeDateT value="yes"/>
-                                <variable>
-                                    <name value="patient-id"/>
-                                    <expression value="(Bundle.entry.resource as Patient).id"/>
-                                    <sourceId value="transaction-response-fixture"/>
-                                </variable>
-                                <xsl:copy-of select="$deleteStuff/f:variable"/>
+                                    <xsl:copy-of select="$deleteStuff/f:variable"/>
                                 <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}">
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
                                     <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
@@ -237,6 +257,26 @@
             </xsl:choose>
 
         </xsl:for-each>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>Add in-target to deleteStuff</xd:desc>
+    </xd:doc>
+    <xsl:template match="f:action | f:variable" mode="Nictiz-intern">
+        <xsl:copy>
+            <xsl:apply-templates select="@*" mode="#current"/>
+            <xsl:attribute name="nts:in-targets">Nictiz-intern</xsl:attribute>
+            <xsl:apply-templates select="node()" mode="#current"/>
+        </xsl:copy>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>Default copy template</xd:desc>
+    </xd:doc>
+    <xsl:template match="@* | node()" mode="#all">
+        <xsl:copy>
+            <xsl:apply-templates select="@* | node()" mode="#current"/>
+        </xsl:copy>
     </xsl:template>
 
     <xd:doc>
