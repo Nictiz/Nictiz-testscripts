@@ -9,7 +9,7 @@
 
     <xsl:param name="mappingsUrl4FhirFixtures">https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/mp/9.2.0/4TouchstoneMPServe</xsl:param>
 
-    <!-- Send/Receive/Retrieve/Serve -->
+    <!-- Send/Receive/Retrieve/Serve, this param defaults to Send -->
     <xsl:param name="transactionType">Send</xsl:param>
 
     <xsl:variable name="bsnSystem" select="$oidMap[@oid = $oidBurgerservicenummer]/@uri"/>
@@ -117,7 +117,7 @@
                                         <name value="{$varName}"/>
                                         <expression value="(Bundle.entry.resource as {current-grouping-key()}).id[{position()-1}]"/>
                                         <sourceId value="transaction-response-fixture"/>
-                                    </variable>                                    
+                                    </variable>
                                     <action>
                                         <operation>
                                             <type>
@@ -133,7 +133,7 @@
                             </xsl:for-each-group>
                         </deleteStuff>
                     </xsl:variable>
-                    
+
                     <xsl:choose>
                         <!-- Receive -->
                         <xsl:when test="$ntsScenario = 'server'">
@@ -144,7 +144,7 @@
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
                                 <nts:includeDateT value="yes"/>
                                 <xsl:apply-templates select="$deleteStuff/f:variable" mode="Nictiz-intern"/>
-                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}">
+                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}" nts:in-targets="#default">
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
                                     <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
                                     <action>
@@ -158,10 +158,29 @@
                                             <contentType value="xml"/>
                                             <destination value="1"/>
                                             <origin value="1"/>
-                                            <requestHeader>
-                                                <field value="Prefer"/>
-                                                <value value="return=representation"/>
-                                            </requestHeader>
+                                            <sourceId value="{$adaTransId}"/>
+                                        </operation>
+                                    </action>
+
+                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
+                                        <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
+                                    </xsl:for-each-group>
+                                </test>
+                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}" nts:in-targets="Nictiz-intern">
+                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
+                                    <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
+                                    <action>
+                                        <operation>
+                                            <type>
+                                                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                                                <code value="transaction"/>
+                                            </type>
+                                            <description value="Test server to handle a Bundle of type transaction."/>
+                                            <accept value="xml"/>
+                                            <contentType value="xml"/>
+                                            <destination value="1"/>
+                                            <origin value="1"/>
+                                            <responseId value="transaction-response-fixture"/>
                                             <sourceId value="{$adaTransId}"/>
                                         </operation>
                                     </action>
@@ -190,17 +209,16 @@
                                         </operation>
                                     </action>
                                 </teardown>
-                             </TestScript>
+                            </TestScript>
                         </xsl:when>
                         <xsl:otherwise>
-                            <!-- assume Send -->                  
+                            <!-- assume Send -->
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                                 <id value="mp9-{$testScriptString/@short}-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
                                 <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long}"/>
                                 <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} for {$fixturePatient/f:name/f:text/@value}."/>
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
-                                <nts:includeDateT value="yes"/>
-                                    <xsl:copy-of select="$deleteStuff/f:variable"/>
+                                <xsl:copy-of select="$deleteStuff/f:variable"/>
                                 <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}">
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
                                     <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
@@ -258,7 +276,7 @@
 
         </xsl:for-each>
     </xsl:template>
-    
+
     <xd:doc>
         <xd:desc>Add in-target to deleteStuff</xd:desc>
     </xd:doc>
@@ -269,7 +287,7 @@
             <xsl:apply-templates select="node()" mode="#current"/>
         </xsl:copy>
     </xsl:template>
-    
+
     <xd:doc>
         <xd:desc>Default copy template</xd:desc>
     </xd:doc>
