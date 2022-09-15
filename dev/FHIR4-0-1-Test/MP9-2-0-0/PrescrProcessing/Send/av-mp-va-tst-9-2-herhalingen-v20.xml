@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<TestScript xmlns:nts="http://nictiz.nl/xsl/testscript" xmlns="http://hl7.org/fhir">
-   <id value="mp9-prescr-send-9-2"/>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="mp9-prescrproc-send-9-2"/>
    <meta>
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
-   <url value="http://nictiz.nl/fhir/TestScript/mp9-prescr-send-9-2"/>
-   <name value="MP9 - Client - Scenario 9.2 - Send Prescription Processing"/>
+   <url value="http://nictiz.nl/fhir/TestScript/mp9-prescrproc-send-9-2"/>
+   <name value="MP9 - Client - Scenario 9.2 - Send PrescrProcessing"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -16,18 +16,18 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 9.2 - Send Prescription Processing for M. XXX_Nederveen."/>
+   <description value="Scenario 9.2 - Send PrescrProcessing for M. XXX_Nederveen."/>
    <origin>
       <index value="1"/>
       <profile>
-         <system value="http://hl7.org/fhir/testscript-profile-origin-types"/>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
          <code value="FHIR-Client"/>
       </profile>
    </origin>
    <destination>
       <index value="1"/>
       <profile>
-         <system value="http://hl7.org/fhir/testscript-profile-destination-types"/>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
          <code value="FHIR-Server"/>
       </profile>
    </destination>
@@ -39,13 +39,33 @@
       </resource>
    </fixture>
    <variable>
-      <name value="T"/>
-      <defaultValue value="${CURRENTDATE}"/>
-      <description value="Date that data and queries are expected to be relative to."/>
+      <name value="patient-id"/>
+      <expression value="(Bundle.entry.resource as Patient).id"/>
+      <sourceId value="transaction-response-fixture"/>
    </variable>
-   <test id="scenario9-2-send-prescription-processing">
+   <variable>
+      <name value="MedicationDispense-1"/>
+      <expression value="(Bundle.entry.resource as MedicationDispense).id[0]"/>
+      <sourceId value="transaction-response-fixture"/>
+   </variable>
+   <variable>
+      <name value="MedicationDispense-2"/>
+      <expression value="(Bundle.entry.resource as MedicationDispense).id[1]"/>
+      <sourceId value="transaction-response-fixture"/>
+   </variable>
+   <variable>
+      <name value="Organization-1"/>
+      <expression value="(Bundle.entry.resource as Organization).id[0]"/>
+      <sourceId value="transaction-response-fixture"/>
+   </variable>
+   <variable>
+      <name value="Medication-1"/>
+      <expression value="(Bundle.entry.resource as Medication).id[0]"/>
+      <sourceId value="transaction-response-fixture"/>
+   </variable>
+   <test id="scenario9-2-send-prescrproc">
       <name value="Scenario 9.2"/>
-      <description value="Send Prescription Processing in a transaction Bundle"/>
+      <description value="Send PrescrProcessing in a transaction Bundle"/>
       <action>
          <operation>
             <type>
@@ -56,10 +76,7 @@
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
-            <requestHeader>
-               <field value="MP9-Request-ID"/>
-               <value value="$"/>
-            </requestHeader>
+            <responseId value="transaction-response-fixture"/>
             <sourceId value="av-mp-va-tst-9-2-herhalingen-v20"/>
          </operation>
       </action>
@@ -108,4 +125,61 @@
          </assert>
       </action>
    </test>
+   <teardown>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="delete"/>
+            </type>
+            <resource value="MedicationDispense"/>
+            <encodeRequestUrl value="true"/>
+            <params value="${MedicationDispense-1}"/>
+         </operation>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="delete"/>
+            </type>
+            <resource value="MedicationDispense"/>
+            <encodeRequestUrl value="true"/>
+            <params value="${MedicationDispense-2}"/>
+         </operation>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="delete"/>
+            </type>
+            <resource value="Organization"/>
+            <encodeRequestUrl value="true"/>
+            <params value="${Organization-1}"/>
+         </operation>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="delete"/>
+            </type>
+            <resource value="Medication"/>
+            <encodeRequestUrl value="true"/>
+            <params value="${Medication-1}"/>
+         </operation>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://touchstone.com/fhir/extended-operation-codes"/>
+               <code value="purge"/>
+            </type>
+            <resource value="Patient"/>
+            <encodeRequestUrl value="true"/>
+            <params value="${patient-id}/$purge"/>
+         </operation>
+      </action>
+   </teardown>
 </TestScript>
