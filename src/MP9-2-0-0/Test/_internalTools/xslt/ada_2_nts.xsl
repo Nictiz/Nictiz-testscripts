@@ -110,7 +110,7 @@
                             </variable>
                             <!-- for each resource type in the request bundle, for each resource from that type 
                                          create a variable to store the id from the response Bundle and a corresponding delete action -->
-                            <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/*[not(self::f:Patient)]" group-by="local-name()">
+                            <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/*" group-by="local-name()">
                                 <xsl:for-each select="current-group()">
                                     <xsl:variable name="varName" select="concat(current-grouping-key(), '-', position())"/>
                                     <variable>
@@ -198,24 +198,8 @@
                                 </test>
                                 <!-- teardown receive only needed for Nictiz internal tests -->
                                 <teardown nts:in-targets="Nictiz-intern">
-                                    <!-- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -->
+                                    <!-- the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -->
                                     <xsl:copy-of select="$deleteStuff/f:action"/>
-                                    <!-- we do a patient purge for extra certainty, we don't know if whoever sent this Bundle sent the exact same number of resources that we expect 
-                                         and this way we will at least get rid of patient related resources which pollute BSN-based query's -->
-                                    <action>
-                                        <operation>
-                                            <!-- Purge the created Patient and all its remaining associated resources that have been sent. -->
-                                            <type>
-                                                <system value="http://touchstone.com/fhir/extended-operation-codes"/>
-                                                <code value="purge"/>
-                                            </type>
-                                            <resource value="Patient"/>
-                                            <encodeRequestUrl value="true"/>
-                                            <params>
-                                                <xsl:attribute name="value">${patient-id}/$purge</xsl:attribute>
-                                            </params>
-                                        </operation>
-                                    </action>
                                 </teardown>
                             </TestScript>
                         </xsl:when>
@@ -248,7 +232,8 @@
                                 </test>
                                 <teardown nts:in-targets="#default">
                                     <!-- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -->
-                                    <xsl:copy-of select="$deleteStuff/f:action"/>
+                                    <!-- but not Patient, since we want to do a purge after -->
+                                    <xsl:copy-of select="$deleteStuff/f:action[f:operation/f:resource[@value ne 'Patient']]"/>
                                     <!-- we do a patient purge for extra certainty, we don't know if whoever sent this Bundle sent the exact same number of resources that we expect 
                                          and this way we will at least get rid of patient related resources which pollute BSN-based query's -->
                                     <action>
