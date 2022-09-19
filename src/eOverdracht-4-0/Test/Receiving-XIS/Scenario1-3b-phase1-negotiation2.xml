@@ -10,37 +10,6 @@
     <nts:includeDateT value="yes"/>
     <nts:patientTokenFixture href="eOverdracht-patient-XXX_Ven-token.xml"/>
     
-    <setup>
-        <nts:fixture
-            id="initial-task-fixture"
-            href="resources/resources-specific/eOverdracht-Task-eov-test-1_3b-REQUESTED.xml"/>
-        <nts:include value="setup.general.initializeTask"
-            task-fixture-id="initial-task-fixture"
-            description="At the sending XIS, a new Task is created in status 'requested'."/>
-    </setup>
-
-    <nts:include value="action.receivingxis.awaitNotification"
-        name="Await new Task notification"
-        description="The sending XIS sends a notification to the receiving XIS because a new Task has been created with status 'requested'."/>
-    
-    <test>
-        <name value="Read 'requested' Task"/>
-        <description value="The receiving XIS should perform a read on the Task after receiving a notification that the Task has been created."/>
-        
-        <nts:include value="test.receivingxis.readTask"
-            taskStatus="requested"
-            responseId="requested-task-response"/>
-    </test>
-    
-    <test>
-        <name value="Read advance notice"/>
-        <description value="After reading the Task, the receiving XIS should perform a read operation on the advance notice Composition that is referenced on Task.input."/>
-        
-        <nts:include value="test.receivingxis.readComposition"
-            taskFixtureId="requested-task-response"
-            sliceSystem="http://snomed.info/sct" sliceCode="721915006"/>
-    </test>
-            
     <test>
         <name value="Propose alternative date"/>
         <description value="The receiving XIS should set the status of the Task to 'on-hold' and fill out the Task.output:alternativeDate slice to signal that it is able to transfer the patient only at some alternative date and time. This should be an update operation where the original Task is sent, with only the status and output elements changed."/>
@@ -48,6 +17,12 @@
         <nts:fixture
             id="on-hold-task-fixture"
             href="resources/resources-specific/eOverdracht-Task-eov-test-1_3b-ON-HOLD.xml"/>
+        
+        <variable>
+            <name value="task-id" />
+            <expression value="Task.id"/>
+            <sourceId value="on-hold-task-fixture"/>
+        </variable>
         
         <nts:include value="test.receivingxis.updateTask"
             taskStatus="on-hold"
