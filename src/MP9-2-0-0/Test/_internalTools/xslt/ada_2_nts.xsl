@@ -89,7 +89,7 @@
             </xsl:variable>
 
             <xsl:choose>
-                <!-- pull raadplegen_medicatiegegevens beschikbaarstellen_medicatiegegevens -->
+                <!-- pull beschikbaarstellen_medicatiegegevens -->
                 <xsl:when test="self::beschikbaarstellen_medicatiegegevens and normalize-space(upper-case($transactionType)) = ('RETRIEVE', 'SERVE')">
                     <xsl:call-template name="util:logMessage">
                         <xsl:with-param name="level" select="$logERROR"/>
@@ -134,6 +134,15 @@
                         </deleteStuff>
                     </xsl:variable>
 
+                    <xsl:variable name="includeNumResources" as="element()*">
+                        <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
+                            <!-- only count the primary resources and Medication, it is not obliged to send along the secondary resources -->
+                            <xsl:if test="current-grouping-key() = ('MedicationRequest', 'MedicationDispense', 'MedicationStatement', 'MedicationAdministration', 'Medication')">
+                                <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
+                            </xsl:if>
+                        </xsl:for-each-group>
+                    </xsl:variable>
+
                     <xsl:choose>
                         <!-- Receive -->
                         <xsl:when test="$ntsScenario = 'server'">
@@ -161,10 +170,8 @@
                                             <sourceId value="{$adaTransId}"/>
                                         </operation>
                                     </action>
-
-                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
-                                        <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
-                                    </xsl:for-each-group>
+                                    
+                                    <xsl:copy-of select="$includeNumResources"/>
                                 </test>
                                 <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}" nts:in-targets="Nictiz-intern">
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
@@ -236,9 +243,7 @@
                                             <sourceId value="{$adaTransId}"/>
                                         </operation>
                                     </action>
-                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
-                                        <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
-                                    </xsl:for-each-group>
+                                    <xsl:copy-of select="$includeNumResources"/>
                                 </test>
                                 <teardown>
                                     <!-- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -->
