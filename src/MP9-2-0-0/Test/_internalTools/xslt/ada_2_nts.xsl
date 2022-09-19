@@ -170,7 +170,7 @@
                                             <sourceId value="{$adaTransId}"/>
                                         </operation>
                                     </action>
-                                    
+
                                     <xsl:copy-of select="$includeNumResources"/>
                                 </test>
                                 <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}" nts:in-targets="Nictiz-intern">
@@ -196,6 +196,7 @@
                                         <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
                                     </xsl:for-each-group>
                                 </test>
+                                <!-- teardown receive only needed for Nictiz internal tests -->
                                 <teardown nts:in-targets="Nictiz-intern">
                                     <!-- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -->
                                     <xsl:copy-of select="$deleteStuff/f:action"/>
@@ -245,7 +246,7 @@
                                     </action>
                                     <xsl:copy-of select="$includeNumResources"/>
                                 </test>
-                                <teardown>
+                                <teardown nts:in-targets="#default">
                                     <!-- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -->
                                     <xsl:copy-of select="$deleteStuff/f:action"/>
                                     <!-- we do a patient purge for extra certainty, we don't know if whoever sent this Bundle sent the exact same number of resources that we expect 
@@ -264,6 +265,11 @@
                                             </params>
                                         </operation>
                                     </action>
+                                </teardown>
+                                <teardown nts:in-targets="Nictiz-intern">
+                                    <!-- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -->
+                                    <xsl:copy-of select="$deleteStuff/f:action"/>
+                                    <!-- MP-746 no $purge needed for Nictiz internal scripts -->
                                 </teardown>
                             </TestScript>
 
