@@ -143,14 +143,15 @@
                         </xsl:for-each-group>
                     </xsl:variable>
 
+                    <xsl:variable name="idString" select="replace(concat('mp9-', $testScriptString/@short, '-', normalize-space(lower-case($transactionType)), '-', $scenarioset, '-', $scenario), '(.*?)-?(-$)', '$1')"></xsl:variable>
                     <xsl:choose>
                         <!-- Receive -->
                         <xsl:when test="$ntsScenario = 'server'">
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
-                                <id value="mp9-{$testScriptString/@short}-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
+                                <id value="{$idString}"/>
                                 <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long}"/>
                                 <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} for {$fixturePatient/f:name/f:text/@value}."/>
-                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
+                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.{'{$_FORMAT}'}"/>
                                 <nts:includeDateT value="yes"/>
                                 <xsl:apply-templates select="$deleteStuff/f:variable" mode="Nictiz-intern"/>
                                 <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}" nts:in-targets="#default">
@@ -163,8 +164,7 @@
                                                 <code value="transaction"/>
                                             </type>
                                             <description value="Test server to handle a Bundle of type transaction."/>
-                                            <accept value="xml"/>
-                                            <contentType value="xml"/>
+                                            <contentType value="{'{$_FORMAT}'}"/>
                                             <destination value="1"/>
                                             <origin value="1"/>
                                             <sourceId value="{$adaTransId}"/>
@@ -206,7 +206,7 @@
                         <xsl:otherwise>
                             <!-- assume Send -->
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
-                                <id value="mp9-{$testScriptString/@short}-{normalize-space(lower-case($transactionType))}-{$scenarioset}-{$scenario}"/>
+                                <id value="{$idString}"/>
                                 <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long}"/>
                                 <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} for {$fixturePatient/f:name/f:text/@value}."/>
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
