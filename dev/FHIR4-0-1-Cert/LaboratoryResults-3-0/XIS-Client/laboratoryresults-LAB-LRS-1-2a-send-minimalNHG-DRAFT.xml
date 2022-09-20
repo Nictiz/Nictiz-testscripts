@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="phr-1-2-send-minimal"/>
+   <meta>
+      <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
+   </meta>
+   <url value="http://nictiz.nl/fhir/TestScript/phr-1-2-send-minimal"/>
+   <version value="R4-3.0-patchlevel 2022-08"/>
+   <name value="LaboratoryResults - PHR client - Scenario 1.2a"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Scenario 1.2a - Send single result"/>
+   <origin>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
+         <code value="FHIR-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <fixture id="patient-token-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
+      <resource>
+         <reference value="../_reference/lab-nl-core-patient-XXX-Aantrekker-token.xml"/>
+      </resource>
+   </fixture>
+   <fixture id="scenario-1-2a-minimal-fixture-NHG">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
+      <resource>
+         <reference value="../_reference/lr-slr-KWAL-KC-NHG-Scenario2a-KCNHG2a.xml"/>
+      </resource>
+   </fixture>
+   <variable>
+      <name value="patient-token-id"/>
+      <expression value="Patient.id"/>
+      <sourceId value="patient-token-fixture"/>
+   </variable>
+   <variable>
+      <name value="T"/>
+      <defaultValue value="${CURRENTDATE}"/>
+      <description value="Date that data and queries are expected to be relative to."/>
+   </variable>
+   <test id="lab-Scenarioset1-2a">
+      <name value="Scenario 1.2a"/>
+      <description value="Send a single laboratory result."/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the Observation resources have a NHG code in the code element"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).code.coding.where(system = 'https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen').count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the Observation resource has the right NHG code in the code element"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).code.coding.where(code = '509').count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the Observation resource has the right value in the code element"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(valueQuantity = 2.3).count() = 1"/>
+            <!--                dit is nog geen juiste assert-->
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
