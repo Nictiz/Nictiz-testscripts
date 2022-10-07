@@ -5,7 +5,7 @@
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
    <url value="http://nictiz.nl/fhir/TestScript/Receiving-XIS-scenario1.1b-negotiation"/>
-   <version value="stu3-4.0 - patchlevel 2022-04"/>
+   <version value="stu3-4.0-patchlevel 2022-09"/>
    <name value="Receiving-XIS-scenario1.1b-negatiation"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -21,33 +21,41 @@
    <origin>
       <index value="1"/>
       <profile>
-         <system value="http://hl7.org/fhir/testscript-profile-origin-types"/>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
          <code value="FHIR-Client"/>
       </profile>
    </origin>
    <destination>
       <index value="1"/>
       <profile>
-         <system value="http://hl7.org/fhir/testscript-profile-destination-types"/>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
          <code value="FHIR-Server"/>
       </profile>
    </destination>
    <fixture id="patient-token-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
       <resource>
-         <reference value="../_reference/eOverdracht-patient-XXX_Altenborg-token.xml"/>
+         <reference value="../_reference/eOverdracht-patient-XXX_Altenborg-simple-token.xml"/>
       </resource>
    </fixture>
    <fixture id="initial-task-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
       <resource>
          <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-test-1_1b-REQUESTED.xml"/>
       </resource>
    </fixture>
    <fixture id="accepted-task-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
       <resource>
          <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-test-1_1b-ACCEPTED.xml"/>
       </resource>
    </fixture>
    <fixture id="in-progress-task-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
       <resource>
          <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-test-1_1b-IN-PROGRESS.xml"/>
       </resource>
@@ -70,21 +78,22 @@
       <hint value="The notification endpoint that the sending XIS can use to notify the receiving XIS, _without_ the trailing slash."/>
    </variable>
    <variable>
-      <name value="requested-task-response-composition-57830-2-id"/>
-      <expression value="Task.input.where(type.coding.system = 'http://loinc.org' and type.coding.code = '57830-2').value.reference.replace('Composition/', '')"/>
+      <name value="requested-task-response-composition-721915006-id"/>
+      <expression value="Task.input.where(type.coding.system = 'http://snomed.info/sct' and type.coding.code = '721915006').value.reference.replace('Composition/', '')"/>
       <sourceId value="requested-task-response"/>
    </variable>
    <setup>
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="updateCreate"/>
             </type>
             <resource value="Task"/>
             <description value="At the sending XIS, a new Task is created in status 'requested'."/>
             <accept value="xml"/>
             <contentType value="xml"/>
+            <destination value="1"/>
             <params value="/${task-id}"/>
             <requestHeader>
                <field value="Authorization"/>
@@ -99,6 +108,7 @@
             <description value="Confirm that the operation was successful"/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </setup>
@@ -108,12 +118,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="create"/>
             </type>
             <resource value="Resource"/>
             <label value="Notify receiving XIS"/>
             <description value="The sending XIS sends a notification to the specified endpoint of the receiving XIS."/>
+            <encodeRequestUrl value="true"/>
             <url value="${notificationEndpoint}/${task-id}"/>
          </operation>
       </action>
@@ -135,13 +146,14 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="read"/>
             </type>
             <resource value="Task"/>
             <label value="Get Task resource for eOverdracht"/>
             <accept value="xml"/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/${task-id}"/>
             <requestHeader>
@@ -159,6 +171,7 @@
             <description value="Confirm that the operation was successful"/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -168,6 +181,7 @@
             </extension>
             <label value="Sanity check to see if the result is a Task."/>
             <resource value="Task"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -177,6 +191,7 @@
             </extension>
             <label value="Sanity check to see if the Task has status=requested."/>
             <expression value="Task.status = 'requested'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>
@@ -186,14 +201,15 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="read"/>
             </type>
             <resource value="Composition"/>
             <description value="Test PHR client to read Composition resource."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
-            <params value="/${requested-task-response-composition-57830-2-id}"/>
+            <params value="/${requested-task-response-composition-721915006-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -208,6 +224,7 @@
             <description value="Confirm that the operation was successful"/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -218,6 +235,7 @@
             <description value="Make sure that the test server (WildFHIR) returns the requested Composition resource."/>
             <direction value="response"/>
             <resource value="Composition"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>
@@ -227,12 +245,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="update"/>
             </type>
             <resource value="Task"/>
             <description value="Test sending XIS to handle an update to the eOverdracht Task"/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/${task-id}"/>
             <requestHeader><!-- 0..* Each operation can have one or more header elements -->
@@ -252,6 +271,7 @@
             <description value="Confirm that the Task conforms to the eOverdracht Task profile"/>
             <direction value="request"/>
             <validateProfileId value="eOverdracht-Task"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -262,6 +282,7 @@
             <description value="Confirm that Task.status has been changed to 'accepted'"/>
             <direction value="request"/>
             <expression value="Task.status = 'accepted'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -272,6 +293,7 @@
             <description value="Confirm that the operation was successful"/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <!-- Test some of the content of the Task sent. This should actually be done using a minimumId assert,
@@ -285,6 +307,7 @@
             <direction value="request"/>
             <expression value="Task.for"/>
             <operator value="notEmpty"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -296,6 +319,7 @@
             <direction value="request"/>
             <expression value="Task.requester.agent"/>
             <operator value="notEmpty"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -307,7 +331,8 @@
             <direction value="request"/>
             <expression value="Task.input.type.coding.code"/>
             <operator value="equals"/>
-            <value value="57830-2"/>
+            <value value="721915006"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>
@@ -317,13 +342,15 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="update"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="updateCreate"/>
             </type>
             <resource value="Task"/>
             <description value="Set the eOverdracht Task resource to 'in-progress'."/>
             <accept value="xml"/>
             <contentType value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <params value="/${task-id}"/>
             <requestHeader>
                <field value="Authorization"/>
@@ -340,6 +367,7 @@
             <description value="Confirm that the operation was successful"/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>
@@ -349,12 +377,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="create"/>
             </type>
             <resource value="Resource"/>
             <label value="Notify receiving XIS"/>
             <description value="The sending XIS sends a notification to the specified endpoint of the receiving XIS."/>
+            <encodeRequestUrl value="true"/>
             <url value="${notificationEndpoint}/${task-id}"/>
          </operation>
       </action>
@@ -376,13 +405,14 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="read"/>
             </type>
             <resource value="Task"/>
             <label value="Get Task resource for eOverdracht"/>
             <accept value="xml"/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/${task-id}"/>
             <requestHeader>
@@ -399,6 +429,7 @@
             <description value="Confirm that the operation was successful"/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -408,6 +439,7 @@
             </extension>
             <label value="Sanity check to see if the result is a Task."/>
             <resource value="Task"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -417,6 +449,7 @@
             </extension>
             <label value="Sanity check to see if the Task has status=in-progress."/>
             <expression value="Task.status = 'in-progress'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>

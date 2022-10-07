@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
-   <id value="xis-1-5-serve-0-binary-xml"/>
+   <id value="xis-1-5-serve-0-binary-Nictiz-intern-xml"/>
    <meta>
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
-   <url value="http://nictiz.nl/fhir/TestScript/xis-1-5-serve-0-binary-xml"/>
-   <version value="stu3-2.0-patchlevel 2022-06"/>
-   <name value="PDFA - XIS Server - Scenario 1.5 - Serve zero Binary resources - XML Format"/>
+   <url value="http://nictiz.nl/fhir/TestScript/xis-1-5-serve-0-binary-Nictiz-intern-xml"/>
+   <version value="stu3-2.0-patchlevel 2022-09"/>
+   <name value="PDFA - XIS Server - Scenario 1.5 - Serve zero Binary resources and one OperationOutcome resource - target Nictiz-intern - XML Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -17,21 +17,24 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 1.5 - Serve no Binary resources of XXX-Baltus."/>
+   <description value="Scenario 1.5 - Serve OperationOutome resource for a request with an unknown id."/>
    <origin>
       <index value="1"/>
       <profile>
-         <system value="http://hl7.org/fhir/testscript-profile-origin-types"/>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
          <code value="FHIR-Client"/>
       </profile>
    </origin>
    <destination>
       <index value="1"/>
       <profile>
-         <system value="http://hl7.org/fhir/testscript-profile-destination-types"/>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
          <code value="FHIR-Server"/>
       </profile>
    </destination>
+   <profile id="OperationOutcome-profile">
+      <reference value="http://hl7.org/fhir/StructureDefinition/OperationOutcome"/>
+   </profile>
    <variable>
       <name value="patient-token-id"/>
       <defaultValue value="Bearer f92b6141-55db-46d5-a3ae-874b69907d22"/>
@@ -39,17 +42,18 @@
    </variable>
    <test id="scenario1-5-serve-0-binary">
       <name value="Scenario 1.5"/>
-      <description value="Serve no Binary resources because the id of the requested read should not exist at the XIS server."/>
+      <description value="Serve OperationOutcome resource because the id of the requested read should not exist at the XIS server."/>
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="read"/>
             </type>
             <resource value="Binary"/>
             <description value="Test XIS server to serve Binary resource."/>
             <accept value="xml"/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/example-pdfa-binary3"/>
             <requestHeader>
@@ -71,6 +75,29 @@
             <direction value="response"/>
             <operator value="in"/>
             <responseCode value="404,410"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned resource type is OperationOutcome."/>
+            <direction value="response"/>
+            <resource value="OperationOutcome"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned OperationOutcome conforms to the base FHIR specification."/>
+            <direction value="response"/>
+            <validateProfileId value="OperationOutcome-profile"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>

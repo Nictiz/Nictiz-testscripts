@@ -14,6 +14,7 @@
             id="initial-task-fixture"
             href="resources/resources-specific/eOverdracht-Task-eov-test-1_4b-REQUESTED.xml"/>
         <nts:include value="setup.general.initializeTask"
+            task-fixture-id="initial-task-fixture"
             description="At the sending XIS, a new Task is created in status 'requested'."/>
     </setup>
 
@@ -36,7 +37,7 @@
         
         <nts:include value="test.receivingxis.readComposition"
             taskFixtureId="requested-task-response"
-            sliceSystem="http://loinc.org" sliceCode="57830-2"/>
+            sliceSystem="http://snomed.info/sct" sliceCode="721915006"/>
     </test>
 
     <test>
@@ -57,7 +58,7 @@
                 <direction value="request"/>
                 <expression value="Task.input.type.coding.code"/>
                 <operator value="equals"/>
-                <value value="57830-2" />
+                <value value="721915006" />
             </assert>
         </action>
     </test>
@@ -65,27 +66,13 @@
     <test>
         <name value="Task is set to 'cancelled'"/>
         <description value="The sending XIS now sets the status of the Task to 'cancelled' to confirm to the receiving XIS that the transfer of the patient has been cancelled."/>
-
+        
         <nts:fixture
             id="cancelled-task-fixture"
             href="resources/resources-specific/eOverdracht-Task-eov-test-1_4b-CANCELLED.xml"/>
-        <action>
-            <operation>
-                <type>
-                    <system value="http://hl7.org/fhir/testscript-operation-codes" />
-                    <code value="update" />
-                </type>
-                <resource value="Task" />
-                <description nts:ifset="description" value="{$description}"/>
-                <description nts:ifnotset="description" value="Set the eOverdracht Task resource to 'cancelled'." />
-                <accept value="xml" />
-                <contentType value="xml" />
-                <params value="/${task-id}" />
-                <nts:include value="header.request.PatientToken" scope="common"/>
-                <sourceId value="cancelled-task-fixture" />
-            </operation>
-        </action>
-        <nts:include value="assert.response.success" scope="common"/>
+        <nts:include value="action.general.updateTaskBySendingXis"
+            description="Set the eOverdracht Task resource to 'cancelled'."
+            task-fixture-id="cancelled-task-fixture" />
     </test>
     
     <nts:include value="action.receivingxis.awaitNotification"
