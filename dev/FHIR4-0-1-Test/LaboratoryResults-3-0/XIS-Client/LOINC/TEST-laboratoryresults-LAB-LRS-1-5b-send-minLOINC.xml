@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
-   <id value="TEST-xis-1-1-send-panel"/>
+   <id value="TEST-xis-1-5b-send-minimal"/>
    <meta>
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
-   <url value="http://nictiz.nl/fhir/TestScript/TEST-xis-1-1-send-panel"/>
-   <version value="R4-3.0-patchlevel 2022-08"/>
-   <name value="LaboratoryResults - LAB-LRS - Scenario 1.1 - Send a panel of laboratory results with an NHG code."/>
+   <url value="http://nictiz.nl/fhir/TestScript/TEST-xis-1-5b-send-minimal"/>
+   <version value="R4-3.0-patchlevel 2022-09"/>
+   <name value="LaboratoryResults - LAB-LRS - Scenario 1.5b - Send a minimal result with the mandatory elements for a result coded with a LOINC code."/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -17,7 +17,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 1.1 - Send a panel of laboratory results with an NHG code."/>
+   <description value="Scenario 1.5b - Send a minimal result with the mandatory elements for a result coded with a LOINC code."/>
    <origin>
       <index value="1"/>
       <profile>
@@ -32,19 +32,24 @@
          <code value="FHIR-Server"/>
       </profile>
    </destination>
-   <fixture id="TEST-scenario-1-1-panel-fixture">
+   <fixture id="TEST-scenario-1-5b-fixture">
       <autocreate value="false"/>
       <autodelete value="false"/>
       <resource>
-         <reference value="../_reference/resources/lr-slr-TEST-Scenario1a-1a.xml"/>
+         <reference value="../../_reference/resources/lr-slr-TEST-Scenario5b-5b.xml"/>
       </resource>
    </fixture>
    <profile id="Bundle-profile">
       <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
    </profile>
-   <test id="lab-Scenarioset1-1">
-      <name value="Scenario 1.1"/>
-      <description value="Send a panel of laboratory results with an NHG code."/>
+   <variable>
+      <name value="T"/>
+      <defaultValue value="${CURRENTDATE}"/>
+      <description value="Date that data and queries are expected to be relative to."/>
+   </variable>
+   <test id="lab-Scenarioset1-5b">
+      <name value="Scenario 1.5b"/>
+      <description value="Send a minimal result with the mandatory elements for a result coded with a LOINC code."/>
       <action>
          <operation>
             <type>
@@ -59,7 +64,7 @@
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
             </requestHeader>
-            <sourceId value="TEST-scenario-1-1-panel-fixture"/>
+            <sourceId value="TEST-scenario-1-5b-fixture"/>
          </operation>
       </action>
       <action>
@@ -278,7 +283,7 @@
             </extension>
             <description value="Confirm that the Observation resources have an NHG code in the code element"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.where(system = 'https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen').exists()).count() = 4"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.where(system = 'http://loinc.org').exists()).count() = 1"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -290,17 +295,6 @@
             <description value="Confirm that the right patient has been sent along"/>
             <direction value="request"/>
             <expression value="Bundle.entry.resource.as(Patient).where(identifier.value = '999999114').count() = 1"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the labresults belong to a panel."/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-EdifactReferenceNumber' and value = '111222').exists()).count()=4"/>
             <warningOnly value="false"/>
          </assert>
       </action>
