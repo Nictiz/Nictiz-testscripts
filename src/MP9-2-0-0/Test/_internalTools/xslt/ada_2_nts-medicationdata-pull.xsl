@@ -74,7 +74,7 @@
         </xsl:variable>
         
         <xsl:variable name="scenario">x</xsl:variable>
-        <xsl:variable name="newFilename" select="concat('mp9-', lower-case($buildingBlockShort), '-', $transactionTypeNormalized, '-', $scenarioset, '-', $scenario, '.xml')"/>
+        <xsl:variable name="newFilename" select="concat($buildingBlockShort, '-Scenarioset', $scenarioset, '.xml')"/>
         <xsl:call-template name="util:logMessage">
             <xsl:with-param name="level" select="$logINFO"/>
             <xsl:with-param name="msg">processing <xsl:value-of select="$newFilename"/></xsl:with-param>
@@ -179,9 +179,10 @@
         </xsl:call-template>
         <xsl:result-document href="{concat($outputDirNormalized,nf:first-cap($transactionTypeNormalized),'/',$buildingBlockLong,'/',$newFilename)}">
             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                <id value="mp9-{$buildingBlockLong}-{$transactionTypeNormalized}-{$scenarioset}-{$scenario}"/>
+                
                 <xsl:choose>
                     <xsl:when test="$transactionTypeNormalized = 'retrieve'">
-                        <id value="mp9-{$buildingBlockLong}-retrieve-{$scenarioset}-{$scenario}"/>
                         <version value="r4-mp9-2.0.0"/>
                         <name value="Medication Process 9 2.0.0  - {$buildingBlockLong} - Retrieve - Scenario {$scenarioset}.{$scenario}"/>
                         <description value="Scenario {$scenarioset}.{$scenario} - {$description}"/>
@@ -207,7 +208,7 @@
                         </test>
                     </xsl:when>
                     <xsl:when test="$transactionTypeNormalized = 'serve'">
-                        <id value="mp9-{$buildingBlockLong}-serve-{$scenarioset}-{$scenario}"/>
+                        <id value="mp9-{$buildingBlockLong}-{$transactionTypeNormalized}-{$scenarioset}-{$scenario}"/>
                         <version value="r4-mp9-2.0.0"/>
                         <name value="Medication Process 9 2.0.0  - MedicationAgreement (NL: MedicatieAfspraak) - Serve - Scenario {$scenarioset}.{$scenario}"/>
                         <description value="Scenario {$scenarioset}.{$scenario} - {$description}"/>

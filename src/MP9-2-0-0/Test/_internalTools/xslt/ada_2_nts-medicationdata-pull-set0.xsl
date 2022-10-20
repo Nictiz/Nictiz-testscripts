@@ -119,7 +119,7 @@
                     <xsl:variable name="scenario" select="scenario/@value"/>
                     
                     <!-- We should change this to something simpler. Building block and transaction type are already in folder names. Leaving it as is for refactoring purposes -->
-                    <xsl:variable name="newFilename" select="concat('mp9-', lower-case($buildingBlockShort), '-', $transactionType, '-', $scenarioset, '-', $scenario, '.xml')"/>
+                    <xsl:variable name="newFilename" select="concat($buildingBlockShort, '-Scenario', $scenarioset, '-', $scenario, '.xml')"/>
                     
                     <xsl:call-template name="util:logMessage">
                         <xsl:with-param name="level" select="$logINFO"/>
