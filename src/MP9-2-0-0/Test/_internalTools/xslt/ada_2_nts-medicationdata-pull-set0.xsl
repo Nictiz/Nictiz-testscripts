@@ -1,23 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <!--Import mp specific constants (and package for underlying imports)-->
-    <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/mp/9.2.0/payload/mp_latest_package.xsl"/>
-    <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/fhir/2_fhir_fixtures.xsl"/>
+    <xsl:import href="ada_2_nts-medicationdata-pull.xsl"/>
     
     <xsl:output indent="yes" omit-xml-declaration="yes"/>
     <xsl:strip-space elements="*"/>
     
-    <!--<xsl:param name="outputDir" required="yes"/>-->
     <xsl:param name="outputDir"/>
     
     <xsl:variable name="outputDirNormalized" select="nf:normalize-path($outputDir)"/>
     
-    <xsl:variable name="bsnSystem" select="$oidMap[@oid = $oidBurgerservicenummer]/@uri"/>
-    
     <xd:doc>
         <xd:desc>Start template. Converts a very specific input file (set0-config.xml) that is maintained manually to nts.</xd:desc>
     </xd:doc>
-    <xsl:template match="ScenarioSet0">
+    <xsl:template match="/">
         <xsl:call-template name="util:logMessage">
             <xsl:with-param name="level" select="$logINFO"/>
             <xsl:with-param name="msg">Processing ScenarioSet0</xsl:with-param>
@@ -27,7 +22,7 @@
         <xsl:variable name="patientBsn" select="'999900389'"/>
         
         <!-- Transaction Type (Retrieve/Serve) -->
-        <xsl:for-each select="*">
+        <xsl:for-each select="ScenarioSet0/*">
             <xsl:variable name="transactionType" select="lower-case(local-name())"/>
             <xsl:variable name="ntsScenario" as="xs:string?">
                 <xsl:choose>
@@ -228,51 +223,6 @@
             </xsl:for-each>
             
         </xsl:for-each>
-    </xsl:template>
-    
-    <xd:doc>
-        <xd:desc>Capitalize first letter of a string</xd:desc>
-        <xd:param name="in">The string to be handled</xd:param>
-    </xd:doc>
-    <xsl:function name="nf:first-cap" as="xs:string?">
-        <xsl:param name="in" as="xs:string?"/>
-        <xsl:sequence select="concat(upper-case(substring($in, 1, 1)), substring($in, 2))"/>
-    </xsl:function>
-    
-    <xd:doc>
-        <xd:desc>Normalize a filepath</xd:desc>
-        <xd:param name="in">The string to be handled</xd:param>
-    </xd:doc>
-    <xsl:function name="nf:normalize-path" as="xs:string?">
-        <xsl:param name="in" as="xs:string?"/>
-        <xsl:variable name="fixSlashes" select="replace($in, '\\', '/')"/>
-        <xsl:variable name="filePrefix">
-            <xsl:choose>
-                <xsl:when test="starts-with($fixSlashes, 'file:/')">
-                    <xsl:value-of select="$fixSlashes"/>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:value-of select="concat('file:/', $fixSlashes)"/>
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
-        <xsl:variable name="trailingSlash">
-            <xsl:choose>
-                <xsl:when test="ends-with($filePrefix, '/')">
-                    <xsl:value-of select="$filePrefix"/>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:value-of select="concat($filePrefix, '/')"/>
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
-        <xsl:value-of select="$trailingSlash"/>
-    </xsl:function>
-    
-    <xsl:template match="@*|*" mode="copy">
-        <xsl:copy copy-namespaces="no">
-            <xsl:apply-templates select="@*|*" mode="#current"/>
-        </xsl:copy>
     </xsl:template>
     
     <!-- Remove 'f:' namespace prefix -->

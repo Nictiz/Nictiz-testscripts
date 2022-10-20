@@ -2,7 +2,6 @@
 <xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <!--Import mp specific constants (and package for underlying imports)-->
     <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/mp/9.2.0/payload/mp_latest_package.xsl"/>
-    <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/util/mp-functions.xsl"/>
     <xsl:output method="xml" indent="yes" omit-xml-declaration="yes"/>
 
     <xsl:strip-space elements="*"/>
@@ -136,10 +135,16 @@
 
                     <xsl:variable name="includeNumResources" as="element()*">
                         <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
-                            <!-- only count the primary resources and Medication, it is not obliged to send along the secondary resources -->
-                            <xsl:if test="current-grouping-key() = ('MedicationRequest', 'MedicationDispense', 'MedicationStatement', 'MedicationAdministration', 'Medication')">
-                                <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
-                            </xsl:if>
+                            <xsl:choose>
+                                <!-- only count the primary resources and Medication, it is not obliged to send along the secondary resources -->
+                                <xsl:when test="current-grouping-key() = ('MedicationRequest', 'MedicationDispense', 'MedicationStatement', 'MedicationAdministration', 'Medication')">
+                                    <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
+                                </xsl:when>
+                                <!-- but for our own materials we'll check the others aswell just to be sure - for 'legacy reasons' only when receiving, should be also for sending? -->
+                                <xsl:when test="normalize-space(upper-case($transactionType)) = 'RECEIVE'">
+                                    <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}" nts:in-targets="Nictiz-intern"/>
+                                </xsl:when>
+                            </xsl:choose>
                         </xsl:for-each-group>
                     </xsl:variable>
 
@@ -154,7 +159,7 @@
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.{'{$_FORMAT}'}"/>
                                 <nts:includeDateT value="yes"/>
                                 <xsl:apply-templates select="$deleteStuff/f:variable" mode="Nictiz-intern"/>
-                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}" nts:in-targets="#default">
+                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}">
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
                                     <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
                                     <action>
@@ -171,6 +176,7 @@
                                                 <field value="Prefer"/>
                                                 <value value="return=representation"/>
                                             </requestHeader>
+                                            <responseId value="transaction-response-fixture" nts:in-targets="Nictiz-intern"/>
                                             <sourceId value="{$adaTransId}"/>
                                         </operation>
                                     </action>
@@ -178,35 +184,6 @@
                                     <nts:include value="assert.response.bundleContent" scope="common"
                                         bundleType="transaction-response"/>
                                     <xsl:copy-of select="$includeNumResources"/>
-                                </test>
-                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}" nts:in-targets="Nictiz-intern">
-                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
-                                    <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
-                                    <action>
-                                        <operation>
-                                            <type>
-                                                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-                                                <code value="transaction"/>
-                                            </type>
-                                            <description value="Test server to handle a Bundle of type transaction."/>
-                                            <contentType value="{'{$_FORMAT}'}"/>
-                                            <destination value="1"/>
-                                            <origin value="1"/>
-                                            <requestHeader>
-                                                <field value="Prefer"/>
-                                                <value value="return=representation"/>
-                                            </requestHeader>
-                                            <responseId value="transaction-response-fixture"/>
-                                            <sourceId value="{$adaTransId}"/>
-                                        </operation>
-                                    </action>
-                                    <nts:include value="assert.response.success" scope="common"/>
-                                    <nts:include value="assert.response.bundleContent" scope="common"
-                                        bundleType="transaction-response"/>
-
-                                    <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
-                                        <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
-                                    </xsl:for-each-group>
                                 </test>
                                 <!-- teardown receive only needed for Nictiz internal tests -->
                                 <teardown nts:in-targets="Nictiz-intern">

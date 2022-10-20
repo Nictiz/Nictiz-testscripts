@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <!--Import mp specific constants (and package for underlying imports)-->
-    <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/mp/9.2.0/payload/mp_latest_package.xsl"/>
     <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/fhir/2_fhir_fixtures.xsl"/>
+    <xsl:import href="ada_2_nts.xsl"/>
+    
     <xsl:output indent="yes" omit-xml-declaration="yes"/>
 
     <xsl:strip-space elements="*"/>
@@ -14,8 +14,6 @@
     <xsl:variable name="transactionTypeNormalized" select="normalize-space(lower-case($transactionType))"/>
     <xsl:variable name="inputDirNormalized" select="nf:normalize-path($inputDir)"/>
     <xsl:variable name="outputDirNormalized" select="nf:normalize-path($outputDir)"/>
-
-    <xsl:variable name="bsnSystem" select="$oidMap[@oid = $oidBurgerservicenummer]/@uri"/>
 
     <xd:doc>
         <xd:desc>Start template. Handles some ada transactions, converts them to nts. Very specific for each transaction.</xd:desc>
@@ -132,17 +130,8 @@
         </xsl:variable>
         <xsl:variable name="patientBsn" select="$adaInstance[1]/patient/identificatienummer/@value"/>
 
-        <!-- AWE: don't like this, too much repetition, the query params are the same per building block except for BSN and scenario 0 -->
-        <xsl:variable name="additionalScenarioParams" select="document('queryDescription.xml')/Output/*[local-name() = nf:first-cap($transactionTypeNormalized)]/TestScript[@fileName = $newFilename]/@params"/>
         <xsl:variable name="theScenarioParams">
-            <xsl:choose>
-                <xsl:when test="string-length($additionalScenarioParams) gt 0">
-                    <xsl:value-of select="$additionalScenarioParams"/>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:value-of select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;category=http://snomed.info/sct|', $matchCategoryCode, '&amp;_include=', $matchResource, ':medication')"/>
-                </xsl:otherwise>
-            </xsl:choose>
+            <xsl:value-of select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;category=http://snomed.info/sct|', $matchCategoryCode, '&amp;_include=', $matchResource, ':medication')"/>
         </xsl:variable>
 
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
@@ -245,17 +234,7 @@
                 </xsl:choose>
             </TestScript>
         </xsl:result-document>
-
     </xsl:template>
-
-    <xd:doc>
-        <xd:desc>Capitalize first letter of a string</xd:desc>
-        <xd:param name="in">The string to be handled</xd:param>
-    </xd:doc>
-    <xsl:function name="nf:first-cap" as="xs:string?">
-        <xsl:param name="in" as="xs:string?"/>
-        <xsl:sequence select="concat(upper-case(substring($in, 1, 1)), substring($in, 2))"/>
-    </xsl:function>
 
     <xd:doc>
         <xd:desc>Normalize a filepath</xd:desc>
@@ -285,24 +264,6 @@
             </xsl:choose>
         </xsl:variable>
         <xsl:value-of select="$trailingSlash"/>
-    </xsl:function>
-
-    <xsl:function name="nf:compare-strings" as="xs:string?">
-        <xsl:param name="in1" as="xs:string?"/>
-        <xsl:param name="in2" as="xs:string?"/>
-        <xsl:param name="i" as="xs:integer"/>
-
-        <xsl:choose>
-            <xsl:when test="$i gt string-length($in1)">
-                <xsl:value-of select="$in1"/>
-            </xsl:when>
-            <xsl:when test="substring($in1, $i, 1) = substring($in2, $i, 1)">
-                <xsl:value-of select="nf:compare-strings($in1, $in2, $i + 1)"/>
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:value-of select="substring($in1, 1, $i - 1)"/>
-            </xsl:otherwise>
-        </xsl:choose>
     </xsl:function>
 
 </xsl:stylesheet>
