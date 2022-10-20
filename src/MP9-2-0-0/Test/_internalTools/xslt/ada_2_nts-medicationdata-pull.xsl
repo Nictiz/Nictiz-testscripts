@@ -72,24 +72,6 @@
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
-        <xsl:variable name="resourceType">
-            <xsl:choose>
-                <xsl:when test="$buildingBlockShort = 'MA'">MedicationRequest</xsl:when>
-                <xsl:when test="$buildingBlockShort = 'MGB'">MedicationStatement</xsl:when>
-                <xsl:when test="$buildingBlockShort = 'TA'">MedicationDispense</xsl:when>
-                <xsl:when test="$buildingBlockShort = 'VV'">MedicationRequest</xsl:when>
-                <xsl:when test="$buildingBlockShort = 'MTD'">MedicationAdministration</xsl:when>
-                <xsl:when test="$buildingBlockShort = 'MVE'">MedicationDispense</xsl:when>
-                <xsl:when test="$buildingBlockShort = 'WDS'">MedicationRequest</xsl:when>
-                <xsl:otherwise>
-                    <xsl:call-template name="util:logMessage">
-                        <xsl:with-param name="level" select="$logFATAL"/>
-                        <xsl:with-param name="msg">Could not determine resourceType: <xsl:value-of select="$buildingBlockShort"/></xsl:with-param>
-                        <xsl:with-param name="terminate" select="true()"/>
-                    </xsl:call-template>
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
         
         <xsl:variable name="scenario">x</xsl:variable>
         <xsl:variable name="newFilename" select="concat('mp9-', lower-case($buildingBlockShort), '-', $transactionTypeNormalized, '-', $scenarioset, '-', $scenario, '.xml')"/>
@@ -209,13 +191,13 @@
                             <name value="Scenario {$scenarioset}.{$scenario}"/>
                             <description value="{$description}"/>
                             <nts:include value="operation-search">
-                                <nts:with-parameter name="description" value="Query {$resourceType} resource(s) for {$buildingBlockLong}"/>
-                                <nts:with-parameter name="resource" value="{$resourceType}"/>
+                                <nts:with-parameter name="description" value="Query {$matchResource} resource(s) for {$buildingBlockLong}"/>
+                                <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                             </nts:include>
                             <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
                             <nts:include value="assert-returnCount" scope="project">
-                                <nts:with-parameter name="resource" value="{$resourceType}"/>
+                                <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="count" value="{$returnCount}"/>
                             </nts:include>
                             <nts:include value="assert-returnEntryCountAtLeast" scope="project">
@@ -235,15 +217,15 @@
                             <name value="Scenario {$scenarioset}.{$scenario}"/>
                             <description value="{$description}"/>
                             <nts:include value="operation-search">
-                                <nts:with-parameter name="description" value="Test server to serve {$resourceType} resource(s) for {$buildingBlockLong}"/>
-                                <nts:with-parameter name="resource" value="{$resourceType}"/>
+                                <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) for {$buildingBlockLong}"/>
+                                <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                             </nts:include>
                             <nts:include value="assert.response.successfulSearch" scope="common"/>
                             <nts:include value="mp9-validation"/>
                             <nts:include value="assert-responseBundleContent-noMM"/>
                             <nts:include value="assert-returnCountAtLeast" scope="project">
-                                <nts:with-parameter name="resource" value="{$resourceType}"/>
+                                <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="count" value="{$returnCount}"/>
                             </nts:include>
                             <nts:include value="assert-returnEntryCountAtLeast" scope="project">

@@ -60,12 +60,32 @@
             <param name="input.dir" value="${xsl.input.mg.abs}"/>
         </antcall>
         
+        <!-- Scenarioset 0, both Retrieve and Serve -->
+        <!-- Hard coded delete - can we do better? -->
+        <echo>Deleting previous results, if any</echo>
+        
+        <fileset id="outputFiles" dir="${xsl.output.mg.abs}">
+            <include name="Retrieve/*-0-*.xml"/>
+            <include name="Serve/*-0-*.xml"/>
+        </fileset>
+        
+        <delete>
+            <fileset refid="outputFiles"/>
+        </delete>
+        
+        <echo>${echo.label} input files ${xsl.in}/${xsl.in.include}, to be converted with: ${xsl.convert}</echo>
+        <property name="xsl.output.dummy" value="${build.dir}/xslt/dummy.xml"/>
+        <xslt force="true" style="${build.dir}/xslt/ada_2_nts-medicationdata-pull-set0.xsl" in="${build.dir}/xslt/set0-config.xml" out="${xsl.output.dummy}" useImplicitFileset="false">
+            <factory name="${xsl.saxon.class}"/>
+            <classpath location="${xsl.saxon}"/>
+            <param name="outputDir" expression="${xsl.output.mg.abs}"/>
+        </xslt>
+        <delete file="${xsl.output.dummy}"/>
      </target>
     
+    <!-- Goal is to include file 'ada_2_nts-medicationdata-pull.xsl' in 'ada_2_nts.xsl' to be able to deprecate this target. -->
     <target name="convert_ada_2_nts_medicationdata-pull_sub">
-        
         <property name="xsl.output.dummy" value="${build.dir}/xslt/dummy.xml"/>
-        
         <xslt force="true" style="${build.dir}/xslt/ada_2_nts-medicationdata-pull.xsl" in="${build.dir}/xslt/ada_2_nts-medicationdata-pull.xsl" out="${xsl.output.dummy}" useImplicitFileset="false">
             <factory name="${xsl.saxon.class}"/>
             <classpath location="${xsl.saxon}"/>
@@ -73,9 +93,7 @@
             <param name="outputDir" expression="${output.dir}" if="output.dir"/>
             <param name="inputDir" expression="${input.dir}" if="input.dir"/>
         </xslt>
-        
         <delete file="${xsl.output.dummy}"/>
-        
     </target>
     
     <target name="convert_ada2nts_push_all_920">
