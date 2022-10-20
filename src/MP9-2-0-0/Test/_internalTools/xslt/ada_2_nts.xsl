@@ -167,10 +167,16 @@
                                             <contentType value="{'{$_FORMAT}'}"/>
                                             <destination value="1"/>
                                             <origin value="1"/>
+                                            <requestHeader>
+                                                <field value="Prefer"/>
+                                                <value value="return=representation"/>
+                                            </requestHeader>
                                             <sourceId value="{$adaTransId}"/>
                                         </operation>
                                     </action>
-
+                                    <nts:include value="assert.response.success" scope="common"/>
+                                    <nts:include value="assert.response.bundleContent" scope="common"
+                                        bundleType="transaction-response"/>
                                     <xsl:copy-of select="$includeNumResources"/>
                                 </test>
                                 <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}" nts:in-targets="Nictiz-intern">
@@ -186,10 +192,17 @@
                                             <contentType value="{'{$_FORMAT}'}"/>
                                             <destination value="1"/>
                                             <origin value="1"/>
+                                            <requestHeader>
+                                                <field value="Prefer"/>
+                                                <value value="return=representation"/>
+                                            </requestHeader>
                                             <responseId value="transaction-response-fixture"/>
                                             <sourceId value="{$adaTransId}"/>
                                         </operation>
                                     </action>
+                                    <nts:include value="assert.response.success" scope="common"/>
+                                    <nts:include value="assert.response.bundleContent" scope="common"
+                                        bundleType="transaction-response"/>
 
                                     <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
                                         <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
@@ -227,6 +240,7 @@
                                             <sourceId value="{$adaTransId}"/>
                                         </operation>
                                     </action>
+                                    <nts:include value="test.client.successfulTransaction" scope="common"/>
                                     <xsl:copy-of select="$includeNumResources"/>
                                 </test>
                                 <teardown nts:in-targets="#default">
