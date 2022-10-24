@@ -128,11 +128,31 @@
                 </xsl:when>
             </xsl:choose>
         </xsl:variable>
-        <xsl:variable name="patientBsn" select="$adaInstance[1]/patient/identificatienummer/@value"/>
-
-        <xsl:variable name="theScenarioParams">
-            <xsl:value-of select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;category=http://snomed.info/sct|', $matchCategoryCode, '&amp;_include=', $matchResource, ':medication')"/>
+        <xsl:variable name="patient" select="$adaInstance[1]/patient[1]"/>
+        <xsl:variable name="patientBsn" select="$patient/identificatienummer/@value"/>
+        <xsl:variable name="patientName">
+            <xsl:choose>
+                <xsl:when test="$patient/naamgegevens[initialen and geslachtsnaam/achternaam]">
+                    <xsl:value-of select="translate(concat(normalize-space($patient/naamgegevens/initialen/@value), ' ',normalize-space($patient/naamgegevens/geslachtsnaam/voorvoegsels/@value), normalize-space($patient/naamgegevens/geslachtsnaam/achternaam/@value)), '_ .', '--')"/>
+                </xsl:when>
+                <xsl:when test="$patient/naamgegevens/ongestructureerde_naam">
+                    <xsl:value-of select="translate(normalize-space($patient/naamgegevens/ongestructureerde_naam/@value), '_ .', '--')"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:call-template name="util:logMessage">
+                        <xsl:with-param name="level" select="$logFATAL"/>
+                        <xsl:with-param name="msg">Cannot determine patient name: <xsl:value-of select="$patientBsn"/></xsl:with-param>
+                        <xsl:with-param name="terminate" select="true()"/>
+                    </xsl:call-template>
+                </xsl:otherwise>
+            </xsl:choose>
         </xsl:variable>
+        
+        <xsl:variable name="theParamParts">
+            <xsl:value-of select="concat('&amp;category=http://snomed.info/sct|', $matchCategoryCode, '&amp;_include=', $matchResource, ':medication')"/>
+        </xsl:variable>
+        <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, $theParamParts)"/>
+        <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts)"/>
 
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
         <xsl:variable name="returnMedicationCount" select="count($adaInstance/bouwstenen/farmaceutisch_product)"/>
@@ -169,21 +189,26 @@
         <xsl:result-document href="{concat($outputDirNormalized,nf:first-cap($transactionTypeNormalized),'/',$buildingBlockLong,'/',$newFilename)}">
             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                 <id value="mp9-{$buildingBlockLong}-{$transactionTypeNormalized}-{$scenarioset}-{$scenario}"/>
+                <version value="r4-mp9-2.0.0"/>
+                <name value="Medication Process 9 2.0.0  - {$buildingBlockLong} - {nf:first-cap($transactionTypeNormalized)} - Scenario {$scenarioset}.{$scenario}"/>
+                <description value="Scenario {$scenarioset}.{$scenario} - {$description}"/>
+                <nts:patientTokenFixture href="nl-core-Patient-mp9-{$patientName}-token.xml" nts:in-targets="MedMij"/>
+                <nts:includeDateT value="no"/>
                 
-                <xsl:choose>
-                    <xsl:when test="$transactionTypeNormalized = 'retrieve'">
-                        <version value="r4-mp9-2.0.0"/>
-                        <name value="Medication Process 9 2.0.0  - {$buildingBlockLong} - Retrieve - Scenario {$scenarioset}.{$scenario}"/>
-                        <description value="Scenario {$scenarioset}.{$scenario} - {$description}"/>
-                        <nts:includeDateT value="no"/>
-                        
-                        <test id="Scenario-{$scenarioset}-{$scenario}">
-                            <name value="Scenario {$scenarioset}.{$scenario}"/>
-                            <description value="{$description}"/>
-                            <nts:include value="operation-search">
-                                <nts:with-parameter name="description" value="Query {$matchResource} resource(s) for {$buildingBlockLong}"/>
+                <test id="Scenario-{$scenarioset}-{$scenario}">
+                    <name value="Scenario {$scenarioset}.{$scenario}"/>
+                    <description value="{$description}"/>
+                    <xsl:choose>
+                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">
+                            <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
+                                <nts:with-parameter name="description" value="Test client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
+                            </nts:include>
+                            <nts:include value="medmij/test.phr.search" scope="common" nts:in-targets="MedMij">
+                                <nts:with-parameter name="description" value="Test PHR client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
                             </nts:include>
                             <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
                             <nts:include value="assert-returnCount" scope="project">
@@ -194,44 +219,43 @@
                                 <nts:with-parameter name="count" value="{$returnEntryCount}"/>
                                 <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
                             </nts:include>
-                        </test>
-                    </xsl:when>
-                    <xsl:when test="$transactionTypeNormalized = 'serve'">
-                        <id value="mp9-{$buildingBlockLong}-{$transactionTypeNormalized}-{$scenarioset}-{$scenario}"/>
-                        <version value="r4-mp9-2.0.0"/>
-                        <name value="Medication Process 9 2.0.0  - MedicationAgreement (NL: MedicatieAfspraak) - Serve - Scenario {$scenarioset}.{$scenario}"/>
-                        <description value="Scenario {$scenarioset}.{$scenario} - {$description}"/>
-                        <nts:includeDateT value="no"/>
-                        
-                        <test id="Scenario-{$scenarioset}-{$scenario}">
-                            <name value="Scenario {$scenarioset}.{$scenario}"/>
-                            <description value="{$description}"/>
-                            <nts:include value="operation-search">
-                                <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) for {$buildingBlockLong}"/>
-                                <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                <nts:with-parameter name="params" value="{$theScenarioParams}"/>
-                            </nts:include>
-                            <nts:include value="assert.response.successfulSearch" scope="common"/>
-                            <nts:include value="mp9-validation"/>
-                            <nts:include value="assert-responseBundleContent-noMM"/>
-                            <nts:include value="assert-returnCountAtLeast" scope="project">
-                                <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                <nts:with-parameter name="count" value="{$returnCount}"/>
-                            </nts:include>
-                            <nts:include value="assert-returnEntryCountAtLeast" scope="project">
-                                <nts:with-parameter name="count" value="{$returnEntryCount}"/>
-                                <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
-                            </nts:include>
-                        </test>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:call-template name="util:logMessage">
-                            <xsl:with-param name="level" select="$logFATAL"/>
-                            <xsl:with-param name="msg">Different xslt should be called for transactionType: <xsl:value-of select="$transactionTypeNormalized"/></xsl:with-param>
-                            <xsl:with-param name="terminate" select="true()"/>
-                        </xsl:call-template>
-                    </xsl:otherwise>
-                </xsl:choose>
+                        </xsl:when>
+                        <xsl:when test="$transactionTypeNormalized = 'serve'">
+                            <test id="Scenario-{$scenarioset}-{$scenario}">
+                                <name value="Scenario {$scenarioset}.{$scenario}"/>
+                                <description value="{$description}"/>
+                                <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
+                                    <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                    <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                    <nts:with-parameter name="params" value="{$theScenarioParams}"/>
+                                </nts:include>
+                                <nts:include value="medmij/test.xis.search" scope="common" nts:in-targets="MedMij">
+                                    <nts:with-parameter name="description" value="Test XIS server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                    <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                    <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
+                                </nts:include>
+                                <nts:include value="assert.response.successfulSearch" scope="common"/>
+                                <nts:include value="mp9-validation"/>
+                                <nts:include value="assert-responseBundleContent-noMM"/>
+                                <nts:include value="assert-returnCountAtLeast" scope="project">
+                                    <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                    <nts:with-parameter name="count" value="{$returnCount}"/>
+                                </nts:include>
+                                <nts:include value="assert-returnEntryCountAtLeast" scope="project">
+                                    <nts:with-parameter name="count" value="{$returnEntryCount}"/>
+                                    <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
+                                </nts:include>
+                            </test>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:call-template name="util:logMessage">
+                                <xsl:with-param name="level" select="$logFATAL"/>
+                                <xsl:with-param name="msg">Different xslt should be called for transactionType: <xsl:value-of select="$transactionTypeNormalized"/></xsl:with-param>
+                                <xsl:with-param name="terminate" select="true()"/>
+                            </xsl:call-template>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </test>
             </TestScript>
         </xsl:result-document>
     </xsl:template>

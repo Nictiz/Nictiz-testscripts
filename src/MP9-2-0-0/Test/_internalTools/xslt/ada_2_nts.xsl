@@ -165,7 +165,7 @@
                                     <action>
                                         <operation>
                                             <type>
-                                                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                                                <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                                                 <code value="transaction"/>
                                             </type>
                                             <description value="Test server to handle a Bundle of type transaction."/>
@@ -207,7 +207,7 @@
                                     <action>
                                         <operation>
                                             <type>
-                                                <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                                                <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                                                 <code value="transaction"/>
                                             </type>
                                             <description value="Test client to POST a Bundle of type transaction."/>

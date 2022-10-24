@@ -20,6 +20,8 @@
         
         <!-- We only support this patient at the moment -->
         <xsl:variable name="patientBsn" select="'999900389'"/>
+        <!-- Used for MedMij token file -->
+        <xsl:variable name="patientName" select="'B-XXX-Blik'"/>
         
         <!-- Transaction Type (Retrieve/Serve) -->
         <xsl:for-each select="ScenarioSet0/*">
@@ -122,7 +124,7 @@
                     </xsl:call-template>
                     
                     <xsl:variable name="additionalScenarioParams" select="params/@value"/>
-                    <xsl:variable name="theScenarioParams">
+                    <xsl:variable name="theParamParts">
                         <xsl:variable name="additionalScenarioParamsNormalized">
                             <xsl:choose>
                                 <xsl:when test="starts-with($additionalScenarioParams, '&amp;amp;') or string-length($additionalScenarioParams) = 0">
@@ -136,8 +138,10 @@
                                 </xsl:when>
                             </xsl:choose>
                         </xsl:variable>
-                        <xsl:value-of select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;category=http://snomed.info/sct|', $matchCategoryCode, replace($additionalScenarioParams, '&amp;', '&amp;'), '&amp;_include=', $matchResource, ':medication')"/>
+                        <xsl:value-of select="concat('&amp;category=http://snomed.info/sct|', $matchCategoryCode, replace($additionalScenarioParams, '&amp;', '&amp;'), '&amp;_include=', $matchResource, ':medication')"/>
                     </xsl:variable>
+                    <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, $theParamParts)"/>
+                    <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts)"/>
                     
                     <xsl:variable name="description" as="xs:string?" select="description/@value"/>
                     <xsl:variable name="returnCount" select="xs:integer(returnCount/@value)"/>
@@ -165,6 +169,7 @@
                             <version value="r4-mp9-2.0.0"/>
                             <name value="Medication Process 9 2.0.0  - {$buildingBlockLong} - {nf:first-cap($transactionType)} - Scenario {$scenarioset}.{$scenario}"/>
                             <description value="Scenario {$scenarioset}.{$scenario} - {$description}"/>
+                            <nts:patientTokenFixture href="nl-core-Patient-mp9-{$patientName}-token.xml" nts:in-targets="MedMij"/>
                             <xsl:if test="contains($additionalScenarioParams, '${DATE, T,')">
                                 <nts:includeDateT value="yes"/>
                             </xsl:if>
@@ -175,11 +180,17 @@
                                 <xsl:choose>
                                     <xsl:when test="$transactionType = 'retrieve'">
                                         
-                                        <nts:include value="operation-search">
-                                            <nts:with-parameter name="description" value="Query {$matchResource} resource(s) for {$buildingBlockLong}"/>
+                                        <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
+                                            <nts:with-parameter name="description" value="Test client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                             <nts:with-parameter name="resource" value="{$matchResource}"/>
                                             <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                                         </nts:include>
+                                        <nts:include value="medmij/test.phr.search" scope="common" nts:in-targets="MedMij">
+                                            <nts:with-parameter name="description" value="Test PHR client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                            <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                            <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
+                                        </nts:include>
+                                        
                                         <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
                                         <nts:include value="assert-returnCount" scope="project">
                                             <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -191,11 +202,17 @@
                                         </nts:include>
                                     </xsl:when>
                                     <xsl:when test="$transactionType = 'serve'">
-                                        <nts:include value="operation-search">
-                                            <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) for {$buildingBlockLong}"/>
+                                        <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
+                                            <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                             <nts:with-parameter name="resource" value="{$matchResource}"/>
                                             <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                                         </nts:include>
+                                        <nts:include value="medmij/test.xis.search" scope="common" nts:in-targets="MedMij">
+                                            <nts:with-parameter name="description" value="Test XIS server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                            <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                            <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
+                                        </nts:include>
+                                        
                                         <nts:include value="assert.response.successfulSearch" scope="common"/>
                                         <nts:include value="mp9-validation"/>
                                         <nts:include value="assert-responseBundleContent-noMM"/>
