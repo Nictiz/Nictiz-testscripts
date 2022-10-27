@@ -221,31 +221,27 @@
                             </nts:include>
                         </xsl:when>
                         <xsl:when test="$transactionTypeNormalized = 'serve'">
-                            <test id="Scenario-{$scenarioset}-{$scenario}">
-                                <name value="Scenario {$scenarioset}.{$scenario}"/>
-                                <description value="{$description}"/>
-                                <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
-                                    <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
-                                    <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                    <nts:with-parameter name="params" value="{$theScenarioParams}"/>
-                                </nts:include>
-                                <nts:include value="medmij/test.xis.search" scope="common" nts:in-targets="MedMij">
-                                    <nts:with-parameter name="description" value="Test XIS server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
-                                    <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                    <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
-                                </nts:include>
-                                <nts:include value="assert.response.successfulSearch" scope="common"/>
-                                <nts:include value="mp9-validation"/>
-                                <nts:include value="assert-responseBundleContent-noMM"/>
-                                <nts:include value="assert-returnCountAtLeast" scope="project">
-                                    <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                    <nts:with-parameter name="count" value="{$returnCount}"/>
-                                </nts:include>
-                                <nts:include value="assert-returnEntryCountAtLeast" scope="project">
-                                    <nts:with-parameter name="count" value="{$returnEntryCount}"/>
-                                    <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
-                                </nts:include>
-                            </test>
+                            <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
+                                <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                <nts:with-parameter name="params" value="{$theScenarioParams}"/>
+                            </nts:include>
+                            <nts:include value="medmij/test.xis.search" scope="common" nts:in-targets="MedMij">
+                                <nts:with-parameter name="description" value="Test XIS server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
+                            </nts:include>
+                            <nts:include value="assert.response.successfulSearch" scope="common"/>
+                            <nts:include value="mp9-validation"/>
+                            <nts:include value="assert-responseBundleContent-noMM"/>
+                            <nts:include value="assert-returnCountAtLeast" scope="project">
+                                <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                <nts:with-parameter name="count" value="{$returnCount}"/>
+                            </nts:include>
+                            <nts:include value="assert-returnEntryCountAtLeast" scope="project">
+                                <nts:with-parameter name="count" value="{$returnEntryCount}"/>
+                                <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
+                            </nts:include>
                         </xsl:when>
                         <xsl:otherwise>
                             <xsl:call-template name="util:logMessage">
