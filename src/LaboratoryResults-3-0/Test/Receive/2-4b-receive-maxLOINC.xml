@@ -5,38 +5,152 @@
   
     <id value="TEST-xis-2-4b-Receive-results"/>
     <version value="R4-3.0"/>
-    <name value="LaboratoryResults - LAB-LRO - Scenario 2.4b - Receive a maximal results with a LOINC code."/>
-    <description value="Scenario 2.4b - Receive a maximal results with a LOINC code."/>
+    <name value="LaboratoryResults - LAB-LRO - Scenario 2.4b - Receive a maximal result with a LOINC code."/>
+    <description value="Scenario 2.4b - Receive a maximal result with a LOINC code."/>
  
     <nts:fixture id="TEST-scenario-2-4b-fixture"
-        href="resources/resources-to-send/lr-slr-TEST-Scenario4b-4b.{$_FORMAT}"/>
+        href="resources-to-send/lr-slr-TEST-Scenario4b-4b.{$_FORMAT}"/>
     <nts:includeDateT value="yes"/>
 
     <test id="lab-Scenarioset2-4b">
         <name value="Scenario 2.4b"/>
-        <description value="Receive a maximal results with a LOINC code."/>
+        <description value="Receive a maximal result with a LOINC code."/>
         
-        <nts:include value="test.xis.successfulTransaction" scope="common" sourceId="TEST-scenario-2-4b-fixture"/>
+        <nts:include value="test.client.successfulTransaction" scope="common" sourceId="TEST-scenario-2-4b-fixture"/>
         <nts:include value="assert.response.numResources" scope="common" resource="Specimen" count="1"/>
         <nts:include value="assert.response.numResources" scope="common" resource="Organization" count="2"/>
+        <nts:include value="assert.observation.LOINCNHG" direction="response" resource="Observation" 
+            system="http://loinc.org" count="1"
+        />
         
-        <action>
-            <assert>
-                <description
-                    value="Confirm that the Observation resources have an NHG code in the code element"/>
-                <direction value="response"/>
-                <expression value="Bundle.entry.resource.as(Observation).where(code.coding.where(system = 'http://loinc.org').exists()).count() = 1"/>
-            </assert>
-        </action>
+    <!--Asserts for checking the Patient resource to be compliant with the wiki page on
+        https://informatiestandaarden.nictiz.nl/wiki/Lab:1.0.0_Testgegevens_SturenResultaten-->
+    <nts:include value="assert.identifier" direction="response" resource="Patient" system="http://fhir.nl/fhir/NamingSystem/bsn" identifier="999999114"/>
+    <nts:include value="assert.patient.name" direction="response" resource="Patient" 
+        use="official" 
+        text = "Elise Erelies" 
+        given = "Elise" 
+        family = "Erelies"
+        urlfamily = "http://hl7.org/fhir/StructureDefinition/humanname-own-name"
+        urliso = "http://hl7.org/fhir/StructureDefinition/iso21090-EN-qualifier"
+        iso = "BR"
+    />
+    <nts:include value="assert.patient.gender" direction="response" resource="Patient"
+        url = "http://nictiz.nl/fhir/StructureDefinition/ext-CodeSpecification"
+        system = "http://terminology.hl7.org/CodeSystem/v3-AdministrativeGender"
+        code = "F"
+        display = "Vrouw"
+    />
+    <nts:include value="assert.patient.birthdate" direction="response" resource="Patient" date = "1950-11-01"
+    />
+    
+    <!-- Asserts for checking the serving Organization resource(s) to be compliant with the wiki page on
+       https://informatiestandaarden.nictiz.nl/wiki/Lab:1.0.0_Testgegevens_SturenResultaten-->  
+    <nts:include value="assert.identifier" direction="response" resource="Organization" system="http://fhir.nl/fhir/NamingSystem/ura" identifier="00005111"/>
+    <nts:include value="assert.organization.address" direction="response" resource="Organization"
+        urlstreet="http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName"
+        street="Langelaan"
+        urlnumber="http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber"
+        number="1"
+        city="Onze Stad"
+        postalcode="1234ZZ"
+        urltype="http://nictiz.nl/fhir/StructureDefinition/ext-AddressInformation.AddressType"
+        system="http://terminology.hl7.org/CodeSystem/v3-AddressUse"
+        code="WP"
+        display="Werkadres"
+    />
+    <nts:include value="assert.organization.type" direction="response" resource="Organization"
+        system="http://nictiz.nl/fhir/NamingSystem/organization-type"
+        code="Z3"
+        display="Huisartspraktijk (zelfstandig of groepspraktijk)"
+    />
+    <action>
+        <assert>
+            <description
+                value="Confirm that the right organization name has been sent along"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.as(Organization).where(name= 'Huisartsenpraktijk Itis').exists()"/>
+        </assert>
+    </action>
+    
+    <!-- Asserts for checking one Observation to be compliant with the wiki page on
+        https://informatiestandaarden.nictiz.nl/wiki/Lab:1.0.0_Testgegevens_SturenResultaten-->     
+        <nts:include value="assert.identifier" direction="response" resource="Observation" system="urn:oid:2.16.840.1.113883.2.4.3.11.999.25.4298.2" identifier="88888"/>  
+    <nts:include value="assert.observation.valueq" direction="response" resource="Observation"
+        quantity = "30"
+        unit = "mmol/(24.h)"
+        system = "http://unitsofmeasure.org"
+        code="mmol/(24.h)"
+    />
+    <nts:include value="assert.observation.referencerange" direction="response" resource="Observation"
+        range="high"
+        rangevalue ="60"
+        unit="mmol/(24.h)"
+        system="http://unitsofmeasure.org"
+        code="mmol/(24.h)"
+    />
+    <nts:include value="assert.observation.referencerange" direction="response" resource="Observation"
+        range="low"
+        rangevalue = "40"
+        unit="mmol/(24.h)"
+        system="http://unitsofmeasure.org"
+        code="mmol/(24.h)"
+    />
+    <nts:include value="assert.observation.status" direction="response" resource="Observation"
+        status="final"
+    />
+    <nts:include value="assert.observation.interpretation" direction="response" resource="Observation"
+        interpretation="Lager dan referentiebereik."
+    />
+    <nts:include value="assert.observation.interpretationflag" direction="response" resource="Observation"
+        system="http://snomed.info/sct"
+        code="281300000"
+        display="onder referentiebereik"
+    />
+    
+    <!--Asserts for checking the Specimen resource(s) to be compliant with the wiki page on
+        https://informatiestandaarden.nictiz.nl/wiki/Lab:1.0.0_Testgegevens_SturenResultaten-->  
+        <nts:include value="assert.identifier" direction="response" resource="Specimen" system="urn:oid:2.16.840.1.113883.2.4.3.11.999.25.4267.2" identifier="335"/>
+    <action>
+        <assert>
+            <description
+                value="Confirm the observations have been sent in a panel"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.as(Specimen).container.type.coding.where(system='http://snomed.info/sct' and code='706055000' and display='container voor 24-uursurine').exists()"/>
+        </assert>
+    </action>
         
-        <action>
-            <assert>
-                <description
-                    value="Confirm that the right patient has been sent along"/>
-                <direction value="response"/>
-                <expression value="Bundle.entry.resource.as(Patient).where(identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/bsn').where(value = '999999114')).count() = 1"/>
-            </assert>
-        </action>
+    <!-- Asserts for checking the performing Organization resource(s) to be compliant with the wiki page on
+       https://informatiestandaarden.nictiz.nl/wiki/Lab:1.0.0_Testgegevens_SturenResultaten-->  
+    <nts:include value="assert.identifier" direction="response" resource="Organization" system="http://fhir.nl/fhir/NamingSystem/ura" identifier="00003333"/>
+    <nts:include value="assert.organization.address" direction="response" resource="Organization"
+        urlstreet="http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName"
+        street="Hoofdstraat"
+        urlnumber="http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber"
+        number="23"
+        city="Zorgstad"
+        postalcode="1234 AA"
+        urltype="http://nictiz.nl/fhir/StructureDefinition/ext-AddressInformation.AddressType"
+        system="http://terminology.hl7.org/CodeSystem/v3-AddressUse"
+        code="WP"
+        display="Werkadres"
+    />
+    
+    <nts:include value="assert.organization.type" direction="response" resource="Organization"
+        system="http://nictiz.nl/fhir/NamingSystem/organization-type"
+        code="L1"
+        display="Laboratorium"
+    />
+    <nts:include value="assert.organization.contact" direction="response" resource="Organization"
+        system="phone"
+        val='06-11122233'
+        use='work'
+    />
+    <nts:include value="assert.organization.contact" direction="response" resource="Organization"
+        system="email"
+        val='tproefje@lab.nl'
+        use='work'
+    />
            
     </test>
 </TestScript>
