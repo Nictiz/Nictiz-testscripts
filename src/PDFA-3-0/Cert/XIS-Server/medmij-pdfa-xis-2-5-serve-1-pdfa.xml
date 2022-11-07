@@ -5,7 +5,7 @@
     <id value="xis-2-5-serve-1-pdfa"/>
     <version value="stu3-2.0"/>
     <name value="PDFA - XIS Server - Scenario 2.5 - Serve one PDFA document"/>
-    <description value="Scenario 2.5 - Serve one PDFA document of XXX-Schulte via a HTTP read. If PDFA documents are served through Binary resources, scenario 1.4 should be executed instead."/>
+    <description value="Scenario 2.5 - Serve one PDFA document of XXX-Schulte via an HTTP get. If PDFA documents are served through Binary resources, scenario 1.4 should be executed instead."/>
     <nts:patientTokenFixture href="pdfa-nl-core-patient-XXX-Schulte-token.xml"/>
 
     <variable>
@@ -31,9 +31,26 @@
     </test>
 
     <test id="scenario2-5-serve-pdfa-document">
-        <name value="Scenario 2.5 - Read PDFA"/>
-        <description value="Serve PDFA document via a HTTP read."/>
-        <nts:include value="operation.xis.readUrl" resource="Binary" url="${pdfa-url}"/>
+        <name value="Scenario 2.5 - Get PDFA"/>
+        <description value="Serve PDFA document via an HTTP get."/>
+        <action>
+            <operation>
+                <type>
+                    <system value="http://touchstone.aegis.net/touchstone/fhir/testing/CodeSystem/codesystem-testscript-operation-codes"/>
+                    <code value="get"/>
+                </type>
+                <description value="Test XIS server get operation for a document on a known location, using the fullURL."/>
+                <destination value="1"/>
+                <method value="get"/>
+                <origin value="1"/>
+                <requestHeader>
+                    <field value="Authorization"/>
+                    <value value="${patient-token-id}"/>
+                </requestHeader>
+                <nts:include value="medmij/header.request.MedMijRequestId" scope="common"/>
+                <url value="${pdfa-url}"/>
+            </operation>
+        </action>
         <nts:include value="assert.response.success" scope="common"/>
         <action>
             <assert>
@@ -46,16 +63,16 @@
     </test>
 
     <test id="scenario2-5-serve-pdfa-document-control">
-        <name value="Scenario 2.5 - Read without authorization header"/>
+        <name value="Scenario 2.5 - Get PDFA without authorization header"/>
         <description value="Test XIS Server to have control over the reference obtained from the DocumentReference.content.attachment.url. This test resolves the fullURL without an authorization header. The request should fail to confirm that the XIS has control over the context. The expected response code is not 200 (OK) but should be e.g. 401, 403 or 404."/>
         <action>
             <operation>
                 <type>
-                    <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
-                    <code value="read"/>
+                    <system value="http://touchstone.aegis.net/touchstone/fhir/testing/CodeSystem/codesystem-testscript-operation-codes"/>
+                    <code value="get"/>
                 </type>
-                <resource value="Binary"/>
-                <description value="Test XIS server read operation for a document on a known location, using the fullURL."/>
+                <description value="Test XIS server get operation for a document on a known location, using the fullURL."/>
+                <method value="get"/>
                 <contentType value="none"/>
                 <nts:include value="medmij/header.request.MedMijRequestId" scope="common"/>
                 <url value="${pdfa-url}"/>

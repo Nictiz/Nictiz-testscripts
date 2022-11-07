@@ -5,7 +5,7 @@
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
    <url value="http://nictiz.nl/fhir/TestScript/Receiving-XIS-scenario1.1-handoff"/>
-   <version value="stu3-4.0-patchlevel 2022-08"/>
+   <version value="stu3-4.0-patchlevel 2022-10"/>
    <name value="Receiving-XIS-scenario1.1b-handoff"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -71,6 +71,10 @@
       <hint value="The notification endpoint that the sending XIS can use to notify the receiving XIS, _without_ the trailing slash."/>
    </variable>
    <variable>
+      <name value="authorization-token-id"/>
+      <hint value="The payload of the authorization header that Touchstone should use when sending the notification to the notification endpoint."/>
+   </variable>
+   <variable>
       <name value="in-progress-task-response-composition-11171000146100-id"/>
       <expression value="Task.input.where(type.coding.system = 'http://snomed.info/sct' and type.coding.code = '11171000146100').value.reference.replace('Composition/', '')"/>
       <sourceId value="in-progress-task-response"/>
@@ -87,7 +91,6 @@
             <accept value="xml"/>
             <contentType value="xml"/>
             <destination value="1"/>
-            <origin value="1"/>
             <params value="/${task-id}"/>
             <requestHeader>
                <field value="Authorization"/>
@@ -102,6 +105,7 @@
             <description value="Confirm that the operation was successful"/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </setup>
@@ -118,6 +122,10 @@
             <label value="Notify receiving XIS"/>
             <description value="The sending XIS sends a notification to the specified endpoint of the receiving XIS."/>
             <encodeRequestUrl value="true"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${authorization-token-id}"/>
+            </requestHeader>
             <url value="${notificationEndpoint}/${task-id}"/>
          </operation>
       </action>
@@ -202,7 +210,7 @@
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
-            <params value="/${in-progress-task-response-composition-11171000146100-id}"/>
+            <params value="/${in-progress-task-response-composition-11171000146100-id}/$document"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -225,9 +233,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Make sure that the test server (WildFHIR) returns the requested Composition resource."/>
+            <description value="Make sure that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
-            <resource value="Composition"/>
+            <resource value="Bundle"/>
             <warningOnly value="false"/>
          </assert>
       </action>
