@@ -19,9 +19,9 @@
         </xsl:call-template>
         
         <!-- We only support this patient at the moment -->
-        <xsl:variable name="patientBsn" select="'999900389'"/>
+        <xsl:variable name="patientBsn" select="'999901084'"/>
         <!-- Used for MedMij token file -->
-        <xsl:variable name="patientName" select="'B-XXX-Blik'"/>
+        <xsl:variable name="patientName" select="'R-vanXXX-Sonnenberg'"/>
         
         <!-- Transaction Type (Retrieve/Serve) -->
         <xsl:for-each select="ScenarioSet0/*">
@@ -138,9 +138,9 @@
                                 </xsl:when>
                             </xsl:choose>
                         </xsl:variable>
-                        <xsl:value-of select="concat('&amp;category=http://snomed.info/sct|', $matchCategoryCode, replace($additionalScenarioParams, '&amp;', '&amp;'), '&amp;_include=', $matchResource, ':medication')"/>
+                        <xsl:value-of select="concat('category=http://snomed.info/sct|', $matchCategoryCode, replace($additionalScenarioParams, '&amp;', '&amp;'), '&amp;_include=', $matchResource, ':medication')"/>
                     </xsl:variable>
-                    <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, $theParamParts)"/>
+                    <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts)"/>
                     <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts)"/>
                     
                     <xsl:variable name="description" as="xs:string?" select="description/@value"/>
@@ -214,7 +214,6 @@
                                         </nts:include>
                                         
                                         <nts:include value="assert.response.successfulSearch" scope="common"/>
-                                        <nts:include value="mp9-validation"/>
                                         <nts:include value="assert-responseBundleContent-noMM"/>
                                         <nts:include value="assert-returnCount" scope="project">
                                             <nts:with-parameter name="resource" value="{$matchResource}"/>

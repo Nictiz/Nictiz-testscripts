@@ -132,11 +132,8 @@
         <xsl:variable name="patientBsn" select="$patient/identificatienummer/@value"/>
         <xsl:variable name="patientName">
             <xsl:choose>
-                <xsl:when test="$patient/naamgegevens[initialen and geslachtsnaam/achternaam]">
-                    <xsl:value-of select="translate(concat(normalize-space($patient/naamgegevens/initialen/@value), ' ',normalize-space($patient/naamgegevens/geslachtsnaam/voorvoegsels/@value), normalize-space($patient/naamgegevens/geslachtsnaam/achternaam/@value)), '_ .', '--')"/>
-                </xsl:when>
-                <xsl:when test="$patient/naamgegevens/ongestructureerde_naam">
-                    <xsl:value-of select="translate(normalize-space($patient/naamgegevens/ongestructureerde_naam/@value), '_ .', '--')"/>
+                <xsl:when test="$patient/naamgegevens[*[not(name() = 'naamgebruik')]]">
+                    <xsl:value-of select="translate(normalize-space(string-join($patient/naamgegevens[1]//*[not(name() = 'naamgebruik')]/@value, ' ')), '_. ', '--')"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:call-template name="util:logMessage">
@@ -149,9 +146,9 @@
         </xsl:variable>
         
         <xsl:variable name="theParamParts">
-            <xsl:value-of select="concat('&amp;category=http://snomed.info/sct|', $matchCategoryCode, '&amp;_include=', $matchResource, ':medication')"/>
+            <xsl:value-of select="concat('category=http://snomed.info/sct|', $matchCategoryCode, '&amp;_include=', $matchResource, ':medication')"/>
         </xsl:variable>
-        <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, $theParamParts)"/>
+        <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts)"/>
         <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts)"/>
 
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
@@ -232,7 +229,6 @@
                                 <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
                             </nts:include>
                             <nts:include value="assert.response.successfulSearch" scope="common"/>
-                            <nts:include value="mp9-validation"/>
                             <nts:include value="assert-responseBundleContent-noMM"/>
                             <nts:include value="assert-returnCountAtLeast" scope="project">
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>

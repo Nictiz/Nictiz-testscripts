@@ -31,8 +31,8 @@
                     <xsl:when test="string-length(scenario-nr/@value) gt 0">
                         <xsl:value-of select="replace(scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$1')"/>
                     </xsl:when>
-                    <xsl:when test="string-length(voorstel_gegevens/voorstel/identificatie/@value) gt 0">
-                        <xsl:value-of select="lower-case(nf:assure-logicalid-chars(voorstel_gegevens/voorstel/identificatie/@value))"/>
+                    <xsl:when test="string-length(voorstel_gegevens/(voorstel|antwoord)/identificatie/@value) gt 0">
+                        <xsl:value-of select="lower-case(nf:assure-logicalid-chars(voorstel_gegevens/(voorstel|antwoord)/identificatie/@value))"/>
                     </xsl:when>
                 </xsl:choose>
             </xsl:variable>
@@ -142,7 +142,15 @@
                                 </xsl:when>
                                 <!-- but for our own materials we'll check the others aswell just to be sure - for 'legacy reasons' only when receiving, should be also for sending? -->
                                 <xsl:when test="normalize-space(upper-case($transactionType)) = 'RECEIVE'">
-                                    <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}" nts:in-targets="Nictiz-intern"/>
+                                    <xsl:choose>
+                                        <!-- Exception for Lab -->
+                                        <xsl:when test="$testScriptString/@short = 'prescr' and $scenarioset = '4' and $scenario = ('2a','2b') and current-grouping-key() = 'Organization'">
+                                            <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group()) + 1}" nts:in-targets="Nictiz-intern"/>
+                                        </xsl:when>
+                                        <xsl:otherwise>
+                                            <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}" nts:in-targets="Nictiz-intern"/>
+                                        </xsl:otherwise>
+                                    </xsl:choose>
                                 </xsl:when>
                             </xsl:choose>
                         </xsl:for-each-group>
