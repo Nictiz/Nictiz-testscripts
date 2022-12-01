@@ -13,10 +13,14 @@
         <!-- Pick the absolute url as is or create an absolute url when a relative url is given by combining the base url given in the Bundle self link with the relative reference.-->
         <expression
             value="iif(Bundle.entry.where(resource.is(Immunization)).resource.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-Vaccination.PharmaceuticalProduct').value.reference.startsWith('Medication/'),
-            Bundle.link.url.replaceMatches('Immunization[/?].*$','') + Bundle.entry.where(resource.is(Immunization)).resource.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-Vaccination.PharmaceuticalProduct').value.reference,
+            Bundle.link.where(relation='self').url.replaceMatches('Immunization[/?].*$','') + Bundle.entry.where(resource.is(Immunization)).resource.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-Vaccination.PharmaceuticalProduct').value.reference,
             Bundle.entry.where(resource.is(Immunization)).resource.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-Vaccination.PharmaceuticalProduct').value.reference)"/>
         <sourceId value="immunization-search-response"/>
     </variable>
+
+    "iif(Bundle.entry.select(resource as DocumentManifest)[0].content[0].p.reference.startsWith('DocumentReference/'),
+                Bundle.link.where(relation='self').url.replaceMatches('DocumentManifest[/?].*$','') + Bundle.entry.select(resource as DocumentManifest)[0].content[0].p.reference,
+                Bundle.entry.select(resource as DocumentManifest)[0].content[0].p.reference)"
 
     <test>
         <name value="Scenario 1.1 - Get Immunization"/>
@@ -31,19 +35,19 @@
         <nts:include value="assert.response.numResources" scope="common"
             resource="Patient" count="1"/>
 
-            <!-- Test Imminization resource -->
+            <!-- Test Immunization resource -->
             <action>
                 <assert>
-                    <description value="Test if vaccinecode corresponds to test material" />
+                    <description value="Test if there is only one vaccination" />
                     <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.where(coding.code = '2924528').exists()" />
+                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.count() = 1" />
                 </assert>
             </action>
             <action>
                 <assert>
-                    <description value="Test if status is completed" />
+                    <description value="Test if vaccinecode corresponds to test material" />
                     <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.where(status = 'completed').exists()" />
+                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.coding.code = '2924528'" />
                 </assert>
             </action>
             <action>
@@ -57,42 +61,42 @@
                 <assert>
                     <description value="Test if status is completed" />
                     <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.where(status = 'completed').exists()" />
+                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.status = 'completed'" />
                 </assert>
             </action>
             <action>
                 <assert>
                     <description value="Test if vaccinecode code corresponds to test material" />
                     <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.where(coding.code = '2924528').exists()" />
+                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.coding.code = '2924528'" />
                 </assert>
             </action>
             <action>
                 <assert>
                     <description value="Test if vaccinecode system corresponds to test material" />
                     <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.where(coding.system = 'urn:oid:2.16.840.1.113883.2.4.4.7').exists()" />
+                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.coding.system = 'urn:oid:2.16.840.1.113883.2.4.4.7'" />
                 </assert>
             </action>
             <action>
                 <assert>
                     <description value="Test if vaccinecode display corresponds to test material" />
                     <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.where(coding.display = 'COVID-19 VACCIN PFIZER INJVLST 0,3ML').exists()" />
+                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.coding.display = 'COVID-19 VACCIN PFIZER INJVLST 0,3ML'" />
                 </assert>
             </action>
             <action>
                 <assert>
                     <description value="Test if patient reference exists" />
                     <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.patient.where(type = 'Patient').where(reference).exists()" />
+                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.patient.where(type = 'Patient').reference.exists()" />
                 </assert>
             </action>
             <action>
                 <assert>
                     <description value="Test if vaccinecode corresponds to test material" />
                     <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.where(occurrenceDateTime='2021-05-24T14:30:00+02:00').exists()" />
+                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.where(occurrenceDateTime='2021-06-19T16:17:00+02:00').exists()" />
                 </assert>
             </action>
             <action>
@@ -120,6 +124,13 @@
             <!-- Test Patient resource -->
             <action>
                 <assert>
+                    <description value="Test if there is only one patient" />
+                    <direction value="response" /> 
+                    <expression value= "Bundle.entry.where(resource.is(Patient)).resource.count() = 1" />
+                </assert>
+            </action>
+            <action>
+                <assert>
                     <description value="Test if a patient name use exists of the type 'offical'" />
                     <direction value="response" /> 
                     <expression value= "Bundle.entry.where(resource.is(Patient)).resource.name.where(use = 'official').exists()" />
@@ -141,44 +152,58 @@
             </action>
             <action>
                 <assert>
+                    <description value="Test if a patient with type 'offical' contains three given names " />
+                    <direction value="response" /> 
+                    <expression value= "Bundle.entry.where(resource.is(Patient)).resource.name.where(use = 'official').given.count() = 3" />
+                </assert>
+            </action>            
+            <action>
+                <assert>
                     <description value="Test if a patient given name 'Johanna' exists of the type 'offical'" />
                     <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Patient)).resource.name.where(use = 'official').where(given = 'Johanna').exists()" />
+                    <expression value= "Bundle.entry.where(resource.is(Patient)).resource.name.where(use = 'official').given.where($this = 'Johanna').exists()" />
                 </assert>
             </action>
             <action>
                 <assert>
                     <description value="Test if a patient given name 'Petronella' exists of the type 'offical'" />
                     <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Patient)).resource.name.where(use = 'official').where(given = 'Petronella').exists()" />
+                    <expression value= "Bundle.entry.where(resource.is(Patient)).resource.name.where(use = 'official').given.where($this = 'Petronella').exists()" />
                 </assert>
             </action>
             <action>
                 <assert>
                     <description value="Test if a patient given name 'Maria' exists of the type 'offical'" />
                     <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Patient)).resource.name.where(use = 'official').where(given = 'Maria').exists()" />
+                    <expression value= "Bundle.entry.where(resource.is(Patient)).resource.name.where(use = 'official').given.where($this = 'Maria').exists()" />
                 </assert>
             </action>
             <action>
                 <assert>
-                    <description value="Test if a patient name use exists of the type 'use'" />
+                    <description value="Test if a patient name use exists of the type 'usual'" />
                     <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Patient)).resource.name.where(use = 'use').exists()" />
+                    <expression value= "Bundle.entry.where(resource.is(Patient)).resource.name.where(use = 'usual').exists()" />
                 </assert>
             </action>
             <action>
                 <assert>
-                    <description value="Test if a patient given name 'Jo' exists of the type 'use'" />
+                    <description value="Test if a patient given name 'Jo' exists of the type 'usual'" />
                     <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Patient)).resource.name.where(use = 'use').where(given = 'Jo').exists()" />
+                    <expression value= "Bundle.entry.where(resource.is(Patient)).resource.name.where(use = 'usual').where(given = 'Jo').exists()" />
                 </assert>
             </action>
             <action>
                 <assert>
                     <description value="Test if a patient with the birthdate '1934-04-28' exists" />
                     <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Patient)).resource.name.where(birthDate = '1934-04-28').exists()" />
+                    <expression value= "Bundle.entry.resource.as(Patient).birthDate = @1934-04-28"/>
+                </assert>
+            </action>
+            <action>
+                <assert>
+                    <description value="null meting voor dit type assert" />
+                    <direction value="response" /> 
+                    <expression value= "Bundle.entry.resource.as(Patient).photo.title = 'Test123'"/>
                 </assert>
             </action>
 
