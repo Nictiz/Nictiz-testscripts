@@ -4,8 +4,16 @@
    <meta>
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
+   <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-rule">
+      <extension url="ruleId">
+         <valueId value="assertMinimumRequest"/>
+      </extension>
+      <extension url="path">
+         <valueString value="../_reference/rules/assertMinimumRequest.groovy"/>
+      </extension>
+   </extension>
    <url value="http://nictiz.nl/fhir/TestScript/medmij-questionnaires-phr-1.6-2.6"/>
-   <version value="stu3-2.0- patchlevel 2021-09"/>
+   <version value="stu3-2.0-patchlevel 2022-11"/>
    <name value="MedMij Questionnaires - PHR Client - Scenario 1.6 and 2.6"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -21,38 +29,48 @@
    <origin>
       <index value="1"/>
       <profile>
-         <system value="http://hl7.org/fhir/testscript-profile-origin-types"/>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
          <code value="FHIR-Client"/>
       </profile>
    </origin>
    <destination>
       <index value="1"/>
       <profile>
-         <system value="http://hl7.org/fhir/testscript-profile-destination-types"/>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
          <code value="FHIR-Server"/>
       </profile>
    </destination>
    <fixture id="patient-token-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
       <resource>
          <reference value="../_reference/medmij-questionnaires-nl-core-patient-XXX_Boumann-token.xml"/>
       </resource>
    </fixture>
    <fixture id="task-requested-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
       <resource>
          <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Boumann-PHQ9E-REQUESTED.xml"/>
       </resource>
    </fixture>
    <fixture id="task-update-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
       <resource>
          <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Boumann-PHQ9E-REJECTED.xml"/>
       </resource>
    </fixture>
    <fixture id="task-minimum-fixture-xml">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
       <resource>
          <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Boumann-PHQ9E-minimum.xml"/>
       </resource>
    </fixture>
    <fixture id="task-minimum-fixture-json">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
       <resource>
          <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Boumann-PHQ9E-minimum.json"/>
       </resource>
@@ -75,22 +93,12 @@
       <defaultValue value="${CURRENTDATE}"/>
       <description value="Date that data and queries are expected to be relative to."/>
    </variable>
-   <variable>
-      <name value="MedMij-Request-ID"/>
-      <defaultValue value="${UUID}"/>
-      <description value="MedMij-Request-ID, by default a UUID. Does not have to be edited, see MM-2254 for more information"/>
-   </variable>
-   <rule id="assertMinimumRequest">
-      <resource>
-         <reference value="../_reference/rule/assertMinimumRequest.groovy"/>
-      </resource>
-   </rule>
    <setup><!-- Search for open Tasks. If they are present, another test is
                  running at the moment and this test cannot proceed. -->
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Task"/>
@@ -105,7 +113,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
             <responseId value="search-response"/>
          </operation>
@@ -121,7 +129,7 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="updateCreate"/>
             </type>
             <resource value="Task"/>
@@ -136,7 +144,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
             <sourceId value="task-requested-fixture"/>
          </operation>
@@ -148,12 +156,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Task"/>
             <description value="Test PHR client to search for QuestionnaireReferenceTask resources with status 'requested'."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://loinc.org|74468-0&amp;status=requested"/>
             <requestHeader><!-- 0..* Each operation can have one or more header elements -->
@@ -164,7 +173,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
             <responseId value="search-response"/>
          </operation>
@@ -178,6 +187,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -189,6 +199,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="owner="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -200,6 +211,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -210,6 +222,7 @@
             <description value="Confirm that the search returns a Bundle with one entry."/>
             <direction value="response"/>
             <expression value="Bundle.total = 1"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>
@@ -219,12 +232,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="update"/>
             </type>
             <resource value="Task"/>
             <description value="Test PHR client to update the status of the QuestionnaireProvisioningTask."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/${task-id}"/>
             <requestHeader><!-- 0..* Each operation can have one or more header elements -->
@@ -235,7 +249,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
             <sourceId value="task-update-fixture"/>
          </operation>
@@ -249,6 +263,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -259,6 +274,7 @@
             <description value="Confirm that the request body is a Task"/>
             <direction value="request"/>
             <resource value="Task"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -269,6 +285,7 @@
             <description value="Confirm that the Task instance declares its profile"/>
             <direction value="request"/>
             <expression value="meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -276,9 +293,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Confirm that the operation was successful"/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -289,6 +307,7 @@
             <description value="Confirm that the Task conforms to the required profile"/>
             <direction value="request"/>
             <validateProfileId value="Task-profile"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -298,14 +317,21 @@
             </extension>
             <!-- There seems to be a bug in Touchstone that requires this directive to be present, although it 
                  shouldn't be necessary from the Groovy perspective. -->
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="assertMinimumRequest"/>
+               </extension>
+               <extension url="param">
+                  <extension url="name">
+                     <valueString value="minimumFixtureBase"/>
+                  </extension>
+                  <extension url="value">
+                     <valueString value="task-minimum-fixture"/>
+                  </extension>
+               </extension>
+            </extension>
             <direction value="request"/>
-            <rule>
-               <ruleId value="assertMinimumRequest"/>
-               <param>
-                  <name value="minimumFixtureBase"/>
-                  <value value="task-minimum-fixture"/>
-               </param>
-            </rule>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -316,6 +342,7 @@
             <description value="Confirm that the status of the Task is 'rejected'"/>
             <direction value="request"/>
             <expression value="Task.status = 'rejected'"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>
@@ -324,7 +351,7 @@
          <operation><!-- Delete the (now modified) Task resource.
                          Note: the "autodelete" option can't be used because it misses the authorization headers -->
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="delete"/>
             </type>
             <resource value="Task"/>
@@ -339,7 +366,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+    Send a notification to the notification endpoint defined during setup. This will be an isolated "test" in the TestScript.
+    This mechanism (ab)uses the TestScript create operation by using the `url` element to define the URL to send the POST to.
+    @param name - A unique name for this notification sending instance.
+    @param [description] - An optional description for thit step.
+-->
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <test>
+        <name value="{$name}"/>
+        <description value="{$description}"/>
+        
+        <variable>
+            <name value="notificationEndpoint"/>
+            <hint value="The notification endpoint that the sending XIS can use to notify the receiving XIS, _without_ the trailing slash."/>
+        </variable>
+        
+        <variable>
+            <name value="authorization-token-id"/>
+            <hint value="The payload of the authorization header that Touchstone should use when sending the notification to the notification endpoint."/>
+        </variable>
+
+        <action>
+            <operation>
+                <type>
+                    <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+                    <code value="create"/>
+                </type>
+                <resource value="Resource"/>
+                <label value="Notify receiving XIS"/>
+                <description value="The sending XIS sends a notification to the specified endpoint of the receiving XIS."/>
+                <requestHeader>
+                    <field value="Authorization"/>
+                    <value value="${authorization-token-id}"/>
+                 </requestHeader>
+                 <url value="${notificationEndpoint}/${task-id}"/>
+            </operation>
+        </action>
+        <action>
+            <assert nts:stopTestOnFail="false">
+                <label value="Check that the response code is 202 Accepted."/>
+                <description value="It is advised that the receiving XIS responds to the notification with '202 Accepted'."/>
+                <responseCode value="202"/>
+                <warningOnly value="true"/>
+            </assert>
+        </action>
+    </test>
+</nts:component>

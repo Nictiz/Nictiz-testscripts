@@ -5,7 +5,7 @@
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
    <url value="http://nictiz.nl/fhir/TestScript/medmij-bgz-phr-1-1"/>
-   <version value="stu3-3.0- patchlevel 2021-09"/>
+   <version value="stu3-3.0-patchlevel 2022-11"/>
    <name value="BgZ - PHR Client - Scenario 1.1 - Retrieve BgZ resources of XXX-Helleman"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -21,18 +21,20 @@
    <origin>
       <index value="1"/>
       <profile>
-         <system value="http://hl7.org/fhir/testscript-profile-origin-types"/>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
          <code value="FHIR-Client"/>
       </profile>
    </origin>
    <destination>
       <index value="1"/>
       <profile>
-         <system value="http://hl7.org/fhir/testscript-profile-destination-types"/>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
          <code value="FHIR-Server"/>
       </profile>
    </destination>
    <fixture id="patient-token-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
       <resource>
          <reference value="../_reference/bgz-nl-core-patient-XXX-Helleman-token.xml"/>
       </resource>
@@ -42,23 +44,19 @@
       <expression value="Patient.id"/>
       <sourceId value="patient-token-fixture"/>
    </variable>
-   <variable>
-      <name value="MedMij-Request-ID"/>
-      <defaultValue value="${UUID}"/>
-      <description value="MedMij-Request-ID, by default a UUID. Does not have to be edited, see MM-2254 for more information"/>
-   </variable>
    <test id="01-retrieve-Patient">
       <name value="Scenario 1.1 - Patient"/>
       <description value="Query Patient resource including the patient's general practitioner for HCIM Patient"/>
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Patient"/>
             <description value="Test PHR client to retrieve Patient resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?_include=Patient:general-practitioner"/>
             <requestHeader>
@@ -67,7 +65,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -80,6 +78,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -91,6 +90,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -102,6 +102,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -109,9 +110,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -119,9 +121,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -129,39 +132,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Patient resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Patient resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Patient)).count() = 1"/>
             <warningOnly value="false"/>
@@ -172,7 +143,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Practitioner resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Practitioner resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Practitioner)).count() = 1"/>
             <warningOnly value="false"/>
@@ -185,12 +156,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Coverage"/>
             <description value="Test PHR client to retrieve Coverage resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?_include=Coverage:payor:Patient&amp;_include=Coverage:payor:Organization"/>
             <requestHeader>
@@ -199,7 +171,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -212,6 +184,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -223,6 +196,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -234,6 +208,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -241,9 +216,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -251,9 +227,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -261,39 +238,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 2 Coverage resource(s). "/>
+            <description value="Confirm that the response Bundle contains 2 Coverage resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Coverage)).count() = 2"/>
             <warningOnly value="false"/>
@@ -304,7 +249,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Organization resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Organization resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Organization)).count() = 1"/>
             <warningOnly value="false"/>
@@ -317,12 +262,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Consent"/>
             <description value="Test PHR client to retrieve Consent resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?category=http://snomed.info/sct|11291000146105"/>
             <requestHeader>
@@ -331,7 +277,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -344,6 +290,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -355,6 +302,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -366,6 +314,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -373,9 +322,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -383,9 +333,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -393,39 +344,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Consent resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Consent resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Consent)).count() = 1"/>
             <warningOnly value="false"/>
@@ -438,12 +357,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Consent"/>
             <description value="Test PHR client to retrieve Consent resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?category=http://snomed.info/sct|11341000146107"/>
             <requestHeader>
@@ -452,7 +372,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -465,6 +385,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -476,6 +397,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -487,6 +409,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -494,9 +417,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -504,9 +428,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -514,39 +439,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Consent resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Consent resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Consent)).count() = 1"/>
             <warningOnly value="false"/>
@@ -559,12 +452,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Observation"/>
             <description value="Test PHR client to retrieve Observation resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/$lastn?category=http://snomed.info/sct|118228005,http://snomed.info/sct|384821006"/>
             <requestHeader>
@@ -573,7 +467,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -586,6 +480,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -597,6 +492,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -608,6 +504,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -615,9 +512,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -625,9 +523,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -635,39 +534,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s). Set to warningOnly because of https://bits.nictiz.nl/browse/MM-1639, please contact kwalificatie@medmij.nl."/>
+            <description value="Confirm that the response Bundle contains 1 Observation resource(s). Set to warningOnly because of https://bits.nictiz.nl/browse/MM-1639, please contact kwalificatie@medmij.nl."/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Observation)).count() = 1"/>
             <warningOnly value="true"/>
@@ -680,12 +547,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Condition"/>
             <description value="Test PHR client to retrieve Condition resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <requestHeader>
                <field value="Authorization"/>
@@ -693,7 +561,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -706,6 +574,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -717,6 +586,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -728,6 +598,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -735,9 +606,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -745,9 +617,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -755,39 +628,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 6 Condition resource(s). "/>
+            <description value="Confirm that the response Bundle contains 6 Condition resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Condition)).count() = 6"/>
             <warningOnly value="false"/>
@@ -800,12 +641,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Observation"/>
             <description value="Test PHR client to retrieve Observation resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/$lastn?code=http://snomed.info/sct|365508006"/>
             <requestHeader>
@@ -814,7 +656,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -827,6 +669,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -838,6 +681,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -849,6 +693,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -856,9 +701,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -866,9 +712,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -876,39 +723,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Observation resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Observation)).count() = 1"/>
             <warningOnly value="false"/>
@@ -921,12 +736,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Observation"/>
             <description value="Test PHR client to retrieve Observation resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://snomed.info/sct|228366006"/>
             <requestHeader>
@@ -935,7 +751,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -948,6 +764,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -959,6 +776,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -970,6 +788,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -977,9 +796,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -987,9 +807,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -997,39 +818,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Observation resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Observation)).count() = 1"/>
             <warningOnly value="false"/>
@@ -1042,12 +831,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Observation"/>
             <description value="Test PHR client to retrieve Observation resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://snomed.info/sct|228273003"/>
             <requestHeader>
@@ -1056,7 +846,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -1069,6 +859,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1080,6 +871,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1091,6 +883,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1098,9 +891,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1108,9 +902,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1118,39 +913,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Observation resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Observation)).count() = 1"/>
             <warningOnly value="false"/>
@@ -1163,12 +926,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Observation"/>
             <description value="Test PHR client to retrieve Observation resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://snomed.info/sct|365980008"/>
             <requestHeader>
@@ -1177,7 +941,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -1190,6 +954,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1201,6 +966,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1212,6 +978,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1219,9 +986,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1229,9 +997,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1239,39 +1008,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Observation resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Observation)).count() = 1"/>
             <warningOnly value="false"/>
@@ -1284,12 +1021,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="NutritionOrder"/>
             <description value="Test PHR client to retrieve NutritionOrder resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <requestHeader>
                <field value="Authorization"/>
@@ -1297,7 +1035,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -1310,6 +1048,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1321,6 +1060,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1332,6 +1072,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1339,9 +1080,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1349,9 +1091,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1359,39 +1102,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 NutritionOrder resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 NutritionOrder resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(NutritionOrder)).count() = 1"/>
             <warningOnly value="false"/>
@@ -1404,12 +1115,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Flag"/>
             <description value="Test PHR client to retrieve Flag resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <requestHeader>
                <field value="Authorization"/>
@@ -1417,7 +1129,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -1430,6 +1142,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1441,6 +1154,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1452,6 +1166,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1459,9 +1174,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1469,9 +1185,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1479,39 +1196,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Flag resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Flag resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Flag)).count() = 1"/>
             <warningOnly value="false"/>
@@ -1524,12 +1209,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="AllergyIntolerance"/>
             <description value="Test PHR client to retrieve AllergyIntolerance resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <requestHeader>
                <field value="Authorization"/>
@@ -1537,7 +1223,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -1550,6 +1236,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1561,6 +1248,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1572,6 +1260,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1579,9 +1268,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1589,9 +1279,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1599,39 +1290,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 AllergyIntolerance resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 AllergyIntolerance resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(AllergyIntolerance)).count() = 1"/>
             <warningOnly value="false"/>
@@ -1644,12 +1303,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="MedicationStatement"/>
             <description value="Test PHR client to retrieve MedicationStatement resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?category=urn:oid:2.16.840.1.113883.2.4.3.11.60.20.77.5.3|6&amp;_include=MedicationStatement:medication"/>
             <requestHeader>
@@ -1658,7 +1318,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -1671,6 +1331,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1682,6 +1343,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1693,6 +1355,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1700,9 +1363,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1710,9 +1374,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1720,39 +1385,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 MedicationStatement resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 MedicationStatement resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(MedicationStatement)).count() = 1"/>
             <warningOnly value="false"/>
@@ -1763,7 +1396,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Medication resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Medication resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Medication)).count() = 1"/>
             <warningOnly value="false"/>
@@ -1776,12 +1409,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="MedicationRequest"/>
             <description value="Test PHR client to retrieve MedicationRequest resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?category=http://snomed.info/sct|16076005&amp;_include=MedicationRequest:medication"/>
             <requestHeader>
@@ -1790,7 +1424,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -1803,6 +1437,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1814,6 +1449,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1825,6 +1461,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1832,9 +1469,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1842,9 +1480,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1852,39 +1491,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 MedicationRequest resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 MedicationRequest resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(MedicationRequest)).count() = 1"/>
             <warningOnly value="false"/>
@@ -1895,7 +1502,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Medication resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Medication resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Medication)).count() = 1"/>
             <warningOnly value="false"/>
@@ -1908,12 +1515,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="MedicationDispense"/>
             <description value="Test PHR client to retrieve MedicationDispense resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?category=http://snomed.info/sct|422037009&amp;_include=MedicationDispense:medication"/>
             <requestHeader>
@@ -1922,7 +1530,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -1935,6 +1543,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1946,6 +1555,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1957,6 +1567,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1964,9 +1575,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1974,9 +1586,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -1984,39 +1597,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 MedicationDispense resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 MedicationDispense resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(MedicationDispense)).count() = 1"/>
             <warningOnly value="false"/>
@@ -2027,7 +1608,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Medication resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Medication resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Medication)).count() = 1"/>
             <warningOnly value="false"/>
@@ -2040,12 +1621,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="DeviceUseStatement"/>
             <description value="Test PHR client to retrieve DeviceUseStatement resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?_include=DeviceUseStatement:device"/>
             <requestHeader>
@@ -2054,7 +1636,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -2067,6 +1649,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2078,6 +1661,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2089,6 +1673,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2096,9 +1681,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2106,9 +1692,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2116,39 +1703,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 2 DeviceUseStatement resource(s). "/>
+            <description value="Confirm that the response Bundle contains 2 DeviceUseStatement resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(DeviceUseStatement)).count() = 2"/>
             <warningOnly value="false"/>
@@ -2159,7 +1714,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 2 Device resource(s). "/>
+            <description value="Confirm that the response Bundle contains 2 Device resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Device)).count() = 2"/>
             <warningOnly value="false"/>
@@ -2172,12 +1727,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Immunization"/>
             <description value="Test PHR client to retrieve Immunization resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?status=completed"/>
             <requestHeader>
@@ -2186,7 +1742,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -2199,6 +1755,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2210,6 +1767,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2221,6 +1779,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2228,9 +1787,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2238,9 +1798,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2248,39 +1809,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Immunization resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Immunization resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Immunization)).count() = 1"/>
             <warningOnly value="false"/>
@@ -2293,12 +1822,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Observation"/>
             <description value="Test PHR client to retrieve Observation resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/$lastn?code=http://loinc.org|85354-9"/>
             <requestHeader>
@@ -2307,7 +1837,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -2320,6 +1850,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2331,6 +1862,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2342,6 +1874,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2349,9 +1882,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2359,9 +1893,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2369,39 +1904,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Observation resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Observation)).count() = 1"/>
             <warningOnly value="false"/>
@@ -2414,12 +1917,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Observation"/>
             <description value="Test PHR client to retrieve Observation resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/$lastn?code=http://loinc.org|29463-7"/>
             <requestHeader>
@@ -2428,7 +1932,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -2441,6 +1945,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2452,6 +1957,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2463,6 +1969,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2470,9 +1977,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2480,9 +1988,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2490,39 +1999,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Observation resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Observation)).count() = 1"/>
             <warningOnly value="false"/>
@@ -2535,12 +2012,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Observation"/>
             <description value="Test PHR client to retrieve Observation resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/$lastn?code=http://loinc.org|8302-2,http://loinc.org|8306-3,http://loinc.org|8308-9"/>
             <requestHeader>
@@ -2549,7 +2027,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -2562,6 +2040,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2573,6 +2052,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2584,6 +2064,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2591,9 +2072,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2601,9 +2083,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2611,39 +2094,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Observation resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Observation)).count() = 1"/>
             <warningOnly value="false"/>
@@ -2656,12 +2107,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Observation"/>
             <description value="Test PHR client to retrieve Observation resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/$lastn?category=http://snomed.info/sct|275711006&amp;_include=Observation:related-target&amp;_include=Observation:specimen"/>
             <requestHeader>
@@ -2670,7 +2122,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -2683,6 +2135,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2694,6 +2147,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2705,6 +2159,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2712,9 +2167,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2722,9 +2178,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2732,39 +2189,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Observation resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Observation)).count() = 1"/>
             <warningOnly value="false"/>
@@ -2775,7 +2200,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Specimen resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Specimen resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Specimen)).count() = 1"/>
             <warningOnly value="false"/>
@@ -2788,12 +2213,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Procedure"/>
             <description value="Test PHR client to retrieve Procedure resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?category=http://snomed.info/sct|387713003"/>
             <requestHeader>
@@ -2802,7 +2228,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -2815,6 +2241,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2826,6 +2253,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2837,6 +2265,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2844,9 +2273,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2854,9 +2284,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2864,39 +2295,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 2 Procedure resource(s). "/>
+            <description value="Confirm that the response Bundle contains 2 Procedure resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Procedure)).count() = 2"/>
             <warningOnly value="false"/>
@@ -2905,16 +2304,17 @@
    </test>
    <test id="24-retrieve-Contact">
       <name value="Scenario 1.1 - Contact"/>
-      <description value="Query Encounter resource(s) for hospital admission related related HCIM Contact"/>
+      <description value="Query Encounter resource(s) for hospital admission related HCIM Contact"/>
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Encounter"/>
             <description value="Test PHR client to retrieve Encounter resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?class=http://hl7.org/fhir/v3/ActCode|IMP,http://hl7.org/fhir/v3/ActCode|ACUTE,http://hl7.org/fhir/v3/ActCode|NONAC"/>
             <requestHeader>
@@ -2923,7 +2323,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -2936,6 +2336,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2947,6 +2348,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2958,6 +2360,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2965,9 +2368,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2975,9 +2379,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -2985,41 +2390,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
+            <description value="Confirm that the response Bundle contains 2 Encounter resource(s). "/>
             <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Encounter resource(s). "/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Encounter)).count() = 1"/>
+            <expression value="Bundle.entry.where(resource.is(Encounter)).count() = 2"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -3030,12 +2403,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="ProcedureRequest"/>
             <description value="Test PHR client to retrieve ProcedureRequest resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?status=active"/>
             <requestHeader>
@@ -3044,7 +2418,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -3057,6 +2431,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3068,6 +2443,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3079,6 +2455,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3086,9 +2463,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3096,9 +2474,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3106,39 +2485,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 ProcedureRequest resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 ProcedureRequest resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(ProcedureRequest)).count() = 1"/>
             <warningOnly value="false"/>
@@ -3151,12 +2498,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="ImmunizationRecommendation"/>
             <description value="Test PHR client to retrieve ImmunizationRecommendation resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <requestHeader>
                <field value="Authorization"/>
@@ -3164,7 +2512,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -3177,6 +2525,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3188,6 +2537,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3199,6 +2549,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3206,9 +2557,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3216,9 +2568,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3226,39 +2579,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 ImmunizationRecommendation resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 ImmunizationRecommendation resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(ImmunizationRecommendation)).count() = 1"/>
             <warningOnly value="false"/>
@@ -3271,12 +2592,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Appointment"/>
             <description value="Test PHR client to retrieve Appointment resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?status=booked,pending,proposed"/>
             <requestHeader>
@@ -3285,7 +2607,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -3298,6 +2620,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3309,6 +2632,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3320,6 +2644,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3327,9 +2652,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3337,9 +2663,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3347,39 +2674,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Appointment resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Appointment resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Appointment)).count() = 1"/>
             <warningOnly value="false"/>
@@ -3392,12 +2687,13 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="DeviceRequest"/>
             <description value="Test PHR client to retrieve DeviceRequest resources."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?status=active&amp;_include=DeviceRequest:device"/>
             <requestHeader>
@@ -3406,7 +2702,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -3419,6 +2715,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3430,6 +2727,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3441,6 +2739,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3448,9 +2747,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the operation was succesful"/>
+            <description value="Make sure that the test server (WildFHIR) gives a success response."/>
             <operator value="in"/>
             <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3458,9 +2758,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned resource type is Bundle."/>
+            <description value="Confirm that the test server (WildFHIR) returns a Bundle."/>
             <direction value="response"/>
             <resource value="Bundle"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -3468,39 +2769,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned Bundle type is searchset."/>
-            <direction value="response"/>
-            <expression value="Bundle.type"/>
-            <operator value="equals"/>
-            <value value="searchset"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
-            <direction value="response"/>
-            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned Bundle contains a self link."/>
-            <direction value="response"/>
-            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 DeviceRequest resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 DeviceRequest resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(DeviceRequest)).count() = 1"/>
             <warningOnly value="false"/>
@@ -3511,7 +2780,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Device resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 Device resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Device)).count() = 1"/>
             <warningOnly value="false"/>

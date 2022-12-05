@@ -5,8 +5,8 @@
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
    <url value="http://nictiz.nl/fhir/TestScript/phr-2-2-retrieve-1-documentreference"/>
-   <version value="stu3-2.0- patchlevel 2021-09"/>
-   <name value="PDFA - PHR Client - Scenario 2.2 - Retrieve 1 DocumentReference resources"/>
+   <version value="stu3-2.0-patchlevel 2022-11"/>
+   <name value="PDFA - PHR Client - Scenario 2.2 - Retrieve one DocumentReference resource"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -17,22 +17,24 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 2.2 - Retrieve one DocumentReference resource of XXX-Schulte based on a retrieved reference in a DocumentManifest resoure (scenario 2.1)."/>
+   <description value="Scenario 2.2 - Retrieve one DocumentReference resource of XXX-Schulte based on a retrieved reference in a DocumentManifest resource (scenario 2.1)."/>
    <origin>
       <index value="1"/>
       <profile>
-         <system value="http://hl7.org/fhir/testscript-profile-origin-types"/>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
          <code value="FHIR-Client"/>
       </profile>
    </origin>
    <destination>
       <index value="1"/>
       <profile>
-         <system value="http://hl7.org/fhir/testscript-profile-destination-types"/>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
          <code value="FHIR-Server"/>
       </profile>
    </destination>
    <fixture id="patient-token-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
       <resource>
          <reference value="../_reference/pdfa-nl-core-patient-XXX-Schulte-token.xml"/>
       </resource>
@@ -42,23 +44,19 @@
       <expression value="Patient.id"/>
       <sourceId value="patient-token-fixture"/>
    </variable>
-   <variable>
-      <name value="MedMij-Request-ID"/>
-      <defaultValue value="${UUID}"/>
-      <description value="MedMij-Request-ID, by default a UUID. Does not have to be edited, see MM-2254 for more information"/>
-   </variable>
-   <test id="scenario2-2-retrieve-1-DocumentReference">
+   <test id="scenario2-2-retrieve-1-documentreference">
       <name value="Scenario 2.2"/>
-      <description value="Read DocumentReference resource"/>
+      <description value="Read DocumentReference resource."/>
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="search"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="read"/>
             </type>
             <resource value="DocumentReference"/>
-            <description value="Test PHR client to retrieve DocumentReference resources."/>
+            <description value="Test PHR client to read DocumentReference resource."/>
             <destination value="1"/>
+            <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/pdfa-documentreference4"/>
             <requestHeader>
@@ -67,7 +65,7 @@
             </requestHeader>
             <requestHeader>
                <field value="MedMij-Request-ID"/>
-               <value value="${MedMij-Request-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -80,6 +78,7 @@
             <direction value="request"/>
             <headerField value="Authorization"/>
             <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -91,6 +90,7 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="patient="/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -102,6 +102,18 @@
             <direction value="request"/>
             <operator value="notContains"/>
             <requestURL value="subject="/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -109,9 +121,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that a DocumentReference is returned."/>
+            <description value="Make sure that the test server (WildFHIR) returns the requested DocumentReference resource."/>
             <direction value="response"/>
-            <expression value="DocumentReference.count() = 1"/>
+            <resource value="DocumentReference"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
    </test>
