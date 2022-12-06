@@ -9,6 +9,20 @@
     <nts:patientTokenFixture href="imm-patient-van-der-Voorden-der-Teeuwen-token.xml"/>
 
     <variable>
+        <name value="immunization-identifier-01"/>
+        <expression
+            value="Bundle.entry.where(resource.is(Immunization)).resource.identifier[0].value"/>
+        <sourceId value="immunization-search-response"/>
+    </variable>
+    
+    <variable>
+        <name value="immunization-identifier-system-01"/>
+        <expression
+            value="Bundle.entry.where(resource.is(Immunization)).resource.identifier[0].system"/>
+        <sourceId value="immunization-search-response"/>
+    </variable>
+    
+    <variable>
         <name value="pharmaceuticalProduct-url-1"/>
         <!-- Pick the absolute url as is or create an absolute url when a relative url is given by combining the base url given in the Bundle self link with the relative reference.-->
         <expression
@@ -57,89 +71,36 @@
             params="?_include=Immunization:patient&#38;_include:iterate=Immunization:performer"
             responseId="immunization-search-response"/>
         <nts:include value="assert.response.numResources" scope="common"
-            resource="Immunization" count="1"/>
+            resource="Immunization" count="4"/>
         <nts:include value="assert.response.numResources" scope="common"
             resource="Patient" count="1"/>
 
             <!-- Test Immunization resource 1 -->
-            <nts:include value="assert.response.numResources" scope="common" resource="Immunization" count="4"/>
-            <action>
-                <assert>
-                    <description value="Test if vaccinecode corresponds to test material" />
-                    <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.coding.code = '2924528').exists()" />
-                </assert>
-            </action>
-            <action>
-                <assert>
-                    <description value="Test if medication reference exists" />
-                    <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-Vaccination.PharmaceuticalProduct').value" />
-                </assert>
-            </action>
-            <action>
-                <assert>
-                    <description value="Test if status is completed" />
-                    <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.status = 'completed'" />
-                </assert>
-            </action>
-            <action>
-                <assert>
-                    <description value="Test if vaccinecode code corresponds to test material" />
-                    <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.coding.code = '2924528'" />
-                </assert>
-            </action>
-            <action>
-                <assert>
-                    <description value="Test if vaccinecode system corresponds to test material" />
-                    <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.coding.system = 'urn:oid:2.16.840.1.113883.2.4.4.7'" />
-                </assert>
-            </action>
-            <action>
-                <assert>
-                    <description value="Test if vaccinecode display corresponds to test material" />
-                    <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.coding.display = 'COVID-19 VACCIN PFIZER INJVLST 0,3ML'" />
-                </assert>
-            </action>
-            <action>
-                <assert>
-                    <description value="Test if patient reference exists" />
-                    <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.patient.where(type = 'Patient').where(reference).exists()" />
-                </assert>
-            </action>
-            <action>
-                <assert>
-                    <description value="Test if vaccinecode corresponds to test material" />
-                    <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.where(occurrenceDateTime='2021-06-19T16:17:00+02:00').exists()" />
-                </assert>
-            </action>
-            <action>
-                <assert>
-                    <description value="Test if performer exists" />
-                    <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.performer.function.coding.where(code = 'AP').exists()" />
-                </assert>
-            </action>
-            <action>
-                <assert>
-                    <description value="Test if performer codessytem exists" />
-                    <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.performer.function.coding.where(system = 'http://terminology.hl7.org/CodeSystem/v2-0443').exists()" />
-                </assert>
-            </action>
-            <action>
-                <assert>
-                    <description value="Test if performer reference exists" />
-                    <direction value="response" /> 
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.performer.actor.where(type = 'Organization').exists()" />
-                </assert>
-            </action>
+        <nts:include value="assert.identifier" direction="response" resource="Immunization"/>
+        <nts:include value="assert.uniqueidentifier" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}" direction="response"/>
+        <nts:include value="assert.medicationreference" direction="response" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <nts:include value="assert.status" direction="response" status="completed" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <nts:include value="assert.vaccincode" direction="response" resource="Immunization" vaccinCode="74691" vaccinCodeSystem="urn:oid:2.16.840.1.113883.2.4.4.10" vaccinCodeDisplay="Infanrix hexa Injsusp Wwsp 0,5ml" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <nts:include value="assert.patientreference" direction="response" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <nts:include value="assert.occurence" direction="response" occurence="2007-04-12T00:00:00+02:00" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <!-- site -->
+        <nts:include value="assert.site" direction="response" lateralitycode="7771000" code="40983000" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <!-- route -->
+        <nts:include value="assert.route" direction="response" code="2" system="urn:oid:2.16.840.1.113883.2.4.4.9" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <!-- dose -->
+        <nts:include value="assert.dosequantity" direction="response" dosevalue="0.5" unit="ml" system="http://unitsofmeasure.org" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <!-- performer -->
+        <nts:include value="assert.performer" direction="response" resource="Immunization" referenceType="PractitionerRole" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <!-- note -->
+        <nts:include value="assert.note" direction="response" resource="Immunization" note="rechterbovenarm in gips" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <!-- reasonCode -->
+        <nts:include value="assert.reasoncode" direction="response" code="159741000146107" system="http://snomed.info/sct" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <nts:include value="assert.reasoncode" direction="response" code="159731000146104" system="http://snomed.info/sct" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <nts:include value="assert.reasoncode" direction="response" code="404904002" system="http://snomed.info/sct" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <nts:include value="assert.reasoncode" direction="response" code="19829001" system="http://snomed.info/sct" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <!-- protocolApplied -->
+        <nts:include value="assert.protocolApplied" direction="response" code="6142004" system="http://snomed.info/sct" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
+        <nts:include value="assert.protocolApplied" direction="response" code="128241005" system="http://snomed.info/sct" identifier="${immunization-identifier-01}" identifiersystem="${immunization-identifier-system-01}"/>
 
             <!-- Test Immunization resource 2 -->
 
@@ -225,10 +186,10 @@
                     <direction value="response" /> 
                     <expression value= "Bundle.entry.resource.as(Patient).photo.title = 'Test123'"/>
                 </assert>
-            </action>
+            </action> 
 
             <!-- Test Organization resource -->
-            <action>
+             <action>
                 <assert>
                     <description value="Test if a organization with a URA identifier '32320038' exists" />
                     <direction value="response" /> 
@@ -241,7 +202,7 @@
                     <direction value="response" /> 
                     <expression value= "Bundle.entry.where(resource.is(Organization)).resource.identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/ura').where(value = '32320038').exists()" />
                 </assert>
-            </action>
+            </action> 
 
             <!-- Test Organization resource (HealthcareProvider Organisation)-->
 
@@ -254,8 +215,8 @@
     </test>
 
     <!-- Test Medication resource 1 -->
-    <test>
-        <name value="Scenario 2.1 - Get PharmaceuticalProduct"/>
+     <test>
+        <name value="Scenario 2.1 - Get PharmaceuticalProduct-1"/>
         <description value="Serve PharmaceuticalProduct via an HTTP get."/>
         <action>
             <operation>
@@ -276,6 +237,7 @@
             </operation>
         </action>
         <nts:include value="assert.response.success" scope="common"/>
+<<<<<<< HEAD
         <nts:include value="assert.resource.identifier" direction="request" resource="Medication"/>
         <nts:include value="assert.resource.code" direction="request" resource="Medication"/>
         <nts:include value="assert.resource.code.codeableconcept" direction="request" resource="Medication" system="urn:oid:2.16.840.1.113883.2.4.4.10" code="74691"/>
@@ -284,10 +246,13 @@
         <nts:include value="assert.resource.batch" direction="request" resource="Medication"/>
         <nts:include value="assert.resource.batchlotnumber" direction="request" resource="Medication" lotnumber="A21CA260A"/>
     </test>
+=======
+    </test> 
+>>>>>>> dbe7b3f9aae937ec2c5e4adc41ee036b457f767b
 
     <!-- Test Medication resource 2 -->
-    <test>
-        <name value="Scenario 2.1 - Get PharmaceuticalProduct"/>
+     <test>
+        <name value="Scenario 2.1 - Get PharmaceuticalProduct-2"/>
         <description value="Serve PharmaceuticalProduct via an HTTP get."/>
         <action>
             <operation>
@@ -308,6 +273,7 @@
             </operation>
         </action>
         <nts:include value="assert.response.success" scope="common"/>
+<<<<<<< HEAD
         <nts:include value="assert.resource.code" direction="request" resource="Medication"/>
         <nts:include value="assert.resource.code.codeableconcept" direction="request" resource="Medication" system="urn:oid:2.16.840.1.113883.2.4.4.7" code="91804"/>
         <nts:include value="assert.resource.form" direction="request" resource="Medication"/>
@@ -317,10 +283,13 @@
         
 
     </test>
+=======
+    </test> 
+>>>>>>> dbe7b3f9aae937ec2c5e4adc41ee036b457f767b
 
     <!-- Test Medication resource 3 -->
-    <test>
-        <name value="Scenario 2.1 - Get PharmaceuticalProduct"/>
+     <test>
+        <name value="Scenario 2.1 - Get PharmaceuticalProduct-3"/>
         <description value="Serve PharmaceuticalProduct via an HTTP get."/>
         <action>
             <operation>
@@ -341,6 +310,7 @@
             </operation>
         </action>
         <nts:include value="assert.response.success" scope="common"/>
+<<<<<<< HEAD
         <nts:include value="assert.resource.code" direction="request" resource="Medication"/>
         <nts:include value="assert.resource.code.codeableconcept" direction="request" resource="Medication" system="urn:oid:2.16.840.1.113883.2.4.4.7" code="2925508"/>
         <nts:include value="assert.resource.form" direction="request" resource="Medication"/>
@@ -348,10 +318,13 @@
         <nts:include value="assert.resource.batch" direction="request" resource="Medication"/>
         <nts:include value="assert.resource.batchlotnumber" direction="request" resource="Medication" lotnumber="ABV3025"/>
     </test>
+=======
+    </test> 
+>>>>>>> dbe7b3f9aae937ec2c5e4adc41ee036b457f767b
 
     <!-- Test Medication resource 4 -->
-    <test>
-        <name value="Scenario 2.1 - Get PharmaceuticalProduct"/>
+     <test>
+        <name value="Scenario 2.1 - Get PharmaceuticalProduct-4"/>
         <description value="Serve PharmaceuticalProduct via an HTTP get."/>
         <action>
             <operation>
@@ -372,6 +345,7 @@
             </operation>
         </action>
         <nts:include value="assert.response.success" scope="common"/>
+<<<<<<< HEAD
         <nts:include value="assert.resource.code" direction="request" resource="Medication"/>
         <nts:include value="assert.resource.code.codeableconcept" direction="request" resource="Medication" system="urn:oid:2.16.840.1.113883.2.4.4.7" code="2924528"/>
         <nts:include value="assert.resource.form" direction="request" resource="Medication"/>
@@ -379,4 +353,7 @@
         <nts:include value="assert.resource.batch" direction="request" resource="Medication"/>
         <nts:include value="assert.resource.batchlotnumber" direction="request" resource="Medication" lotnumber="PCA0021"/>
     </test>
+=======
+    </test> 
+>>>>>>> dbe7b3f9aae937ec2c5e4adc41ee036b457f767b
 </TestScript>
