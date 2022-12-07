@@ -8,165 +8,38 @@
     <description value="Scenario 1.1 - Serve Immunization resources of van Putten"/>
     <nts:patientTokenFixture href="imm-Patient-01-token.xml"/>
 
-    <variable>
-        <name value="pharmaceuticalProduct-url"/>
-        <!-- Pick the absolute url as is or create an absolute url when a relative url is given by combining the base url given in the Bundle self link with the relative reference.-->
-        <expression
-            value="iif(Bundle.entry.where(resource.is(Immunization)).resource.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-Vaccination.PharmaceuticalProduct').value.reference.startsWith('Medication/'),
-            Bundle.link.where(relation='self').url.replaceMatches('Immunization[/?].*$','') + Bundle.entry.where(resource.is(Immunization)).resource.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-Vaccination.PharmaceuticalProduct').value.reference,
-            Bundle.entry.where(resource.is(Immunization)).resource.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-Vaccination.PharmaceuticalProduct').value.reference)"/>
-        <sourceId value="immunization-search-response"/>
-    </variable>
-
-    "iif(Bundle.entry.select(resource as DocumentManifest)[0].content[0].p.reference.startsWith('DocumentReference/'),
-                Bundle.link.where(relation='self').url.replaceMatches('DocumentManifest[/?].*$','') + Bundle.entry.select(resource as DocumentManifest)[0].content[0].p.reference,
-                Bundle.entry.select(resource as DocumentManifest)[0].content[0].p.reference)"
+    <nts:include value="variable.immunization.medication.url" name="pharmaceuticalProduct-url" seqeunceNumber="0"/>
 
     <test>
-        <name value="Scenario 1.1 - Get Immunization"/>
+        <name value="Scenario 1.1 - Serve Immunization resources"/>
         <description
-            value="Serve Immunization resource including the patient"/>
+            value="Serve Immunization resource including the patient and performer"/>
         <nts:include value="medmij/test.xis.successfulSearch" scope="common"
             resource="Immunization"
-            params="?_include=Immunization:patient&#38;_include:iterate=Immunization:performer"
+            params="?_include=Immunization:patient&#38;_include=Immunization:performer"
             responseId="immunization-search-response"/>
         <nts:include value="assert.response.numResources" scope="common"
             resource="Immunization" count="1"/>
         <nts:include value="assert.response.numResources" scope="common"
+            resource="Medication" count="1" nts:in-targets="#default"/>
+        <nts:include value="assert.response.numResources" scope="common"
             resource="Patient" count="1"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Organization" count="1"/>
 
-        <!-- Test Immunization resource -->
-        <action>
-            <assert>
-                <description value="Test if there is only one vaccination"/>
-                <direction value="response"/>
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.count() = 1" />
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Test if vaccinecode corresponds to test material"/>
-                <direction value="response"/>
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.coding.code = '2924528'" />
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Test if medication reference exists"/>
-                <direction value="response"/>
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-Vaccination.PharmaceuticalProduct').value" />
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Test if status is completed"/>
-                <direction value="response"/>
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.status = 'completed'" />
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Test if vaccinecode code corresponds to test material"/>
-                <direction value="response"/>
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.coding.code = '2924528'" />
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Test if vaccinecode system corresponds to test material"/>
-                <direction value="response"/>
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.coding.system = 'urn:oid:2.16.840.1.113883.2.4.4.7'" />
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Test if vaccinecode display corresponds to test material"/>
-                <direction value="response"/>
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.vaccineCode.coding.display = 'COVID-19 VACCIN PFIZER INJVLST 0,3ML'" />
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Test if patient reference exists"/>
-                <direction value="response"/>
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.patient.where(type = 'Patient').reference.exists()" />
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Test if vaccinecode corresponds to test material"/>
-                <direction value="response"/>
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.where(occurrenceDateTime='2021-06-19T16:17:00+02:00').exists()" />
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Test if performer exists"/>
-                <direction value="response"/>
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.performer.function.coding.where(code = 'AP').exists()" />
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Test if performer codessytem exists"/>
-                <direction value="response"/>
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.performer.function.coding.where(system = 'http://terminology.hl7.org/CodeSystem/v2-0443').exists()" />
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Test if performer reference exists"/>
-                <direction value="response"/>
-                    <expression value= "Bundle.entry.where(resource.is(Immunization)).resource.performer.actor.where(type = 'Organization').exists()" />
-            </assert>
-        </action>
+        <!-- Immunization  -->
+        <nts:include value="assert.numIdentifier" direction="response" resource="Immunization" count="1"/>
+        <nts:include value="assert.numMedicationReference" direction="response" resource="Immunization" count="1"/>
         
         <!-- Patient -->
-        <nts:include value="assert.response.numResources" scope="common" resource="Patient"
-            count="1"/>
-        <nts:include value="assert.identifier" direction="response" resource="Patient"/>
         <nts:include value="assert.birthdate" direction="response" resource="Patient" date="1934-04-28"/>
         
+        <!-- Test Medication resource -->
+        <test nts:in-targets="NoMedication">
+            <name value="Scenario 1.1 - Read Medication resource"/>
+            <description value="Serve PharmaceuticalProduct via an HTTP get."/>
+            <nts:include value="medmij/test.xis.successfulRead" resource="Medication" url="${pharmaceuticalProduct-url}" scope="common"/>
+        </test>
         
-        
-        <!-- Test Organization resource -->
-        <action>
-            <assert>
-                <description value="Test if a organization with a URA identifier '32320038' exists"/>
-                <direction value="response"/>
-                    <expression value= "Bundle.entry.where(resource.is(Organization)).resource.identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/ura').where(value = '32320038').exists()" />
-            </assert>
-        </action>
-        <action>
-            <assert>
-                <description value="Test if a organization with name 'GGD Gelderland-Zuid' exists"/>
-                <direction value="response"/>
-                    <expression value= "Bundle.entry.where(resource.is(Organization)).resource.identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/ura').where(value = '32320038').exists()" />
-            </assert>
-        </action>
-    </test>
-
-    <test>
-        <name value="Scenario 1.1 - Get PharmaceuticalProduct"/>
-        <description value="Serve PharmaceuticalProduct via an HTTP get."/>
-        <action>
-            <operation>
-                <type>
-                    <system value="http://touchstone.aegis.net/touchstone/fhir/testing/CodeSystem/codesystem-testscript-operation-codes"/>
-                    <code value="get"/>
-                </type>
-                <description value="Test XIS server get operation for a document on a known location, using the fullURL."/>
-                <destination value="1"/>
-                <method value="get"/>
-                <origin value="1"/>
-                <requestHeader>
-                    <field value="Authorization"/>
-                    <value value="${patient-token-id}"/>
-                </requestHeader>
-                <nts:include value="medmij/header.request.MedMijRequestId" scope="common"/>
-                <url value="${pharmaceuticalProduct-url}"/>
-            </operation>
-        </action>
-        <nts:include value="assert.response.success" scope="common"/>
     </test>
 </TestScript>

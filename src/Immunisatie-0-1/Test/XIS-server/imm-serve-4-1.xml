@@ -4,30 +4,48 @@
     nts:scenario="server">
     <id value="imm-serve-4-1"/>
     <version value="R4-4.0.1"/>
-    <name value="Immunization - XIS Server - Scenario 4.1 - Serve Immunization resources of Lucasz"/>
-    <description value="Scenario 4.1 - Serve Immunization resources of van Lucasz"/>
+    <name value="Immunization - XIS Server - Scenario 3.1 - Serve Immunization resources of Lucasz"/>
+    <description value="Scenario 3.1 - Serve Immunization resources of van Lucasz"/>
     <nts:patientTokenFixture href="imm-Patient-04-token.xml"/>
 
-    <test id="03-serve-Immunization">
-        <name value="Scenario 4.1 - Immunization"/>
+    <nts:include value="variable.immunization.medication.url" name="pharmaceuticalProduct-url-1" seqeunceNumber="0"/>
+    <nts:include value="variable.immunization.medication.url" name="pharmaceuticalProduct-url-2" seqeunceNumber="0"/>
+    
+    <test>
+        <name value="Test scenario 3.1 - Serve vaccinations"/>
         <description
             value="Serve Immunization resource including the patient"/>
         <nts:include value="medmij/test.xis.successfulSearch" scope="common"
             resource="Immunization"
-            params="?_include=Immunization:patient&#38;_include:iterate=Immunization:performer"/>
+            params="?_include=Immunization:patient&#38;_include=Immunization:performer"/>
         <nts:include value="assert.response.numResources" scope="common"
-            resource="Immunization" count="1"/>
+            resource="Immunization" count="2"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Medication" count="2" nts:in-targets="#default"/>
         <nts:include value="assert.response.numResources" scope="common"
             resource="Patient" count="1"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Organization" count="1"/>
         
-        <!-- Immunizations -->
+        <!-- Immunization -->
+        <nts:include value="assert.numIdentifier" direction="response" resource="Immunization" count="2"/>
+        <nts:include value="assert.numMedicationReference" direction="response" resource="Immunization" count="2"/>
      
         <!-- Patient -->
-        <nts:include value="assert.response.numResources" scope="common" resource="Patient" count="1"/>
-        <nts:include value="assert.identifier" direction="response" resource="Patient"/>
         <nts:include value="assert.birthdate" direction="response" resource="Patient" date="2004-09-28"/>
         
-        <!-- Medication -->
-        <!-- Organization -->
+        <!-- Test Medication resource 1 -->
+        <test nts:in-targets="NoMedication">
+            <name value="Scenario 3.1 - Read Medication resource 1"/>
+            <description value="Serve PharmaceuticalProduct via an HTTP get."/>
+            <nts:include value="medmij/test.xis.successfulRead" resource="Medication" url="${pharmaceuticalProduct-url-1}" scope="common"/>
+        </test>
+        
+        <!-- Test Medication resource 2 -->
+        <test nts:in-targets="NoMedication">
+            <name value="Scenario 3.1 - Read Medication resource 2"/>
+            <description value="Serve PharmaceuticalProduct via an HTTP get."/>
+            <nts:include value="medmij/test.xis.successfulRead" resource="Medication" url="${pharmaceuticalProduct-url-2}" scope="common"/>
+        </test>
     </test>
 </TestScript>
