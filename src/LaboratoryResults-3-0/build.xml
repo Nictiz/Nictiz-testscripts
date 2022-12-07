@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Apache ANT build file that sets up (target = setup) or by default converts transaction with references to full ada xml (target = resolve-refs)
+    Apache ANT is based on Java and may be found here: https://ant.apache.org/
+    run on command line or from a batch file: 
+        ant [-f build.xml] [target]
+        
+    If you just run ant, it expects a build.xml in the working dir and runs the default target.
+-->
+<project basedir="." default="setup_lab" name="build-lab" xmlns:if="ant:if" xmlns:unless="ant:unless">
+    <property name="is.version" value="3.0.0"/>
+    <property name="is.version.short" value="300"/>
+    
+    <property name="echo.label.in" value="ADA2FHIR"/>
+    <property name="echo.label.out" value="TestScript"/>
+    
+    <property name="echo.label" value="${echo.label.in} to ${echo.label.out}"/>
+    
+    <property name="ada2fhir.source.dir" value="${basedir}/../../../HL7-mappings/ada_2_fhir-r4/lab/${is.version}"/>
+    <property name="usecase.labbr" value="beschikbaarstellen_laboratoriumresultaten"/>
+    <property name="usecase.labsr" value="sturen_laboratoriumresultaten"/>
+    
+    
+    <target name="setup_lab" description="Setup subdirectories, schemas, ada instance xml's in ${build.dir} for ${is.name} ${is.version}">
+        <!-- laboratoriumresultaten sturen for qualification-->
+        <antcall target="setup_sub_instances">
+            <param name="usecase" value="${usecase.labsr}"/>
+            <param name="fileset.dir" value="fhir_instance"/>
+            <param name="fileset.include" value="*KWAL*.xml"/>
+            <param name="output.dir" value="${basedir}/Cert/_reference/resources-to-sendreceive"/>
+        </antcall>
+        
+        <!-- laboratoriumresultaten sturen for qualification-->
+        <antcall target="setup_sub_instances">
+            <param name="usecase" value="${usecase.labsr}"/>
+            <param name="fileset.dir" value="fhir_instance"/>
+            <param name="fileset.include" value="*TEST*.xml"/>
+            <param name="output.dir" value="${basedir}/Test/_reference/resources-to-sendreceive"/>
+        </antcall>
+        
+        <!-- laboratoriumresultaten beschikbaar stellen for qualification-->
+        <antcall target="setup_sub_instances">
+            <param name="usecase" value="${usecase.labbr}"/>
+            <param name="fileset.dir" value="fhir_instance"/>
+            <param name="fileset.include" value="*KWAL*.xml"/>
+            <param name="output.dir" value="${basedir}/Cert/_reference/resources-to-serve"/>
+        </antcall>
+        
+        <!-- laboratoriumresultaten beschikbaar stellen for qualification-->
+        <antcall target="setup_sub_instances">
+            <param name="usecase" value="${usecase.labbr}"/>
+            <param name="fileset.dir" value="fhir_instance"/>
+            <param name="fileset.include" value="*TEST*.xml"/>
+            <param name="output.dir" value="${basedir}/Test/_reference/resources-to-serve"/>
+        </antcall>
+    </target>
+    
+    <target name="setup_sub_instances" description="Setup ${output.dir} containing ${echo.label.in} instances (${fileset.dir}/${fileset.include})">
+        <echo>Copying FHIR instances from ${usecase}/${fileset.dir}/${fileset.include} to ${output.dir}</echo>
+        
+        <!-- make dir if it does not exist (anymore) -->
+        <mkdir dir="${output.dir}"/>
+        
+        <delete>
+            <fileset dir="${output.dir}" includes="*.xml"/>
+        </delete>
+        <copy todir="${output.dir}" failonerror="true">
+            <fileset dir="${ada2fhir.source.dir}/${usecase}/${fileset.dir}">
+                <include name="${fileset.include}"/>
+            </fileset>
+        </copy>
+        
+    </target>
+    
+</project>
