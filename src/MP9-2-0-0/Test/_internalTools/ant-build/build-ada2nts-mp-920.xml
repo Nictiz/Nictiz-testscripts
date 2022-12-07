@@ -13,11 +13,11 @@
 
     <property name="build.dir" value=".."/>
 
-    <property name="github.mp92.dir" value="https://raw.githubusercontent.com/Nictiz/HL7-mappings/MP920/ada_2_fhir-r4/mp/9.2.0"/>
+    <property name="github.mp92.dir" value="https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/ada_2_fhir-r4/mp/9.2.0"/>
     <!-- don't know how to create fileset or resource collection from online dir, workaround: use local dir -->
-<!--    <property name="github.mp92.dir.local" value="${build.dir}/../../../../../HL7-mappings/ada_2_fhir-r4/mp/9.2.0"/>-->
-    <property name="github.mp92.dir.local" value="${build.dir}/../../../../../HL7-mappings-dev/ada_2_fhir-r4/mp/9.2.0"/>
-    <property name="mappings.url.4.fhir.fixtures" value="${github.mp92.dir}/4TouchstoneMPServe"/>
+    <property name="github.mp92.dir.local" value="${build.dir}/../../../../../HL7-mappings/ada_2_fhir-r4/mp/9.2.0"/>
+    <!--<property name="github.mp92.dir.local" value="${build.dir}/../../../../../HL7-mappings-dev/ada_2_fhir-r4/mp/9.2.0"/>-->
+    <property name="mappings.url.4.fhir.fixtures" value="${github.mp92.dir}/4TouchstoneMP"/>
     
     
     <property name="usecase.mg.input" value="beschikbaarstellen_medicatiegegevens"/>
@@ -26,6 +26,8 @@
     
     <target name="convert_ada_2_nts_920">
         <!-- this would be the umbrella target to build all scenarios -->
+        <!-- pull medicationdata -->
+        <antcall target="convert_ada2nts_pull_meddata_920"/>
         <!-- all push scenario's -->
         <antcall target="convert_ada2nts_push_all_920"/>
     </target>
@@ -39,6 +41,13 @@
         <property name="xsl.input.mg.abs" location="${xsl.input.mg}"/>
         <property name="xsl.output.mg" value="${build.dir}/../${usecase.mg.output}"/>
         <property name="xsl.output.mg.abs" location="${xsl.output.mg}"/>
+        
+        <echo>Deleting previous results, if any</echo>
+        <mkdir dir="${xsl.output.mg.abs}"/>
+        <delete>
+            <fileset dir="${xsl.output.mg.abs}/Retrieve"/>
+            <fileset dir="${xsl.output.mg.abs}/Serve"/>
+        </delete>
         
         <!-- Retrieve -->
         <!-- MedicationAgreement -->
@@ -58,12 +67,21 @@
             <param name="input.dir" value="${xsl.input.mg.abs}"/>
         </antcall>
         
-     </target>
-    
-    <target name="convert_ada_2_nts_medicationdata-pull_sub">
+        <!-- Scenarioset 0, both Retrieve and Serve -->
+        <!-- Hard coded delete - can we do better? -->
         
         <property name="xsl.output.dummy" value="${build.dir}/xslt/dummy.xml"/>
-        
+        <xslt force="true" style="${build.dir}/xslt/ada_2_nts-medicationdata-pull-set0.xsl" in="${build.dir}/xslt/set0-config.xml" out="${xsl.output.dummy}" useImplicitFileset="false">
+            <factory name="${xsl.saxon.class}"/>
+            <classpath location="${xsl.saxon}"/>
+            <param name="outputDir" expression="${xsl.output.mg.abs}"/>
+        </xslt>
+        <delete file="${xsl.output.dummy}"/>
+     </target>
+    
+    <!-- Goal is to include file 'ada_2_nts-medicationdata-pull.xsl' in 'ada_2_nts.xsl' to be able to deprecate this target. -->
+    <target name="convert_ada_2_nts_medicationdata-pull_sub">
+        <property name="xsl.output.dummy" value="${build.dir}/xslt/dummy.xml"/>
         <xslt force="true" style="${build.dir}/xslt/ada_2_nts-medicationdata-pull.xsl" in="${build.dir}/xslt/ada_2_nts-medicationdata-pull.xsl" out="${xsl.output.dummy}" useImplicitFileset="false">
             <factory name="${xsl.saxon.class}"/>
             <classpath location="${xsl.saxon}"/>
@@ -71,9 +89,7 @@
             <param name="outputDir" expression="${output.dir}" if="output.dir"/>
             <param name="inputDir" expression="${input.dir}" if="input.dir"/>
         </xslt>
-        
         <delete file="${xsl.output.dummy}"/>
-        
     </target>
     
     <target name="convert_ada2nts_push_all_920">
@@ -148,7 +164,7 @@
     <target name="convert_ada2nts_reply_prop_vv_920">
         <!-- target for reply proposal dispense request (verstrekkingsverzoek) -->
         <antcall target="convert_push_usecase_920_sub">
-            <param name="xsl.input.usecase" value="${github.mp92.dir.local}/sturen_voorstel_verstrekkingsverzoek/ada_instance"/>
+            <param name="xsl.input.usecase" value="${github.mp92.dir.local}/sturen_antwoord_voorstel_verstrekkingsverzoek/ada_instance"/>
             <param name="xsl.output.usecase" value="${build.dir}/ReplyProposalVV"/>
         </antcall>
     </target>

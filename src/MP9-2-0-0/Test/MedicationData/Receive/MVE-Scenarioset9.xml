@@ -5,7 +5,7 @@
    <name value="MP9 - Server - Scenario 9.x - Receive MedicationData"/>
    <description value="Scenario 9.x - Receive MedicationData for M. XXX_Nederveen."/>
    <nts:fixture id="mg-mp-mg-tst-MVE-Scenarioset9-v20"
-                href="fixtures/mg-mp-mg-tst-MVE-Scenarioset9-v20.xml"/>
+                href="fixtures/mg-mp-mg-tst-MVE-Scenarioset9-v20.{$_FORMAT}"/>
    <nts:includeDateT value="yes"/>
    <variable nts:in-targets="Nictiz-intern">
       <name value="patient-id"/>
@@ -57,50 +57,31 @@
       <expression value="(Bundle.entry.resource as Location).id[0]"/>
       <sourceId value="transaction-response-fixture"/>
    </variable>
-   <test id="scenario9-x-receive-meddata" nts:in-targets="#default">
+   <test id="scenario9-x-receive-meddata">
       <name value="Scenario 9.x"/>
       <description value="Receive MedicationData in a transaction Bundle"/>
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="transaction"/>
             </type>
             <description value="Test server to handle a Bundle of type transaction."/>
-            <accept value="xml"/>
-            <contentType value="xml"/>
+            <contentType value="{$_FORMAT}"/>
             <destination value="1"/>
             <origin value="1"/>
+            <requestHeader>
+               <field value="Prefer"/>
+               <value value="return=representation"/>
+            </requestHeader>
+            <responseId value="transaction-response-fixture" nts:in-targets="Nictiz-intern"/>
             <sourceId value="mg-mp-mg-tst-MVE-Scenarioset9-v20"/>
          </operation>
       </action>
-      <nts:include value="assert.request.numResources"
+      <nts:include value="assert.response.success" scope="common"/>
+      <nts:include value="assert.response.bundleContent"
                    scope="common"
-                   resource="MedicationDispense"
-                   count="3"/>
-      <nts:include value="assert.request.numResources"
-                   scope="common"
-                   resource="Medication"
-                   count="3"/>
-   </test>
-   <test id="scenario9-x-receive-meddata" nts:in-targets="Nictiz-intern">
-      <name value="Scenario 9.x"/>
-      <description value="Receive MedicationData in a transaction Bundle"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="transaction"/>
-            </type>
-            <description value="Test server to handle a Bundle of type transaction."/>
-            <accept value="xml"/>
-            <contentType value="xml"/>
-            <destination value="1"/>
-            <origin value="1"/>
-            <responseId value="transaction-response-fixture"/>
-            <sourceId value="mg-mp-mg-tst-MVE-Scenarioset9-v20"/>
-         </operation>
-      </action>
+                   bundleType="transaction-response"/>
       <nts:include value="assert.request.numResources"
                    scope="common"
                    resource="MedicationDispense"
@@ -108,11 +89,13 @@
       <nts:include value="assert.request.numResources"
                    scope="common"
                    resource="Patient"
-                   count="1"/>
+                   count="1"
+                   nts:in-targets="Nictiz-intern"/>
       <nts:include value="assert.request.numResources"
                    scope="common"
                    resource="Organization"
-                   count="1"/>
+                   count="1"
+                   nts:in-targets="Nictiz-intern"/>
       <nts:include value="assert.request.numResources"
                    scope="common"
                    resource="Medication"
@@ -120,7 +103,8 @@
       <nts:include value="assert.request.numResources"
                    scope="common"
                    resource="Location"
-                   count="1"/>
+                   count="1"
+                   nts:in-targets="Nictiz-intern"/>
    </test>
    <teardown nts:in-targets="Nictiz-intern">
       <action>
