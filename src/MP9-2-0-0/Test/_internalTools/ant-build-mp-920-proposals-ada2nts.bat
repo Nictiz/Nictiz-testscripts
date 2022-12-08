@@ -1,7 +1,7 @@
 @setlocal enableextensions
 
 @echo off
-
+echo.ant mp 920 proposals ada2nts build...
 echo.ant mp 920 proposal ma ada2nts build...
 call ant -f ant-build\build-ada2nts-mp-920.xml convert_ada2nts_prop_ma_920 >ant-build-prop-ma.log
 echo.Done with proposal ma

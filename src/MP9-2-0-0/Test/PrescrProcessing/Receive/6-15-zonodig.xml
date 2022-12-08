@@ -5,7 +5,7 @@
    <name value="MP9 - Server - Scenario 6.15 - Receive PrescrProcessing"/>
    <description value="Scenario 6.15 - Receive PrescrProcessing for G. XXX_Hemsbergen."/>
    <nts:fixture id="av-mp-va-tst-6-15-zonodig-v20"
-                href="fixtures/av-mp-va-tst-6-15-zonodig-v20.xml"/>
+                href="fixtures/av-mp-va-tst-6-15-zonodig-v20.{$_FORMAT}"/>
    <nts:includeDateT value="yes"/>
    <variable nts:in-targets="Nictiz-intern">
       <name value="patient-id"/>
@@ -37,50 +37,31 @@
       <expression value="(Bundle.entry.resource as Medication).id[0]"/>
       <sourceId value="transaction-response-fixture"/>
    </variable>
-   <test id="scenario6-15-receive-prescrproc" nts:in-targets="#default">
+   <test id="scenario6-15-receive-prescrproc">
       <name value="Scenario 6.15"/>
       <description value="Receive PrescrProcessing in a transaction Bundle"/>
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="transaction"/>
             </type>
             <description value="Test server to handle a Bundle of type transaction."/>
-            <accept value="xml"/>
-            <contentType value="xml"/>
+            <contentType value="{$_FORMAT}"/>
             <destination value="1"/>
             <origin value="1"/>
+            <requestHeader>
+               <field value="Prefer"/>
+               <value value="return=representation"/>
+            </requestHeader>
+            <responseId value="transaction-response-fixture" nts:in-targets="Nictiz-intern"/>
             <sourceId value="av-mp-va-tst-6-15-zonodig-v20"/>
          </operation>
       </action>
-      <nts:include value="assert.request.numResources"
+      <nts:include value="assert.response.success" scope="common"/>
+      <nts:include value="assert.response.bundleContent"
                    scope="common"
-                   resource="MedicationDispense"
-                   count="2"/>
-      <nts:include value="assert.request.numResources"
-                   scope="common"
-                   resource="Medication"
-                   count="1"/>
-   </test>
-   <test id="scenario6-15-receive-prescrproc" nts:in-targets="Nictiz-intern">
-      <name value="Scenario 6.15"/>
-      <description value="Receive PrescrProcessing in a transaction Bundle"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
-               <code value="transaction"/>
-            </type>
-            <description value="Test server to handle a Bundle of type transaction."/>
-            <accept value="xml"/>
-            <contentType value="xml"/>
-            <destination value="1"/>
-            <origin value="1"/>
-            <responseId value="transaction-response-fixture"/>
-            <sourceId value="av-mp-va-tst-6-15-zonodig-v20"/>
-         </operation>
-      </action>
+                   bundleType="transaction-response"/>
       <nts:include value="assert.request.numResources"
                    scope="common"
                    resource="MedicationDispense"
@@ -88,11 +69,13 @@
       <nts:include value="assert.request.numResources"
                    scope="common"
                    resource="Patient"
-                   count="1"/>
+                   count="1"
+                   nts:in-targets="Nictiz-intern"/>
       <nts:include value="assert.request.numResources"
                    scope="common"
                    resource="Organization"
-                   count="1"/>
+                   count="1"
+                   nts:in-targets="Nictiz-intern"/>
       <nts:include value="assert.request.numResources"
                    scope="common"
                    resource="Medication"

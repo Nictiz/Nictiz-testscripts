@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
+    nts:scenario="client">
+  
+    <id value="TEST-xis-1-4a-send-results"/>
+    <version value="R4-3.0"/>
+    <name value="LaboratoryResults - LAB-LRS - Scenario 1.4a - Send a maximal NHG coded result."/>
+    <description value="Scenario 1.4a - Send a maximal NHG coded result."/>
+ 
+    <nts:fixture id="TEST-scenario-1-4a-fixture"
+        href="resources-to-sendreceive/lr-slr-TEST-Scenario4a-4a.xml"/>
+    <nts:includeDateT value="yes"/>
+
+    <test id="lab-Scenarioset1-4a">
+        <name value="Scenario 1.4a"/>
+        <description value="Send a maximal NHG coded result."/>
+        
+        <nts:include value="test.client.transaction" scope="common" sourceId="TEST-scenario-1-4a-fixture"/>
+        <nts:include value="test.client.successfulTransaction" scope="common"/>
+        <nts:include value="assert.request.numResources" scope="common" resource="Specimen" count="1"/>
+        <nts:include value="assert.request.numResources" scope="common" resource="Organization" count="1"/>
+        <nts:include value="assert.numberofcodes" direction="request" resource="Observation" 
+            system="https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen" count="1"
+        />
+        
+        <!--Asserts for checking the Patient resource to be compliant with the wiki page on
+        https://informatiestandaarden.nictiz.nl/wiki/Lab:1.0.0_Testgegevens_SturenResultaten-->
+        <nts:include value="assert.identifier" direction="request" resource="Patient" system="http://fhir.nl/fhir/NamingSystem/bsn" identifier="999999114"/>
+        <nts:include value="assert.humanname" direction="request" resource="Patient" 
+            use="official" 
+            text="Elise Erelies" 
+            given="Elise" 
+            family="Erelies"
+            urlfamily="http://hl7.org/fhir/StructureDefinition/humanname-own-name"
+            urliso="http://hl7.org/fhir/StructureDefinition/iso21090-EN-qualifier"
+            iso="BR"
+        />
+        <nts:include value="assert.gender" direction="request" resource="Patient"
+            url="http://nictiz.nl/fhir/StructureDefinition/ext-CodeSpecification"
+            system="http://terminology.hl7.org/CodeSystem/v3-AdministrativeGender"
+            code="F"
+        />
+        <nts:include value="assert.birthdate" direction="request" resource="Patient" date="1950-11-01"
+        />
+               
+        <!-- Asserts for checking one Observation to be compliant with the wiki page on
+        https://informatiestandaarden.nictiz.nl/wiki/Lab:1.0.0_Testgegevens_SturenResultaten-->     
+        <nts:include value="assert.identifier" direction="request" resource="Observation" system="urn:oid:2.16.840.1.113883.2.4.3.11.999.25.4298.2" identifier="88888"/>  
+        <nts:include value="assert.valuequantity" direction="request" resource="Observation"
+            quantity="30"
+            system="http://unitsofmeasure.org"
+            code="mmol/(24.h)"
+        />
+        <nts:include value="assert.referencerange" direction="request" resource="Observation"
+            range="high"
+            rangevalue ="60"
+            system="http://unitsofmeasure.org"
+            code="mmol/(24.h)"
+        />
+        <nts:include value="assert.referencerange" direction="request" resource="Observation"
+            range="low"
+            rangevalue="40"
+            system="http://unitsofmeasure.org"
+            code="mmol/(24.h)"
+        />
+        <nts:include value="assert.status" direction="request" resource="Observation"
+            status="final"
+        />
+        <nts:include value="assert.interpretation" direction="request" resource="Observation"
+            interpretation="Lager dan referentiebereik."
+        />
+        
+        <!--Asserts for checking the Specimen resource(s) to be compliant with the wiki page on
+        https://informatiestandaarden.nictiz.nl/wiki/Lab:1.0.0_Testgegevens_SturenResultaten-->  
+        <nts:include value="assert.identifier" direction="request" resource="Specimen" system="urn:oid:2.16.840.1.113883.2.4.3.11.999.25.4267.2" identifier="335"/>
+        <action>
+            <assert>
+                <description
+                    value="Confirm the Specimen resource contains a container type."/>
+                <direction value="request"/>
+                <expression value="Bundle.entry.resource.as(Specimen).container.type.coding.where(system='http://snomed.info/sct' and code='706055000' and display='container voor 24-uursurine').exists()"/>
+            </assert>
+        </action>
+        
+        <!-- Asserts for checking the performing Organization resource(s) to be compliant with the wiki page on
+       https://informatiestandaarden.nictiz.nl/wiki/Lab:1.0.0_Testgegevens_SturenResultaten-->  
+        <nts:include value="assert.identifier" direction="request" resource="Organization" system="http://fhir.nl/fhir/NamingSystem/ura" identifier="00003333"/>
+        <nts:include value="assert.address" direction="request" resource="Organization"
+            urlstreet="http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName"
+            street="Hoofdstraat"
+            urlhousenumber="http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber"
+            housenumber="23"
+            city="Zorgstad"
+            postalcode="1234AA"
+            urltype="http://nictiz.nl/fhir/StructureDefinition/ext-AddressInformation.AddressType"
+            systemtype="http://terminology.hl7.org/CodeSystem/v3-AddressUse"
+            codetype="WP"
+            
+        />
+        
+        <nts:include value="assert.type" direction="request" resource="Organization"
+            system="http://nictiz.nl/fhir/NamingSystem/organization-type"
+            code="L1"
+            
+        />
+        <nts:include value="assert.telecom" direction="request" resource="Organization"
+            system="phone"
+            telecomvalue='06-11122233'
+            use='work'
+        />
+        <nts:include value="assert.telecom" direction="request" resource="Organization"
+            system="email"
+            telecomvalue='tproefje@lab.nl'
+            use='work'
+        />
+        
+           
+    </test>
+</TestScript>
