@@ -12,9 +12,30 @@
     <test id="Basic-tests">
         <name value="1.1 Basic-tests"/>
         <description value="Check if Identifier structure is correct"/>
-        <nts:include value="medmij/test.xis.successfulSearch" scope="common"
-            resource="Observation"
-            params="?code=http://loinc.org|8302-2"/>
+        <action>
+            <operation>
+                <type>
+                    <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+                    <code value="search"/>
+                </type>
+                <resource value="Observation"/>
+                <description value="Test XIS server to serve Observation resources."/>
+                <accept value="xml"/>
+                <destination value="1"/>
+                <encodeRequestUrl value="true"/>
+                <origin value="1"/>
+                <params value="?code=http://loinc.org|8302-2"/>
+                <requestHeader>
+                    <field value="Authorization"/>
+                    <value value="${patient-token-id}"/>
+                </requestHeader>
+                <requestHeader>
+                    <field value="MedMij-Request-ID"/>
+                    <value value="${UUID}"/>
+                </requestHeader>
+                <responseId value="search-observation"/>
+            </operation>
+        </action>
         <nts:include value="assert.response.numResources" scope="common" 
             resource="Observation" count="1"/>
     </test>
@@ -22,14 +43,12 @@
     <test id="status">
         <name value="1.2 status"/>
         <description value="Check if status contains the correct value"/>
-        <nts:include value="medmij/test.xis.search" scope="common"
-            resource="Observation"
-            params="?code=http://loinc.org|8302-2"/>
         <action>
             <assert>
                 <description value="Confirm that the status contains the expected value"/>
                 <direction value="response"/>
                 <expression value="Bundle.entry.resource.status = 'final'"/>
+                <sourceId value="search-observation"/>
             </assert>
         </action>
     </test>
