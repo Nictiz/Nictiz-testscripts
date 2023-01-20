@@ -5,7 +5,7 @@
     <xsl:output method="xml" indent="yes" omit-xml-declaration="yes"/>
 
     <xsl:strip-space elements="*"/>
-
+    
     <xsl:param name="mappingsUrl4FhirFixtures">https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/ada_2_fhir-r4/mp/9.2.0/4TouchstoneMP</xsl:param>
 
     <!-- Send/Receive/Retrieve/Serve, this param defaults to Send -->
