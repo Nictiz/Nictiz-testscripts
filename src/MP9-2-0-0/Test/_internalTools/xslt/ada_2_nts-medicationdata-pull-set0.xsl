@@ -169,7 +169,7 @@
                             <version value="r4-mp9-2.0.0"/>
                             <name value="Medication Process 9 2.0.0  - {$buildingBlockLong} - {nf:first-cap($transactionType)} - Scenario {$scenarioset}.{$scenario}"/>
                             <description value="Scenario {$scenarioset}.{$scenario} - {$description}"/>
-                            <nts:patientTokenFixture href="nl-core-Patient-mp9-{$patientName}-token.xml" nts:in-targets="MedMij"/>
+                            <nts:authToken patientResourceId="nl-core-Patient-mp9-{$patientName}" nts:in-targets="MedMij"/>
                             <xsl:if test="contains($additionalScenarioParams, '${DATE, T,')">
                                 <nts:includeDateT value="yes"/>
                             </xsl:if>
