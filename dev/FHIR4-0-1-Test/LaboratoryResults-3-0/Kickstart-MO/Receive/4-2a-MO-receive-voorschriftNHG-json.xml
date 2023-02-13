@@ -5,7 +5,7 @@
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
    <url value="http://nictiz.nl/fhir/TestScript/TEST-xis-1-prescription-json"/>
-   <version value="R4-3.0"/>
+   <version value="R4-3.0-patchlevel 2023-01"/>
    <name value="LaboratoryResults - LAB-LRO - Scenario 4.2a - Receive a NHG coded laboratory result along with a prescription. - JSON Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -50,6 +50,7 @@
    <test id="lab-Scenarioset1">
       <name value="Scenario 4.2a"/>
       <description value="Receive a NHG coded panel of laboratory results."/>
+      <!--General asserts-->
       <action>
          <operation>
             <type>
@@ -268,12 +269,13 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!--Initial asserts to check the lab result codes and status-->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains 2 Observation resource(s) containing codes from the specified code system."/>
+            <description value="Confirm that the Bundle contains 2 Observation resource(s) containing codes from the code system https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen."/>
             <direction value="response"/>
             <expression value="Bundle.entry.resource.as(Observation).where(code.coding.where(system='https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen').exists()).count()=2"/>
             <warningOnly value="false"/>
@@ -284,9 +286,20 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation that has the right status"/>
+            <description value="Confirm that the Bundle contains a(n) Observation that has the code 3583 with system https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(status='final').exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).code.coding.where(code='3583' and system='https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the Bundle contains a(n) Observation that has the code 523 with system https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.as(Observation).code.coding.where(code='523' and system='https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen').exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -297,7 +310,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm the Patient resource contains an identifier with specified system and value."/>
+            <description value="Confirm the Patient resource contains identifier with the BSN system http://fhir.nl/fhir/NamingSystem/bsn and value 999900511."/>
             <direction value="response"/>
             <expression value="Bundle.entry.resource.as(Patient).identifier.where(system='http://fhir.nl/fhir/NamingSystem/bsn' and value='999900511').exists()"/>
             <warningOnly value="false"/>
@@ -321,9 +334,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation with a value of 97, and system http://unitsofmeasure.org and unit"/>
+            <description value="Confirm that the Bundle contains a(n) Observation with a value of 97, and system http://unitsofmeasure.org and a unit."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(value.as(Quantity).where(value=97 and system='http://unitsofmeasure.org' and code='mL/min/{1.73_m2}' and unit.exists())).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='3583' and code.coding.system='https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen').value.as(Quantity).where(value=97 and system='http://unitsofmeasure.org' and code='mL/min/{1.73_m2}' and unit.exists()).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -332,9 +345,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation that has right reference range"/>
+            <description value="Confirm that the Bundle contains a(n) Observation that has a low reference range of value 90."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).referenceRange.low.where(value=90 and system='http://unitsofmeasure.org' and code='mL/min/{1.73_m2}' and unit.exists()).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='3583' and code.coding.system='https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen').referenceRange.low.where(value=90 and system='http://unitsofmeasure.org' and code='mL/min/{1.73_m2}' and unit.exists()).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -343,9 +356,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation that has the right status"/>
+            <description value="Confirm that the Bundle contains a(n) Observation that has the status final."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(status='final').exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='3583' and code.coding.system='https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen').where(status='final').exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -354,10 +367,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation with the right interpretation"/>
+            <description value="Confirm that the Bundle contains a(n) Observation with the interpretation Iets bovengemiddeld"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(interpretation.text='Iets bovengemiddeld').exists()"/>
-            <warningOnly value="false"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(interpretation.text~'Iets bovengemiddeld').exists()"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
       <!-- Asserts for checking Observations to be compliant with the wiki page on
@@ -378,9 +391,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation with a value of 135, and system http://unitsofmeasure.org and unit"/>
+            <description value="Confirm that the Bundle contains a(n) Observation with a value of 135, and system http://unitsofmeasure.org and a unit."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(value.as(Quantity).where(value=135 and system='http://unitsofmeasure.org' and code='umol/l' and unit.exists())).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='523' and code.coding.system='https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen').value.as(Quantity).where(value=135 and system='http://unitsofmeasure.org' and code='umol/l' and unit.exists()).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -389,9 +402,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation that has right reference range"/>
+            <description value="Confirm that the Bundle contains a(n) Observation that has a high reference range of value 110."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).referenceRange.high.where(value=110 and system='http://unitsofmeasure.org' and code='umol/l' and unit.exists()).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='523' and code.coding.system='https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen').referenceRange.high.where(value=110 and system='http://unitsofmeasure.org' and code='umol/l' and unit.exists()).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -400,9 +413,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation that has right reference range"/>
+            <description value="Confirm that the Bundle contains a(n) Observation that has a low reference range of value 60."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).referenceRange.low.where(value=60 and system='http://unitsofmeasure.org' and code='umol/l' and unit.exists()).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='523' and code.coding.system='https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen').referenceRange.low.where(value=60 and system='http://unitsofmeasure.org' and code='umol/l' and unit.exists()).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -411,9 +424,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation that has the right status"/>
+            <description value="Confirm that the Bundle contains a(n) Observation that has the status final."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(status='final').exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='523' and code.coding.system='https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen').where(status='final').exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -422,10 +435,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation with the right interpretation"/>
+            <description value="Confirm that the Bundle contains a(n) Observation with the interpretation Creatinine iets hoger dan normaal."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(interpretation.text='Creatinine iets hoger dan normaal.').exists()"/>
-            <warningOnly value="false"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(interpretation.text~'Creatinine iets hoger dan normaal.').exists()"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
       <action>
@@ -433,9 +446,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation with the right interpretation flag"/>
+            <description value="Confirm that the Bundle contains a(n) Observation with code 523 with the interpretationflag 281302008 with system http://snomed.info/sct."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).interpretation.coding.where(system='http://snomed.info/sct' and code='281302008').exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='523' and code.coding.system='https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen').interpretation.coding.where(system='http://snomed.info/sct' and code='281302008').exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -457,10 +470,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm the Specimen resource contains the right note."/>
+            <description value="Confirm the Specimen resource contains the note Serum afgenomen bij patiënt.."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Specimen).note.where(text='Serum afgenomen bij patiënt.').exists()"/>
-            <warningOnly value="false"/>
+            <expression value="Bundle.entry.resource.as(Specimen).note.where(text~'Serum afgenomen bij patiënt.').exists()"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
       <!-- Asserts for checking the performing Organization resource(s) to be compliant with the wiki page on

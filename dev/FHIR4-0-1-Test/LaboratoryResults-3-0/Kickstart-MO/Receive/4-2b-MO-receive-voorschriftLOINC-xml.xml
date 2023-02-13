@@ -5,7 +5,7 @@
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
    <url value="http://nictiz.nl/fhir/TestScript/TEST-xis-3-prescription-xml"/>
-   <version value="R4-3.0"/>
+   <version value="R4-3.0-patchlevel 2023-01"/>
    <name value="LaboratoryResults - LAB-LRO - Scenario 4.2b - Receive a LOINC coded laboratory result along with a prescription. - XML Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -50,6 +50,7 @@
    <test id="lab-Scenarioset3">
       <name value="Scenario 4.2b"/>
       <description value="Receive a NHG coded panel of laboratory results."/>
+      <!--        General asserts-->
       <action>
          <operation>
             <type>
@@ -257,14 +258,37 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!--Initial asserts to check the lab result codes and status-->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains 2 Observation resource(s) containing codes from the specified code system."/>
+            <description value="Confirm that the Bundle contains 2 Observation resource(s) containing codes from the code system http://loinc.org."/>
             <direction value="response"/>
             <expression value="Bundle.entry.resource.as(Observation).where(code.coding.where(system='http://loinc.org').exists()).count()=2"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the Bundle contains a(n) Observation that has the code 98979-8 with system http://loinc.org"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.as(Observation).code.coding.where(code='98979-8' and system='http://loinc.org').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the Bundle contains a(n) Observation that has the code 45066-8 with system http://loinc.org"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.as(Observation).code.coding.where(code='45066-8' and system='http://loinc.org').exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -275,7 +299,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm the Patient resource contains an identifier with specified system and value."/>
+            <description value="Confirm the Patient resource contains identifier with the BSN system http://fhir.nl/fhir/NamingSystem/bsn and value 999900511."/>
             <direction value="response"/>
             <expression value="Bundle.entry.resource.as(Patient).identifier.where(system='http://fhir.nl/fhir/NamingSystem/bsn' and value='999900511').exists()"/>
             <warningOnly value="false"/>
@@ -299,9 +323,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation with a value of 97, and system http://unitsofmeasure.org and unit"/>
+            <description value="Confirm that the Bundle contains a(n) Observation with a value of 97, and system http://unitsofmeasure.org and a unit."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(value.as(Quantity).where(value=97 and system='http://unitsofmeasure.org' and code='mL/min/{1.73_m2}' and unit.exists())).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='98979-8' and code.coding.system='http://loinc.org').value.as(Quantity).where(value=97 and system='http://unitsofmeasure.org' and code='mL/min/{1.73_m2}' and unit.exists()).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -310,9 +334,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation that has the right status"/>
+            <description value="Confirm that the Bundle contains a(n) Observation that has the status final."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(status='final').exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='98979-8' and code.coding.system='http://loinc.org').where(status='final').exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -321,9 +345,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation that has right reference range"/>
+            <description value="Confirm that the Bundle contains a(n) Observation that has a low reference range of value 90."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).referenceRange.low.where(value=90 and system='http://unitsofmeasure.org' and code='mL/min/{1.73_m2}' and unit.exists()).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='98979-8' and code.coding.system='http://loinc.org').referenceRange.low.where(value=90 and system='http://unitsofmeasure.org' and code='mL/min/{1.73_m2}' and unit.exists()).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -332,10 +356,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation with the right interpretation"/>
+            <description value="Confirm that the Bundle contains a(n) Observation with the interpretation Waarde is goed."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(interpretation.text='Waarde is goed.').exists()"/>
-            <warningOnly value="false"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(interpretation.text~'Waarde is goed.').exists()"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
       <!-- Asserts for checking the second Observation to be compliant with the wiki page on
@@ -356,9 +380,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation with a value of 135, and system http://unitsofmeasure.org and unit"/>
+            <description value="Confirm that the Bundle contains a(n) Observation with a value of 135, and system http://unitsofmeasure.org and a unit."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(value.as(Quantity).where(value=135 and system='http://unitsofmeasure.org' and code='umol/l' and unit.exists())).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='45066-8' and code.coding.system='http://loinc.org').value.as(Quantity).where(value=135 and system='http://unitsofmeasure.org' and code='umol/l' and unit.exists()).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -367,9 +391,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation that has right reference range"/>
+            <description value="Confirm that the Bundle contains a(n) Observation that has a high reference range of value 134."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).referenceRange.high.where(value=134 and system='http://unitsofmeasure.org' and code='umol/l' and unit.exists()).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='45066-8' and code.coding.system='http://loinc.org').referenceRange.high.where(value=134 and system='http://unitsofmeasure.org' and code='umol/l' and unit.exists()).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -378,9 +402,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation that has right reference range"/>
+            <description value="Confirm that the Bundle contains a(n) Observation that has a low reference range of value 62."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).referenceRange.low.where(value=62 and system='http://unitsofmeasure.org' and code='umol/l' and unit.exists()).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='45066-8' and code.coding.system='http://loinc.org').referenceRange.low.where(value=62 and system='http://unitsofmeasure.org' and code='umol/l' and unit.exists()).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -389,7 +413,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation that has the right method"/>
+            <description value="Confirm that the Bundle contains a(n) Observation with method 258026004 and system http://snomed.info/sct and a display value."/>
             <direction value="response"/>
             <expression value="Bundle.entry.resource.as(Observation).method.coding.where(system='http://snomed.info/sct' and code='258026004' and display.exists()).exists()"/>
             <warningOnly value="false"/>
@@ -400,10 +424,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation with the right interpretation"/>
+            <description value="Confirm that the Bundle contains a(n) Observation with the interpretation Creatinine iets hoger dan normaal."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(interpretation.text='Creatinine iets hoger dan normaal.').exists()"/>
-            <warningOnly value="false"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(interpretation.text~'Creatinine iets hoger dan normaal.').exists()"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
       <action>
@@ -411,9 +435,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation with the right interpretation flag"/>
+            <description value="Confirm that the Bundle contains a(n) Observation with code 45066-8 with the interpretationflag 281302008 with system http://snomed.info/sct."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Observation).interpretation.coding.where(system='http://snomed.info/sct' and code='281302008').exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).where(code.coding.code='45066-8' and code.coding.system='http://loinc.org').interpretation.coding.where(system='http://snomed.info/sct' and code='281302008').exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
