@@ -141,9 +141,9 @@
                                     <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
                                 </xsl:when>
                                 <!-- but for our own materials we'll check the others aswell just to be sure - for 'legacy reasons' only when receiving, should be also for sending? -->
-                                <xsl:when test="normalize-space(upper-case($transactionType)) = 'RECEIVE'">
+                                <!--<xsl:when test="normalize-space(upper-case($transactionType)) = 'RECEIVE'">
                                     <xsl:choose>
-                                        <!-- Exception for Lab -->
+                                        <!-\- Exception for Lab -\->
                                         <xsl:when test="$testScriptString/@short = 'prescr' and $scenarioset = '4' and $scenario = ('2a','2b') and current-grouping-key() = 'Organization'">
                                             <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group()) + 1}" nts:in-targets="Nictiz-intern"/>
                                         </xsl:when>
@@ -151,7 +151,7 @@
                                             <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}" nts:in-targets="Nictiz-intern"/>
                                         </xsl:otherwise>
                                     </xsl:choose>
-                                </xsl:when>
+                                </xsl:when>-->
                             </xsl:choose>
                         </xsl:for-each-group>
                     </xsl:variable>
@@ -166,7 +166,7 @@
                                 <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} for {$fixturePatient/f:name/f:text/@value}."/>
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.{'{$_FORMAT}'}"/>
                                 <nts:includeDateT value="yes"/>
-                                <xsl:apply-templates select="$deleteStuff/f:variable" mode="Nictiz-intern"/>
+                                <!--<xsl:apply-templates select="$deleteStuff/f:variable" mode="Nictiz-intern"/>-->
                                 <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}">
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
                                     <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
@@ -184,7 +184,7 @@
                                                 <field value="Prefer"/>
                                                 <value value="return=representation"/>
                                             </requestHeader>
-                                            <responseId value="transaction-response-fixture" nts:in-targets="Nictiz-intern"/>
+                                            <!--<responseId value="transaction-response-fixture" nts:in-targets="Nictiz-intern"/>-->
                                             <sourceId value="{$adaTransId}"/>
                                         </operation>
                                     </action>
@@ -194,10 +194,10 @@
                                     <xsl:copy-of select="$includeNumResources"/>
                                 </test>
                                 <!-- teardown receive only needed for Nictiz internal tests -->
-                                <teardown nts:in-targets="Nictiz-intern">
-                                    <!-- the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -->
+                                <!--<teardown nts:in-targets="Nictiz-intern">
+                                    <!-\- the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
                                     <xsl:copy-of select="$deleteStuff/f:action"/>
-                                </teardown>
+                                </teardown>-->
                             </TestScript>
                         </xsl:when>
                         <xsl:otherwise>
@@ -228,15 +228,15 @@
                                     <nts:include value="test.client.successfulTransaction" scope="common"/>
                                     <xsl:copy-of select="$includeNumResources"/>
                                 </test>
-                                <teardown nts:in-targets="#default">
-                                    <!-- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -->
-                                    <!-- but not Patient, since we want to do a purge after -->
+                                <!--<teardown nts:in-targets="#default">
+                                    <!-\- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
+                                    <!-\- but not Patient, since we want to do a purge after -\->
                                     <xsl:copy-of select="$deleteStuff/f:action[f:operation/f:resource[@value ne 'Patient']]"/>
-                                    <!-- we do a patient purge for extra certainty, we don't know if whoever sent this Bundle sent the exact same number of resources that we expect 
-                                         and this way we will at least get rid of patient related resources which pollute BSN-based query's -->
+                                    <!-\- we do a patient purge for extra certainty, we don't know if whoever sent this Bundle sent the exact same number of resources that we expect 
+                                         and this way we will at least get rid of patient related resources which pollute BSN-based query's -\->
                                     <action>
                                         <operation>
-                                            <!-- Purge the created Patient and all its remaining associated resources that have been sent. -->
+                                            <!-\- Purge the created Patient and all its remaining associated resources that have been sent. -\->
                                             <type>
                                                 <system value="http://touchstone.com/fhir/extended-operation-codes"/>
                                                 <code value="purge"/>
@@ -250,10 +250,10 @@
                                     </action>
                                 </teardown>
                                 <teardown nts:in-targets="Nictiz-intern">
-                                    <!-- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -->
+                                    <!-\- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
                                     <xsl:copy-of select="$deleteStuff/f:action"/>
-                                    <!-- MP-746 no $purge needed for Nictiz internal scripts -->
-                                </teardown>
+                                    <!-\- MP-746 no $purge needed for Nictiz internal scripts -\->
+                                </teardown>-->
                             </TestScript>
 
                         </xsl:otherwise>
