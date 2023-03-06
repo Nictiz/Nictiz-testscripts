@@ -100,15 +100,15 @@
                 <!-- push all transactions -->
                 <xsl:when test="normalize-space(upper-case($transactionType)) = ('SEND', 'RECEIVE')">
                     <!-- variable to prepare TestScript variable and accompanying delete/purge actions for cleanup of push stuff -->
-                    <xsl:variable name="deleteStuff" as="element()">
+                    <!--<xsl:variable name="deleteStuff" as="element()">
                         <deleteStuff xmlns="http://hl7.org/fhir">
                             <variable>
                                 <name value="patient-id"/>
                                 <expression value="(Bundle.entry.resource as Patient).id"/>
                                 <sourceId value="transaction-response-fixture"/>
                             </variable>
-                            <!-- for each resource type in the request bundle, for each resource from that type 
-                                         create a variable to store the id from the response Bundle and a corresponding delete action -->
+                            <!-\- for each resource type in the request bundle, for each resource from that type 
+                                         create a variable to store the id from the response Bundle and a corresponding delete action -\->
                             <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/*" group-by="local-name()">
                                 <xsl:for-each select="current-group()">
                                     <xsl:variable name="varName" select="concat(current-grouping-key(), '-', position())"/>
@@ -131,7 +131,7 @@
                                 </xsl:for-each>
                             </xsl:for-each-group>
                         </deleteStuff>
-                    </xsl:variable>
+                    </xsl:variable>-->
 
                     <xsl:variable name="includeNumResources" as="element()*">
                         <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
@@ -208,7 +208,7 @@
                                 <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} for {$fixturePatient/f:name/f:text/@value}."/>
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
                                 <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
-                                <xsl:copy-of select="$deleteStuff/f:variable"/>
+                                <!--<xsl:copy-of select="$deleteStuff/f:variable"/>-->
                                 <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}">
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
                                     <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
