@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns:nts="http://nictiz.nl/xsl/testscript" xmlns="http://hl7.org/fhir">
-   <id value="mp9-ta-serve-0-6-contentAsserts-json"/>
+   <id value="mp9-ta-serve-0-1-contentAsserts-json"/>
    <meta>
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
-   <url value="http://nictiz.nl/fhir/TestScript/mp9-ta-serve-0-6-contentAsserts-json"/>
+   <url value="http://nictiz.nl/fhir/TestScript/mp9-ta-serve-0-1-contentAsserts-json"/>
    <version value="r4-mp9-3.0.0-beta"/>
-   <name value="Medication Process 9 3.0.0-beta  - AdministrationAgreement - Serve - Scenario 0.6 - target contentAsserts - JSON Format"/>
+   <name value="Medication Process 9 3.0.0-beta  - AdministrationAgreement - Serve - Scenario 0.1 - target contentAsserts - JSON Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -17,7 +17,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 0.6 - Toedieningafspraken met een filter op gebruiksperiode – ingangsdatum én einddatum (alles vanaf T-21 tot en met T-7) (Antwoord: bericht met 3 toedieningsafspraken)"/>
+   <description value="Scenario 0.1 - Alle toedieningsafspraken van de patiënt, zonder aanvullend filtercriterium (Antwoord: bericht met 6 toedieningsafspraken)"/>
    <origin>
       <index value="1"/>
       <profile>
@@ -36,13 +36,34 @@
       <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
    </profile>
    <variable>
-      <name value="T"/>
-      <defaultValue value="${CURRENTDATE}"/>
-      <description value="Date that data and queries are expected to be relative to."/>
+      <name value="ta1-id"/>
+      <expression value="Bundle.entry.select(resource as MedicationDispense).where(medication.resolve().code.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.7' and code = '641898')).id"/>
+      <sourceId value="search-response"/>
    </variable>
-   <test id="Scenario-0-6">
-      <name value="Scenario 0.6"/>
-      <description value="Toedieningafspraken met een filter op gebruiksperiode – ingangsdatum én einddatum (alles vanaf T-21 tot en met T-7) (Antwoord: bericht met 3 toedieningsafspraken)"/>
+   <variable>
+      <name value="ta2-id"/>
+      <expression value="Bundle.entry.select(resource as MedicationDispense).where(medication.resolve().code.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.7' and code = '101079')).id"/>
+      <sourceId value="search-response"/>
+   </variable>
+   <test id="Scenario-0-1">
+      <name value="Scenario 0.1"/>
+      <description value="Alle toedieningsafspraken van de patiënt, zonder aanvullend filtercriterium (Antwoord: bericht met 6 toedieningsafspraken)"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="MedicationDispense"/>
+            <description value="Test server to serve MedicationDispense resource(s) representing MP9 building block AdministrationAgreement"/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901084&amp;category=http://snomed.info/sct|422037009&amp;_include=MedicationDispense:medication"/>
+            <responseId value="search-response"/>
+         </operation>
+      </action>
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -303,9 +324,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 3 MedicationDispense resource(s). "/>
+            <description value="Confirm that the returned searchset Bundle contains 6 MedicationDispense resource(s). "/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(MedicationDispense)).count() = 3"/>
+            <expression value="Bundle.entry.where(resource.is(MedicationDispense)).count() = 6"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -314,9 +335,50 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains at least 6 entries. (Consists of 3 MedicationDispense and 3 Medication resources.)"/>
+            <description value="Confirm that the returned searchset Bundle contains at least 12 entries. (Consists of 6 MedicationDispense and 6 Medication resources.)"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.count() &gt;= 6"/>
+            <expression value="Bundle.entry.count() &gt;= 12"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="Scenario-0-1-id">
+      <name value="Scenario 0.1 - identify resources"/>
+      <description value="Probeer alle opgehaalde resources te koppelen aan resources zoals die volgens het testscenario verwacht worden"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 1 MedicationDispense resource that references Medication 641898|urn:oid:2.16.840.1.113883.2.4.4.7 (IBUPROFEN PCH TABLET 600MG)"/>
+            <expression value="Bundle.entry.select(resource as MedicationDispense).where(medication.resolve().code.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.7' and code = '641898')).count() = 1"/>
+            <sourceId value="search-response"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 1 MedicationDispense resource that references Medication 101079|urn:oid:2.16.840.1.113883.2.4.4.7 (XPRAEP SIROOP 2MG/ML)"/>
+            <expression value="Bundle.entry.select(resource as MedicationDispense).where(medication.resolve().code.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.7' and code = '101079')).count() = 1"/>
+            <sourceId value="search-response"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="Scenario-0-1-TA1-check">
+      <name value="Scenario 0.1 - check content of TA1"/>
+      <description value="Controleer of de inhoud van ToedieningAfspraak1 voldoet aan de verwachtingen."/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that ToedieningAfspraak1 contains category 422037009|http://snomed.info/sct (toedieningsafspraak)"/>
+            <expression value="Bundle.entry.select(resource as MedicationDispense).where(id = ${ta1-id}).category.coding.where(system = 'http://snomed.info/sct' and value = '422037009').exists()"/>
+            <sourceId value="search-response"/>
             <warningOnly value="false"/>
          </assert>
       </action>
