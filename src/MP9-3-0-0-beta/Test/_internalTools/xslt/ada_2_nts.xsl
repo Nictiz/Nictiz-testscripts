@@ -86,7 +86,46 @@
                     </xsl:otherwise>
                 </xsl:choose>
             </xsl:variable>
-
+            
+            <!-- In Send scripts, the request is being validated. In Receive scripts, the response is being validated (mainly because the FHIR spec is not really clear about what servers can or cannot edit before storing a resource). In both these cases, we add an assert to check for each resource that we expect. Next to that, this script is prepared to also add a variable for each resource, so that we can use this variable in the future to add content asserts for each resource -->
+            <xsl:variable name="identifyResources" as="element()*">
+                <xsl:variable name="direction">
+                    <xsl:choose>
+                        <xsl:when test="normalize-space(upper-case($transactionType)) = ('RETRIEVE', 'SEND')">request</xsl:when>
+                        <xsl:when test="normalize-space(upper-case($transactionType)) = ('SERVE', 'RECEIVE')">response</xsl:when>
+                    </xsl:choose>
+                </xsl:variable>
+                <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
+                    <xsl:choose>
+                        <!-- only check the primary resources and Medication, it is not obliged to send along the secondary resources -->
+                        <xsl:when test="current-grouping-key() = 'MedicationDispense' and current-group()[1]/f:category/f:coding/f:code/@value = '422037009'">
+                            <xsl:for-each select="current-group()">
+                                <xsl:variable name="medicationReference" select="f:medicationReference/f:reference/@value"/>
+                                <xsl:variable name="medicationCoding" select="$fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]/f:resource/f:Medication/f:code/f:coding[f:userSelected/@value = 'true']"/>
+                                <xsl:variable name="medicationCode" select="$medicationCoding/f:code/@value"/>
+                                <xsl:variable name="medicationSystem" select="$medicationCoding/f:system/@value"/>
+                                <xsl:variable name="medicationDisplay" select="$medicationCoding/f:display/@value"/>
+                                <action>
+                                    <assert>
+                                        <description value="Confirm that the {$direction} Bundle contains 1 {current-grouping-key()} resource that references Medication {$medicationCode}|{$medicationSystem} ({$medicationDisplay})"/>
+                                        
+                                        <expression value="Bundle.entry.select(resource as MedicationDispense).where(medication.resolve().code.coding.where(system = '{$medicationSystem}' and code = '{$medicationCode}')).count() = 1"/>
+                                        <sourceId value="transaction-{$direction}"/>
+                                        <warningOnly value="false"/>
+                                    </assert>
+                                </action>
+                                <!--<variable>
+                                    <name value="{current-grouping-key()}-{position()}"/>
+                                    <expression value="Bundle.entry.select(resource as {current-grouping-key()}).where(medication.resolve().code.coding.where(system = '{$medicationSystem}' and code = '{$medicationCode}')).id"/>
+                                    <sourceId value="search-response"/>
+                                </variable>-->
+                            </xsl:for-each>
+                        </xsl:when>
+                        <xsl:when test="current-grouping-key() = ('MedicationRequest', 'MedicationDispense', 'MedicationStatement', 'MedicationAdministration', 'Medication')"/>
+                    </xsl:choose>
+                </xsl:for-each-group>
+            </xsl:variable>
+            
             <xsl:choose>
                 <!-- pull beschikbaarstellen_medicatiegegevens -->
                 <xsl:when test="self::beschikbaarstellen_medicatiegegevens and normalize-space(upper-case($transactionType)) = ('RETRIEVE', 'SERVE')">
@@ -184,6 +223,9 @@
                                                 <field value="Prefer"/>
                                                 <value value="return=representation"/>
                                             </requestHeader>
+                                            <xsl:if test="count($identifyResources) gt 0">
+                                                <responseId value="transaction-response"/>
+                                            </xsl:if>
                                             <!--<responseId value="transaction-response-fixture" nts:in-targets="Nictiz-intern"/>-->
                                             <sourceId value="{$adaTransId}"/>
                                         </operation>
@@ -193,6 +235,14 @@
                                         bundleType="transaction-response"/>
                                     <xsl:copy-of select="$includeNumResources"/>
                                 </test>
+                                
+                                <xsl:if test="count($identifyResources) gt 0">
+                                    <test id="test123">
+                                        <name value="test456"/>
+                                        <description value="test789"/>
+                                        <xsl:copy-of select="$identifyResources"/>
+                                    </test>
+                                </xsl:if>
                                 <!-- teardown receive only needed for Nictiz internal tests -->
                                 <!--<teardown nts:in-targets="Nictiz-intern">
                                     <!-\- the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
@@ -221,13 +271,25 @@
                                             <description value="Test client to POST a Bundle of type transaction."/>
                                             <destination value="1"/>
                                             <origin value="1"/>
-                                            <responseId value="transaction-response-fixture"/>
+                                            <xsl:if test="count($identifyResources) gt 0">
+                                                <requestId value="transaction-request"/>
+                                            </xsl:if>
+                                            <!--<responseId value="transaction-response-fixture"/>-->
                                             <sourceId value="{$adaTransId}"/>
                                         </operation>
                                     </action>
                                     <nts:include value="test.client.successfulTransaction" scope="common"/>
                                     <xsl:copy-of select="$includeNumResources"/>
                                 </test>
+                                
+                                <xsl:if test="count($identifyResources) gt 0">
+                                    <test id="test123">
+                                        <name value="test456"/>
+                                        <description value="test789"/>
+                                        <xsl:copy-of select="$identifyResources"/>
+                                    </test>
+                                </xsl:if>
+                                
                                 <!--<teardown nts:in-targets="#default">
                                     <!-\- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
                                     <!-\- but not Patient, since we want to do a purge after -\->
