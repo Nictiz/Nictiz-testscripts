@@ -106,6 +106,7 @@
                             <xsl:variable name="groupContainsStopType" select="exists(current-group()/f:modifierExtension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-StopType'])"/>
                             <xsl:variable name="groupContainsReasonCode" select="exists(current-group()/f:reasonCode) or exists(current-group()/f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation'])"/>
                             
+                            <!-- We use the resolved Medication code here instead of the reference value to account for OTH -->
                             <xsl:for-each-group select="current-group()" group-by="
                                 concat($fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = current()/f:medicationReference/f:reference/@value]/f:resource/f:Medication/f:code/(f:coding[f:userSelected/@value = 'true'],f:coding[1])[1]/f:code/@value, '|', $fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = current()/f:medicationReference/f:reference/@value]/f:resource/f:Medication/f:code/(f:coding[f:userSelected/@value = 'true'],f:coding[1])[1]/f:system/@value, 
                                 if ($groupContainsStopType) then concat('|', (f:modifierExtension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-StopType']/f:valueCodeableConcept/f:coding/f:code/@value, f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation']/f:valueCodeableConcept/f:coding/f:code/@value, 'null')[1]) else '', 
@@ -140,7 +141,15 @@
                                 
                                 <!-- Compose description and expression -->
                                 <xsl:variable name="description">
-                                    <xsl:value-of select="concat('Confirm that the ', $direction, ' Bundle contains ', $resourceCount, ' ',$resourceType, ' resource(s) that reference(s) Medication with coding ''', $medicationCode, '|', $medicationSystem, ''' (', $medicationDisplay, ')')"/>
+                                    <xsl:value-of select="concat('Confirm that the ', $direction, ' Bundle contains ', $resourceCount, ' ',$resourceType, ' resource(s) that reference(s) Medication with ')"/>
+                                    <xsl:choose>
+                                        <xsl:when test="starts-with($medicationSystem, 'urn:oid:2.16.840.1.113883.2.4.3.11.9999.77.90000000')">
+                                            <xsl:value-of select="'90 million number coding'"/>
+                                        </xsl:when>
+                                        <xsl:otherwise>
+                                            <xsl:value-of select="concat('coding ''', $medicationCode, '|', $medicationSystem, ''' (', $medicationDisplay, ')')"/>
+                                        </xsl:otherwise>
+                                    </xsl:choose>
                                     <xsl:if test="$groupContainsStopType">
                                         <xsl:choose>
                                             <xsl:when test="string-length($stopTypeCode) gt 0">
@@ -163,7 +172,16 @@
                                     </xsl:if>
                                 </xsl:variable>
                                 <xsl:variable name="expression">
-                                    <xsl:value-of select="concat('Bundle.entry.select(resource as ', $resourceType, ').where(medication.resolve().code.coding.where(system = ''', $medicationSystem, ''' and code = ''', $medicationCode, '''))')"/>
+                                    <xsl:value-of select="concat('Bundle.entry.select(resource as ', $resourceType, ').where(medication.resolve().code.coding.where(')"/>
+                                    <xsl:choose>
+                                        <xsl:when test="starts-with($medicationSystem, 'urn:oid:2.16.840.1.113883.2.4.3.11.9999.77.90000000')">
+                                            <xsl:value-of select="'system.startsWith(''urn:oid:2.16.840.1.113883.2.4.4.'').not() and code.toInteger() &gt; 90000000'"/>
+                                        </xsl:when>
+                                        <xsl:otherwise>
+                                            <xsl:value-of select="concat('system = ''', $medicationSystem, ''' and code = ''', $medicationCode, '''')"/>
+                                        </xsl:otherwise>
+                                    </xsl:choose>
+                                    <xsl:value-of select="'))'"/>
                                     <xsl:if test="$groupContainsStopType">
                                         <xsl:choose>
                                             <xsl:when test="string-length($stopTypeCode) gt 0">
