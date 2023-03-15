@@ -101,18 +101,98 @@
                         <!-- only check the primary resources and Medication, it is not obliged to send along the secondary resources -->
                         <xsl:when test="current-grouping-key() = ('MedicationAdministration','MedicationDispense','MedicationRequest','MedicationStatement')">
                             <xsl:variable name="resourceType" select="current-grouping-key()"/>
-                            <xsl:for-each-group select="current-group()" group-by="f:medicationReference/f:reference/@value">
-                                <xsl:variable name="medicationReference" select="current-grouping-key()"/>
+                            
+                            <!-- We filter by a combination of (referenced) Medication.code, ext-StopType and reasonCode -->
+                            <xsl:variable name="groupContainsStopType" select="exists(current-group()/f:modifierExtension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-StopType'])"/>
+                            <xsl:variable name="groupContainsReasonCode" select="exists(current-group()/f:reasonCode) or exists(current-group()/f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation'])"/>
+                            
+                            <xsl:for-each-group select="current-group()" group-by="
+                                concat(f:medicationReference/f:reference/@value, 
+                                if ($groupContainsStopType) then concat('|', (f:modifierExtension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-StopType']/f:valueCodeableConcept/f:coding/f:code/@value, f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation']/f:valueCodeableConcept/f:coding/f:code/@value, 'null')[1]) else '', 
+                                if ($groupContainsReasonCode) then concat('|', (f:reasonCode/f:coding/f:code/@value,'null')[1]) else '')">
+                                <xsl:variable name="resourceCount" select="count(current-group())"/>
+                                <xsl:if test="$resourceCount gt 1">
+                                    <xsl:message><xsl:value-of select="$adaTransId"/> contains multiple <xsl:value-of select="$resourceType"/> using the same Medication</xsl:message>
+                                </xsl:if>
+                                
+                                <!-- Medication code -->
+                                <xsl:variable name="medicationReference" select="current-group()[1]/f:medicationReference/f:reference/@value"/>
                                 <xsl:variable name="medicationCoding" select="$fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]/f:resource/f:Medication/f:code/(f:coding[f:userSelected/@value = 'true'],f:coding[1])[1]"/>
                                 <xsl:variable name="medicationCode" select="$medicationCoding/f:code/@value"/>
                                 <xsl:variable name="medicationSystem" select="$medicationCoding/f:system/@value"/>
                                 <xsl:variable name="medicationDisplay" select="$medicationCoding/f:display/@value"/>
-                                <xsl:variable name="resourceCount" select="count(current-group())"/>
+                                
+                                <!-- ext-StopType -->
+                                <xsl:variable name="stopType" select="current-group()[1]/f:modifierExtension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-StopType']/f:valueCodeableConcept/f:coding"/>
+                                <xsl:variable name="stopTypeCode" select="$stopType/f:code/@value"/>
+                                <xsl:variable name="stopTypeDisplay" select="$stopType/f:display/@value"/>
+                                
+                                <!-- reasonCode - only for MedicationRequest resource types, AdministrationAgreement uses extension -->
+                                <xsl:variable name="reasonCode" select="current-group()[1]/(f:reasonCode/f:coding, f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation']/f:valueCodeableConcept/f:coding)[1]"/>
+                                <xsl:variable name="reasonCodeCode" select="$reasonCode/f:code/@value"/>
+                                <xsl:variable name="reasonCodeDisplay" select="$reasonCode/f:display/@value"/>
+                                <xsl:variable name="reasonCodeName">
+                                    <xsl:choose>
+                                        <xsl:when test="$reasonCode/parent::*/local-name() = 'reasonCode'">.reasonCode</xsl:when>
+                                        <xsl:when test="$reasonCode/ancestor::f:extension/@url =  'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation'">ext-AdministrationAgreement.ReasonModificationOrDiscontinuation</xsl:when>
+                                    </xsl:choose>
+                                </xsl:variable>
+                                
+                                <!-- Compose description and expression -->
+                                <xsl:variable name="description">
+                                    <xsl:value-of select="concat('Confirm that the ', $direction, ' Bundle contains ', $resourceCount, ' ',$resourceType, ' resource(s) that reference(s) Medication with coding ''', $medicationCode, '|', $medicationSystem, ''' (', $medicationDisplay, ')')"/>
+                                    <xsl:if test="$groupContainsStopType">
+                                        <xsl:choose>
+                                            <xsl:when test="string-length($stopTypeCode) gt 0">
+                                                <xsl:value-of select="concat(' and contain(s) ext-StopType with coding ''', $stopTypeCode, '|http://snomed.info/sct'' (', $stopTypeDisplay, ')')"/>
+                                            </xsl:when>
+                                            <xsl:otherwise>
+                                                <xsl:value-of select="' and contain(s) no ext-StopType'"/>
+                                            </xsl:otherwise>
+                                        </xsl:choose>
+                                    </xsl:if>
+                                    <xsl:if test="$groupContainsReasonCode">
+                                        <xsl:choose>
+                                            <xsl:when test="string-length($reasonCodeCode) gt 0">
+                                                <xsl:value-of select="concat(' and contain(s) ', $reasonCodeName, ' with coding ''', $reasonCodeCode, '|http://snomed.info/sct'' (', $reasonCodeDisplay, ')')"/>
+                                            </xsl:when>
+                                            <xsl:otherwise>
+                                                <xsl:value-of select="' and contain(s) no ', $reasonCodeName"/>
+                                            </xsl:otherwise>
+                                        </xsl:choose>
+                                    </xsl:if>
+                                </xsl:variable>
+                                <xsl:variable name="expression">
+                                    <xsl:value-of select="concat('Bundle.entry.select(resource as ', $resourceType, ').where(medication.resolve().code.coding.where(system = ''', $medicationSystem, ''' and code = ''', $medicationCode, '''))')"/>
+                                    <xsl:if test="$groupContainsStopType">
+                                        <xsl:choose>
+                                            <xsl:when test="string-length($stopTypeCode) gt 0">
+                                                <xsl:value-of select="'.where(modifierExtension.where(url = ''http://nictiz.nl/fhir/StructureDefinition/ext-StopType'').value.coding.where(system = ''http://snomed.info/sct'' and code = ''', $stopTypeCode, '''))'"/>
+                                            </xsl:when>
+                                            <xsl:otherwise>
+                                                <xsl:value-of select="'.where(modifierExtension.where(url = ''http://nictiz.nl/fhir/StructureDefinition/ext-StopType'').exists.not())'"/>
+                                            </xsl:otherwise>
+                                        </xsl:choose>
+                                    </xsl:if>
+                                    <xsl:if test="$groupContainsReasonCode">
+                                        <xsl:choose>
+                                            <xsl:when test="string-length($reasonCodeCode) gt 0">
+                                                <xsl:value-of select="'.where(reasonCode.coding.where(system = ''http://snomed.info/sct'' and code = ''', $stopTypeCode, '''))'"/>
+                                                <xsl:value-of select="concat(' and contains .reasonCode with coding ''', $reasonCodeCode, '|http://snomed.info/sct'' (', $reasonCodeDisplay, ')')"/>
+                                            </xsl:when>
+                                            <xsl:otherwise>
+                                                <xsl:value-of select="'.where(reasonCode.exists.not())'"/>
+                                            </xsl:otherwise>
+                                        </xsl:choose>
+                                    </xsl:if>
+                                    <xsl:value-of select="concat('.count() = ', $resourceCount)"/>
+                                </xsl:variable>
+                                
                                 <action xmlns="http://hl7.org/fhir">
                                     <assert>
-                                        <description value="Confirm that the {$direction} Bundle contains {$resourceCount} {$resourceType} resource(s) that reference(s) Medication with code '{$medicationCode}|{$medicationSystem}' ({$medicationDisplay})"/>
+                                        <description value="{$description}"/>
                                         
-                                        <expression value="Bundle.entry.select(resource as {$resourceType}).where(medication.resolve().code.coding.where(system = '{$medicationSystem}' and code = '{$medicationCode}')).count() = {$resourceCount}"/>
+                                        <expression value="{$expression}"/>
                                         <sourceId value="transaction-{$direction}"/>
                                         <warningOnly value="false"/>
                                     </assert>
