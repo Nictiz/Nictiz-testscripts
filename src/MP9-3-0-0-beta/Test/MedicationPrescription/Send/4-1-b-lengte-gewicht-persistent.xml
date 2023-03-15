@@ -9,7 +9,7 @@
    <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
    <test id="scenario4-1b-send-prescr">
       <name value="Scenario 4.1b"/>
-      <description value="Send MedicationPrescription in a transaction Bundle"/>
+      <description value="Specifies the query to run and general checks on the request."/>
       <action>
          <operation>
             <type>
@@ -19,6 +19,7 @@
             <description value="Test client to POST a Bundle of type transaction."/>
             <destination value="1"/>
             <origin value="1"/>
+            <requestId value="transaction-request"/>
             <sourceId value="mv-mp-vo-tst-4-1-b-lengte-gewicht-persistent-v30"/>
          </operation>
       </action>
@@ -31,5 +32,25 @@
                    scope="common"
                    resource="Medication"
                    count="1"/>
+   </test>
+   <test id="scenario4-1b-send-prescr-identification">
+      <name value="Resource identification"/>
+      <description value="Checks if all resources specified by the scenario can be identified unambiguously."/>
+      <action>
+         <assert>
+            <description value="Confirm that the request Bundle contains 2 MedicationRequest resource(s) that reference(s) Medication with code '49484|urn:oid:2.16.840.1.113883.2.4.4.10' (ACETYLSALICYLZUUR TABLETMSR 100MG)"/>
+            <expression value="Bundle.entry.select(resource as MedicationRequest).where(medication.resolve().code.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.10' and code = '49484')).count() = 2"/>
+            <sourceId value="transaction-request"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the request Bundle contains 1 Medication resource that contains code '49484|urn:oid:2.16.840.1.113883.2.4.4.10' (ACETYLSALICYLZUUR TABLETMSR 100MG)"/>
+            <expression value="Bundle.entry.select(resource as Medication).code.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.10' and code = '49484').count() = 1"/>
+            <sourceId value="transaction-request"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
    </test>
 </TestScript>

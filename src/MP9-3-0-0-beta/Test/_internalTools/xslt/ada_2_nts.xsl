@@ -87,29 +87,32 @@
                 </xsl:choose>
             </xsl:variable>
             
+            <xsl:variable name="direction">
+                <xsl:choose>
+                    <xsl:when test="normalize-space(upper-case($transactionType)) = ('RETRIEVE', 'SEND')">request</xsl:when>
+                    <xsl:when test="normalize-space(upper-case($transactionType)) = ('SERVE', 'RECEIVE')">response</xsl:when>
+                </xsl:choose>
+            </xsl:variable>
+            
             <!-- In Send scripts, the request is being validated. In Receive scripts, the response is being validated (mainly because the FHIR spec is not really clear about what servers can or cannot edit before storing a resource). In both these cases, we add an assert to check for each resource that we expect. Next to that, this script is prepared to also add a variable for each resource, so that we can use this variable in the future to add content asserts for each resource -->
             <xsl:variable name="identifyResources" as="element()*">
-                <xsl:variable name="direction">
-                    <xsl:choose>
-                        <xsl:when test="normalize-space(upper-case($transactionType)) = ('RETRIEVE', 'SEND')">request</xsl:when>
-                        <xsl:when test="normalize-space(upper-case($transactionType)) = ('SERVE', 'RECEIVE')">response</xsl:when>
-                    </xsl:choose>
-                </xsl:variable>
                 <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
                     <xsl:choose>
                         <!-- only check the primary resources and Medication, it is not obliged to send along the secondary resources -->
-                        <xsl:when test="current-grouping-key() = 'MedicationDispense' and current-group()[1]/f:category/f:coding/f:code/@value = '422037009'">
-                            <xsl:for-each select="current-group()">
-                                <xsl:variable name="medicationReference" select="f:medicationReference/f:reference/@value"/>
-                                <xsl:variable name="medicationCoding" select="$fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]/f:resource/f:Medication/f:code/f:coding[f:userSelected/@value = 'true']"/>
+                        <xsl:when test="current-grouping-key() = ('MedicationAdministration','MedicationDispense','MedicationRequest','MedicationStatement')">
+                            <xsl:variable name="resourceType" select="current-grouping-key()"/>
+                            <xsl:for-each-group select="current-group()" group-by="f:medicationReference/f:reference/@value">
+                                <xsl:variable name="medicationReference" select="current-grouping-key()"/>
+                                <xsl:variable name="medicationCoding" select="$fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]/f:resource/f:Medication/f:code/(f:coding[f:userSelected/@value = 'true'],f:coding[1])[1]"/>
                                 <xsl:variable name="medicationCode" select="$medicationCoding/f:code/@value"/>
                                 <xsl:variable name="medicationSystem" select="$medicationCoding/f:system/@value"/>
                                 <xsl:variable name="medicationDisplay" select="$medicationCoding/f:display/@value"/>
-                                <action>
+                                <xsl:variable name="resourceCount" select="count(current-group())"/>
+                                <action xmlns="http://hl7.org/fhir">
                                     <assert>
-                                        <description value="Confirm that the {$direction} Bundle contains 1 {current-grouping-key()} resource that references Medication {$medicationCode}|{$medicationSystem} ({$medicationDisplay})"/>
+                                        <description value="Confirm that the {$direction} Bundle contains {$resourceCount} {$resourceType} resource(s) that reference(s) Medication with code '{$medicationCode}|{$medicationSystem}' ({$medicationDisplay})"/>
                                         
-                                        <expression value="Bundle.entry.select(resource as MedicationDispense).where(medication.resolve().code.coding.where(system = '{$medicationSystem}' and code = '{$medicationCode}')).count() = 1"/>
+                                        <expression value="Bundle.entry.select(resource as {$resourceType}).where(medication.resolve().code.coding.where(system = '{$medicationSystem}' and code = '{$medicationCode}')).count() = {$resourceCount}"/>
                                         <sourceId value="transaction-{$direction}"/>
                                         <warningOnly value="false"/>
                                     </assert>
@@ -119,9 +122,30 @@
                                     <expression value="Bundle.entry.select(resource as {current-grouping-key()}).where(medication.resolve().code.coding.where(system = '{$medicationSystem}' and code = '{$medicationCode}')).id"/>
                                     <sourceId value="search-response"/>
                                 </variable>-->
-                            </xsl:for-each>
+                            </xsl:for-each-group>
                         </xsl:when>
-                        <xsl:when test="current-grouping-key() = ('MedicationRequest', 'MedicationDispense', 'MedicationStatement', 'MedicationAdministration', 'Medication')"/>
+                        <xsl:when test="current-grouping-key() = 'Medication'">
+                            <xsl:for-each-group select="current-group()" group-by="concat((f:code/f:coding[f:userSelected/@value = 'true'],f:code/f:coding[1])[1]/f:code/@value, '|', (f:code/f:coding[f:userSelected/@value = 'true'],f:code/f:coding[1])[1]/f:system/@value)">
+                                <xsl:variable name="medicationCoding" select="(f:code/f:coding[f:userSelected/@value = 'true'],f:code/f:coding[1])[1]"/>
+                                <xsl:variable name="medicationCode" select="$medicationCoding/f:code/@value"/>
+                                <xsl:variable name="medicationSystem" select="$medicationCoding/f:system/@value"/>
+                                <xsl:variable name="medicationDisplay" select="$medicationCoding/f:display/@value"/>
+                                <action xmlns="http://hl7.org/fhir">
+                                    <assert>
+                                        <description value="Confirm that the {$direction} Bundle contains 1 Medication resource that contains code '{$medicationCode}|{$medicationSystem}' ({$medicationDisplay})"/>
+                                        
+                                        <expression value="Bundle.entry.select(resource as Medication).code.coding.where(system = '{$medicationSystem}' and code = '{$medicationCode}').count() = 1"/>
+                                        <sourceId value="transaction-{$direction}"/>
+                                        <warningOnly value="false"/>
+                                    </assert>
+                                </action>
+                                <!--<variable>
+                                    <name value="{current-grouping-key()}-{position()}"/>
+                                    <expression value="Bundle.entry.select(resource as {current-grouping-key()}).where(medication.resolve().code.coding.where(system = '{$medicationSystem}' and code = '{$medicationCode}')).id"/>
+                                    <sourceId value="search-response"/>
+                                </variable>-->
+                            </xsl:for-each-group>
+                        </xsl:when>
                     </xsl:choose>
                 </xsl:for-each-group>
             </xsl:variable>
@@ -177,7 +201,7 @@
                             <xsl:choose>
                                 <!-- only count the primary resources and Medication, it is not obliged to send along the secondary resources -->
                                 <xsl:when test="current-grouping-key() = ('MedicationRequest', 'MedicationDispense', 'MedicationStatement', 'MedicationAdministration', 'Medication')">
-                                    <nts:include value="assert.request.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
+                                    <nts:include value="assert.{$direction}.numResources" scope="common" resource="{current-grouping-key()}" count="{count(current-group())}"/>
                                 </xsl:when>
                                 <!-- but for our own materials we'll check the others aswell just to be sure - for 'legacy reasons' only when receiving, should be also for sending? -->
                                 <!--<xsl:when test="normalize-space(upper-case($transactionType)) = 'RECEIVE'">
@@ -196,6 +220,7 @@
                     </xsl:variable>
 
                     <xsl:variable name="idString" select="replace(concat('mp9-', $testScriptString/@short, '-', normalize-space(lower-case($transactionType)), '-', $scenarioset, '-', $scenario), '(.*?)-?(-$)', '$1')"></xsl:variable>
+                    <xsl:variable name="testId" select="concat('scenario', $scenarioset, '-', $scenario, '-', lower-case($transactionType), '-', $testScriptString/@short)"/>
                     <xsl:choose>
                         <!-- Receive -->
                         <xsl:when test="$ntsScenario = 'server'">
@@ -206,9 +231,9 @@
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.{'{$_FORMAT}'}"/>
                                 <nts:includeDateT value="yes"/>
                                 <!--<xsl:apply-templates select="$deleteStuff/f:variable" mode="Nictiz-intern"/>-->
-                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}">
-                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
-                                    <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
+                                <test id="{$testId}">
+                                    <name value="Operation and general checks"/>
+                                    <description value="Specifies the query that runs and general checks on the response."/>
                                     <action>
                                         <operation>
                                             <type>
@@ -237,9 +262,9 @@
                                 </test>
                                 
                                 <xsl:if test="count($identifyResources) gt 0">
-                                    <test id="test123">
-                                        <name value="test456"/>
-                                        <description value="test789"/>
+                                    <test id="{$testId}-identification">
+                                        <name value="Resource identification"/>
+                                        <description value="Checks if all resources specified by the scenario can be identified unambiguously."/>
                                         <xsl:copy-of select="$identifyResources"/>
                                     </test>
                                 </xsl:if>
@@ -259,9 +284,9 @@
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
                                 <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
                                 <!--<xsl:copy-of select="$deleteStuff/f:variable"/>-->
-                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}">
+                                <test id="{$testId}">
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
-                                    <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
+                                    <description value="Specifies the query to run and general checks on the request."/>
                                     <action>
                                         <operation>
                                             <type>
@@ -283,9 +308,9 @@
                                 </test>
                                 
                                 <xsl:if test="count($identifyResources) gt 0">
-                                    <test id="test123">
-                                        <name value="test456"/>
-                                        <description value="test789"/>
+                                    <test id="{$testId}-identification">
+                                        <name value="Resource identification"/>
+                                        <description value="Checks if all resources specified by the scenario can be identified unambiguously."/>
                                         <xsl:copy-of select="$identifyResources"/>
                                     </test>
                                 </xsl:if>
