@@ -107,7 +107,7 @@
                             <xsl:variable name="groupContainsReasonCode" select="exists(current-group()/f:reasonCode) or exists(current-group()/f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation'])"/>
                             
                             <xsl:for-each-group select="current-group()" group-by="
-                                concat(f:medicationReference/f:reference/@value, 
+                                concat($fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = current()/f:medicationReference/f:reference/@value]/f:resource/f:Medication/f:code/(f:coding[f:userSelected/@value = 'true'],f:coding[1])[1]/f:code/@value, '|', $fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = current()/f:medicationReference/f:reference/@value]/f:resource/f:Medication/f:code/(f:coding[f:userSelected/@value = 'true'],f:coding[1])[1]/f:system/@value, 
                                 if ($groupContainsStopType) then concat('|', (f:modifierExtension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-StopType']/f:valueCodeableConcept/f:coding/f:code/@value, f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation']/f:valueCodeableConcept/f:coding/f:code/@value, 'null')[1]) else '', 
                                 if ($groupContainsReasonCode) then concat('|', (f:reasonCode/f:coding/f:code/@value,'null')[1]) else '')">
                                 <xsl:variable name="resourceCount" select="count(current-group())"/>
