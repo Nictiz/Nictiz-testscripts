@@ -133,11 +133,13 @@
                                 <!-- ext-StopType -->
                                 <xsl:variable name="stopType" select="current-group()[1]/f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding"/>
                                 <xsl:variable name="stopTypeCode" select="$stopType/f:code/@value"/>
+                                <xsl:variable name="stopTypeSystem" select="$stopType/f:system/@value"/>
                                 <xsl:variable name="stopTypeDisplay" select="$stopType/f:display/@value"/>
                                 
                                 <!-- reasonCode - only for MedicationRequest resource types, AdministrationAgreement and MedicationAdministration2 use extension -->
                                 <xsl:variable name="reasonCode" select="current-group()[1]/(f:reasonCode/f:coding, f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation']/f:valueCodeableConcept/f:coding, f:extension[@url = $urlExtMedicationAdministration2ReasonForDeviation]/f:valueCodeableConcept/f:coding)[1]"/>
                                 <xsl:variable name="reasonCodeCode" select="$reasonCode/f:code/@value"/>
+                                <xsl:variable name="reasonCodeSystem" select="$reasonCode/f:system/@value"/>
                                 <xsl:variable name="reasonCodeDisplay" select="$reasonCode/f:display/@value"/>
                                 <xsl:variable name="reasonCodeName">
                                     <xsl:choose>
@@ -168,7 +170,7 @@
                                     <xsl:if test="$groupContainsStopType">
                                         <xsl:choose>
                                             <xsl:when test="string-length($stopTypeCode) gt 0">
-                                                <xsl:value-of select="concat(' and contain(s) ext-StopType with coding ''', $stopTypeCode, '|http://snomed.info/sct'' (', $stopTypeDisplay, ')')"/>
+                                                <xsl:value-of select="concat(' and contain(s) ext-StopType with coding ''', $stopTypeCode, '|', $stopTypeSystem, ''' (', $stopTypeDisplay, ')')"/>
                                             </xsl:when>
                                             <xsl:otherwise>
                                                 <xsl:value-of select="' and contain(s) no ext-StopType'"/>
@@ -178,7 +180,7 @@
                                     <xsl:if test="$groupContainsReasonCode">
                                         <xsl:choose>
                                             <xsl:when test="string-length($reasonCodeCode) gt 0">
-                                                <xsl:value-of select="concat(' and contain(s) ', $reasonCodeName, ' with coding ''', $reasonCodeCode, '|http://snomed.info/sct'' (', $reasonCodeDisplay, ')')"/>
+                                                <xsl:value-of select="concat(' and contain(s) ', $reasonCodeName, ' with coding ''', $reasonCodeCode, '|', $reasonCodeSystem, ''' (', $reasonCodeDisplay, ')')"/>
                                             </xsl:when>
                                             <xsl:otherwise>
                                                 <xsl:value-of select="concat(' and contain(s) no ', $reasonCodeName)"/>
@@ -200,7 +202,7 @@
                                     <xsl:if test="$groupContainsStopType">
                                         <xsl:choose>
                                             <xsl:when test="string-length($stopTypeCode) gt 0">
-                                                <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').value.coding.where(system = ''http://snomed.info/sct'' and code = ''', $stopTypeCode, '''))')"/>
+                                                <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').value.coding.where(system = ''', $stopTypeSystem, ''' and code = ''', $stopTypeCode, '''))')"/>
                                             </xsl:when>
                                             <xsl:otherwise>
                                                 <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').exists().not())')"/>
@@ -210,7 +212,7 @@
                                     <xsl:if test="$groupContainsReasonCode">
                                         <xsl:choose>
                                             <xsl:when test="string-length($reasonCodeCode) gt 0">
-                                                <xsl:value-of select="concat('.where(', $reasonCodeExpression, '.coding.where(system = ''http://snomed.info/sct'' and code = ''', $reasonCodeCode, '''))')"/>
+                                                <xsl:value-of select="concat('.where(', $reasonCodeExpression, '.coding.where(system = ''', $reasonCodeSystem, ''' and code = ''', $reasonCodeCode, '''))')"/>
                                             </xsl:when>
                                             <xsl:otherwise>
                                                 <xsl:value-of select="concat('.where(', $reasonCodeExpression, '.exists().not())')"/>
