@@ -96,6 +96,7 @@
             
             <!-- In Send scripts, the request is being validated. In Receive scripts, the response is being validated (mainly because the FHIR spec is not really clear about what servers can or cannot edit before storing a resource). In both these cases, we add an assert to check for each resource that we expect. Next to that, this script is prepared to also add a variable for each resource, so that we can use this variable in the future to add content asserts for each resource -->
             <xsl:variable name="identifyResources" as="element()*">
+                <xsl:variable name="medicationGroup" select="$fhirFixture/f:Bundle/f:entry/f:resource/f:Medication"/>
                 <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
                     <xsl:choose>
                         <!-- only check the primary resources and Medication, it is not obliged to send along the secondary resources -->
@@ -113,22 +114,35 @@
                             <xsl:variable name="groupContainsStopType" select="exists(current-group()/f:modifierExtension[@url = $urlExtStoptype])"/>
                             <xsl:variable name="groupContainsReasonCode" select="exists(current-group()/f:reasonCode) or exists(current-group()/f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation']) or exists(current-group()/f:extension[@url = $urlExtMedicationAdministration2ReasonForDeviation])"/>
                             
-                            <!-- We use the resolved Medication code here instead of the reference value to account for OTH -->
+                            <!-- We use the resolved Medication code here instead of the reference value to account for OTH-codes -->
                             <xsl:for-each-group select="current-group()" group-by="
                                 concat($fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = current()/f:medicationReference/f:reference/@value]/f:resource/f:Medication/f:code/(f:coding[f:userSelected/@value = 'true'],f:coding[1])[1]/f:code/@value, '|', $fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = current()/f:medicationReference/f:reference/@value]/f:resource/f:Medication/f:code/(f:coding[f:userSelected/@value = 'true'],f:coding[1])[1]/f:system/@value, 
                                 if ($groupContainsStopType) then concat('|', (f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value, 'null')[1]) else '', 
                                 if ($groupContainsReasonCode) then concat('|', (f:reasonCode/f:coding/f:code/@value, f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation']/f:valueCodeableConcept/f:coding/f:code/@value, f:extension[@url = $urlExtMedicationAdministration2ReasonForDeviation]/f:valueCodeableConcept/f:coding/f:code/@value, 'null')[1]) else '')">
                                 <xsl:variable name="resourceCount" select="count(current-group())"/>
-                                <!--<xsl:if test="$resourceCount gt 1">
+                                <xsl:if test="$resourceCount gt 1">
                                     <xsl:message><xsl:value-of select="$adaTransId"/> contains multiple <xsl:value-of select="$resourceType"/> using the same Medication</xsl:message>
-                                </xsl:if>-->
+                                </xsl:if>
                                 
                                 <!-- Medication code -->
                                 <xsl:variable name="medicationReference" select="current-group()[1]/f:medicationReference/f:reference/@value"/>
-                                <xsl:variable name="medicationCoding" select="$fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]/f:resource/f:Medication/f:code/(f:coding[f:userSelected/@value = 'true'],f:coding[1])[1]"/>
+                                <xsl:variable name="medication" select="$fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]/f:resource/f:Medication/f:code"/>
+                                <xsl:variable name="medicationCoding" select="$medication/(f:coding[f:userSelected/@value = 'true'],f:coding[1])[1]"/>
                                 <xsl:variable name="medicationCode" select="$medicationCoding/f:code/@value"/>
                                 <xsl:variable name="medicationSystem" select="$medicationCoding/f:system/@value"/>
                                 <xsl:variable name="medicationDisplay" select="$medicationCoding/f:display/@value"/>
+                                <xsl:variable name="useUserSelected">
+                                    <xsl:variable name="medicationCoding" />
+                                    <xsl:choose>
+                                        <!-- Exception for OTH for now -->
+                                        <xsl:when test="count($medicationGroup/f:code/f:coding[f:code/@value = $medicationCode and f:system/@value = $medicationSystem]) gt 1 and not($medicationCode = 'OTH')">
+                                            <xsl:value-of select="false()"/>
+                                        </xsl:when>
+                                        <xsl:otherwise>
+                                            <xsl:value-of select="true()"/>
+                                        </xsl:otherwise>
+                                    </xsl:choose>
+                                </xsl:variable>
                                 
                                 <!-- ext-StopType -->
                                 <xsl:variable name="stopType" select="current-group()[1]/f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding"/>
@@ -189,16 +203,26 @@
                                     </xsl:if>
                                 </xsl:variable>
                                 <xsl:variable name="expression">
-                                    <xsl:value-of select="concat('Bundle.entry.select(resource as ', $resourceType, ').where(medication.resolve().code.coding.where(')"/>
+                                    <xsl:value-of select="concat('Bundle.entry.select(resource as ', $resourceType, ').where(medication.resolve().code')"/>
                                     <xsl:choose>
                                         <xsl:when test="starts-with($medicationSystem, 'urn:oid:2.16.840.1.113883.2.4.3.11.9999.77.90000000')">
-                                            <xsl:value-of select="'system.startsWith(''urn:oid:2.16.840.1.113883.2.4.4.'').not() and code.toInteger() &gt; 90000000'"/>
+                                            <xsl:value-of select="'.coding.where(system.startsWith(''urn:oid:2.16.840.1.113883.2.4.4.'').not() and code.toInteger() &gt; 90000000)'"/>
+                                        </xsl:when>
+                                        <xsl:when test="$useUserSelected = true()">
+                                            <xsl:value-of select="concat('.coding.where(system = ''', $medicationSystem, ''' and code = ''', $medicationCode, ''')')"/>
                                         </xsl:when>
                                         <xsl:otherwise>
-                                            <xsl:value-of select="concat('system = ''', $medicationSystem, ''' and code = ''', $medicationCode, '''')"/>
+                                            <xsl:value-of select="concat('.where(coding.count() = ', count($medication/f:coding), ' and ')"/>
+                                            <xsl:for-each select="$medication/f:coding">
+                                                <xsl:value-of select="concat('coding.where(system = ''', f:system/@value, ''' and code = ''', f:code/@value, ''')')"/>
+                                                <xsl:if test="not(position() = last())">
+                                                    <xsl:value-of select="' and '"/>
+                                                </xsl:if>
+                                            </xsl:for-each>
+                                            <xsl:value-of select="')'"/>
                                         </xsl:otherwise>
                                     </xsl:choose>
-                                    <xsl:value-of select="'))'"/>
+                                    <xsl:value-of select="')'"/>
                                     <xsl:if test="$groupContainsStopType">
                                         <xsl:choose>
                                             <xsl:when test="string-length($stopTypeCode) gt 0">
@@ -246,11 +270,45 @@
                                 <xsl:variable name="medicationCode" select="$medicationCoding/f:code/@value"/>
                                 <xsl:variable name="medicationSystem" select="$medicationCoding/f:system/@value"/>
                                 <xsl:variable name="medicationDisplay" select="$medicationCoding/f:display/@value"/>
+                                <!-- First we check if the userSelected (or if userSelected is absent just the first) coding is unique within the Medication group. If not, we are going to use the complete CodeableConcept to generate an expression -->
+                                <xsl:variable name="useUserSelected">
+                                    <xsl:variable name="medicationCoding" />
+                                    <xsl:choose>
+                                        <!-- Exception for OTH for now -->
+                                        <xsl:when test="count($medicationGroup/f:code/f:coding[f:code/@value = $medicationCode and f:system/@value = $medicationSystem]) gt 1 and not($medicationCode = 'OTH')">
+                                            <xsl:value-of select="false()"/>
+                                        </xsl:when>
+                                        <xsl:otherwise>
+                                            <xsl:value-of select="true()"/>
+                                        </xsl:otherwise>
+                                    </xsl:choose>
+                                </xsl:variable>
+                                
+                                <xsl:variable name="expression">
+                                    <xsl:value-of select="'Bundle.entry.select(resource as Medication).where(code'"/>
+                                    <xsl:choose>
+                                        <xsl:when test="$useUserSelected = true()">
+                                            <xsl:value-of select="concat('.coding.where(system = ''', $medicationSystem, ''' and code = ''', $medicationCode, ''')')"/>
+                                        </xsl:when>
+                                        <xsl:otherwise>
+                                            <xsl:value-of select="concat('.where(coding.count() = ', count(f:code/f:coding), ' and ')"/>
+                                            <xsl:for-each select="f:code/f:coding">
+                                                <xsl:value-of select="concat('coding.where(system = ''', f:system/@value, ''' and code = ''', f:code/@value, ''')')"/>
+                                                <xsl:if test="not(position() = last())">
+                                                    <xsl:value-of select="' and '"/>
+                                                </xsl:if>
+                                            </xsl:for-each>
+                                            <xsl:value-of select="')'"/>
+                                        </xsl:otherwise>
+                                    </xsl:choose>
+                                    <xsl:value-of select="concat(').count() = ', $resourceCount)"/>
+                                </xsl:variable>
+                                
                                 <action xmlns="http://hl7.org/fhir">
                                     <assert>
                                         <description value="Confirm that the {$direction} Bundle contains {$resourceCount} Medication resource that contains code '{$medicationCode}|{$medicationSystem}' ({$medicationDisplay})"/>
                                         
-                                        <expression value="Bundle.entry.select(resource as Medication).code.coding.where(system = '{$medicationSystem}' and code = '{$medicationCode}').count() = {$resourceCount}"/>
+                                        <expression value="{$expression}"/>
                                         <sourceId value="transaction-{$direction}"/>
                                         <warningOnly value="false"/>
                                     </assert>
