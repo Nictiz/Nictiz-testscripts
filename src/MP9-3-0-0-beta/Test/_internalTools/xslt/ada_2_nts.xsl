@@ -185,21 +185,20 @@
                                     <xsl:if test="$groupContainsStopType">
                                         <xsl:choose>
                                             <xsl:when test="string-length($stopTypeCode) gt 0">
-                                                <xsl:value-of select="'.where(modifierExtension.where(url = ''http://nictiz.nl/fhir/StructureDefinition/ext-StopType'').value.coding.where(system = ''http://snomed.info/sct'' and code = ''', $stopTypeCode, '''))'"/>
+                                                <xsl:value-of select="concat('.where(modifierExtension.where(url = ''http://nictiz.nl/fhir/StructureDefinition/ext-StopType'').value.coding.where(system = ''http://snomed.info/sct'' and code = ''', $stopTypeCode, '''))')"/>
                                             </xsl:when>
                                             <xsl:otherwise>
-                                                <xsl:value-of select="'.where(modifierExtension.where(url = ''http://nictiz.nl/fhir/StructureDefinition/ext-StopType'').exists.not())'"/>
+                                                <xsl:value-of select="'.where(modifierExtension.where(url = ''http://nictiz.nl/fhir/StructureDefinition/ext-StopType'').exists().not())'"/>
                                             </xsl:otherwise>
                                         </xsl:choose>
                                     </xsl:if>
                                     <xsl:if test="$groupContainsReasonCode">
                                         <xsl:choose>
                                             <xsl:when test="string-length($reasonCodeCode) gt 0">
-                                                <xsl:value-of select="'.where(reasonCode.coding.where(system = ''http://snomed.info/sct'' and code = ''', $stopTypeCode, '''))'"/>
-                                                <xsl:value-of select="concat(' and contains .reasonCode with coding ''', $reasonCodeCode, '|http://snomed.info/sct'' (', $reasonCodeDisplay, ')')"/>
+                                                <xsl:value-of select="concat('.where(reasonCode.coding.where(system = ''http://snomed.info/sct'' and code = ''', $reasonCodeCode, '''))')"/>
                                             </xsl:when>
                                             <xsl:otherwise>
-                                                <xsl:value-of select="'.where(reasonCode.exists.not())'"/>
+                                                <xsl:value-of select="'.where(reasonCode.exists().not())'"/>
                                             </xsl:otherwise>
                                         </xsl:choose>
                                     </xsl:if>
