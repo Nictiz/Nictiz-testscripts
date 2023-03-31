@@ -384,6 +384,9 @@
                                                 </xsl:choose>
                                             </xsl:variable>
                                             
+                                            <xsl:variable name="stopTypeCode" select="$currentMPBouwsteen/f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value"/>
+                                            <xsl:variable name="reasonCode" select="$currentMPBouwsteen/f:reasonCode/f:coding/f:code/@value"/>
+                                            
                                             <xsl:variable name="description">
                                                 <xsl:value-of select="concat('Confirm that the ', $direction, ' Bundle contains exactly 1 ', $resourceType, ' resource that references Medication with code.coding.code''s ')"/>
                                                 <xsl:for-each select="$medication-code">
@@ -392,6 +395,19 @@
                                                         <xsl:value-of select="' and '"/>
                                                     </xsl:if>
                                                 </xsl:for-each>
+                                                <xsl:choose>
+                                                    <!-- is er één bouwsteen ? dan hoeven we niets toe te voegen-->
+                                                    <xsl:when test="count($mpBouwstenenSameProduct) = 1"/>
+                                                    <!-- aanwezigheid stoptype uniek? -->
+                                                    <xsl:when test="$stopTypeCode and count($mpBouwstenenSameProduct[f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value]) = 1">
+                                                        <xsl:value-of select="concat(' and contains ext-StopType with code ''', $stopTypeCode, '''')"/>
+                                                    </xsl:when>
+                                                    <!-- afwezigheid stoptype uniek? -->
+                                                    <xsl:when test="not($stopTypeCode) and count($mpBouwstenenSameProduct[not(f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value)]) = 1">
+                                                        <xsl:value-of select="' and contains no ext-StopType'"/>
+                                                    </xsl:when>
+                                                    <xsl:otherwise/>
+                                                </xsl:choose>
                                             </xsl:variable>
                                             
                                             <xsl:variable name="expression">
@@ -404,19 +420,46 @@
                                                         <xsl:value-of select="' and '"/>
                                                     </xsl:if>
                                                 </xsl:for-each>
-                                                <xsl:value-of select="')).count() = 1'"/>
+                                                <xsl:value-of select="'))'"/>
                                                 <xsl:choose>
                                                     <!-- is er één bouwsteen ? dan hoeven we niets toe te voegen-->
                                                     <xsl:when test="count($mpBouwstenenSameProduct) = 1"/>
+                                                    <!-- aanwezigheid stoptype uniek? -->
+                                                    <xsl:when test="$stopTypeCode and count($mpBouwstenenSameProduct[f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value] = $stopTypeCode) = 1">
+                                                        <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').value.coding.code = ''', $stopTypeCode, ''')')"/>
+                                                    </xsl:when>
+                                                    <!-- afwezigheid stoptype uniek? -->
+                                                    <xsl:when test="not($stopTypeCode) and count($mpBouwstenenSameProduct[not(f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value)]) = 1">
+                                                        <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').exists().not())')"/>
+                                                    </xsl:when>
+                                                    <!-- aanwezigheid reden... uniek? -->
+                                                    <xsl:when test="$reasonCode and count($mpBouwstenenSameProduct[f:reasonCode/f:coding/f:code/@value = $reasonCode]) = 1">
+                                                        <xsl:value-of select="concat('.where(reasonCode.coding.code = ''', $stopTypeCode, ''')')"/>
+                                                    </xsl:when>
+                                                    <!-- afwezigheid reden... uniek? -->
+                                                    <xsl:when test="not($reasonCode) and count($mpBouwstenenSameProduct[not(f:reasonCode/f:coding/f:code/@value)]) = 1">
+                                                        <xsl:value-of select="'.where(reasonCode.exists().not())'"/>
+                                                    </xsl:when>
+                                                    <!-- aanwezigheid stoptype en reden... uniek? -->
+                                                    <xsl:when test="$stopTypeCode and $reasonCode and count($mpBouwstenenSameProduct[f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value  = $stopTypeCode and f:reasonCode/f:coding/f:code/@value = $reasonCode]) = 1">
+                                                        <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').value.coding.code = ''', $stopTypeCode, ''')')"/>
+                                                        <xsl:value-of select="concat('.where(reasonCode.coding.code = ''', $reasonCode, ''')')"/>
+                                                    </xsl:when>
+                                                    <!-- afwezigheid stoptype en reden... uniek? -->
+                                                    <xsl:when test="not($stopTypeCode) and not($reasonCode) and count($mpBouwstenenSameProduct[not(f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value) and not(f:reasonCode/f:coding/f:code/@value)]) = 1">
+                                                        <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').exists().not()).where(reasonCode.exists().not())')"/>
+                                                    </xsl:when>
+                                                    
                                                     <xsl:otherwise>
                                                         <xsl:message>Count 1 not reached: <xsl:value-of select="count($mpBouwstenenSameProduct)"/></xsl:message>
                                                     </xsl:otherwise>
                                                 </xsl:choose>
+                                                <xsl:value-of select="'.count() = 1'"/>
                                             </xsl:variable>
                                             
                                             <action xmlns="http://hl7.org/fhir">
                                                 <assert>
-                                                    <description value="{$description}"/>
+                                                    <!--<description value="{$description}"/>-->
                                                     <expression value="{$expression}"/>
                                                     <sourceId value="transaction-{$direction}"/>
                                                     <warningOnly value="false"/>
