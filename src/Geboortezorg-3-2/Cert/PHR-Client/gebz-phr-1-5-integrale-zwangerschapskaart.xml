@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="client">
+   <id value="gbz-fhir3-0-2-ikz-phr-1-4"/>
+   <version value="stu3-3.0"/>
+   <name value="Nictiz Geboortezorg - Client - Scenario 1.5 - Retrieve Integrale Zwangerschapskaart of Julia Laarhoven (no data available)"/>
+   <description value="Scenario 1.5: Retrieve Integrale Zwangerschapskaart of Julia Laarhoven (no data available)"/>
+   <nts:authToken patientResourceId="JULIAJXXX-LAARHOVEN"/>
+   <nts:fixture id="patient-fixture" href="Vrouw3-GeenData/medmij-gbz-nl-core-patient-JULIAJXXX-LAARHOVEN.xml"/>
+   <variable><name value="patient-id"/><expression value="Patient.id"/><sourceId value="patient-fixture"/></variable>
+   
+   <!-- Patient - Zwangere vrouw -->
+   <test id="1-RetrieveWoman">
+      <name value="1-RetrieveWoman"/>
+      <description value="Query Patient resource for HCIM Patient"/>
+      <nts:include value="gbz-operation-search-phr">
+         <nts:with-parameter name="resource" value="Patient"/>
+      </nts:include>
+      <nts:include value="assert.request.authorizationHeader" scope="common"/>
+      <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+      <nts:include value="assert.response.numResources" scope="common">
+         <nts:with-parameter name="resource" value="Patient"/>
+         <nts:with-parameter name="count" value="1"/>
+      </nts:include>
+   </test>
+
+   <!-- EpisodeOfCare - Actieve zwangerschap (dossier) -->
+   <test id="2-RetrieveMaternalRecord">
+      <name value="2-RetrieveMaternalRecord"/>
+      <description value="Test Client query operation for MaternalRecord (EpisodeOfCare)"/>
+      <nts:include value="gbz-operation-search-phr">
+         <nts:with-parameter name="resource" value="EpisodeOfCare"/>
+         <nts:with-parameter name="params" value="?type=http://snomed.info/sct|364320009&amp;status=finished&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
+      </nts:include>
+      <nts:include value="assert.request.authorizationHeader" scope="common"/>
+      <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+      <nts:include value="assert.response.numResources" scope="common">
+         <nts:with-parameter name="resource" value="EpisodeOfCare"/>
+         <nts:with-parameter name="count" value="0"/>
+      </nts:include>
+      <nts:include value="assert.response.numResources" scope="common">
+         <nts:with-parameter name="resource" value="Organization"></nts:with-parameter>
+         <nts:with-parameter name="count" value="0"></nts:with-parameter>
+      </nts:include>
+      <nts:include value="assert.response.numResources" scope="common">
+         <nts:with-parameter name="resource" value="Practitioner"></nts:with-parameter>
+         <nts:with-parameter name="count" value="0"></nts:with-parameter>
+      </nts:include>
+      <nts:include value="assert.response.numResources" scope="common">
+         <nts:with-parameter name="resource" value="PractitionerRole"></nts:with-parameter>
+         <nts:with-parameter name="count" value="0"></nts:with-parameter>
+      </nts:include>
+   </test>
+   
+</TestScript>

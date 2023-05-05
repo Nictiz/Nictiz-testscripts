@@ -1,25 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="server">
-   <id value="gbz-fhir3-0-2-ikz-xis-1-3"/>
+   <id value="gbz-fhir3-0-2-ikz-xis-1-2"/>
    <version value="stu3-3.0"/>
-   <name value="Nictiz Geboortezorg - Server - Scenario 1.3 - Serve Integrale Zwangerschapskaart primary and secondary care resources of multiple pregnancy of Jamila Kwee"/>
-   <description value="Scenario 1.3: Serve Integrale Zwangerschapskaart primary care resources of multiple pregnancy of Jamila Kwee"/>
-   <nts:authToken patientResourceId="JAMILAJXXX-KWEE"/>
-   <variable><name value="dossier1-id"/><defaultValue value="66aa2fcb-2064-11ec-5265-020000000000"></defaultValue></variable>
-   <variable><name value="dossier2-id"/><defaultValue value="a490614b-2291-11ec-8669-020000000000"></defaultValue></variable>
-   <variable><name value="practitioner1-id"/><defaultValue value="2-16-528-1-1007-3-112340001"></defaultValue></variable>
-   <variable><name value="practitioner2-id"/><defaultValue value="2-16-528-1-1007-3-198765432"></defaultValue></variable>
+   <name value="Nictiz Geboortezorg - Server - Scenario 1.3 - Serve Integrale Zwangerschapskaart resources of all pregnancies of Hanna Kooij"/>
+   <description value="Scenario 1.3: Serve Integrale Zwangerschapskaart resources of all pregnancies of Hanna Kooij"/>
+   <nts:authToken patientResourceId="HANNAHXXX-KOOIJ"/>
+   <variable><name value="dossier-id"/><defaultValue value="d735bfeb-2062-11ec-2089-020000000000"></defaultValue></variable>
+   <variable><name value="practitioner-id"/><defaultValue value="2-16-528-1-1007-3-112340001"></defaultValue></variable>
+   <variable><name value="child-id"/><defaultValue value="HELENXXX-KOOIJ"></defaultValue></variable>
    <variable><name value="T"/><defaultValue value="${CURRENTDATE}"/></variable>
    
    <!-- Patient - Zwangere vrouw -->
    <test id="1-ServeWoman">
       <name value="1-ServeWoman"/>
-      <description value="Query Patient resource for HCIM Patient"/>
+      <description value="Test Server query operation for HCIM Patient"/>
       <nts:include value="gbz-operation-search-xis">
          <nts:with-parameter name="resource" value="Patient"/>
       </nts:include>
       <nts:include value="assert.request.authorizationHeader" scope="common"/>
-      <nts:include value="medmij/assert.response.successfulSearch" scope="common" resource="Bundle"/>
+      <nts:include value="medmij/assert.response.successfulSearch" scope="common" resource="Bundle"/> 
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="Patient"/>
          <nts:with-parameter name="count" value="1"/>
@@ -27,13 +26,13 @@
       </nts:include>
    </test>
 
-   <!-- EpisodeOfCare - Actieve zwangerschap (dossier) -->
+   <!-- Voorgaande zwangerschap (dossier) -->
    <test id="2-ServeMaternalRecord">
       <name value="2-ServeMaternalRecord"/>
       <description value="Test Server query operation for MaternalRecord (EpisodeOfCare) including managing organization (Organization) and care manager (Practitioner)"/>
       <nts:include value="gbz-operation-search-xis">
          <nts:with-parameter name="resource" value="EpisodeOfCare"/>
-         <nts:with-parameter name="params" value="?type=http://snomed.info/sct|364320009&amp;status=active&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
+         <nts:with-parameter name="params" value="?type=http://snomed.info/sct|364320009&amp;status=finished&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
       </nts:include>
       <nts:include value="assert.request.authorizationHeader" scope="common"/>
       <nts:include value="medmij/assert.response.successfulSearch" scope="common" resource="Bundle"/>     <nts:include value="assert.response.queryParamsInSelfLink" scope="common"/>
@@ -43,27 +42,27 @@
       </nts:include>
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="Organization"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
       </nts:include>
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="Practitioner"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
       </nts:include>
    </test>
     
    <!-- Conditions - Problemen gerelateerd aan dossier incl. zwangerschap -->
    <test id="3-ServeConditions">
       <name value="3-ServeConditions"/>
-      <description value="Test Server query operation for Conditions (including Pregnancy)"/>
+      <description value="Test Server query operation for for Conditions (including Pregnancy))"/>
       <nts:include value="gbz-operation-search-xis">
          <nts:with-parameter name="resource" value="Condition"/>
-         <nts:with-parameter name="params" value="?context=EpisodeOfCare/${dossier1-id},EpisodeOfCare/${dossier2-id}"/>
+         <nts:with-parameter name="params" value="?context=EpisodeOfCare/${dossier1-id,dossier2-id}"/>
       </nts:include>
       <nts:include value="assert.request.authorizationHeader" scope="common"/>
       <nts:include value="medmij/assert.response.successfulSearch" scope="common" resource="Bundle"/>     <nts:include value="assert.response.queryParamsInSelfLink" scope="common"/>
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="Condition"></nts:with-parameter>
-         <nts:with-parameter name="count" value="6"></nts:with-parameter>
+         <nts:with-parameter name="count" value="4"></nts:with-parameter>
       </nts:include>
       <!-- Zwangerschap -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -73,47 +72,43 @@
          <nts:with-parameter name="code" value="118185001"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
-      <!-- Meerlingzwangerschap -->
+      <!-- Zwakke foetale beweging -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Meerlingzwangerschap)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Condition"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="16356006"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
-      </nts:include>
-      <!-- Groeiafwijking -->
-      <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Groeiafwijking)"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(Zwakke foetale beweging)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Condition"></nts:with-parameter>
          <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="267258002"></nts:with-parameter>
+         <nts:with-parameter name="code" value="276372004"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
-      <!-- Liggingsafwijking -->
+      <!-- Foetale nood -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Liggingsafwijking)"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(Foetale nood)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Condition"></nts:with-parameter>
          <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="15028002"></nts:with-parameter>
+         <nts:with-parameter name="code" value="288274003"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
    </test>
-   
-   <!-- Encounters - Prenatale controles/contacten gekoppeld aan dossier -->
+    
+   <!-- Prenatale controles -->
    <test id="4-ServePrenatalVisits">
       <name value="4-ServePrenatalVisits"/>
       <description value="Test Server query operation for PrenatalVisits (Encounter)"/>
       <nts:include value="gbz-operation-search-xis">
          <nts:with-parameter name="resource" value="Encounter"/>
-         <nts:with-parameter name="params" value="?episodeofcare=${dossier1-id},${dossier2-id}&amp;_include=Encounter:practitioner"/>
+         <nts:with-parameter name="params" value="?episodeofcare=${dossier1-id,dossier2-id}&amp;_include=Encounter:practitioner"/>
       </nts:include>
       <nts:include value="assert.request.authorizationHeader" scope="common"/>
       <nts:include value="medmij/assert.response.successfulSearch" scope="common" resource="Bundle"/>     <nts:include value="assert.response.queryParamsInSelfLink" scope="common"/>
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="Encounter"></nts:with-parameter>
-         <nts:with-parameter name="count" value="3"></nts:with-parameter>
+         <nts:with-parameter name="count" value="2"></nts:with-parameter>
       </nts:include>
-   </test> 
+      <nts:include value="assert.response.numResources" scope="common">
+         <nts:with-parameter name="resource" value="Practitioner"/>
+         <nts:with-parameter name="count" value="1"/>
+      </nts:include>
+   </test>  
    
    <!-- Observations - Observaties gekoppeld aan dossier -->  
    <test id="5a-ServeObservations">
@@ -121,13 +116,13 @@
       <description value="Test Server query operation for Observations"/>
       <nts:include value="gbz-operation-search-xis">
          <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?context=EpisodeOfCare/${dossier1-id},EpisodeOfCare/${dossier2-id}"/>
+         <nts:with-parameter name="params" value="?context=EpisodeOfCare/${dossier1-id,dossier2-id}"/>
       </nts:include>
       <nts:include value="assert.request.authorizationHeader" scope="common"/>
       <nts:include value="medmij/assert.response.successfulSearch" scope="common" resource="Bundle"/>     <nts:include value="assert.response.queryParamsInSelfLink" scope="common"/>
 <!--      <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="28"></nts:with-parameter>
+         <nts:with-parameter name="count" value="17"></nts:with-parameter>
       </nts:include>-->
       <!-- parity -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -157,7 +152,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(def term date)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
+         <nts:with-parameter name="count" value="2"></nts:with-parameter>
          <nts:with-parameter name="code" value="147781000146105"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
@@ -165,7 +160,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(multiple pregnancy)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
+         <nts:with-parameter name="count" value="0"></nts:with-parameter>
          <nts:with-parameter name="code" value="65147003"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
@@ -173,7 +168,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(number of fetus)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="0"></nts:with-parameter>
          <nts:with-parameter name="code" value="246435002"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
@@ -189,7 +184,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(fetal loss)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="0"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="713651007"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
@@ -197,11 +192,11 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(folium accid intake)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="792807003"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
-     <!-- fetal movement -->
+      <!-- fetal movement -->
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(fetal movement)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
@@ -213,7 +208,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(body weight)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="0"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="29463-7"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
       </nts:include> 
@@ -261,7 +256,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(onset first stage of labor)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="0"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="439771001"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
@@ -269,7 +264,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(type first stage of labor)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="0"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="249120008"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
@@ -301,7 +296,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(Hb)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="4"></nts:with-parameter>
+         <nts:with-parameter name="count" value="0"></nts:with-parameter>
          <nts:with-parameter name="code" value="93846-4"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
       </nts:include>
@@ -309,7 +304,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(Rhesus D)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="1305-2"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
       </nts:include>
@@ -317,7 +312,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(Rhesus C)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="1159-3"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
       </nts:include>
@@ -325,7 +320,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(Bloedgroep)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="883-9"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
       </nts:include>
@@ -333,15 +328,15 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(Toxoplasma)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
+         <nts:with-parameter name="count" value="0"></nts:with-parameter>
          <nts:with-parameter name="code" value="8039-0"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
       </nts:include>  
-<!--      <!-\\- Apgar Score 1-minuut -\\->
+      <!--      <!-\\- Apgar Score 1-minuut -\\->
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(Apgar Score 1-minuut)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="9272-6"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
       </nts:include>
@@ -349,7 +344,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(Apgar Score 5-minuten)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="9274-2"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
       </nts:include>
@@ -357,7 +352,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(Apgar Score 10-minuten)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="9271-8"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
       </nts:include>
@@ -365,7 +360,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(Geboortegewicht)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="8339-4"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
       </nts:include>
@@ -373,7 +368,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(Geboortegewicht)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="89269-5"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
       </nts:include>
@@ -381,7 +376,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(Hoofdomtrek)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="169876006"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>-->
@@ -390,16 +385,16 @@
    <!-- Observations - Observaties gekoppeld aan prenatale controle -->  
    <test id="5b-ServeObservations">
       <name value="5b-ServeObservations"/>
-      <description value="Test Server query operation for Observations"/>  
+      <description value="Test Server query operation for Observations"/>
       <nts:include value="gbz-operation-search-xis">
          <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?context:Encounter.episodeofcare=EpisodeOfCare/${dossier1-id},EpisodeOfCare/${dossier2-id}"/>
+         <nts:with-parameter name="params" value="?context:Encounter.episodeofcare=EpisodeOfCare/${dossier1-id,dossier2-id}"/>
       </nts:include>
       <nts:include value="assert.request.authorizationHeader" scope="common"/>
       <nts:include value="medmij/assert.response.successfulSearch" scope="common" resource="Bundle"/>     <nts:include value="assert.response.queryParamsInSelfLink" scope="common"/>
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="12"></nts:with-parameter>
+         <nts:with-parameter name="count" value="8"></nts:with-parameter>
       </nts:include>
       <!-- fetal movement -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -421,7 +416,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(blood pressure)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="3"></nts:with-parameter>
+         <nts:with-parameter name="count" value="2"></nts:with-parameter>
          <nts:with-parameter name="code" value="85354-9"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
       </nts:include>
@@ -429,7 +424,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(alcohol use)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="228273003"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
@@ -437,7 +432,7 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(drug use)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="228366006"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
@@ -445,13 +440,13 @@
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(tobacco use)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="365980008"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
       <!-- fetal heart rate -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(fetal heart rate)"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(tobacco use)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
          <nts:with-parameter name="count" value="0"></nts:with-parameter>
          <nts:with-parameter name="code" value="249043002"></nts:with-parameter>
@@ -462,39 +457,24 @@
    <!-- Procedures - Verrichtingen gekoppeld aan dossier --> <!--To include child Patient use: &amp;_include=Procedure:subject-->
    <test id="6-ServeProcedures">
       <name value="6-ServeProcedures"/>
-      <description value="Test Server query operation for Procedures including performing Organization and underlying ProcedureRequest"/>
+      <description value="Test Server query operation for Procedures"/>
       <nts:include value="gbz-operation-search-xis">
          <nts:with-parameter name="resource" value="Procedure"/>
-         <nts:with-parameter name="params" value="?context=EpisodeOfCare/${dossier1-id},EpisodeOfCare/${dossier2-id}&amp;_include=Procedure:subject&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
+         <nts:with-parameter name="params" value="?context=EpisodeOfCare/${dossier1-id,dossier2-id}&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
       </nts:include>
       <nts:include value="assert.request.authorizationHeader" scope="common"/>
       <nts:include value="medmij/assert.response.successfulSearch" scope="common" resource="Bundle"/>     <nts:include value="assert.response.queryParamsInSelfLink" scope="common"/>
-<!--      <nts:include value="assert.response.numResources" scope="common">
+      <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="count" value="12"></nts:with-parameter>
-      </nts:include>-->
+         <nts:with-parameter name="count" value="7"></nts:with-parameter>
+      </nts:include>
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="Organization"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
+         <nts:with-parameter name="count" value="0"></nts:with-parameter>
       </nts:include>
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="ProcedureRequest"></nts:with-parameter>
          <nts:with-parameter name="count" value="0"></nts:with-parameter>
-      </nts:include>
-      <!-- Verrichting (Zwangerschap) -->
-      <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Diet control)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="410175003"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
-      </nts:include>
-      <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Blood exam)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="396550006"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
       <!-- Delivery -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -504,57 +484,56 @@
          <nts:with-parameter name="code" value="236973005"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
-      <!-- Ziekenhuisbaring -->
-      <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="()"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Organization"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="element" value="type"></nts:with-parameter>
-         <nts:with-parameter name="code" value="V5"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://nictiz.nl/fhir/NamingSystem/organization-type"></nts:with-parameter>
-      </nts:include>
       <!--   todo: voor nu nemen we gegevens kind niet mee, wellicht in aparte test ivm afwijkend subject -->
       <!-- Birth -->
       <!--      <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(Birth)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="3950001"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>-->
-      <!-- Opname in ziekenhuis -->
+      <!-- Episiotomie -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Opname in ziekenhuis)"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(Episiotomie)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
          <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="32485007"></nts:with-parameter>
+         <nts:with-parameter name="code" value="236992007"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
-      <!-- Primaire sectio caesarea -->
+      <!-- Vaginaal toucher -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Primaire sectio caesarea)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="80771000146107"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
-      </nts:include>
-      <!-- Vitamine K toediening neonaat -->
-      <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Vitamine K toediening neonaat)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="698350008:370131001=133933007"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
-      </nts:include>
-      <!-- Inflatie long -->
-      <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Inflatie long)"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(Vaginaal Toucher)"></nts:with-parameter>
          <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
          <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="243140006"></nts:with-parameter>
+         <nts:with-parameter name="code" value="51597003"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
-   </test>  
+      <!-- Foetale hartslag monitoring -->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Foetale hartslag monitoring)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="281568006"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>
+      <!-- Echo -->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Echo)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="241491007"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>
+      <!-- Educatiemateriaal -->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Educatiemateriaal)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="445283009"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>
+   </test>
    
    <!-- PractitionerRole -->
    <test id="7-ServePractitionerRole">
@@ -562,12 +541,12 @@
       <description value="Test Server query operation for PractitionerRole"/>
       <nts:include value="gbz-operation-search-xis">
          <nts:with-parameter name="resource" value="PractitionerRole"/>
-         <nts:with-parameter name="params" value="?practitioner=${practitioner1-id},${practitioner2-id}"/>
+         <nts:with-parameter name="params" value="?practitioner=${practitioner-id}"/>
       </nts:include>
       <nts:include value="medmij/assert.response.successfulSearch" scope="common" resource="Bundle"/>     <nts:include value="assert.response.queryParamsInSelfLink" scope="common"/>
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="PractitionerRole"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
       </nts:include>
    </test>
    
