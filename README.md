@@ -42,14 +42,14 @@ NTS source folders are organized according to the (NTS defaults)[https://github.
 #### build.properties in an NTS target directory
 * `input.dir` - The directory of the NTS target, _relative to the base dir of this repo_. Required.
 * `output.dir` - The directory of the output folder, _relative to the base dir of this repo_. Required.
-* `targets.additional` - Comma separated list of [additional targets](https://github.com/Nictiz/Nictiz-tooling-testscripts/tree/main/generate#building-different-variants) to build.
+* `targets.additional` - Comma-separated list of [additional targets](https://github.com/Nictiz/Nictiz-tooling-testscripts/tree/main/generate#building-different-variants) to build.
 
 #### build.properties for building multiple targets
 * `input.dirs` - A comma-seperated list of dirs, _relative to the base dir of this repo_, each containing a build.properties file. Required.
 
 ### For building narratives
 * `generate.narratives.pattern` - The root folder of the fixtures where the narrative needs to be added. Needs to be defined in the build.properties for multiple targets, but is normally not needed in the build.properties for a single target.
-* `dontgenerate.narratives.pattern` - Comma seperated list of additional file name patterns that should be excluded from narrative generation. By default, the 'minimum' folder and '-token.xml' files are excluded.
+* `dontgenerate.narratives.pattern` - Comma-separated list of additional file name patterns that should be excluded from narrative generation. By default, the 'minimum' folder and '-token.xml' files are excluded.
 
 ### For loadscripts
-* `loadresources.exclude` - Comma separated list of folders to exclude from loadscript generation, _relative to the folder containing the fixtures_.
+* `loadresources.exclude` - Comma-separated list of folders to exclude from loadscript generation, _relative to the folder containing the fixtures_.
