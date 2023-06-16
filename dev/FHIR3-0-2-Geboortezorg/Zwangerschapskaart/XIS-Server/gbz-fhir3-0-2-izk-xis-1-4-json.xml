@@ -1,0 +1,2492 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="gbz-fhir3-0-2-ikz-xis-1-4-json"/>
+   <meta>
+      <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
+   </meta>
+   <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-rule">
+      <extension url="ruleId">
+         <valueId value="assert-response-queryParamsInSelfLink"/>
+      </extension>
+      <extension url="path">
+         <valueString value="../_reference/rules/assert_response_queryParamsInSelfLink.groovy"/>
+      </extension>
+   </extension>
+   <url value="http://nictiz.nl/fhir/TestScript/gbz-fhir3-0-2-ikz-xis-1-4-json"/>
+   <version value="stu3-3.0-patchlevel 2023-05"/>
+   <name value="Nictiz Geboortezorg - Server - Scenario 1.4 - Serve Integrale Zwangerschapskaart primary and secondary care resources of multiple pregnancy of Jamila Kwee - JSON Format"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Scenario 1.4: Serve Integrale Zwangerschapskaart primary care resources of multiple pregnancy of Jamila Kwee"/>
+   <origin>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
+         <code value="FHIR-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <profile id="Bundle-profile">
+      <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
+   </profile>
+   <variable>
+      <name value="patient-token-id"/>
+      <defaultValue value="Bearer 9d0084c7-332a-4ee9-81fb-4994e74e4c10"/>
+      <description value="OAuth Token for current patient"/>
+   </variable>
+   <variable>
+      <name value="dossier1-id"/>
+      <defaultValue value="66aa2fcb-2064-11ec-5265-020000000000"/>
+   </variable>
+   <variable>
+      <name value="dossier2-id"/>
+      <defaultValue value="a490614b-2291-11ec-8669-020000000000"/>
+   </variable>
+   <variable>
+      <name value="T"/>
+      <defaultValue value="${CURRENTDATE}"/>
+   </variable>
+   <test id="1-ServeWoman">
+      <name value="1-ServeWoman"/>
+      <description value="Query Patient resource for HCIM Patient"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Patient"/>
+            <description value="Test XIS server to serve Patient resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned resource type is Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle type is searchset."/>
+            <direction value="response"/>
+            <expression value="Bundle.type"/>
+            <operator value="equals"/>
+            <value value="searchset"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources contain an Resource.id except when temporary ids are used in the Bundle. The only time that a resource does not have an id is when it is being submitted to the server using a create operation: https://www.hl7.org/fhir/STU3/resource-definitions.html#Resource.id "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.all( $this.fullUrl.matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or $this.fullUrl.matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or $this.resource.id.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources except OperationOutcome and Binary contain a meta.profile tag."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).where(is(Binary).not()).where(meta.profile.empty()).empty()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl does not disagree with the id in the resource, see http://hl7.org/fhir/stu3/bundle-definitions.html#Bundle.entry.fullUrl"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(fullUrl.exists() and resource.id.exists()).all($this.fullUrl.endsWith($this.resource.id))"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl is an absolute URL, an uuid or an oid."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.fullUrl.all( startsWith('http://') or startsWith('https://') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that literal References (Reference.reference) are an absolute URL, a relative URL or an internal fragment reference (contained), see: http://hl7.org/fhir/stu3/references.html#literal."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this as Reference).reference.all( startsWith('http://') or startsWith('https://') or startsWith('#') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or (startsWith('urn:').not() and startsWith('#').not() and matches('^[A-Za-z]{3,}/[^/]+$')) )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
+            <direction value="response"/>
+            <validateProfileId value="Bundle-profile"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all coding elements contain both a .system and a .code."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).all(system.exists() and code.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the OID of the zib valueset is not used for the system of a coding element."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).system.startsWith('urn:oid:2.16.840.1.113883.2.4.3.11.60.40.2').not()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3#Use_of_the_reference_datatype."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Reference)).all(display.exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/iso21090-nullFlavor').exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Identifiers have both a .system and a .value. In rare cases where a general category of identifiers can be used, .type can replace .system. Edge cases for both .system and .type to be unknown are not applicable to Nictiz. For more information, see https://www.hl7.org/fhir/stu3/datatypes.html#Identifier."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Identifier)).all((system.exists() or type.exists()) and value.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().select(identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/bsn').where(value.empty().not() and value.extension.exists().not())).count() = 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
+            <direction value="response"/>
+            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle contains a self link."/>
+            <direction value="response"/>
+            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) in the self link."/>
+            <direction value="response"/>
+            <expression value="Bundle.link.url.contains('http://fhir.nl/fhir/NamingSystem/bsn') = false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 1 Patient resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Patient)).count() &gt;= 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="2-ServeMaternalRecord">
+      <name value="2-ServeMaternalRecord"/>
+      <description value="Test Server query operation for MaternalRecord (EpisodeOfCare) including managing organization (Organization) and care manager (Practitioner)"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="EpisodeOfCare"/>
+            <description value="Test XIS server to serve EpisodeOfCare resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?type=http://snomed.info/sct|364320009&amp;status=active&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned resource type is Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle type is searchset."/>
+            <direction value="response"/>
+            <expression value="Bundle.type"/>
+            <operator value="equals"/>
+            <value value="searchset"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources contain an Resource.id except when temporary ids are used in the Bundle. The only time that a resource does not have an id is when it is being submitted to the server using a create operation: https://www.hl7.org/fhir/STU3/resource-definitions.html#Resource.id "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.all( $this.fullUrl.matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or $this.fullUrl.matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or $this.resource.id.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources except OperationOutcome and Binary contain a meta.profile tag."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).where(is(Binary).not()).where(meta.profile.empty()).empty()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl does not disagree with the id in the resource, see http://hl7.org/fhir/stu3/bundle-definitions.html#Bundle.entry.fullUrl"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(fullUrl.exists() and resource.id.exists()).all($this.fullUrl.endsWith($this.resource.id))"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl is an absolute URL, an uuid or an oid."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.fullUrl.all( startsWith('http://') or startsWith('https://') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that literal References (Reference.reference) are an absolute URL, a relative URL or an internal fragment reference (contained), see: http://hl7.org/fhir/stu3/references.html#literal."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this as Reference).reference.all( startsWith('http://') or startsWith('https://') or startsWith('#') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or (startsWith('urn:').not() and startsWith('#').not() and matches('^[A-Za-z]{3,}/[^/]+$')) )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
+            <direction value="response"/>
+            <validateProfileId value="Bundle-profile"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all coding elements contain both a .system and a .code."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).all(system.exists() and code.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the OID of the zib valueset is not used for the system of a coding element."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).system.startsWith('urn:oid:2.16.840.1.113883.2.4.3.11.60.40.2').not()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3#Use_of_the_reference_datatype."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Reference)).all(display.exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/iso21090-nullFlavor').exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Identifiers have both a .system and a .value. In rare cases where a general category of identifiers can be used, .type can replace .system. Edge cases for both .system and .type to be unknown are not applicable to Nictiz. For more information, see https://www.hl7.org/fhir/stu3/datatypes.html#Identifier."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Identifier)).all((system.exists() or type.exists()) and value.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().select(identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/bsn').where(value.empty().not() and value.extension.exists().not())).count() = 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
+            <direction value="response"/>
+            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle contains a self link."/>
+            <direction value="response"/>
+            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) in the self link."/>
+            <direction value="response"/>
+            <expression value="Bundle.link.url.contains('http://fhir.nl/fhir/NamingSystem/bsn') = false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="assert-response-queryParamsInSelfLink"/>
+               </extension>
+            </extension>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 2 EpisodeOfCare resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(EpisodeOfCare)).count() = 2"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 2 Organization resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Organization)).count() = 2"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 2 Practitioner resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Practitioner)).count() = 2"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="3-ServeConditions">
+      <name value="3-ServeConditions"/>
+      <description value="Test Server query operation for Conditions (including Pregnancy)"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Condition"/>
+            <description value="Test XIS server to serve Condition resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?context=EpisodeOfCare/${dossier1-id},EpisodeOfCare/${dossier2-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned resource type is Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle type is searchset."/>
+            <direction value="response"/>
+            <expression value="Bundle.type"/>
+            <operator value="equals"/>
+            <value value="searchset"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources contain an Resource.id except when temporary ids are used in the Bundle. The only time that a resource does not have an id is when it is being submitted to the server using a create operation: https://www.hl7.org/fhir/STU3/resource-definitions.html#Resource.id "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.all( $this.fullUrl.matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or $this.fullUrl.matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or $this.resource.id.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources except OperationOutcome and Binary contain a meta.profile tag."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).where(is(Binary).not()).where(meta.profile.empty()).empty()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl does not disagree with the id in the resource, see http://hl7.org/fhir/stu3/bundle-definitions.html#Bundle.entry.fullUrl"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(fullUrl.exists() and resource.id.exists()).all($this.fullUrl.endsWith($this.resource.id))"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl is an absolute URL, an uuid or an oid."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.fullUrl.all( startsWith('http://') or startsWith('https://') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that literal References (Reference.reference) are an absolute URL, a relative URL or an internal fragment reference (contained), see: http://hl7.org/fhir/stu3/references.html#literal."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this as Reference).reference.all( startsWith('http://') or startsWith('https://') or startsWith('#') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or (startsWith('urn:').not() and startsWith('#').not() and matches('^[A-Za-z]{3,}/[^/]+$')) )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
+            <direction value="response"/>
+            <validateProfileId value="Bundle-profile"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all coding elements contain both a .system and a .code."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).all(system.exists() and code.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the OID of the zib valueset is not used for the system of a coding element."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).system.startsWith('urn:oid:2.16.840.1.113883.2.4.3.11.60.40.2').not()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3#Use_of_the_reference_datatype."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Reference)).all(display.exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/iso21090-nullFlavor').exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Identifiers have both a .system and a .value. In rare cases where a general category of identifiers can be used, .type can replace .system. Edge cases for both .system and .type to be unknown are not applicable to Nictiz. For more information, see https://www.hl7.org/fhir/stu3/datatypes.html#Identifier."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Identifier)).all((system.exists() or type.exists()) and value.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().select(identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/bsn').where(value.empty().not() and value.extension.exists().not())).count() = 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
+            <direction value="response"/>
+            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle contains a self link."/>
+            <direction value="response"/>
+            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) in the self link."/>
+            <direction value="response"/>
+            <expression value="Bundle.link.url.contains('http://fhir.nl/fhir/NamingSystem/bsn') = false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="assert-response-queryParamsInSelfLink"/>
+               </extension>
+            </extension>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 6 Condition resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Condition)).count() = 6"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Zwangerschap -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Condition resource(s) with code http://snomed.info/sct | 118185001. (Zwangerschap)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Condition)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '118185001').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Meerlingzwangerschap -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Condition resource(s) with code http://snomed.info/sct | 16356006. (Meerlingzwangerschap)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Condition)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '16356006').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Groeiafwijking -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Condition resource(s) with code http://snomed.info/sct | 22033007. (Groeiafwijking)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Condition)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '22033007').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Liggingsafwijking -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Condition resource(s) with code http://snomed.info/sct | 15028002. (Liggingsafwijking)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Condition)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '15028002').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="4-ServePrenatalVisits">
+      <name value="4-ServePrenatalVisits"/>
+      <description value="Test Server query operation for PrenatalVisits (Encounter)"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Encounter"/>
+            <description value="Test XIS server to serve Encounter resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?episodeofcare=${dossier1-id},${dossier2-id}&amp;_include=Encounter:practitioner"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned resource type is Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle type is searchset."/>
+            <direction value="response"/>
+            <expression value="Bundle.type"/>
+            <operator value="equals"/>
+            <value value="searchset"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources contain an Resource.id except when temporary ids are used in the Bundle. The only time that a resource does not have an id is when it is being submitted to the server using a create operation: https://www.hl7.org/fhir/STU3/resource-definitions.html#Resource.id "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.all( $this.fullUrl.matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or $this.fullUrl.matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or $this.resource.id.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources except OperationOutcome and Binary contain a meta.profile tag."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).where(is(Binary).not()).where(meta.profile.empty()).empty()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl does not disagree with the id in the resource, see http://hl7.org/fhir/stu3/bundle-definitions.html#Bundle.entry.fullUrl"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(fullUrl.exists() and resource.id.exists()).all($this.fullUrl.endsWith($this.resource.id))"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl is an absolute URL, an uuid or an oid."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.fullUrl.all( startsWith('http://') or startsWith('https://') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that literal References (Reference.reference) are an absolute URL, a relative URL or an internal fragment reference (contained), see: http://hl7.org/fhir/stu3/references.html#literal."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this as Reference).reference.all( startsWith('http://') or startsWith('https://') or startsWith('#') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or (startsWith('urn:').not() and startsWith('#').not() and matches('^[A-Za-z]{3,}/[^/]+$')) )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
+            <direction value="response"/>
+            <validateProfileId value="Bundle-profile"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all coding elements contain both a .system and a .code."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).all(system.exists() and code.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the OID of the zib valueset is not used for the system of a coding element."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).system.startsWith('urn:oid:2.16.840.1.113883.2.4.3.11.60.40.2').not()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3#Use_of_the_reference_datatype."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Reference)).all(display.exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/iso21090-nullFlavor').exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Identifiers have both a .system and a .value. In rare cases where a general category of identifiers can be used, .type can replace .system. Edge cases for both .system and .type to be unknown are not applicable to Nictiz. For more information, see https://www.hl7.org/fhir/stu3/datatypes.html#Identifier."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Identifier)).all((system.exists() or type.exists()) and value.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().select(identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/bsn').where(value.empty().not() and value.extension.exists().not())).count() = 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
+            <direction value="response"/>
+            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle contains a self link."/>
+            <direction value="response"/>
+            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) in the self link."/>
+            <direction value="response"/>
+            <expression value="Bundle.link.url.contains('http://fhir.nl/fhir/NamingSystem/bsn') = false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="assert-response-queryParamsInSelfLink"/>
+               </extension>
+            </extension>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 3 Encounter resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Encounter)).count() = 3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="5a-ServeObservations">
+      <name value="5a-ServeObservations"/>
+      <description value="Test Server query operation for Observations"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?context=EpisodeOfCare/${dossier1-id},EpisodeOfCare/${dossier2-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned resource type is Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle type is searchset."/>
+            <direction value="response"/>
+            <expression value="Bundle.type"/>
+            <operator value="equals"/>
+            <value value="searchset"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources contain an Resource.id except when temporary ids are used in the Bundle. The only time that a resource does not have an id is when it is being submitted to the server using a create operation: https://www.hl7.org/fhir/STU3/resource-definitions.html#Resource.id "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.all( $this.fullUrl.matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or $this.fullUrl.matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or $this.resource.id.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources except OperationOutcome and Binary contain a meta.profile tag."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).where(is(Binary).not()).where(meta.profile.empty()).empty()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl does not disagree with the id in the resource, see http://hl7.org/fhir/stu3/bundle-definitions.html#Bundle.entry.fullUrl"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(fullUrl.exists() and resource.id.exists()).all($this.fullUrl.endsWith($this.resource.id))"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl is an absolute URL, an uuid or an oid."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.fullUrl.all( startsWith('http://') or startsWith('https://') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that literal References (Reference.reference) are an absolute URL, a relative URL or an internal fragment reference (contained), see: http://hl7.org/fhir/stu3/references.html#literal."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this as Reference).reference.all( startsWith('http://') or startsWith('https://') or startsWith('#') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or (startsWith('urn:').not() and startsWith('#').not() and matches('^[A-Za-z]{3,}/[^/]+$')) )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
+            <direction value="response"/>
+            <validateProfileId value="Bundle-profile"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all coding elements contain both a .system and a .code."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).all(system.exists() and code.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the OID of the zib valueset is not used for the system of a coding element."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).system.startsWith('urn:oid:2.16.840.1.113883.2.4.3.11.60.40.2').not()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3#Use_of_the_reference_datatype."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Reference)).all(display.exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/iso21090-nullFlavor').exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Identifiers have both a .system and a .value. In rare cases where a general category of identifiers can be used, .type can replace .system. Edge cases for both .system and .type to be unknown are not applicable to Nictiz. For more information, see https://www.hl7.org/fhir/stu3/datatypes.html#Identifier."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Identifier)).all((system.exists() or type.exists()) and value.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().select(identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/bsn').where(value.empty().not() and value.extension.exists().not())).count() = 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
+            <direction value="response"/>
+            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle contains a self link."/>
+            <direction value="response"/>
+            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) in the self link."/>
+            <direction value="response"/>
+            <expression value="Bundle.link.url.contains('http://fhir.nl/fhir/NamingSystem/bsn') = false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="assert-response-queryParamsInSelfLink"/>
+               </extension>
+            </extension>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <!-- <nts:include value="assert.response.numResources" scope="common" resource="Observation" count="28"/> -->
+      <!-- pregnancy duration -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 4 Observation resource(s) with code http://snomed.info/sct | 57036006. (pregnancy duration)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '57036006').count()=4).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- parity -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://loinc.org | 11977-6. (parity)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '11977-6').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- gravidity -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://loinc.org | 11996-6. (gravidity)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '11996-6').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- term date -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 161714006. (term date)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '161714006').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- date last menstruation -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 21840007. (date last menstruation)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '21840007').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- def term date -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 147781000146105. (def term date)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '147781000146105').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- multiple pregnancy -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 65147003. (multiple pregnancy)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '65147003').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- number of fetus -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 246435002. (number of fetus)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '246435002').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- number of living offspring -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 143881000146107. (number of living offspring)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '143881000146107').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- fetal loss -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 0 Observation resource(s) with code http://snomed.info/sct | 713651007. (fetal loss)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '713651007').count()=0).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- folium accid intake -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 792807003. (folium accid intake)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '792807003').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- fetal movement -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 0 Observation resource(s) with code http://snomed.info/sct | 364618000. (fetal movement)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364618000').count()=0).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- body weight -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 0 Observation resource(s) with code http://loinc.org | 29463-7. (body weight)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '29463-7').count()=0).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- blood pressure -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 85354-9. (blood pressure)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '85354-9').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- alcohol use -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 0 Observation resource(s) with code http://snomed.info/sct | 228273003. (alcohol use)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '228273003').count()=0).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- drug use -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 0 Observation resource(s) with code http://snomed.info/sct | 228366006. (drug use)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '228366006').count()=0).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- tobacco use -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 0 Observation resource(s) with code http://snomed.info/sct | 365980008. (tobacco use)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '365980008').count()=0).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- fetal heart rate -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 0 Observation resource(s) with code http://snomed.info/sct | 249043002. (fetal heart rate)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '249043002').count()=0).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- onset first stage of labor -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 0 Observation resource(s) with code http://snomed.info/sct | 439771001. (onset first stage of labor)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '439771001').count()=0).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- type first stage of labor -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 0 Observation resource(s) with code http://snomed.info/sct | 249120008. (type first stage of labor)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '249120008').count()=0).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- parturition type -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 364336006. (parturition type)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364336006').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- number of offspring -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 118861000146102. (number of offspring)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '118861000146102').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- place of birth -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 169812000. (place of birth)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '169812000').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Hb -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 4 Observation resource(s) with code http://loinc.org | 93846-4. (Hb)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '93846-4').count()=4).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Lab rhesus D -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://loinc.org | 1305-2. (Rhesus D)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '1305-2').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Lab rhesus C -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://loinc.org | 1159-3. (Rhesus C)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '1159-3').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Bloedgroep -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://loinc.org | 883-9. (Bloedgroep)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '883-9').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Torch -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 8039-0. (Toxoplasma)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '8039-0').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!--      <!-\\- Apgar Score 1-minuut -\\->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Apgar Score 1-minuut)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="code" value="9272-6"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+      </nts:include>
+      <!-\\- Apgar Score 5-minuten -\\->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Apgar Score 5-minuten)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="code" value="9274-2"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+      </nts:include>
+      <!-\\- Apgar Score 10-minuten -\\->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Apgar Score 10-minuten)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="code" value="9271-8"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+      </nts:include>
+      <!-\\- Geboortegewicht -\\->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Geboortegewicht)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="code" value="8339-4"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+      </nts:include>
+      <!-\\- Lichaamslengte bij geboorte -\\->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Geboortegewicht)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="code" value="89269-5"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+      </nts:include>
+      <!-\\- Hoofdomtrek -\\->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Hoofdomtrek)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="code" value="169876006"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>-->
+   </test>
+   <test id="5b-ServeObservations">
+      <name value="5b-ServeObservations"/>
+      <description value="Test Server query operation for Observations"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?context:Encounter.episodeofcare=EpisodeOfCare/${dossier1-id},EpisodeOfCare/${dossier2-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned resource type is Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle type is searchset."/>
+            <direction value="response"/>
+            <expression value="Bundle.type"/>
+            <operator value="equals"/>
+            <value value="searchset"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources contain an Resource.id except when temporary ids are used in the Bundle. The only time that a resource does not have an id is when it is being submitted to the server using a create operation: https://www.hl7.org/fhir/STU3/resource-definitions.html#Resource.id "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.all( $this.fullUrl.matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or $this.fullUrl.matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or $this.resource.id.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources except OperationOutcome and Binary contain a meta.profile tag."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).where(is(Binary).not()).where(meta.profile.empty()).empty()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl does not disagree with the id in the resource, see http://hl7.org/fhir/stu3/bundle-definitions.html#Bundle.entry.fullUrl"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(fullUrl.exists() and resource.id.exists()).all($this.fullUrl.endsWith($this.resource.id))"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl is an absolute URL, an uuid or an oid."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.fullUrl.all( startsWith('http://') or startsWith('https://') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that literal References (Reference.reference) are an absolute URL, a relative URL or an internal fragment reference (contained), see: http://hl7.org/fhir/stu3/references.html#literal."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this as Reference).reference.all( startsWith('http://') or startsWith('https://') or startsWith('#') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or (startsWith('urn:').not() and startsWith('#').not() and matches('^[A-Za-z]{3,}/[^/]+$')) )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
+            <direction value="response"/>
+            <validateProfileId value="Bundle-profile"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all coding elements contain both a .system and a .code."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).all(system.exists() and code.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the OID of the zib valueset is not used for the system of a coding element."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).system.startsWith('urn:oid:2.16.840.1.113883.2.4.3.11.60.40.2').not()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3#Use_of_the_reference_datatype."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Reference)).all(display.exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/iso21090-nullFlavor').exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Identifiers have both a .system and a .value. In rare cases where a general category of identifiers can be used, .type can replace .system. Edge cases for both .system and .type to be unknown are not applicable to Nictiz. For more information, see https://www.hl7.org/fhir/stu3/datatypes.html#Identifier."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Identifier)).all((system.exists() or type.exists()) and value.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().select(identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/bsn').where(value.empty().not() and value.extension.exists().not())).count() = 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
+            <direction value="response"/>
+            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle contains a self link."/>
+            <direction value="response"/>
+            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) in the self link."/>
+            <direction value="response"/>
+            <expression value="Bundle.link.url.contains('http://fhir.nl/fhir/NamingSystem/bsn') = false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="assert-response-queryParamsInSelfLink"/>
+               </extension>
+            </extension>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 12 Observation resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 12"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- fetal movement -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364618000. (fetal movement)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364618000').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- body weight -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://loinc.org | 29463-7. (body weight)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '29463-7').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- blood pressure -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 3 Observation resource(s) with code http://loinc.org | 85354-9. (blood pressure)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '85354-9').count()=3).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- alcohol use -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 228273003. (alcohol use)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '228273003').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- drug use -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 228366006. (drug use)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '228366006').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- tobacco use -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 365980008. (tobacco use)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '365980008').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- fetal heart rate -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 0 Observation resource(s) with code http://snomed.info/sct | 249043002. (fetal heart rate)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '249043002').count()=0).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="6-ServeProcedures">
+      <name value="6-ServeProcedures"/>
+      <description value="Test Server query operation for Procedures including performing Organization and underlying ProcedureRequest"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Procedure"/>
+            <description value="Test XIS server to serve Procedure resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?context=EpisodeOfCare/${dossier1-id},EpisodeOfCare/${dossier2-id}&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that HTTP header Authorization contains the patient token ${patient-token-id}"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <value value="${patient-token-id}"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned resource type is Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle type is searchset."/>
+            <direction value="response"/>
+            <expression value="Bundle.type"/>
+            <operator value="equals"/>
+            <value value="searchset"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources contain an Resource.id except when temporary ids are used in the Bundle. The only time that a resource does not have an id is when it is being submitted to the server using a create operation: https://www.hl7.org/fhir/STU3/resource-definitions.html#Resource.id "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.all( $this.fullUrl.matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or $this.fullUrl.matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or $this.resource.id.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources except OperationOutcome and Binary contain a meta.profile tag."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).where(is(Binary).not()).where(meta.profile.empty()).empty()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl does not disagree with the id in the resource, see http://hl7.org/fhir/stu3/bundle-definitions.html#Bundle.entry.fullUrl"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(fullUrl.exists() and resource.id.exists()).all($this.fullUrl.endsWith($this.resource.id))"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl is an absolute URL, an uuid or an oid."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.fullUrl.all( startsWith('http://') or startsWith('https://') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that literal References (Reference.reference) are an absolute URL, a relative URL or an internal fragment reference (contained), see: http://hl7.org/fhir/stu3/references.html#literal."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this as Reference).reference.all( startsWith('http://') or startsWith('https://') or startsWith('#') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or (startsWith('urn:').not() and startsWith('#').not() and matches('^[A-Za-z]{3,}/[^/]+$')) )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
+            <direction value="response"/>
+            <validateProfileId value="Bundle-profile"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all coding elements contain both a .system and a .code."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).all(system.exists() and code.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the OID of the zib valueset is not used for the system of a coding element."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).system.startsWith('urn:oid:2.16.840.1.113883.2.4.3.11.60.40.2').not()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3#Use_of_the_reference_datatype."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Reference)).all(display.exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/iso21090-nullFlavor').exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Identifiers have both a .system and a .value. In rare cases where a general category of identifiers can be used, .type can replace .system. Edge cases for both .system and .type to be unknown are not applicable to Nictiz. For more information, see https://www.hl7.org/fhir/stu3/datatypes.html#Identifier."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Identifier)).all((system.exists() or type.exists()) and value.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) anywhere."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().select(identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/bsn').where(value.empty().not() and value.extension.exists().not())).count() = 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle total value matches or is less than the number of entries in the Bundle. The included resources should not be counted as entries in the Bundle.total."/>
+            <direction value="response"/>
+            <expression value="Bundle.total.toInteger() &lt;= Bundle.entry.where(search.empty() or search.mode = 'match').count()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle contains a self link."/>
+            <direction value="response"/>
+            <expression value="Bundle.link.where(relation = 'self' and url.exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Bundle does not use Burgerservicenummer (BSN) in the self link."/>
+            <direction value="response"/>
+            <expression value="Bundle.link.url.contains('http://fhir.nl/fhir/NamingSystem/bsn') = false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="assert-response-queryParamsInSelfLink"/>
+               </extension>
+            </extension>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <!-- <nts:include value="assert.response.numResources" scope="common" resource="Procedure" count="12"/> -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 1 Organization resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Organization)).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 0 ProcedureRequest resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(ProcedureRequest)).count() = 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Verrichting (Zwangerschap) -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 410175003. (Diet control)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Procedure)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '410175003').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Procedure resource(s) with code http://snomed.info/sct | 396550006. (Blood exam)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Procedure)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '396550006').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Delivery -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 236973005. (Delivery)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Procedure)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '236973005').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Ziekenhuisbaring -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Organization resource(s) with type http://nictiz.nl/fhir/NamingSystem/organization-type | V5. ()"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Organization)).resource.type.coding.where(system = 'http://nictiz.nl/fhir/NamingSystem/organization-type' and code = 'V5').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!--   todo: voor nu nemen we gegevens kind niet mee, wellicht in aparte test ivm afwijkend subject -->
+      <!-- Birth -->
+      <!--      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Birth)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
+         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="code" value="3950001"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>-->
+      <!-- Opname in ziekenhuis -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 32485007. (Opname in ziekenhuis)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Procedure)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '32485007').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Primaire sectio caesarea -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Procedure resource(s) with code http://snomed.info/sct | 80771000146107. (Primaire sectio caesarea)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Procedure)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '80771000146107').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Vitamine K toediening neonaat -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Procedure resource(s) with code http://snomed.info/sct | 698350008:370131001=133933007. (Vitamine K toediening neonaat)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Procedure)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '698350008:370131001=133933007').count()=2).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Inflatie long -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 243140006. (Inflatie long)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Procedure)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '243140006').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
