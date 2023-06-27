@@ -6,10 +6,8 @@
 
 def bundle = response.body.document
 def task = bundle.entry[0].resource
-task.status = newStatus
-task.text = ''
-if (response.body.bodyContentTypeEnum == 'json') {
+task.status = '${param.newStatus}'
+// task.text = ''
+// if (response.body.bodyContentTypeEnum == 'json') {
     output['taskModified'] = JsonOutput.toJson(task)
-} else {
-    output['taskModified'] = ...
-}
+// }
