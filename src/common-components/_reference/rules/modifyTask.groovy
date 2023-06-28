@@ -46,5 +46,9 @@ if (isJson) {
     if (task.text != null) {
         task.text.replaceNode {}
     }
-    output[param.fixtureId] = XmlUtil.serialize(task)
+    // The serializer in combination with the GPathResult (datatype of the XML Task) has the nasty habit of adding
+    // "tag0" as the default namespace, so each FHIR element becomes "tag0:Task" etc. There are probably ways to solve
+    // this in a decent way, but they are hard to find, so we just take a pragmatic approach and filter "tag0" from
+    // the result.
+    output[param.fixtureId] = XmlUtil.serialize(task).replace("tag0:", "").replace("xmlns:tag0", "xmlns")
 }
