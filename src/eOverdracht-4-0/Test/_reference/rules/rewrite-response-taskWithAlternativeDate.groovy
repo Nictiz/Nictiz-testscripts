@@ -51,13 +51,15 @@ if (isJson) {
         task.text.replaceNode {}
     }
     task.appendNode {
-        type {
-            coding {
-                system(value: 'http://snomed.info/sct')
-                code(value: '146851000146105')
+        output {
+            type {
+                coding {
+                    system(value: 'http://snomed.info/sct')
+                    code(value: '146851000146105')
+                }
             }
+            valueDateTime(value: param.newDate)
         }
-        valueDateTime(value: param.newDate)
     }
 
     // The serializer in combination with the GPathResult (datatype of the XML Task) has the nasty habit of adding
