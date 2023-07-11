@@ -90,7 +90,7 @@
                 <!-- After this, we can use the variable in all following asserts -->
                 <xsl:apply-templates select="$fixture/f:*/f:*" mode="generateAsserts">
                     <xsl:with-param name="resourceType" select="$fixture/f:*/local-name()"/>
-                    <xsl:with-param name="structureDefinition" select="$structureDefinition"/>
+                    <xsl:with-param name="structureDefinition" select="$structureDefinition" tunnel="yes"/>
                     <xsl:with-param name="idVariable" select="$idVariable"/>
                 </xsl:apply-templates>
             </test>
@@ -99,37 +99,19 @@
     
     <xsl:template match="f:*" mode="generateAsserts">
         <xsl:param name="resourceType"/>
-        <xsl:param name="structureDefinition"/>
         <xsl:param name="idVariable"/>
         
         <!-- Need to use element/@id or element/path/@value? So far, they are identical in STU3 -->
         <xsl:variable name="elementPath" select="concat($resourceType, '.', local-name())"/>
-        <xsl:variable name="elementNameBase">
-            <xsl:analyze-string select="local-name()" regex="^[a-z]+">
-                <xsl:matching-substring>
-                    <xsl:value-of select="."/>
-                </xsl:matching-substring>
-            </xsl:analyze-string>
-        </xsl:variable>
-        <xsl:variable name="polymorphic" select="concat($resourceType, '.', $elementNameBase, '[x]')"/>
-        <xsl:variable name="polymorphicDataType" select="substring-after(local-name(), $elementNameBase)"/>
+        
         <xsl:variable name="dataType">
-            <xsl:choose>
-                <xsl:when test="$structureDefinition/f:StructureDefinition/f:snapshot/f:element/@id = $elementPath">
-                    <!-- In StructureDefinitions, References have an f:type for each targetProfile. Using distinct-values to filter that (because I still want to know if it outputs multiple hits) -->
-                    <xsl:value-of select="distinct-values($structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $elementPath]/f:type/f:code/@value)"/>
-                </xsl:when>
-                <xsl:when test="$structureDefinition/f:StructureDefinition/f:snapshot/f:element/@id = $polymorphic">
-                    <!-- Element is polymorphic, lets use its name to guess data type -->
-                    <xsl:value-of select="$structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $polymorphic]/f:type/f:code/@value[lower-case(.) = lower-case($polymorphicDataType)]"/>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:message>Could not find <xsl:value-of select="$elementNameBase"/></xsl:message>
-                </xsl:otherwise>
-            </xsl:choose>
+            <xsl:call-template name="getDataType">
+                <xsl:with-param name="resourceType" select="$resourceType"/>
+                <xsl:with-param name="elementPath" select="$elementPath"/>
+            </xsl:call-template>
         </xsl:variable>
         
-        <xsl:variable name="expressionBase" select="concat('Bundle.entry.resource.ofType(', $resourceType, ').where(id = ''${', $idVariable, '}'').', $elementNameBase)"/>
+        <xsl:variable name="expressionBase" select="concat('Bundle.entry.resource.ofType(', $resourceType, ').where(id = ''${', $idVariable, '}'').')"/>
         
         <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
         
@@ -140,6 +122,96 @@
         </xsl:if>
         
         <!-- Generate (part of) expression based on datatype -->
+        <xsl:variable name="expression">
+            <xsl:call-template name="createExpression">
+                <xsl:with-param name="dataType" select="$dataType"/>
+            </xsl:call-template>
+        </xsl:variable>
+        
+        <xsl:variable name="description">
+            <xsl:choose>
+                <xsl:when test="$dataType = 'code' and $hasValue = true()">
+                    <xsl:value-of select="concat('with value ''', @value, '''')"/>
+                </xsl:when>
+                <xsl:when test="$dataType = 'id'">
+                    <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
+                </xsl:when>
+                <xsl:when test="$dataType = 'Identifier'">
+                    <xsl:text>with .</xsl:text>
+                    <xsl:choose>
+                        <xsl:when test="f:system">system</xsl:when>
+                        <xsl:when test="f:type">type</xsl:when>
+                    </xsl:choose>
+                    <xsl:text> and .value</xsl:text>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:message select="concat('TODO DESCRIPTION: ',$dataType)"/>
+                    <xsl:value-of select="'with ...'"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+        
+        <xsl:if test="string-length($expression) gt 0">
+            <xsl:call-template name="createAssert">
+                <xsl:with-param name="description" select="concat($resourceType, ' X contains .', local-name(), ' ', $description)"/>
+                <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
+            </xsl:call-template>
+        </xsl:if>
+    </xsl:template>
+    
+    <xsl:template name="getDataType">
+        <xsl:param name="resourceType"/>
+        <xsl:param name="structureDefinition" tunnel="yes"/>
+        <xsl:param name="elementPath" required="yes"/>
+        
+        <xsl:variable name="polymorphic" select="concat($resourceType, '.', nf:get-element-base(local-name()), '[x]')"/>
+        <xsl:variable name="polymorphicDataType" select="substring-after(local-name(), nf:get-element-base(local-name()))"/>
+        
+        <xsl:choose>
+            <xsl:when test="$structureDefinition/f:StructureDefinition/f:snapshot/f:element/@id = $elementPath">
+                <!-- In StructureDefinitions, References have an f:type for each targetProfile. Using distinct-values to filter that (because I still want to know if it outputs multiple hits) -->
+                <xsl:value-of select="distinct-values($structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $elementPath]/f:type/f:code/@value)"/>
+            </xsl:when>
+            <xsl:when test="$structureDefinition/f:StructureDefinition/f:snapshot/f:element/@id = $polymorphic">
+                <!-- Element is polymorphic, lets use its name to guess data type -->
+                <xsl:value-of select="$structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $polymorphic]/f:type/f:code/@value[lower-case(.) = lower-case($polymorphicDataType)]"/>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:message>Could not find <xsl:value-of select="$elementPath"/></xsl:message>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+    
+    <xsl:template name="createAssert">
+        <xsl:param name="description" required="yes"/>
+        <xsl:param name="expression" required="yes"/>
+        <xsl:param name="warningOnly" select="false()"/>
+        <xsl:param name="stopTestOnFail" select="false()"/>
+        
+        <action>
+            <assert>
+                <!-- False is the default of the NTS process, so we do not have to add anything in that case -->
+                <xsl:if test="$stopTestOnFail = true()">
+                    <xsl:attribute name="nts:stopTestOnFail">true</xsl:attribute>
+                </xsl:if>
+                <!-- We can also do something with label here -->
+                <!--<label value=""/>-->
+                <description value="{$description}"/>
+                <!-- Should be edited based on scenario probably, leaving it fixed on 'response' for now -->
+                <direction value="response"/>
+                <expression value="{$expression}"/>
+                <!-- False is the default of the NTS process, so we do not have to add anything in that case -->
+                <xsl:if test="$warningOnly = true()">
+                    <warningOnly value="true"/>
+                </xsl:if>
+            </assert>
+        </action>
+    </xsl:template>
+    
+    <xsl:template name="createExpression">
+        <xsl:param name="dataType" required="yes"/>
+        <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
+        
         <xsl:variable name="expression">
             <xsl:choose>
                 <xsl:when test="$dataType = 'dateTime' and $hasValue = true()">
@@ -176,13 +248,34 @@
                 <xsl:when test="$dataType = 'id'">
                     <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
                 </xsl:when>
+                <xsl:when test="$dataType = 'Coding'">
+                    <!-- Extension? -->
+                    <xsl:text>.where(</xsl:text>
+                    <xsl:if test="f:system">
+                        <xsl:text>system = '</xsl:text>
+                        <xsl:value-of select="f:system/@value"/>
+                        <xsl:text>'</xsl:text>
+                        <xsl:if test="f:code or f:display"> and </xsl:if>
+                    </xsl:if>
+                    <!-- Do nothing with f:version -->
+                    <xsl:if test="f:code">
+                        <xsl:text>code = '</xsl:text>
+                        <xsl:value-of select="f:code/@value"/>
+                        <xsl:text>'</xsl:text>
+                        <xsl:if test="f:display"> and </xsl:if>
+                    </xsl:if>
+                    <xsl:if test="f:display">
+                        <xsl:text>display.exists()</xsl:text>
+                    </xsl:if>
+                    <xsl:text>)</xsl:text>
+                    <!-- Do nothing with f:userSelected -->
+                </xsl:when>
                 <xsl:when test="$dataType = 'CodeableConcept'">
                     <!-- How to handle .text? We hardly use it ourselves -->
                     <xsl:text>.where(</xsl:text>
                     <xsl:for-each select="f:coding">
-                        <xsl:text>coding</xsl:text>
-                        <xsl:call-template name="createExpressionCoding">
-                            <xsl:with-param name="in" select="."/>
+                        <xsl:call-template name="createExpression">
+                            <xsl:with-param name="dataType" select="'Coding'"/>
                         </xsl:call-template>
                         <xsl:if test="not(position() = last())">
                             <xsl:text> and </xsl:text>
@@ -258,7 +351,14 @@
                 <xsl:when test="$dataType = 'BackboneElement'">
                     <!-- Basically a container. Problem is expressions get very complicated very quickly. But that doesn't mean we can start from there (as long as it's automatically generated -->
                     <xsl:text>.where(</xsl:text>
-                    
+                    <!--<xsl:for-each select="*">
+                        <xsl:call-template name="createExpression">
+                            <!-\-<xsl:with-param name="dataType" select="'Coding'"/>-\->
+                        </xsl:call-template>
+                        <xsl:if test="not(position() = last())">
+                            <xsl:text> and </xsl:text>
+                        </xsl:if>
+                    </xsl:for-each>-->
                     <xsl:text>).exists()</xsl:text>
                 </xsl:when>
                 <xsl:otherwise>
@@ -267,86 +367,10 @@
             </xsl:choose>
         </xsl:variable>
         
-        <xsl:variable name="description">
-            <xsl:choose>
-                <xsl:when test="$dataType = 'code' and $hasValue = true()">
-                    <xsl:value-of select="concat('with value ''', @value, '''')"/>
-                </xsl:when>
-                <xsl:when test="$dataType = 'id'">
-                    <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
-                </xsl:when>
-                <xsl:when test="$dataType = 'Identifier'">
-                    <xsl:text>with .</xsl:text>
-                    <xsl:choose>
-                        <xsl:when test="f:system">system</xsl:when>
-                        <xsl:when test="f:type">type</xsl:when>
-                    </xsl:choose>
-                    <xsl:text> and .value</xsl:text>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:message select="concat('TODO DESCRIPTION: ',$dataType)"/>
-                    <xsl:value-of select="'with ...'"/>
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
-        
         <xsl:if test="string-length($expression) gt 0">
-            <xsl:call-template name="createAssert">
-                <xsl:with-param name="description" select="concat($resourceType, ' X contains .', local-name(), ' ', $description)"/>
-                <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
-            </xsl:call-template>
+            <xsl:value-of select="concat(nf:get-element-base(local-name()), $expression)"/>
         </xsl:if>
-    </xsl:template>
-    
-    <xsl:template name="createAssert">
-        <xsl:param name="description" required="yes"/>
-        <xsl:param name="expression" required="yes"/>
-        <xsl:param name="warningOnly" select="false()"/>
-        <xsl:param name="stopTestOnFail" select="false()"/>
         
-        <action>
-            <assert>
-                <!-- False is the default of the NTS process, so we do not have to add anything in that case -->
-                <xsl:if test="$stopTestOnFail = true()">
-                    <xsl:attribute name="nts:stopTestOnFail">true</xsl:attribute>
-                </xsl:if>
-                <!-- We can also do something with label here -->
-                <!--<label value=""/>-->
-                <description value="{$description}"/>
-                <!-- Should be edited based on scenario probably, leaving it fixed on 'response' for now -->
-                <direction value="response"/>
-                <expression value="{$expression}"/>
-                <!-- False is the default of the NTS process, so we do not have to add anything in that case -->
-                <xsl:if test="$warningOnly = true()">
-                    <warningOnly value="true"/>
-                </xsl:if>
-            </assert>
-        </action>
-    </xsl:template>
-    
-    <xsl:template name="createExpressionCoding">
-        <xsl:param name="in" as="element(f:coding)"/>
-        
-        <!-- Extension? -->
-        <xsl:text>.where(</xsl:text>
-        <xsl:if test="f:system">
-            <xsl:text>system = '</xsl:text>
-            <xsl:value-of select="f:system/@value"/>
-            <xsl:text>'</xsl:text>
-            <xsl:if test="f:code or f:display"> and </xsl:if>
-        </xsl:if>
-        <!-- Do nothing with f:version -->
-        <xsl:if test="f:code">
-            <xsl:text>code = '</xsl:text>
-            <xsl:value-of select="f:code/@value"/>
-            <xsl:text>'</xsl:text>
-            <xsl:if test="f:display"> and </xsl:if>
-        </xsl:if>
-        <xsl:if test="f:display">
-            <xsl:text>display.exists()</xsl:text>
-        </xsl:if>
-        <xsl:text>)</xsl:text>
-        <!-- Do nothing with f:userSelected -->
     </xsl:template>
     
     <xsl:template match="nts:contentAsserts"/>
@@ -356,5 +380,14 @@
             <xsl:apply-templates select="node()|@*" mode="#current"/>
         </xsl:copy>
     </xsl:template>
+    
+    <xsl:function name="nf:get-element-base" as="xs:string">
+        <xsl:param name="localName"/>
+        <xsl:analyze-string select="$localName" regex="^[a-z]+">
+            <xsl:matching-substring>
+                <xsl:value-of select="."/>
+            </xsl:matching-substring>
+        </xsl:analyze-string>
+    </xsl:function>
     
 </xsl:stylesheet>
