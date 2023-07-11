@@ -2,8 +2,9 @@
  rule.summary=Create new Task fixture
  rule.description=Create a new Task fixture based on the retreived Task for later use in the TestScript. This is not an actual test, but a step needed for the TestScript infrastructure.
  rule.param.newStatus.required=true
- rule.param.fixtureId.required=true
+ rule.param.outputId.required=true
  rule.param.responseId.required=false
+ rule.param.embeddable.required=false
 */
 
 import groovy.xml.XmlUtil
@@ -40,7 +41,7 @@ if (isJson) {
         task.remove("text")
     }
 
-    output[param.fixtureId] = JsonOutput.toJson(task)
+    output[param.outputId] = JsonOutput.toJson(task)
 } else {
     task.status.@value = param.newStatus
     if (task.text != null) {
@@ -50,5 +51,12 @@ if (isJson) {
     // "tag0" as the default namespace, so each FHIR element becomes "tag0:Task" etc. There are probably ways to solve
     // this in a decent way, but they are hard to find, so we just take a pragmatic approach and filter "tag0" from
     // the result.
-    output[param.fixtureId] = XmlUtil.serialize(task).replace("tag0:", "").replace("xmlns:tag0", "xmlns")
+    def xml = XmlUtil.serialize(task)
+    xml = xml.replace("tag0:", "")
+    xml = xml.replace("xmlns:tag0", "xmlns")
+    if (param.embeddable != null && param.embeddable.toLowerCase() in ["true", "1"]) {
+        xml = xml.replaceAll("<\\?xml .*?>", "")
+        xml = xml.replaceAll("\\sxmlns.*?>", ">")
+    }
+    output[param.outputId] = xml
 }

@@ -1,23 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    This component doesn't strictly assert anything, but rather can be used to create fixture from a retreived Task
-    resource with a modified status (which can than be used to send back to the server). Both the response from a
-    direct read or a search can be used, but the latter one requires that only one Task resource is included in the
-    response Bundle.
+    This component doesn't strictly assert anything, but rather can be used to create a fixture or a TestScript 
+    variable from a retreived Task resource with a modified status (which can than be used to send back to the server).
+    Both the response from a direct read or a search can be used, but the latter one requires that only one Task 
+    resource is included in the response Bundle.
 
     Heavy lifting of this component is done by the modifyTask.groovy rule.
 
     @param newStatus - The status to set in the Task fixture.
-    @param fixtureId - The id where the fixture will be stored to.
+    @param [fixtureId] - The id where of the fixture where the output will be stored to. When this parameter is given,
+                         the output will be available as a fixture which can be used in places where Touchstone can 
+                         work with fixtures.
+                         Either fixtureId or varName must be supplied.
+    @param [varName] - The name of the variable to store output to. When this parameter is given, the output will be
+                       available as a "flat" TestScript variable that can be used in places where Touchstone can work
+                       with variables.
+                       Either fixtureId or varName must be supplied.
     @param [responseId] - The responseId of the action to use for input. If absent, the response context from the
                           current test is used.
 -->
 <nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
     <action>
         <assert>
-            <nts:rule id="modifyTask" href="rules/rewrite-response-taskStatus.groovy" newStatus="{$newStatus}" fixtureId="{$fixtureId}">
+            <nts:rule id="modifyTask" href="rules/rewrite-response-taskStatus.groovy" newStatus="{$newStatus}">
                 <nts:with-parameter nts:ifset="responseId" name="responseId" value="{$responseId}"/>
-                <nts:output name="{$fixtureId}" type="document" contentType="{$_FORMAT}" resourceType="Task"/>
+
+                <nts:with-parameter nts:ifset="fixtureId" name="outputId" value="{$fixtureId}"/>
+                <nts:output nts:ifset="fixtureId" name="{$fixtureId}" type="document" contentType="{$_FORMAT}" resourceType="Task"/>
+
+                <nts:with-parameter nts:ifset="varName" name="outputId" value="{$varName}"/>
+                <nts:with-parameter nts:ifset="varName" name="embeddable" value="true"/>
+                <nts:output nts:ifset="varName" name="{$varName}"/>
             </nts:rule>
         </assert>
     </action>
