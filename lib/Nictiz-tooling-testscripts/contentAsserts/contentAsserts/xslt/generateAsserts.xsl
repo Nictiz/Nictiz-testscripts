@@ -139,17 +139,10 @@
             <xsl:message>Element contains an unhandles Extension!</xsl:message>
         </xsl:if>
         
-        <!--<!-\- Generate (part of) expression based on datatype -\->
+        <!-- Generate (part of) expression based on datatype -->
         <xsl:variable name="expression">
             <xsl:choose>
-                <xsl:when test="$dataType = 'dateTime' and $hasValue = true()"></xsl:when>
-            </xsl:choose>
-        </xsl:variable>-->
-        
-        <!-- Add assert based on datatype -->
-        <xsl:choose>
-            <xsl:when test="$dataType = 'dateTime' and $hasValue = true()">
-                <xsl:variable name="expression">
+                <xsl:when test="$dataType = 'dateTime' and $hasValue = true()">
                     <xsl:choose>
                         <xsl:when test="matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
                             <xsl:text> ~ </xsl:text>
@@ -176,26 +169,15 @@
                             <!--<xsl:if test=""></xsl:if>-->
                         </xsl:when>
                     </xsl:choose>
-                </xsl:variable>
-                
-                <xsl:call-template name="createAssert">
-                    <xsl:with-param name="description" select="concat($resourceType, ' X contains .', local-name(), ' with ...')"/>
-                    <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
-                </xsl:call-template>
-            </xsl:when>
-            <xsl:when test="$dataType = 'code' and $hasValue = true()">
-                <xsl:call-template name="createAssert">
-                    <xsl:with-param name="description" select="concat($resourceType, ' X contains .', local-name(), ' with value ''', @value, '''')"/>
-                    <xsl:with-param name="expression" select="concat($expressionBase, ' = ''', @value, '''')"/>
-                </xsl:call-template>
-            </xsl:when>
-            <xsl:when test="$dataType = 'id'">
-                <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
-            </xsl:when>
-            
-            <xsl:when test="$dataType = 'CodeableConcept'">
-                <!-- How to handle .text? We hardly use it ourselves -->
-                <xsl:variable name="expression">
+                </xsl:when>
+                <xsl:when test="$dataType = 'code' and $hasValue = true()">
+                    <xsl:value-of select="concat(' = ''', @value, '''')"/>
+                </xsl:when>
+                <xsl:when test="$dataType = 'id'">
+                    <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
+                </xsl:when>
+                <xsl:when test="$dataType = 'CodeableConcept'">
+                    <!-- How to handle .text? We hardly use it ourselves -->
                     <xsl:text>.where(</xsl:text>
                     <xsl:for-each select="f:coding">
                         <xsl:text>coding</xsl:text>
@@ -207,16 +189,8 @@
                         </xsl:if>
                     </xsl:for-each>
                     <xsl:text>).exists()</xsl:text>
-                </xsl:variable>
-                
-                <xsl:call-template name="createAssert">
-                    <xsl:with-param name="description" select="concat($resourceType, ' X contains .', local-name(), ' with ...')"/>
-                    <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
-                </xsl:call-template>
-            </xsl:when>
-            
-            <xsl:when test="$dataType = 'Quantity'">
-                <xsl:variable name="expression">
+                </xsl:when>
+                <xsl:when test="$dataType = 'Quantity'">
                     <xsl:text>.where(</xsl:text>
                     <xsl:if test="f:value">
                         <xsl:text>value = </xsl:text>
@@ -258,45 +232,19 @@
                         </xsl:choose>
                     </xsl:if>
                     <xsl:text>).exists()</xsl:text>
-                </xsl:variable>
-                
-                <xsl:call-template name="createAssert">
-                    <xsl:with-param name="description" select="concat($resourceType, ' X contains .', local-name(), ' with ...')"/>
-                    <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
-                </xsl:call-template>
-            </xsl:when>
-            
-            <!--<xsl:when test="$dataType = 'Meta'">
+                </xsl:when>
+                <!--<xsl:when test="$dataType = 'Meta'">
                 <!-\- Is a general assert to check for Meta.profile. Move it to here for more specific debugging. If the resource contains more fields in Meta (for example meta.tag in MP?) I guess there should be an assert to check it -\->
             </xsl:when>-->
-            <xsl:when test="$dataType = 'Identifier'">
-                <xsl:variable name="description">
-                    <xsl:text>contains .</xsl:text>
-                    <xsl:value-of select="local-name()"/>
-                    <xsl:text> with .</xsl:text>
-                    <xsl:choose>
-                        <xsl:when test="f:system">system</xsl:when>
-                        <xsl:when test="f:type">type</xsl:when>
-                    </xsl:choose>
-                    <xsl:text> and .value</xsl:text>
-                </xsl:variable>
-                <xsl:variable name="expression">
+                <xsl:when test="$dataType = 'Identifier'">
                     <xsl:text>.where(</xsl:text>
                     <xsl:choose>
                         <xsl:when test="f:system">system</xsl:when>
                         <xsl:when test="f:type">type</xsl:when>
                     </xsl:choose>
                     <xsl:text>.exists() and value.exists())</xsl:text>
-                </xsl:variable>
-                
-                <xsl:call-template name="createAssert">
-                    <xsl:with-param name="description" select="concat($resourceType, ' X ', $description)"/>
-                    <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
-                </xsl:call-template>
-            </xsl:when>
-            
-            <xsl:when test="$dataType = 'Reference'">
-                <xsl:variable name="expression">
+                </xsl:when>
+                <xsl:when test="$dataType = 'Reference'">
                     <xsl:text>.where(</xsl:text>
                     <!-- Check if (reference OR identifier) and display exist -->
                     <!-- Check reference -->
@@ -306,37 +254,48 @@
                     <!-- dislay should exist -->
                     <xsl:text>display.exists()</xsl:text>
                     <xsl:text>).exists()</xsl:text>
-                </xsl:variable>
-                
-                <xsl:call-template name="createAssert">
-                    <xsl:with-param name="description" select="concat($resourceType, ' X contains .', local-name(), ' with ...')"/>
-                    <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
-                </xsl:call-template>
-            </xsl:when>
-            
-            <xsl:when test="$dataType = 'BackboneElement'">
-                <!-- Basically a container. Problem is expressions get very complicated very quickly. But that doesn't mean we can start from there (as long as it's automatically generated -->
-                <xsl:variable name="expression">
+                </xsl:when>
+                <xsl:when test="$dataType = 'BackboneElement'">
+                    <!-- Basically a container. Problem is expressions get very complicated very quickly. But that doesn't mean we can start from there (as long as it's automatically generated -->
                     <xsl:text>.where(</xsl:text>
                     
                     <xsl:text>).exists()</xsl:text>
-                </xsl:variable>
-                
-                <xsl:call-template name="createAssert">
-                    <xsl:with-param name="description" select="concat($resourceType, ' X contains .', local-name(), ' with ...')"/>
-                    <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
-                </xsl:call-template>
-            </xsl:when>
-            
-            <xsl:otherwise>
-                <xsl:message select="concat('TODO: ',$dataType)"/>
-                <!--<TODO dataType="{$dataType}">
-                    <xsl:copy>
-                        <xsl:apply-templates select="node()|@*"/>
-                    </xsl:copy>
-                </TODO>-->
-            </xsl:otherwise>
-        </xsl:choose>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:message select="concat('TODO EXPRESSION: ',$dataType)"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+        
+        <xsl:variable name="description">
+            <xsl:choose>
+                <xsl:when test="$dataType = 'code' and $hasValue = true()">
+                    <xsl:value-of select="concat('with value ''', @value, '''')"/>
+                </xsl:when>
+                <xsl:when test="$dataType = 'id'">
+                    <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
+                </xsl:when>
+                <xsl:when test="$dataType = 'Identifier'">
+                    <xsl:text>with .</xsl:text>
+                    <xsl:choose>
+                        <xsl:when test="f:system">system</xsl:when>
+                        <xsl:when test="f:type">type</xsl:when>
+                    </xsl:choose>
+                    <xsl:text> and .value</xsl:text>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:message select="concat('TODO DESCRIPTION: ',$dataType)"/>
+                    <xsl:value-of select="'with ...'"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+        
+        <xsl:if test="string-length($expression) gt 0">
+            <xsl:call-template name="createAssert">
+                <xsl:with-param name="description" select="concat($resourceType, ' X contains .', local-name(), ' ', $description)"/>
+                <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
+            </xsl:call-template>
+        </xsl:if>
     </xsl:template>
     
     <xsl:template name="createAssert">
