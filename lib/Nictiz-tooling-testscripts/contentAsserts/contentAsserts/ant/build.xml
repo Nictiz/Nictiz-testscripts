@@ -185,7 +185,7 @@
         </sequential>
     </target>
     
-    <!--<macrodef name="saxon-transform" description="Custom task to run an XSLT transformation using Saxon (HE)">
+    <macrodef name="saxon-transform" description="Custom task to run an XSLT transformation using Saxon (HE)">
         <attribute name="style" description="The path to the stylesheet to use for the transformation"/>
         <attribute name="in" description="The path to the input file" default="@{style}"/>
         <attribute name="out" description="The path to the output file"/>
@@ -202,75 +202,28 @@
         </sequential>
     </macrodef>
 
-    <macrodef name="transform-NTS-file" description="Custom task to perform the transformation of an NTS file">
+    <macrodef name="generate-asserts-NTS" description="Custom task to perform the transformation of an NTS file">
         <attribute name="nts.file" description="The (full) path to the input file."/>
-        <attribute name="output.dir" description="The target dir (not just the base) of the transformed file. The name of the actual file will be determined by this task."/>
+        <!--<attribute name="output.dir" description="The target dir (not just the base) of the transformed file. The name of the actual file will be determined by this task."/>
         <attribute name="references.file" description="The (temporary) text file to collect the list of fixtures to. See the collect-fixtures macrodef for more information."/>
-        <attribute name="target" default="#default" description="The name of the target to build; choose '#default' to build the default target."/>
+        <attribute name="target" default="#default" description="The name of the target to build; choose '#default' to build the default target."/>-->
 
         <sequential>
-            <!-\- Get the raw file name without suffix -\->
-            <local name="nts.file.basename"/>
-            <basename property="nts.file.basename" file="@{nts.file}" suffix="xml"/>
-           
-            <!-\- Load the NTS file as an "xmlproperty" file. All variables extracted from xmlproperty should be
-                 declared local. -\->
-            <local name="TestScript(nts:scenario)"/>
-            <xmlproperty file="@{nts.file}"/>
-            
-            <!-\- Calculate the relative path to the reference dir from the NTS file-\->
-            <local name="nts.file.dir"/>
-            <local name="reference.dir.relative"/>
-            <local name="reference.dir.relative.normalized"/>
-            <dirname property="nts.file.dir" file="@{nts.file}"/>
-            <property name="reference.dir.relative" location="${reference.dir}" relative="true" basedir="${nts.file.dir}"/>
-            <!-\- Convert backslashes to forward slashes if needed -\->
-            <propertyregex property="reference.dir.relative.normalized" input="${reference.dir.relative}" regexp="[\\]" replace="/" global="true" defaultValue="${reference.dir.relative}"/>
-            
-            <if>
-                <equals arg1="${TestScript(nts:scenario)}" arg2="server"/>
-                <then>
-                    <for param="expectedResponseFormat" list="xml,json"> <!-\- XIS scripts are generated in both XML and JSON flavor -\->
-                        <sequential>
-                            <local name="nts.file.newname"/>
-                            <property name="nts.file.newname" value="${nts.file.basename}-@{expectedResponseFormat}.xml"/>
-                            
-                            <saxon-transform style="${xslt.dir}/generateTestScript.xsl" in="@{nts.file}" out="@{output.dir}/${nts.file.newname}">
-                                <parameters>
-                                    <param name="referenceBase" expression="${reference.dir.relative.normalized}"/>
-                                    <param name="commonComponentFolder" expression="${commoncomponents.dir.abs}"/>
-                                    <param name="projectComponentFolder" expression="${components.dir.abs}"/>
-                                    <param name="expectedResponseFormat" expression="@{expectedResponseFormat}"/>
-                                    <param name="target" expression="@{target}"/>
-                                    <param name="versionAddition" expression="${version.addition}"/>
-                                    <param name="tokensJsonFile" expression="${tokens.json.url}"/>
-                                </parameters>
-                            </saxon-transform>
-                            
-                            <collect-references testscript.path="@{output.dir}/${nts.file.newname}" references.file="@{references.file}" reference.dir.rel="@{reference.dir.rel}"/>
-                        </sequential>
-                    </for>
-                </then>
-                <else>
-                    <local name="nts.file.newname"/>
-                    <property name="nts.file.newname" value="${nts.file.basename}.xml"/>
-                    <saxon-transform style="${xslt.dir}/generateTestScript.xsl" in="@{nts.file}" out="@{output.dir}/${nts.file.newname}">
-                        <parameters>
-                            <param name="referenceBase" expression="${reference.dir.relative.normalized}"/>
-                            <param name="commonComponentFolder" expression="${commoncomponents.dir.abs}"/>
-                            <param name="projectComponentFolder" expression="${components.dir.abs}"/>
-                            <param name="target" expression="@{target}"/>
-                            <param name="versionAddition" expression="${version.addition}"/>
-                            <param name="tokensJsonFile" expression="${tokens.json.url}"/>
-                        </parameters>
-                    </saxon-transform>
-                    <collect-references testscript.path="@{output.dir}/${nts.file.newname}" references.file="@{references.file}" reference.dir.rel="@{reference.dir.rel}"/>
-                </else>
-            </if>
+            <saxon-transform style="${xslt.dir}/generateAsserts.xsl" in="@{nts.file}" out="@{nts.file}">
+                <parameters>
+                    <!--<param name="referenceBase" expression="${reference.dir.relative.normalized}"/>
+                    <param name="commonComponentFolder" expression="${commoncomponents.dir.abs}"/>
+                    <param name="projectComponentFolder" expression="${components.dir.abs}"/>
+                    <param name="expectedResponseFormat" expression="@{expectedResponseFormat}"/>
+                    <param name="target" expression="@{target}"/>
+                    <param name="versionAddition" expression="${version.addition}"/>
+                    <param name="tokensJsonFile" expression="${tokens.json.url}"/>-->
+                </parameters>
+            </saxon-transform>
         </sequential>
     </macrodef>
     
-    <macrodef name="collect-references" description="Analyze a FHIR TestScript for the fixtures and rules used, and store them in a file.">
+    <!--<macrodef name="collect-references" description="Analyze a FHIR TestScript for the fixtures and rules used, and store them in a file.">
         <attribute name="testscript.path" description="The FHIR TestScript to analyze."/>
         <attribute name="references.file" description="The file to store the list of references fixtures and rules to, formatted as an Ant property file with the property's 'fixtures' and 'rules', each containing a list of files separated by a semicolon. If there are already fixtures/rules listed in this file, the new ones are appended."/>
         <attribute name="reference.dir.rel" description="The relative path to reference.dir, calculated from nts.file.dir (the location of the input NTS file)."/>
@@ -416,8 +369,8 @@
                 </then>
             </if>
         </sequential>
-    </macrodef>
-    -->
+    </macrodef>-->
+    
     <target name="cleanBuildDir">
         <sequential>
             <echo message="Deleting previous output dir"/>
@@ -427,147 +380,37 @@
     
     <target name="build" depends="load, check-input, cleanBuildDir">
         
-        <echo message="Hallo 123"/>
-        
-        <!--<property name="reference.dir" location="${input.dir.abs}/${reference.subdir}"/>
-        
-        <!-\- Set default loadresources.exclude to nothing -\->
-        <property name="loadresources.exclude" value=""/>
-        
-        <!-\- Collect the XML files to transform -\->
         <fileset id="nts.files" dir="${input.dir.abs}">
             <include name="*/**/*.xml"/>
-            <exclude name="**/_*/"/><!-\- Exclude every dir that starts with '_' -\->
+            <exclude name="**/_*/"/><!-- Exclude every dir that starts with '_' -->
         </fileset>
         
-        <!-\- Create a temporary file to collect all the used fixtures -\->
-        <tempfile property="references.file" suffix=".txt" createfile="true" deleteonexit="true"/>
-        
-        <!-\- Check if there are files in the fileset. -\->
+        <!-- Check if there are files in the fileset. -->
         <condition property="nts.files.available">
             <resourcecount count="0" when="gt">
                 <fileset refid="nts.files"/>
             </resourcecount>
         </condition>
         
-        <!-\- Fail if no input files are found - otherwise the build just fails at process-references without any warning -\->
+        <!-- Fail if no input files are found - otherwise the build just fails at process-references without any warning -->
         <if>
             <equals arg1="${nts.files.available}" arg2="true"/>
             <then>
                 <sequential>
-                    <echo message="Transforming NTS files"/>
-                    
-                    <!-\- Iteratate over all targets that are defined as build parameter (targets.additional) plus the 
-                         default target ('#default') -\->
-                    <for list="${targets}" delimiter="," param="target.dir">
+                    <for param="nts.file">
+                        <path>
+                            <fileset refid="nts.files"/>
+                        </path>
+                        
                         <sequential>
-                            <if>
-                                <equals arg1="@{target.dir}" arg2="#default"/>
-                                <then>
-                                    <echo>- default target</echo>
-                                </then>
-                                <else>
-                                    <echo message="- @{target.dir}"/>
-                                </else>
-                            </if>
-                            <for param="nts.file">
-                                <path>
-                                    <fileset refid="nts.files"/>
-                                </path>
-                                
-                                <sequential>
-                                    <!-\- Get the relative directory of the input file within the base directory -\->
-                                    <local name="nts.file.reldir"/>
-                                    <local name="nts.file.dir"/>
-                                    <local name="nts.file.reldir.leaf"/>
-                                    <dirname property="nts.file.dir" file="@{nts.file}"/>
-                                    <pathconvert property="nts.file.reldir" targetos="unix">
-                                        <path>
-                                            <dirset dir="${nts.file.dir}">
-                                                <!-\- If a subdirectory is present next to NTS-files, an error occurs, because dirset returns current ánd subdirectories in one property. Therefore: exclude subdirs. -\->
-                                                <exclude name="*/**/"/>
-                                            </dirset>
-                                        </path>
-                                        <map from="${input.dir.abs}" to=""/>
-                                    </pathconvert>
-                                    
-                                    <!-\- Now extract the 'root' dir of the relative path, where additional targets may be
-                                         defined, and any subpaths following it. The 'root' is the larget combination of dir and subdirs that are defined in target.additional -\->
-                                    <var name="nts.file.reldir.root" value=""/>
-                                    <for list="${nts.file.reldir}" param="dirname" delimiter="/">
-                                        <sequential>
-                                            <local name="root.candidate"/>
-                                            <!-\- Get relative path up to and including subdir.-\->
-                                            <propertyregex property="root.candidate" input="${nts.file.reldir}" regexp="(\/.*\/@{dirname})" select="\1" defaultValue="/@{dirname}"/>
-                                            <!-\- If the candidate is present in the target dir, pass the candidate. If not (for example because we are a level deeper), keep the last set candidate -\->
-                                            <if>
-                                                <contains string="/@{target.dir}" substring="${root.candidate}"/>
-                                                <then>
-                                                    <var name="nts.file.reldir.root" value="${root.candidate}"/>
-                                                </then>
-                                                <else>
-                                                    <var name="nts.file.reldir.root" value="${nts.file.reldir.root}"/>
-                                                </else>
-                                            </if>
-                                        </sequential>
-                                    </for>
-                                    <pathconvert property="nts.file.reldir.leaf" targetos="unix">
-                                        <path path="${nts.file.reldir}"/>
-                                        <map from="${nts.file.reldir.root}" to=""/>
-                                        <map from="c:${nts.file.reldir.root}" to=""/>
-                                    </pathconvert>
-                                    
-                                    <if>
-                                        <!-\- The default target -\->
-                                        <equals arg1="@{target.dir}" arg2="#default"/>
-                                        <then>
-                                            <transform-NTS-file 
-                                                nts.file="@{nts.file}"
-                                                output.dir="${output.dir.abs}/${nts.file.reldir}" 
-                                                references.file="${references.file}"/>
-                                        </then>
-                                        <elseif>
-                                            <!-\- An extra defined target -\->
-                                            <and>
-                                                <!-\- Necessary because we explicitly set root to '' (empty string) every time) -\->
-                                                <not>
-                                                    <equals arg1="${nts.file.reldir.root}" arg2=""/>
-                                                </not>
-                                                <contains string="/@{target.dir}" substring="${nts.file.reldir.root}-"/>
-                                            </and>
-                                            <then>
-                                                <sequential>
-                                                    <!-\- Extract the target name from the relative path name -\->
-                                                    <var name="target" unset="true"/>
-                                                    <pathconvert property="target" targetos="unix">
-                                                        <path location="/@{target.dir}"/>
-                                                        <map from="${nts.file.reldir.root}-" to=""/>
-                                                        <map from="c:${nts.file.reldir.root}-" to=""/>
-                                                    </pathconvert>
-                                                    <transform-NTS-file 
-                                                        nts.file="@{nts.file}"
-                                                        output.dir="${output.dir.abs}/@{target.dir}${nts.file.reldir.leaf}" 
-                                                        references.file="${references.file}"
-                                                        target="${target}"/>
-                                                </sequential>
-                                            </then>
-                                        </elseif>
-                                    </if>
-                                </sequential>
-                            </for>
+                            <generate-asserts-NTS nts.file="@{nts.file}"/>
                         </sequential>
                     </for>
-                    
-                    <!-\- Copy over all fixtures and rules -\->
-                    <echo message="Processing fixtures and rules"/>
-                    <process-references references.file="${references.file}"/>
-                    <generate-loadresources/>
                 </sequential>
             </then>
             <else>
                 <fail message="No input files found in ${input.dir.abs}."/>
             </else>
-        </if>-->
-        
+        </if>
     </target>
 </project>
