@@ -32,6 +32,7 @@
             </xsl:choose>
         </xsl:variable>
         <xsl:copy>
+            <xsl:apply-templates select="@*"/>
             <!-- Copy everything blindly except test elements -->
             <xsl:apply-templates select="*[not(self::f:test) and not(self::f:teardown)]"/>
             <xsl:apply-templates select="f:test">
