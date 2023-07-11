@@ -89,7 +89,7 @@
                 
                 <!-- After this, we can use the variable in all following asserts -->
                 <xsl:apply-templates select="$fixture/f:*/f:*" mode="generateAsserts">
-                    <xsl:with-param name="resourceType" select="$fixture/f:*/local-name()"/>
+                    <xsl:with-param name="resourceType" select="$fixture/f:*/local-name()" tunnel="yes"/>
                     <xsl:with-param name="structureDefinition" select="$structureDefinition" tunnel="yes"/>
                     <xsl:with-param name="idVariable" select="$idVariable"/>
                 </xsl:apply-templates>
@@ -98,19 +98,11 @@
     </xsl:template>
     
     <xsl:template match="f:*" mode="generateAsserts">
-        <xsl:param name="resourceType"/>
+        <xsl:param name="resourceType" tunnel="yes"/>
         <xsl:param name="idVariable"/>
         
         <!-- Need to use element/@id or element/path/@value? So far, they are identical in STU3 -->
         <xsl:variable name="elementPath" select="concat($resourceType, '.', local-name())"/>
-        
-        <xsl:variable name="dataType">
-            <xsl:call-template name="getDataType">
-                <xsl:with-param name="resourceType" select="$resourceType"/>
-                <xsl:with-param name="elementPath" select="$elementPath"/>
-            </xsl:call-template>
-        </xsl:variable>
-        
         <xsl:variable name="expressionBase" select="concat('Bundle.entry.resource.ofType(', $resourceType, ').where(id = ''${', $idVariable, '}'').')"/>
         
         <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
@@ -124,11 +116,16 @@
         <!-- Generate (part of) expression based on datatype -->
         <xsl:variable name="expression">
             <xsl:call-template name="createExpression">
-                <xsl:with-param name="dataType" select="$dataType"/>
+                <xsl:with-param name="elementPath" select="$elementPath"/>
             </xsl:call-template>
         </xsl:variable>
         
         <xsl:variable name="description">
+            <xsl:variable name="dataType">
+                <xsl:call-template name="getDataType">
+                    <xsl:with-param name="elementPath" select="$elementPath"/>
+                </xsl:call-template>
+            </xsl:variable>
             <xsl:choose>
                 <xsl:when test="$dataType = 'code' and $hasValue = true()">
                     <xsl:value-of select="concat('with value ''', @value, '''')"/>
@@ -145,7 +142,7 @@
                     <xsl:text> and .value</xsl:text>
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:message select="concat('TODO DESCRIPTION: ',$dataType)"/>
+                    <xsl:message select="concat('TODO DESCRIPTION: ', $elementPath, ' - ',$dataType)"/>
                     <xsl:value-of select="'with ...'"/>
                 </xsl:otherwise>
             </xsl:choose>
@@ -160,7 +157,7 @@
     </xsl:template>
     
     <xsl:template name="getDataType">
-        <xsl:param name="resourceType"/>
+        <xsl:param name="resourceType" tunnel="yes"/>
         <xsl:param name="structureDefinition" tunnel="yes"/>
         <xsl:param name="elementPath" required="yes"/>
         
@@ -209,7 +206,13 @@
     </xsl:template>
     
     <xsl:template name="createExpression">
-        <xsl:param name="dataType" required="yes"/>
+        <xsl:param name="elementPath"/>
+        <xsl:param name="dataType">
+            <xsl:call-template name="getDataType">
+                <xsl:with-param name="elementPath" select="$elementPath"/>
+            </xsl:call-template>
+        </xsl:param>
+        
         <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
         
         <xsl:variable name="expression">
@@ -351,18 +354,18 @@
                 <xsl:when test="$dataType = 'BackboneElement'">
                     <!-- Basically a container. Problem is expressions get very complicated very quickly. But that doesn't mean we can start from there (as long as it's automatically generated -->
                     <xsl:text>.where(</xsl:text>
-                    <!--<xsl:for-each select="*">
+                    <xsl:for-each select="*">
                         <xsl:call-template name="createExpression">
-                            <!-\-<xsl:with-param name="dataType" select="'Coding'"/>-\->
+                            <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
                         </xsl:call-template>
                         <xsl:if test="not(position() = last())">
                             <xsl:text> and </xsl:text>
                         </xsl:if>
-                    </xsl:for-each>-->
+                    </xsl:for-each>
                     <xsl:text>).exists()</xsl:text>
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:message select="concat('TODO EXPRESSION: ',$dataType)"/>
+                    <xsl:message select="concat('TODO EXPRESSION: ', $elementPath, ' - ',$dataType)"/>
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
