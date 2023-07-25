@@ -208,7 +208,7 @@
                                 <version value="r4-mp9-3.0.0-beta"/>
                                 <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long}"/>
                                 <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} for {$fixturePatient/f:name/f:text/@value}."/>
-                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml"/>
+                                <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml" nts:in-targets="Nictiz-intern"/>
                                 <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
                                 <!--<xsl:copy-of select="$deleteStuff/f:variable"/>-->
                                 <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}">
@@ -224,7 +224,7 @@
                                             <destination value="1"/>
                                             <origin value="1"/>
                                             <responseId value="transaction-response-fixture"/>
-                                            <sourceId value="{$adaTransId}"/>
+                                            <sourceId value="{$adaTransId}" nts:in-targets="Nictiz-intern"/>
                                         </operation>
                                     </action>
                                     <nts:include value="test.client.successfulTransaction" scope="common"/>
