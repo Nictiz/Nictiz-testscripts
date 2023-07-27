@@ -33,10 +33,13 @@
                 </xsl:otherwise>
             </xsl:choose>
             <xsl:apply-templates select="f:entry[f:resource[f:Patient|f:PractitionerRole|f:Practitioner|f:Organization]]"/>
+            <!-- Laboratorium 't Proefje -->
             <xsl:choose>
-                <xsl:when test="$bundleId = ($nhgId, $loincId)">
-                    <!-- Laboratorium 't Proefje -->
+                <xsl:when test="$bundleId = $nhgId">
                     <xsl:apply-templates select="$nhgFixture/f:Bundle/f:entry[f:resource/f:Organization/f:identifier[f:system/@value = 'http://fhir.nl/fhir/NamingSystem/ura']/f:value/@value = '00003333']"/>
+                </xsl:when>
+                <xsl:when test="$bundleId = $loincId">
+                    <xsl:apply-templates select="$loincFixture/f:Bundle/f:entry[f:resource/f:Organization/f:identifier[f:system/@value = 'http://fhir.nl/fhir/NamingSystem/ura']/f:value/@value = '00003333']"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:message terminate="yes">Unexpected situation</xsl:message>
