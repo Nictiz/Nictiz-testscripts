@@ -43,8 +43,23 @@
     </xsl:template>
     
     <xsl:template match="f:test[nts:contentAsserts]">
-        <!-- copy test and its contents -->
-        <xsl:next-match/>
+        <xsl:variable name="responseId">
+            <xsl:choose>
+                <xsl:when test="nts:include[@value = 'medmij/test.xis.successfulSearch']/@responseId">
+                    <xsl:value-of select="nts:include[@value = 'medmij/test.xis.successfulSearch']/@responseId"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:message>TOCHECK: responseId not found, reverting to default.</xsl:message>
+                    <xsl:value-of select="concat('fixture-',@id)"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+        <!-- copy test and its contents, we do add responseId if not present -->
+        <xsl:copy>
+            <xsl:apply-templates select="node()|@*" mode="modifyNts">
+                <xsl:with-param name="responseId" select="$responseId" tunnel="yes"/>
+            </xsl:apply-templates>
+        </xsl:copy>
         
         <xsl:variable name="basePath">
             <xsl:variable name="tokenize" select="tokenize(base-uri(), '/')"/>
@@ -85,6 +100,7 @@
                     <name value="{$idVariable}"/>
                     <description value="Resource.id for Observation X"/>
                     <expression value="{concat('Bundle.entry.resource.ofType(', $resourceType, ')', $expression, '.id')}"/>
+                    <sourceId value="{$responseId}"/>
                 </variable>
                 
                 <!-- After this, we can use the variable in all following asserts -->
@@ -376,7 +392,18 @@
         
     </xsl:template>
     
-    <xsl:template match="nts:contentAsserts"/>
+    <xsl:template match="nts:contentAsserts" mode="modifyNts"/>
+    
+    <xsl:template match="nts:include[@value = 'medmij/test.xis.successfulSearch']" mode="modifyNts">
+        <xsl:param name="responseId" tunnel="yes"/>
+        <xsl:copy>
+            <xsl:apply-templates select="@*" mode="#current"/>
+            <xsl:if test="not(@responseId)">
+                <xsl:attribute name="responseId" select="$responseId"/>
+            </xsl:if>
+            <xsl:apply-templates select="node()" mode="#current"/>
+        </xsl:copy>
+    </xsl:template>
     
     <xsl:template match="node()|@*" mode="#all">
         <xsl:copy>
