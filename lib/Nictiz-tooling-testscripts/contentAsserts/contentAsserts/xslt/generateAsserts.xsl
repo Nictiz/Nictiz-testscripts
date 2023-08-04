@@ -69,6 +69,9 @@
         <xsl:for-each select="nts:contentAsserts">
             <xsl:variable name="href" select="@href"/>
             <xsl:variable name="expression" select="@expression"/>
+            <xsl:if test="ends-with(translate($expression, ' ', ''), 'count()=1') or ends-with($expression, 'exists()')">
+                <xsl:message terminate="yes">TOEDIT: Expression shouldn't end in count() or exists() - <xsl:value-of select="$expression"/></xsl:message>
+            </xsl:if>
             <xsl:variable name="description" select="@description"/>
             
             <xsl:variable name="fixtureUri" select="concat($basePath, '/', $referenceBase, $href)"/>
