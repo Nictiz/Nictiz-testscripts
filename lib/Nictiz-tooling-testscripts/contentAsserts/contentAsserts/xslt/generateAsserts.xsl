@@ -54,6 +54,7 @@
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
+        <xsl:variable name="testName" select="f:name/@value"/>
         <!-- copy test and its contents, we do add responseId if not present -->
         <xsl:copy>
             <xsl:apply-templates select="node()|@*" mode="modifyNts">
@@ -78,10 +79,11 @@
             <xsl:variable name="fixture" select="document($fixtureUri)"/>
             <xsl:variable name="fixtureId" select="$fixture/f:*/f:id/@value"/>
             <test>
-                <name value="check-{$fixtureId}"/>
-                <!--<description value=""/>-->
-                
                 <xsl:variable name="resourceType" select="$fixture/f:*/local-name()"/>
+                
+                <name value="{$testName} - Check {$resourceType}"/>
+                <description value="Check if the previous operation results in a FHIR {$resourceType} that contains the values that are expected following Nictiz' materials (fixture .id: {$fixtureId})"/>
+                
                 <xsl:variable name="structureDefinition" select="document(concat($libPath, lower-case($fhirVersion), '/StructureDefinition-', $resourceType, '.xml'))"/>
                 
                 <!-- According to TestScript spec, the last available request/response will be used, so we do not specifically have to add a responseId. Could (should?) be a feature though -->
@@ -140,31 +142,9 @@
         </xsl:variable>
         
         <xsl:variable name="description">
-            <xsl:variable name="dataType">
-                <xsl:call-template name="getDataType">
-                    <xsl:with-param name="elementPath" select="$elementPath"/>
-                </xsl:call-template>
-            </xsl:variable>
-            <xsl:choose>
-                <xsl:when test="$dataType = 'code' and $hasValue = true()">
-                    <xsl:value-of select="concat('with value ''', @value, '''')"/>
-                </xsl:when>
-                <xsl:when test="$dataType = 'id'">
-                    <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
-                </xsl:when>
-                <xsl:when test="$dataType = 'Identifier'">
-                    <xsl:text>with .</xsl:text>
-                    <xsl:choose>
-                        <xsl:when test="f:system">system</xsl:when>
-                        <xsl:when test="f:type">type</xsl:when>
-                    </xsl:choose>
-                    <xsl:text> and .value</xsl:text>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:message select="concat('TODO DESCRIPTION: ', $elementPath, ' - ',$dataType)"/>
-                    <xsl:value-of select="'with ...'"/>
-                </xsl:otherwise>
-            </xsl:choose>
+            <xsl:call-template name="createDescription">
+                <xsl:with-param name="elementPath" select="$elementPath"/>
+            </xsl:call-template>
         </xsl:variable>
         
         <xsl:if test="string-length($expression) gt 0">
@@ -348,27 +328,31 @@
                     </xsl:if>
                     <xsl:text>).exists()</xsl:text>
                 </xsl:when>
-                <!--<xsl:when test="$dataType = 'Meta'">
-                <!-\- Is a general assert to check for Meta.profile. Move it to here for more specific debugging. If the resource contains more fields in Meta (for example meta.tag in MP?) I guess there should be an assert to check it -\->
-            </xsl:when>-->
                 <xsl:when test="$dataType = 'Identifier'">
-                    <xsl:text>.where(</xsl:text>
+                    <xsl:text>.exists(</xsl:text>
                     <xsl:choose>
                         <xsl:when test="f:system">system</xsl:when>
                         <xsl:when test="f:type">type</xsl:when>
                     </xsl:choose>
-                    <xsl:text>.exists() and value.exists())</xsl:text>
+                    <xsl:text> and value)</xsl:text>
                 </xsl:when>
                 <xsl:when test="$dataType = 'Reference'">
-                    <xsl:text>.where(</xsl:text>
                     <!-- Check if (reference OR identifier) and display exist -->
-                    <!-- Check reference -->
-                    <xsl:text>(reference.where( startsWith('http://') or startsWith('https://') or startsWith('#') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or (startsWith('urn:').not() and startsWith('#').not() and matches('^[A-Za-z]{3,}/[^/]+$')) ).exists() or </xsl:text>
-                    <!-- Check identifier reference -->
-                    <xsl:text>identifier.exists()) and </xsl:text>
-                    <!-- dislay should exist -->
-                    <xsl:text>display.exists()</xsl:text>
-                    <xsl:text>).exists()</xsl:text>
+                    <xsl:text>.exists((reference or identifier) and display)</xsl:text>
+                </xsl:when>
+                <xsl:when test="$dataType = 'Meta'">
+                    <!-- There is a general assert to check for Meta.profile, which can be removed if this specific check is applied. -->
+                    <xsl:text>.exists(</xsl:text>
+                    <xsl:for-each select="f:profile">
+                        <xsl:text>profile.exists($this = '</xsl:text>
+                        <xsl:value-of select="@value"/>
+                        <xsl:text>')</xsl:text>
+                    </xsl:for-each>
+                    <xsl:text>)</xsl:text>
+                    <!-- Not compatible with other elements being present - e.g. f:tag -->
+                    <xsl:if test="*[not(self::f:profile)]">
+                        <xsl:message select="concat('TODO EXTENSION: ', $elementPath, ' - ',$dataType)"/>
+                    </xsl:if>
                 </xsl:when>
                 <xsl:when test="$dataType = 'BackboneElement'">
                     <!-- Basically a container. Problem is expressions get very complicated very quickly. But that doesn't mean we can start from there (as long as it's automatically generated -->
@@ -393,6 +377,90 @@
             <xsl:value-of select="concat(nf:get-element-base(local-name()), $expression)"/>
         </xsl:if>
         
+    </xsl:template>
+    
+    <xsl:template name="createDescription">
+        <xsl:param name="elementPath"/>
+        <xsl:param name="dataType">
+            <xsl:call-template name="getDataType">
+                <xsl:with-param name="elementPath" select="$elementPath"/>
+            </xsl:call-template>
+        </xsl:param>
+        
+        <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
+        
+        <xsl:choose>
+            <!--<xsl:when test="$dataType = 'dateTime' and $hasValue = true()">
+                
+            </xsl:when>-->
+            <xsl:when test="$dataType = 'code' and $hasValue = true()">
+                <xsl:value-of select="concat('with value ''', @value, '''')"/>
+            </xsl:when>
+            <xsl:when test="$dataType = 'id'">
+                <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
+            </xsl:when>
+            <xsl:when test="$dataType = 'Coding'">
+                <xsl:text>with </xsl:text>
+                <xsl:if test="f:system">
+                    <xsl:text>.system with value '</xsl:text>
+                    <xsl:value-of select="f:system/@value"/>
+                    <xsl:text>'</xsl:text>
+                    <xsl:if test="f:code or f:display"> and </xsl:if>
+                </xsl:if>
+                <!-- Do nothing with f:version -->
+                <xsl:if test="f:code">
+                    <xsl:text>.code with value '</xsl:text>
+                    <xsl:value-of select="f:code/@value"/>
+                    <xsl:text>'</xsl:text>
+                    <xsl:if test="f:display"> and </xsl:if>
+                </xsl:if>
+                <xsl:if test="f:display">
+                    <xsl:text>.display</xsl:text>
+                </xsl:if>
+                <xsl:text>)</xsl:text>
+                <!-- Do nothing with f:userSelected -->
+            </xsl:when>
+            <xsl:when test="$dataType = 'CodeableConcept'">
+                <xsl:text>with </xsl:text>
+                <xsl:for-each select="f:coding">
+                    <xsl:text>.coding </xsl:text>
+                    <xsl:call-template name="createDescription">
+                        <xsl:with-param name="dataType" select="'Coding'"/>
+                    </xsl:call-template>
+                    <xsl:if test="not(position() = last())">
+                        <xsl:text> and </xsl:text>
+                    </xsl:if>
+                </xsl:for-each>
+            </xsl:when>
+            <!--<xsl:when test="$dataType = 'Quantity'">
+                
+            </xsl:when>-->
+            <xsl:when test="$dataType = 'Identifier'">
+                <xsl:text>with .</xsl:text>
+                <xsl:choose>
+                    <xsl:when test="f:system">system</xsl:when>
+                    <xsl:when test="f:type">type</xsl:when>
+                </xsl:choose>
+                <xsl:text> and .value</xsl:text>
+            </xsl:when>
+            <xsl:when test="$dataType = 'Reference'">
+                <xsl:text>with either .reference or .identifier and .display</xsl:text>
+            </xsl:when>
+            <xsl:when test="$dataType = 'Meta'">
+                <xsl:text>with </xsl:text>
+                <xsl:for-each select="f:profile">
+                    <xsl:value-of select="concat('.profile with value ''', @value, '''')"/>
+                    <xsl:if test="not(position() = last())">
+                        <xsl:text> and </xsl:text>
+                    </xsl:if>
+                </xsl:for-each>
+            </xsl:when>
+            <!--<xsl:when test="$dataType = 'BackboneElement'"></xsl:when>-->
+            <xsl:otherwise>
+                <xsl:message select="concat('TODO DESCRIPTION: ', $elementPath, ' - ',$dataType)"/>
+                <xsl:value-of select="'with ...'"/>
+            </xsl:otherwise>
+        </xsl:choose>
     </xsl:template>
     
     <xsl:template match="nts:contentAsserts" mode="modifyNts"/>
