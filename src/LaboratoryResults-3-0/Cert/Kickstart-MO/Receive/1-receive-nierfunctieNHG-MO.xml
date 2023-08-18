@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
+    nts:scenario="server">
+    
+    <id value="TEST-xis-1-prescription"/>
+    <version value="R4-3.0"/>
+    <name value="LaboratoryResults - LAB-LRO - Scenario 4.2a - Receive a NHG coded laboratory result along with a prescription."/>
+    <description value="Scenario 4.2a - Receive a NHG coded laboratory result along with a prescription"/>
+    
+    <nts:fixture id="TEST-scenario-1-prescription-fixture"
+        href="resources-to-sendreceive/lr-slr-TEST-KC-NHG-Nierfunctie-Scenario1-1.{$_FORMAT}"/>
+    <nts:includeDateT value="yes"/>
+    
+    <test id="lab-Scenarioset1">
+        <name value="Scenario 4.2a"/>
+        <description value="Receive a NHG coded panel of laboratory results."/>
+
+        <!--General asserts-->
+        <nts:include value="test.server.transaction" scope="common" sourceId="TEST-scenario-1-prescription-fixture"/>
+        <nts:include value="test.server.successfulTransaction" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common" resource="Specimen" count="1"/>
+        <nts:include value="assert.response.numResources" scope="common" resource="Organization" count="3"/>
+        <nts:include value="assert.response.numResources" scope="common" resource="MedicationRequest" count="2" warningOnly="true"/>
+        <nts:include value="assert.response.numResources" scope="common" resource="Patient" count="1"/>
+        
+        <!--Initial asserts to check the lab result codes and status-->
+        <nts:include value="assert.numberofcodes" direction="response" resource="Observation" system="https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen" count="2"/>
+        <nts:include value="assert.code" direction="response" resource="Observation" labcode="3583" labsystem="https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen"/>
+        <nts:include value="assert.code" direction="response" resource="Observation" labcode="523" labsystem="https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen"/>    
+                
+        <!--Asserts for checking the Patient resource to be compliant with the wiki page on
+            https://informatiestandaarden.nictiz.nl/wiki/Lab:1.0.0_Testgegevens_SturenResultaten-->
+        <nts:include value="assert.identifier.bsn" direction="response" resource="Patient" system="http://fhir.nl/fhir/NamingSystem/bsn" identifier="999900511"/>
+        
+        <!-- Asserts for checking Observations to be compliant with the wiki page on
+            https://informatiestandaarden.nictiz.nl/wiki/Lab:1.0.0_Testgegevens_SturenResultaten-->
+        <nts:include value="assert.identifier" direction="response" resource="Observation" system="urn:oid:2.16.840.1.113883.2.4.3.11.999.25.4298.2" identifier="11111"/>
+        <nts:include value="assert.valuequantity" direction="response" resource="Observation" labcode="3583" labsystem="https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen" quantity="97" system="http://unitsofmeasure.org" code="mL/min/{1.73_m2}"/>
+        <nts:include value="assert.referencerange" direction="response" resource="Observation" labcode="3583" labsystem="https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen" range="low" rangevalue="90" system="http://unitsofmeasure.org" code="mL/min/{1.73_m2}"/>
+        <nts:include value="assert.status" direction="response" resource="Observation" labcode="3583" labsystem="https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen" status="final"/>
+        <nts:include value="assert.interpretation" direction="response" resource="Observation" interpretation="Iets bovengemiddeld"/>
+        
+        <!-- Asserts for checking Observations to be compliant with the wiki page on
+            https://informatiestandaarden.nictiz.nl/wiki/Lab:1.0.0_Testgegevens_SturenResultaten-->
+        <nts:include value="assert.identifier" direction="response" resource="Observation" system="urn:oid:2.16.840.1.113883.2.4.3.11.999.25.4298.2" identifier="11111"/>
+        <nts:include value="assert.valuequantity" direction="response" resource="Observation" labcode="523" labsystem="https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen" quantity="135" system="http://unitsofmeasure.org" code="umol/l"/>
+        <nts:include value="assert.referencerange" direction="response" resource="Observation" labcode="523" labsystem="https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen" range="high" rangevalue="110" system="http://unitsofmeasure.org" code="umol/l"/>
+        <nts:include value="assert.referencerange" direction="response" resource="Observation" labcode="523" labsystem="https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen" range="low" rangevalue="60" system="http://unitsofmeasure.org" code="umol/l"/>
+        <nts:include value="assert.status" direction="response" resource="Observation" labcode="523" labsystem="https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen" status="final"/>
+        <nts:include value="assert.interpretation" direction="response" resource="Observation" interpretation="Creatinine iets hoger dan normaal."/>
+        <nts:include value="assert.interpretationflag" direction="response" resource="Observation" labcode="523" labsystem="https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen" system="http://snomed.info/sct" code="281302008"/>
+        
+        <!--Asserts for checking the Specimen resource(s) to be compliant with the wiki page on
+            https://informatiestandaarden.nictiz.nl/wiki/Lab:1.0.0_Testgegevens_SturenResultaten-->
+        <nts:include value="assert.identifier" direction="response" resource="Specimen"/>
+        <nts:include value="assert.note" direction="response" resource="Specimen" note="Serum afgenomen bij patiënt."/>
+        
+        <!-- Asserts for checking the performing Organization resource(s) to be compliant with the wiki page on
+           https://informatiestandaarden.nictiz.nl/wiki/Lab:1.0.0_Testgegevens_SturenResultaten-->
+        <nts:include value="assert.identifier" direction="response" resource="Organization" system="http://fhir.nl/fhir/NamingSystem/ura" identifier="00003333"/>
+    </test>
+</TestScript>
