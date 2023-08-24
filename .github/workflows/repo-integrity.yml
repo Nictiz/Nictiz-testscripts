@@ -1,6 +1,5 @@
-name: Repo integrity
+name: Repo integrity 2
 
-# Run this workflow when a pull request is created to master
 on: pull_request
 
 jobs:
@@ -9,11 +8,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checks out a copy of your repository on the ubuntu-latest machine
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      # Check that QualificationTokens.json still exists in the right place
+      - name: Check XML syntax for the src folder
+        uses: Ahli/verify-xml-action@v1
+        with:
+          path: "src"
+
+      - name: Check XML syntax for the dev folder
+        uses: Ahli/verify-xml-action@v1
+        with:
+          path: "dev"
+
       - name: Check existence of QualificationTokens.json
         run: |
           if [[ ! -f Configuration/QualificationTokens.json ]]; then
@@ -21,11 +28,16 @@ jobs:
             exit 1
           fi
         
-      # Runs the Super-Linter action
-      - name: Run Super-Linter on XML and JSON files
-        uses: github/super-linter@v4
+      - name: Check JSON syntax of the Configuration folder
+        uses: limitusus/json-syntax-check@v2
         env:
-          DEFAULT_BRANCH: main
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VALIDATE_JSON: true
-          VALIDATE_XML: true
+          BASE: ${{ github.workspace }}/Configuration
+        with:
+          pattern: "\\.json$"
+
+      - name: Check JSON syntax of everything in the dev folder
+        uses: limitusus/json-syntax-check@v2
+        env:
+          BASE: ${{ github.workspace }}/dev
+        with:
+          pattern: "\\.json$"
