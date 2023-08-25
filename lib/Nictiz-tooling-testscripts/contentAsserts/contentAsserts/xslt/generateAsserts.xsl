@@ -87,7 +87,7 @@
             <xsl:if test="not($resourceType = $fixture/f:*/local-name())">
                 <xsl:message terminate="yes">nts:contentAsserts[@href = '<xsl:value-of select="$href"/>']/@resourceType is absent or does not match the actual resource type of the fixture</xsl:message>
             </xsl:if>
-            <xsl:message></xsl:message>
+            
             <test>
                 <name value="{$testName} - Check {$resourceType} {$resourceCount}"/>
                 <description value="Check if the previous operation results in a FHIR {$resourceType} that contains the values that are expected following Nictiz' materials (fixture .id: {$fixtureId})"/>
@@ -143,7 +143,7 @@
         <!-- Add reminder here. For every element, a scenario with extension present should be considered -->
         <xsl:if test="f:extension">
             <!-- for each extension apply template createExpressionExtension -->
-            <xsl:message>Element contains an unhandles Extension!</xsl:message>
+            <xsl:message>Element contains an unhandled Extension!</xsl:message>
         </xsl:if>
         
         <xsl:variable name="dataType">
@@ -172,7 +172,7 @@
                 <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
             </xsl:call-template>
         </xsl:if>
-        <xsl:if test="$dataType = 'BackboneElement'">
+        <xsl:if test="$dataType = ('BackboneElement'(:, 'Extension':))">
             <xsl:apply-templates select="*" mode="#current">
                 <xsl:with-param name="parentElementPath" select="$elementPath"/>
             </xsl:apply-templates>
@@ -184,7 +184,7 @@
         <xsl:param name="structureDefinition" tunnel="yes"/>
         <xsl:param name="elementPath" required="yes"/>
         
-        <xsl:variable name="polymorphic" select="concat($resourceType, '.', nf:get-element-base(local-name()), '[x]')"/>
+        <xsl:variable name="polymorphic" select="concat(substring-before($elementPath, local-name()), nf:get-element-base(local-name()), '[x]')"/>
         <xsl:variable name="polymorphicDataType" select="substring-after(local-name(), nf:get-element-base(local-name()))"/>
         
         <xsl:choose>
@@ -195,6 +195,15 @@
             <xsl:when test="$structureDefinition/f:StructureDefinition/f:snapshot/f:element/@id = $polymorphic">
                 <!-- Element is polymorphic, lets use its name to guess data type -->
                 <xsl:value-of select="$structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $polymorphic]/f:type/f:code/@value[lower-case(.) = lower-case($polymorphicDataType)]"/>
+            </xsl:when>
+            <!-- If parent is extension, definition of extension isn't in Snapshot - this means datatype is either Extension or some value[x] -->
+            <xsl:when test="parent::*/local-name() = 'extension'">
+                <xsl:choose>
+                    <xsl:when test="self::f:extension">Extension</xsl:when>
+                    <xsl:otherwise>
+                        <xsl:value-of select="$polymorphicDataType"/>
+                    </xsl:otherwise>
+                </xsl:choose>
             </xsl:when>
             <xsl:otherwise>
                 <xsl:message>Could not find <xsl:value-of select="$elementPath"/></xsl:message>
@@ -236,10 +245,18 @@
             </xsl:call-template>
         </xsl:param>
         
+        <!-- We should take into account that element can have extension AND that element can have extension and not a value of itself -->
         <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
         
         <xsl:variable name="expression">
             <xsl:choose>
+                <xsl:when test="$dataType = 'Boolean'">
+                    <xsl:value-of select="concat(' = ', @value)"/>
+                </xsl:when>
+                <xsl:when test="$dataType = 'string'">
+                    <!-- Should not be an exact match, but rather something case-insensitive using matches()? Or should we be allowed to define overrides in our NTS-script? -->
+                    <xsl:value-of select="concat(' = ''', @value, '''')"/>
+                </xsl:when>
                 <xsl:when test="$dataType = 'dateTime' and $hasValue = true() and matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
                     <xsl:choose>
                         <xsl:when test="matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
@@ -377,6 +394,20 @@
                     <xsl:if test="*[not(self::f:profile)]">
                         <xsl:message select="concat('TODO EXTENSION: ',$dataType)"/>
                     </xsl:if>
+                </xsl:when>
+                <xsl:when test="$dataType = 'Extension'">
+                    <xsl:text>('</xsl:text>
+                    <xsl:value-of select="@url"/>
+                    <xsl:text>').where(</xsl:text>
+                    <xsl:for-each select="*">
+                        <xsl:call-template name="createExpression">
+                            <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
+                        </xsl:call-template>
+                        <xsl:if test="not(position() = last())">
+                            <xsl:text> and </xsl:text>
+                        </xsl:if>
+                    </xsl:for-each>
+                    <xsl:text>).exists()</xsl:text>
                 </xsl:when>
                 <xsl:when test="$dataType = 'BackboneElement'">
                     <!-- Basically a container. Problem is expressions get very complicated very quickly. But that doesn't mean we can start from there (as long as it's automatically generated -->
