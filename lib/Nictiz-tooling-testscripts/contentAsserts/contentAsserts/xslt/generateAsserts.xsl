@@ -216,7 +216,7 @@
         
         <xsl:variable name="expression">
             <xsl:choose>
-                <xsl:when test="$dataType = 'dateTime' and $hasValue = true()">
+                <xsl:when test="$dataType = 'dateTime' and $hasValue = true() and matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
                     <xsl:choose>
                         <xsl:when test="matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
                             <xsl:text> ~ </xsl:text>
@@ -390,9 +390,33 @@
         <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
         
         <xsl:choose>
-            <!--<xsl:when test="$dataType = 'dateTime' and $hasValue = true()">
-                
-            </xsl:when>-->
+            <xsl:when test="$dataType = 'dateTime' and $hasValue = true() and matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
+                <xsl:choose>
+                    <xsl:when test="matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
+                        <xsl:text>with a value that equals T-date </xsl:text>
+                        <xsl:analyze-string select="@value" regex="\$\{{DATE, T, (Y|M|D), ([-]?)(\d+)\}}">
+                            <xsl:matching-substring>
+                                <xsl:choose>
+                                    <xsl:when test="regex-group(2) = '-'">- </xsl:when>
+                                    <xsl:otherwise>+ </xsl:otherwise>
+                                </xsl:choose>
+                                <xsl:value-of select="regex-group(3)"/>
+                                <xsl:text> </xsl:text>
+                                <xsl:choose>
+                                    <xsl:when test="regex-group(1) = 'Y'">years</xsl:when>
+                                    <xsl:when test="regex-group(1) = 'M'">months</xsl:when>
+                                    <xsl:when test="regex-group(1) = 'D'">days</xsl:when>
+                                    <xsl:otherwise>
+                                        <xsl:message>Unkown T-date symbol: <xsl:value-of select="regex-group(1)"/></xsl:message>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                            </xsl:matching-substring>
+                        </xsl:analyze-string>
+                        <!-- If time is added to T-date, it should be added to the assert -->
+                        <!--<xsl:if test=""></xsl:if>-->
+                    </xsl:when>
+                </xsl:choose>
+            </xsl:when>
             <xsl:when test="$dataType = 'code' and $hasValue = true()">
                 <xsl:value-of select="concat('with value ''', @value, '''')"/>
             </xsl:when>
@@ -432,9 +456,49 @@
                     </xsl:if>
                 </xsl:for-each>
             </xsl:when>
-            <!--<xsl:when test="$dataType = 'Quantity'">
-                
-            </xsl:when>-->
+            <xsl:when test="$dataType = 'Quantity'">
+                <xsl:text>with </xsl:text>
+                <xsl:if test="f:value">
+                    <xsl:text>.value with value '</xsl:text>
+                    <xsl:value-of select="f:value/@value"/>
+                    <xsl:text>'</xsl:text>
+                    <xsl:if test="f:unit or f:system or f:code"> and </xsl:if>
+                </xsl:if>
+                <!-- Do nothing with f:comparator -->
+                <xsl:if test="f:unit">
+                    <xsl:text>.unit</xsl:text>
+                    <xsl:if test="f:system or f:code"> and </xsl:if>
+                </xsl:if>
+                <xsl:if test="f:system">
+                    <xsl:text>.system with value '</xsl:text>
+                    <xsl:value-of select="f:system/@value"/>
+                    <xsl:text>'</xsl:text>
+                    <xsl:if test="f:code"> and </xsl:if>
+                </xsl:if>
+                <xsl:if test="f:code">
+                    <xsl:variable name="value" select="f:code/@value"/>
+                    <xsl:text>.code </xsl:text>
+                    <xsl:choose>
+                        <xsl:when test="contains($value, '{') and contains($value, '}') ">
+                            <xsl:text>matching regex '^</xsl:text>
+                            <xsl:analyze-string select="$value" regex="\{{\w*\}}">
+                                <xsl:matching-substring>
+                                    <xsl:text>\\{.+\\}</xsl:text>
+                                </xsl:matching-substring>
+                                <xsl:non-matching-substring>
+                                    <xsl:value-of select="."/>
+                                </xsl:non-matching-substring>
+                            </xsl:analyze-string>
+                            <xsl:text>$'</xsl:text>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:text>with value '</xsl:text>
+                            <xsl:value-of select="f:code/@value"/>
+                            <xsl:text>'</xsl:text>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:if>
+            </xsl:when>
             <xsl:when test="$dataType = 'Identifier'">
                 <xsl:text>with .</xsl:text>
                 <xsl:choose>
@@ -455,7 +519,9 @@
                     </xsl:if>
                 </xsl:for-each>
             </xsl:when>
-            <!--<xsl:when test="$dataType = 'BackboneElement'"></xsl:when>-->
+            <xsl:when test="$dataType = 'BackboneElement'">
+                <xsl:text>with specific contents. This asserts checks both if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails</xsl:text>
+            </xsl:when>
             <xsl:otherwise>
                 <xsl:message select="concat('TODO DESCRIPTION: ', $elementPath, ' - ',$dataType)"/>
                 <xsl:value-of select="'with ...'"/>
