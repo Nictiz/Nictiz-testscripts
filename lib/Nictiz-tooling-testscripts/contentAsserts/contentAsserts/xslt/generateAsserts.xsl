@@ -75,13 +75,21 @@
             </xsl:if>
             <xsl:variable name="description" select="@description"/>
             
+            <!-- We use @resourceType to present a nice count to users  -->
+            <xsl:variable name="resourceType" select="@resourceType"/>
+            <xsl:variable name="resourceCount" select="count(preceding-sibling::nts:contentAsserts[@resourceType = $resourceType]) + 1"/>
+            
             <xsl:variable name="fixtureUri" select="concat($basePath, '/', $referenceBase, $href)"/>
             <xsl:variable name="fixture" select="document($fixtureUri)"/>
             <xsl:variable name="fixtureId" select="$fixture/f:*/f:id/@value"/>
+            
+            <!-- Sanity check -->
+            <xsl:if test="not($resourceType = $fixture/f:*/local-name())">
+                <xsl:message terminate="yes">nts:contentAsserts[@href = '<xsl:value-of select="$href"/>']/@resourceType is absent or does not match the actual resource type of the fixture</xsl:message>
+            </xsl:if>
+            <xsl:message></xsl:message>
             <test>
-                <xsl:variable name="resourceType" select="$fixture/f:*/local-name()"/>
-                
-                <name value="{$testName} - Check {$resourceType}"/>
+                <name value="{$testName} - Check {$resourceType} {$resourceCount}"/>
                 <description value="Check if the previous operation results in a FHIR {$resourceType} that contains the values that are expected following Nictiz' materials (fixture .id: {$fixtureId})"/>
                 
                 <xsl:variable name="structureDefinition" select="document(concat($libPath, lower-case($fhirVersion), '/StructureDefinition-', $resourceType, '.xml'))"/>
@@ -103,16 +111,18 @@
                 <xsl:variable name="idVariable" select="concat($fixtureId,'-id')"/>
                 <variable>
                     <name value="{$idVariable}"/>
-                    <description value="Resource.id for Observation X"/>
+                    <description value="Resource.id for Observation {$resourceCount}"/>
                     <expression value="{concat('Bundle.entry.resource.ofType(', $resourceType, ')', $expression, '.id')}"/>
                     <sourceId value="{$responseId}"/>
                 </variable>
                 
                 <!-- After this, we can use the variable in all following asserts -->
                 <xsl:apply-templates select="$fixture/f:*/f:*" mode="generateAsserts">
-                    <xsl:with-param name="resourceType" select="$fixture/f:*/local-name()" tunnel="yes"/>
+                    <xsl:with-param name="resourceType" select="$resourceType" tunnel="yes"/>
+                    <xsl:with-param name="resourceCount" select="$resourceCount" tunnel="yes"/>
                     <xsl:with-param name="structureDefinition" select="$structureDefinition" tunnel="yes"/>
-                    <xsl:with-param name="idVariable" select="$idVariable"/>
+                    <xsl:with-param name="idVariable" select="$idVariable" tunnel="yes"/>
+                    <xsl:with-param name="parentElementPath" select="$resourceType"/>
                 </xsl:apply-templates>
             </test>
         </xsl:for-each>
@@ -120,11 +130,13 @@
     
     <xsl:template match="f:*" mode="generateAsserts">
         <xsl:param name="resourceType" tunnel="yes"/>
-        <xsl:param name="idVariable"/>
+        <xsl:param name="resourceCount" tunnel="yes"/>
+        <xsl:param name="idVariable" tunnel="yes"/>
+        <xsl:param name="parentElementPath" required="yes"/>
         
         <!-- Need to use element/@id or element/path/@value? So far, they are identical in STU3 -->
-        <xsl:variable name="elementPath" select="concat($resourceType, '.', local-name())"/>
-        <xsl:variable name="expressionBase" select="concat('Bundle.entry.resource.ofType(', $resourceType, ').where(id = ''${', $idVariable, '}'').')"/>
+        <xsl:variable name="elementPath" select="concat($parentElementPath, '.', local-name())"/>
+        <xsl:variable name="expressionBase" select="concat('Bundle.entry.resource.ofType(', $resourceType, ').where(id = ''${', $idVariable, '}'')',substring-after($parentElementPath, $resourceType),'.')"/>
         
         <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
         
@@ -134,24 +146,36 @@
             <xsl:message>Element contains an unhandles Extension!</xsl:message>
         </xsl:if>
         
+        <xsl:variable name="dataType">
+            <xsl:call-template name="getDataType">
+                <xsl:with-param name="elementPath" select="$elementPath"/>
+            </xsl:call-template>
+        </xsl:variable>
+        
         <!-- Generate (part of) expression based on datatype -->
         <xsl:variable name="expression">
             <xsl:call-template name="createExpression">
+                <xsl:with-param name="dataType" select="$dataType"/>
                 <xsl:with-param name="elementPath" select="$elementPath"/>
             </xsl:call-template>
         </xsl:variable>
         
         <xsl:variable name="description">
             <xsl:call-template name="createDescription">
-                <xsl:with-param name="elementPath" select="$elementPath"/>
+                <xsl:with-param name="dataType" select="$dataType"/>
             </xsl:call-template>
         </xsl:variable>
         
         <xsl:if test="string-length($expression) gt 0">
             <xsl:call-template name="createAssert">
-                <xsl:with-param name="description" select="concat($resourceType, ' X contains .', local-name(), ' ', $description)"/>
+                <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', substring-after($elementPath, $resourceType), ' ', $description)"/>
                 <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
             </xsl:call-template>
+        </xsl:if>
+        <xsl:if test="$dataType = 'BackboneElement'">
+            <xsl:apply-templates select="*" mode="#current">
+                <xsl:with-param name="parentElementPath" select="$elementPath"/>
+            </xsl:apply-templates>
         </xsl:if>
     </xsl:template>
     
@@ -351,7 +375,7 @@
                     <xsl:text>)</xsl:text>
                     <!-- Not compatible with other elements being present - e.g. f:tag -->
                     <xsl:if test="*[not(self::f:profile)]">
-                        <xsl:message select="concat('TODO EXTENSION: ', $elementPath, ' - ',$dataType)"/>
+                        <xsl:message select="concat('TODO EXTENSION: ',$dataType)"/>
                     </xsl:if>
                 </xsl:when>
                 <xsl:when test="$dataType = 'BackboneElement'">
@@ -380,13 +404,8 @@
     </xsl:template>
     
     <xsl:template name="createDescription">
-        <xsl:param name="elementPath"/>
-        <xsl:param name="dataType">
-            <xsl:call-template name="getDataType">
-                <xsl:with-param name="elementPath" select="$elementPath"/>
-            </xsl:call-template>
-        </xsl:param>
-        
+        <xsl:param name="dataType"/>
+
         <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
         
         <xsl:choose>
@@ -523,7 +542,7 @@
                 <xsl:text>with specific contents. This asserts checks both if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails</xsl:text>
             </xsl:when>
             <xsl:otherwise>
-                <xsl:message select="concat('TODO DESCRIPTION: ', $elementPath, ' - ',$dataType)"/>
+                <xsl:message select="concat('TODO DESCRIPTION: ',$dataType)"/>
                 <xsl:value-of select="'with ...'"/>
             </xsl:otherwise>
         </xsl:choose>
