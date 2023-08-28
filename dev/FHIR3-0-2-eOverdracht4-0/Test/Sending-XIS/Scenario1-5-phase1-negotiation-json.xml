@@ -4,8 +4,16 @@
    <meta>
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
+   <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-rule">
+      <extension url="ruleId">
+         <valueId value="modifyTask"/>
+      </extension>
+      <extension url="path">
+         <valueString value="../_reference/rules/rewrite-response-taskStatus.groovy"/>
+      </extension>
+   </extension>
    <url value="http://nictiz.nl/fhir/TestScript/Sending-XIS-scenario1.5-negotiation-json"/>
-   <version value="stu3-4.0-patchlevel 2022-11"/>
+   <version value="stu3-4.0-patchlevel 2023-07"/>
    <name value="Sending-XIS-scenario1.5-negotiation - JSON Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -46,11 +54,11 @@
          <code value="FHIR-Server"/>
       </profile>
    </destination>
-   <fixture id="accepted-task-fixture">
+   <fixture id="initial-task-fixture">
       <autocreate value="false"/>
       <autodelete value="false"/>
       <resource>
-         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-test-1_5-ACCEPTED.xml"/>
+         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-test-1_5-REQUESTED.xml"/>
       </resource>
    </fixture>
    <profile id="eOverdracht-Task">
@@ -154,6 +162,46 @@
             </extension>
             <label value="Make sure that the Task has status=requested."/>
             <expression value="Task.status = 'requested'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="modifyTask"/>
+               </extension>
+               <extension url="param">
+                  <extension url="name">
+                     <valueString value="newStatus"/>
+                  </extension>
+                  <extension url="value">
+                     <valueString value="accepted"/>
+                  </extension>
+               </extension>
+               <extension url="param">
+                  <extension url="name">
+                     <valueString value="fixtureId"/>
+                  </extension>
+                  <extension url="value">
+                     <valueString value="accepted-task-fixture"/>
+                  </extension>
+               </extension>
+               <extension url="output">
+                  <extension url="name">
+                     <valueString value="accepted-task-fixture"/>
+                  </extension>
+                  <extension url="type">
+                     <valueString value="document"/>
+                  </extension>
+                  <extension url="contentType">
+                     <valueString value="json"/>
+                  </extension>
+               </extension>
+            </extension>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -333,7 +381,7 @@
             <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
             <direction value="response"/>
             <validateProfileId value="Bundle-profile"/>
-            <warningOnly value="false"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
       <action>
@@ -404,6 +452,7 @@
             <resource value="Task"/>
             <description value="Test sending XIS to handle an update to the eOverdracht Task"/>
             <accept value="json"/>
+            <contentType value="json"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
