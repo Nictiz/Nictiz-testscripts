@@ -123,6 +123,7 @@
                     <xsl:with-param name="structureDefinition" select="$structureDefinition" tunnel="yes"/>
                     <xsl:with-param name="idVariable" select="$idVariable" tunnel="yes"/>
                     <xsl:with-param name="parentElementPath" select="$resourceType"/>
+                    <xsl:with-param name="parentLabel" select="$resourceCount"/>
                 </xsl:apply-templates>
             </test>
         </xsl:for-each>
@@ -133,6 +134,7 @@
         <xsl:param name="resourceCount" tunnel="yes"/>
         <xsl:param name="idVariable" tunnel="yes"/>
         <xsl:param name="parentElementPath" required="yes"/>
+        <xsl:param name="parentLabel" required="yes"/>
         
         <!-- Need to use element/@id or element/path/@value? So far, they are identical in STU3 -->
         <xsl:variable name="elementPath" select="concat($parentElementPath, '.', local-name())"/>
@@ -166,10 +168,17 @@
             </xsl:call-template>
         </xsl:variable>
         
+        <xsl:variable name="label">
+            <xsl:value-of select="$parentLabel"/>
+            <xsl:text>-</xsl:text>
+            <xsl:value-of select="fn:count(preceding-sibling::*[not(self::f:id)])+1"/>
+        </xsl:variable>
+        
         <xsl:if test="string-length($expression) gt 0">
             <xsl:call-template name="createAssert">
                 <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', substring-after($elementPath, $resourceType), ' ', $description)"/>
                 <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
+                <xsl:with-param name="label" select="$label"/>
             </xsl:call-template>
         </xsl:if>
         <xsl:if test="$dataType = ('BackboneElement', 'Extension') and count(*) gt 1">
@@ -184,6 +193,7 @@
                         </xsl:otherwise>
                     </xsl:choose>
                 </xsl:with-param>
+                <xsl:with-param name="parentLabel" select="$label"/>
             </xsl:apply-templates>
         </xsl:if>
     </xsl:template>
@@ -223,6 +233,7 @@
     <xsl:template name="createAssert">
         <xsl:param name="description" required="yes"/>
         <xsl:param name="expression" required="yes"/>
+        <xsl:param name="label"/>
         <xsl:param name="warningOnly" select="false()"/>
         <xsl:param name="stopTestOnFail" select="false()"/>
         
@@ -232,8 +243,9 @@
                 <xsl:if test="$stopTestOnFail = true()">
                     <xsl:attribute name="nts:stopTestOnFail">true</xsl:attribute>
                 </xsl:if>
-                <!-- We can also do something with label here -->
-                <!--<label value=""/>-->
+                <xsl:if test="fn:string-length($label) gt 0">
+                    <label value="{$label}"/>
+                </xsl:if>
                 <description value="{$description}"/>
                 <!-- Should be edited based on scenario probably, leaving it fixed on 'response' for now -->
                 <direction value="response"/>
