@@ -162,7 +162,6 @@
             </xsl:call-template>
         </xsl:variable>
         
-        
         <xsl:variable name="label">
             <xsl:value-of select="$parentLabel"/>
             <xsl:text>-</xsl:text>
@@ -172,6 +171,7 @@
         <xsl:variable name="description">
             <xsl:call-template name="createDescription">
                 <xsl:with-param name="dataType" select="$dataType"/>
+                <xsl:with-param name="elementPath" select="$elementPath"/>
             </xsl:call-template>
             <!-- If there are two hyphens or more in label -->
             <xsl:if test="string-length($label) - string-length(translate($label, '-', '')) ge 2">
@@ -461,11 +461,22 @@
     </xsl:template>
     
     <xsl:template name="createDescription">
-        <xsl:param name="dataType"/>
+        <xsl:param name="elementPath"/>
+        <xsl:param name="dataType">
+            <xsl:call-template name="getDataType">
+                <xsl:with-param name="elementPath" select="$elementPath"/>
+            </xsl:call-template>
+        </xsl:param>
 
         <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
         
         <xsl:choose>
+            <xsl:when test="$dataType = 'Boolean'">
+                <xsl:value-of select="concat('with value ''', @value, '''')"/>
+            </xsl:when>
+            <xsl:when test="$dataType = 'string'">
+                <xsl:value-of select="concat('with value ''', @value, '''')"/>
+            </xsl:when>
             <xsl:when test="$dataType = 'dateTime' and $hasValue = true() and matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
                 <xsl:choose>
                     <xsl:when test="matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
@@ -590,6 +601,20 @@
                 <xsl:text>with </xsl:text>
                 <xsl:for-each select="f:profile">
                     <xsl:value-of select="concat('.profile with value ''', @value, '''')"/>
+                    <xsl:if test="not(position() = last())">
+                        <xsl:text> and </xsl:text>
+                    </xsl:if>
+                </xsl:for-each>
+            </xsl:when>
+            <xsl:when test="$dataType = 'Extension'">
+                <xsl:value-of select="concat('with url ''', @url, ''' ')"/>
+                <xsl:for-each select="*">
+                    <xsl:text>with </xsl:text>
+                    <xsl:value-of select="local-name()"/>
+                    <xsl:text> </xsl:text>
+                    <xsl:call-template name="createDescription">
+                        <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
+                    </xsl:call-template>
                     <xsl:if test="not(position() = last())">
                         <xsl:text> and </xsl:text>
                     </xsl:if>
