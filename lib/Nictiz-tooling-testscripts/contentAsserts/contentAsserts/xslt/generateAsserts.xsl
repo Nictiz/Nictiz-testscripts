@@ -162,16 +162,21 @@
             </xsl:call-template>
         </xsl:variable>
         
-        <xsl:variable name="description">
-            <xsl:call-template name="createDescription">
-                <xsl:with-param name="dataType" select="$dataType"/>
-            </xsl:call-template>
-        </xsl:variable>
         
         <xsl:variable name="label">
             <xsl:value-of select="$parentLabel"/>
             <xsl:text>-</xsl:text>
             <xsl:value-of select="fn:count(preceding-sibling::*[not(self::f:id)])+1"/>
+        </xsl:variable>
+        
+        <xsl:variable name="description">
+            <xsl:call-template name="createDescription">
+                <xsl:with-param name="dataType" select="$dataType"/>
+            </xsl:call-template>
+            <!-- If there are two hyphens or more in label -->
+            <xsl:if test="string-length($label) - string-length(translate($label, '-', '')) ge 2">
+                <xsl:value-of select="concat('. This assert checks only one child. Assert ', $parentLabel, ' checks if all children are present in the same parent')"/>
+            </xsl:if>
         </xsl:variable>
         
         <xsl:if test="string-length($expression) gt 0">
@@ -591,7 +596,7 @@
                 </xsl:for-each>
             </xsl:when>
             <xsl:when test="$dataType = 'BackboneElement'">
-                <xsl:text>with specific contents. This asserts checks both if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails</xsl:text>
+                <xsl:text>with specific contents. This asserts checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails</xsl:text>
             </xsl:when>
             <xsl:otherwise>
                 <xsl:message select="concat('TODO DESCRIPTION: ',$dataType)"/>
