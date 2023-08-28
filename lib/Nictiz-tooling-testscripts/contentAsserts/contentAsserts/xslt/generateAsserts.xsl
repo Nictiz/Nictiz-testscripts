@@ -172,9 +172,18 @@
                 <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
             </xsl:call-template>
         </xsl:if>
-        <xsl:if test="$dataType = ('BackboneElement'(:, 'Extension':))">
+        <xsl:if test="$dataType = ('BackboneElement', 'Extension') and count(*) gt 1">
             <xsl:apply-templates select="*" mode="#current">
-                <xsl:with-param name="parentElementPath" select="$elementPath"/>
+                <xsl:with-param name="parentElementPath">
+                    <xsl:choose>
+                        <xsl:when test="$dataType = 'Extension'">
+                            <xsl:value-of select="concat($elementPath,'(''',@url,''')')"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="$elementPath"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:with-param>
             </xsl:apply-templates>
         </xsl:if>
     </xsl:template>
