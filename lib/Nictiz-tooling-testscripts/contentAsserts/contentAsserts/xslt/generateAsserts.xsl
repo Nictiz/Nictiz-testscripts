@@ -283,8 +283,8 @@
                     <xsl:value-of select="concat(' = ', @value)"/>
                 </xsl:when>
                 <xsl:when test="$dataType = 'string'">
-                    <!-- Should not be an exact match, but rather something case-insensitive using matches()? Or should we be allowed to define overrides in our NTS-script? -->
-                    <xsl:value-of select="concat(' = ''', @value, '''')"/>
+                    <!-- '~' (equivalence) ignores case and whitespace. replace('.', '') removes dots (or other characters - hyphens perhaps?). Or should we be allowed to define overrides in our NTS-script? -->
+                    <xsl:value-of select="concat('.replace(''.'', '''') ~ ''', normalize-space(translate(@value, '.', '')), '''')"/>
                 </xsl:when>
                 <xsl:when test="$dataType = 'dateTime' and $hasValue = true() and matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
                     <xsl:choose>
