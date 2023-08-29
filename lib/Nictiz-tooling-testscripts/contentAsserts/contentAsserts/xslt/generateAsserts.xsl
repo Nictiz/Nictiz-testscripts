@@ -96,7 +96,16 @@
                 
                 <!-- According to TestScript spec, the last available request/response will be used, so we do not specifically have to add a responseId. Could (should?) be a feature though -->
                 <xsl:call-template name="createAssert">
-                    <xsl:with-param name="description" select="concat('Response Bundle ', $description)"/>
+                    <xsl:with-param name="description">
+                        <xsl:choose>
+                            <xsl:when test="string-length($description) gt 0">
+                                <xsl:value-of select="concat('Response Bundle contains exactly 1 ', $description)"/>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:text>Response Bundle contains exactly 1 resource with specific contents</xsl:text>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:with-param>
                     <xsl:with-param name="expression" select="concat('Bundle.entry.resource.ofType(', $resourceType, ')', $expression, '.count() = 1')"/>
                     <xsl:with-param name="stopTestOnFail" select="true()"/>
                 </xsl:call-template>
@@ -142,12 +151,6 @@
         
         <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
         
-        <!-- Add reminder here. For every element, a scenario with extension present should be considered -->
-        <xsl:if test="f:extension">
-            <!-- for each extension apply template createExpressionExtension -->
-            <xsl:message>Element contains an unhandled Extension!</xsl:message>
-        </xsl:if>
-        
         <xsl:variable name="dataType">
             <xsl:call-template name="getDataType">
                 <xsl:with-param name="elementPath" select="$elementPath"/>
@@ -186,7 +189,7 @@
                 <xsl:with-param name="label" select="$label"/>
             </xsl:call-template>
         </xsl:if>
-        <xsl:if test="$dataType = ('BackboneElement', 'Extension') and count(*) gt 1">
+        <xsl:if test="($dataType = ('BackboneElement', 'Extension') and count(*) gt 1) or f:extension">
             <xsl:apply-templates select="*" mode="#current">
                 <xsl:with-param name="parentElementPath">
                     <xsl:choose>
@@ -472,10 +475,10 @@
         
         <xsl:choose>
             <xsl:when test="$dataType = 'Boolean'">
-                <xsl:value-of select="concat('with value ''', @value, '''')"/>
+                <xsl:value-of select="concat('''', @value, '''')"/>
             </xsl:when>
             <xsl:when test="$dataType = 'string'">
-                <xsl:value-of select="concat('with value ''', @value, '''')"/>
+                <xsl:value-of select="concat('''', @value, '''')"/>
             </xsl:when>
             <xsl:when test="$dataType = 'dateTime' and $hasValue = true() and matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
                 <xsl:choose>
@@ -505,7 +508,7 @@
                 </xsl:choose>
             </xsl:when>
             <xsl:when test="$dataType = 'code' and $hasValue = true()">
-                <xsl:value-of select="concat('with value ''', @value, '''')"/>
+                <xsl:value-of select="concat('''', @value, '''')"/>
             </xsl:when>
             <xsl:when test="$dataType = 'id'">
                 <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
@@ -513,14 +516,14 @@
             <xsl:when test="$dataType = 'Coding'">
                 <xsl:text>with </xsl:text>
                 <xsl:if test="f:system">
-                    <xsl:text>.system with value '</xsl:text>
+                    <xsl:text>.system '</xsl:text>
                     <xsl:value-of select="f:system/@value"/>
                     <xsl:text>'</xsl:text>
                     <xsl:if test="f:code or f:display"> and </xsl:if>
                 </xsl:if>
                 <!-- Do nothing with f:version -->
                 <xsl:if test="f:code">
-                    <xsl:text>.code with value '</xsl:text>
+                    <xsl:text>.code '</xsl:text>
                     <xsl:value-of select="f:code/@value"/>
                     <xsl:text>'</xsl:text>
                     <xsl:if test="f:display"> and </xsl:if>
@@ -546,7 +549,7 @@
             <xsl:when test="$dataType = 'Quantity'">
                 <xsl:text>with </xsl:text>
                 <xsl:if test="f:value">
-                    <xsl:text>.value with value '</xsl:text>
+                    <xsl:text>.value '</xsl:text>
                     <xsl:value-of select="f:value/@value"/>
                     <xsl:text>'</xsl:text>
                     <xsl:if test="f:unit or f:system or f:code"> and </xsl:if>
@@ -557,7 +560,7 @@
                     <xsl:if test="f:system or f:code"> and </xsl:if>
                 </xsl:if>
                 <xsl:if test="f:system">
-                    <xsl:text>.system with value '</xsl:text>
+                    <xsl:text>.system '</xsl:text>
                     <xsl:value-of select="f:system/@value"/>
                     <xsl:text>'</xsl:text>
                     <xsl:if test="f:code"> and </xsl:if>
@@ -579,7 +582,7 @@
                             <xsl:text>$'</xsl:text>
                         </xsl:when>
                         <xsl:otherwise>
-                            <xsl:text>with value '</xsl:text>
+                            <xsl:text>'</xsl:text>
                             <xsl:value-of select="f:code/@value"/>
                             <xsl:text>'</xsl:text>
                         </xsl:otherwise>
@@ -600,7 +603,7 @@
             <xsl:when test="$dataType = 'Meta'">
                 <xsl:text>with </xsl:text>
                 <xsl:for-each select="f:profile">
-                    <xsl:value-of select="concat('.profile with value ''', @value, '''')"/>
+                    <xsl:value-of select="concat('.profile ''', @value, '''')"/>
                     <xsl:if test="not(position() = last())">
                         <xsl:text> and </xsl:text>
                     </xsl:if>
