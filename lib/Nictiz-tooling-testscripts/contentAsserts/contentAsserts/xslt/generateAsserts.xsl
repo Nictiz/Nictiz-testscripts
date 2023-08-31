@@ -48,9 +48,15 @@
                 <xsl:when test="nts:include[@value = 'medmij/test.xis.successfulSearch']/@responseId">
                     <xsl:value-of select="nts:include[@value = 'medmij/test.xis.successfulSearch']/@responseId"/>
                 </xsl:when>
-                <xsl:otherwise>
-                    <xsl:message>TOCHECK: responseId not found, reverting to default.</xsl:message>
+                <xsl:when test="fn:string-length(@id) gt 0">
                     <xsl:value-of select="concat('fixture-',@id)"/>
+                </xsl:when>
+                <xsl:when test="count(parent::f:TestScript/f:test) = 1">
+                    <xsl:text>fixture-response</xsl:text>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:message>TOCHECK: responseId and test/@id not found, reverting to default.</xsl:message>
+                    <xsl:value-of select="generate-id()"/>
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
@@ -423,6 +429,10 @@
                     <xsl:if test="*[not(self::f:profile)]">
                         <xsl:message select="concat('TODO EXTENSION: ',$dataType)"/>
                     </xsl:if>
+                </xsl:when>
+                <xsl:when test="$dataType = 'Narrative' and f:status/@value = 'extensions'">
+                    <!-- Narrative isn't always present in fixtures. If not present, it is generated at a later stage. We should find a way to always add this assert. -->
+                    <xsl:text>.exists()</xsl:text>
                 </xsl:when>
                 <xsl:when test="$dataType = 'Extension'">
                     <xsl:text>('</xsl:text>
