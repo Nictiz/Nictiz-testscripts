@@ -93,12 +93,18 @@
             <xsl:if test="not($resourceType = $fixture/f:*/local-name())">
                 <xsl:message terminate="yes">nts:contentAsserts[@href = '<xsl:value-of select="$href"/>']/@resourceType is absent or does not match the actual resource type of the fixture</xsl:message>
             </xsl:if>
+            <xsl:variable name="structureDefinition" select="document(concat($libPath, lower-case($fhirVersion), '/StructureDefinition-', $resourceType, '.xml'))"/>
+            
+            <!-- Would preferably do this in a separate step with Xproc. We'll see what the future brings -->
+            <xsl:variable name="fixtureWithDataTypes">
+                <xsl:apply-templates select="$fixture" mode="addDataTypes">
+                    <xsl:with-param name="structureDefinition" select="$structureDefinition" tunnel="yes"/>
+                </xsl:apply-templates>
+            </xsl:variable>
             
             <test>
                 <name value="{$testName} - Check {$resourceType} {$resourceCount}"/>
                 <description value="Check if the previous operation results in a FHIR {$resourceType} that contains the values that are expected following Nictiz' materials (fixture .id: {$fixtureId})"/>
-                
-                <xsl:variable name="structureDefinition" select="document(concat($libPath, lower-case($fhirVersion), '/StructureDefinition-', $resourceType, '.xml'))"/>
                 
                 <!-- According to TestScript spec, the last available request/response will be used, so we do not specifically have to add a responseId. Could (should?) be a feature though -->
                 <xsl:call-template name="createAssert">
@@ -132,7 +138,7 @@
                 </variable>
                 
                 <!-- After this, we can use the variable in all following asserts -->
-                <xsl:apply-templates select="$fixture/f:*/f:*" mode="generateAsserts">
+                <xsl:apply-templates select="$fixtureWithDataTypes/f:*/f:*" mode="generateAsserts">
                     <xsl:with-param name="resourceType" select="$resourceType" tunnel="yes"/>
                     <xsl:with-param name="resourceCount" select="$resourceCount" tunnel="yes"/>
                     <xsl:with-param name="structureDefinition" select="$structureDefinition" tunnel="yes"/>
@@ -157,16 +163,9 @@
         
         <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
         
-        <xsl:variable name="dataType">
-            <xsl:call-template name="getDataType">
-                <xsl:with-param name="elementPath" select="$elementPath"/>
-            </xsl:call-template>
-        </xsl:variable>
-        
         <!-- Generate (part of) expression based on datatype -->
         <xsl:variable name="expression">
             <xsl:call-template name="createExpression">
-                <xsl:with-param name="dataType" select="$dataType"/>
                 <xsl:with-param name="elementPath" select="$elementPath"/>
             </xsl:call-template>
         </xsl:variable>
@@ -179,7 +178,6 @@
         
         <xsl:variable name="description">
             <xsl:call-template name="createDescription">
-                <xsl:with-param name="dataType" select="$dataType"/>
                 <xsl:with-param name="elementPath" select="$elementPath"/>
             </xsl:call-template>
             <!-- If there are two hyphens or more in label -->
@@ -195,6 +193,8 @@
                 <xsl:with-param name="label" select="$label"/>
             </xsl:call-template>
         </xsl:if>
+        
+        <xsl:variable name="dataType" select="@nts:dataType"/>
         <xsl:if test="($dataType = ('BackboneElement', 'Extension') and count(*) gt 1) or f:extension">
             <xsl:apply-templates select="*" mode="#current">
                 <xsl:with-param name="parentElementPath">
@@ -274,11 +274,7 @@
     
     <xsl:template name="createExpression">
         <xsl:param name="elementPath"/>
-        <xsl:param name="dataType">
-            <xsl:call-template name="getDataType">
-                <xsl:with-param name="elementPath" select="$elementPath"/>
-            </xsl:call-template>
-        </xsl:param>
+        <xsl:param name="dataType" select="@nts:dataType"/>
         
         <!-- We should take into account that element can have extension AND that element can have extension and not a value of itself -->
         <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
@@ -475,11 +471,7 @@
     
     <xsl:template name="createDescription">
         <xsl:param name="elementPath"/>
-        <xsl:param name="dataType">
-            <xsl:call-template name="getDataType">
-                <xsl:with-param name="elementPath" select="$elementPath"/>
-            </xsl:call-template>
-        </xsl:param>
+        <xsl:param name="dataType" select="@nts:dataType"/>
 
         <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
         
@@ -656,6 +648,42 @@
         </xsl:copy>
     </xsl:template>
     
+    <xsl:template match="f:*" mode="addDataTypes">
+        <xsl:param name="parentElementPath"/>
+        <xsl:variable name="elementPath">
+            <xsl:choose>
+                <xsl:when test="string-length($parentElementPath) gt 0">
+                    <xsl:value-of select="concat($parentElementPath, '.', local-name())"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:value-of select="local-name()"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+        <xsl:variable name="dataType">
+            <xsl:call-template name="getDataType">
+                <xsl:with-param name="elementPath" select="$elementPath"/>
+            </xsl:call-template>
+        </xsl:variable>
+        <xsl:copy>
+            <xsl:apply-templates select="@*"/>
+            <xsl:attribute name="nts:dataType" select="$dataType"/>
+            <xsl:choose>
+                <!-- Suppress messages -->
+                <xsl:when test="$dataType = ('Meta','Narrative','Identifier','CodeableConcept','Reference')">
+                    <xsl:apply-templates select="node()" mode="#default"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:apply-templates select="node()" mode="#current">
+                        <xsl:with-param name="parentElementPath" select="$elementPath"/>
+                    </xsl:apply-templates>
+                </xsl:otherwise>
+            </xsl:choose>
+            
+            
+        </xsl:copy>
+    </xsl:template>
+    
     <xsl:template match="node()|@*" mode="#all">
         <xsl:copy>
             <xsl:apply-templates select="node()|@*" mode="#current"/>
@@ -664,11 +692,23 @@
     
     <xsl:function name="nf:get-element-base" as="xs:string">
         <xsl:param name="localName"/>
-        <xsl:analyze-string select="$localName" regex="^[a-z]+">
-            <xsl:matching-substring>
-                <xsl:value-of select="."/>
-            </xsl:matching-substring>
-        </xsl:analyze-string>
+        <xsl:variable name="output">
+            <xsl:analyze-string select="$localName" regex="^[a-z]+">
+                <xsl:matching-substring>
+                    <xsl:value-of select="."/>
+                </xsl:matching-substring>
+            </xsl:analyze-string>
+        </xsl:variable>
+        
+        <!-- Always return _something_ -->
+        <xsl:choose>
+            <xsl:when test="string-length($output) gt 0">
+                <xsl:value-of select="$output"/>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:value-of select="$localName"/>
+            </xsl:otherwise>
+        </xsl:choose>
     </xsl:function>
     
 </xsl:stylesheet>
