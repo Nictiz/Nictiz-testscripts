@@ -343,6 +343,9 @@
             <xsl:choose>
                 <xsl:when test="@nts:polymorphic = 'true'">
                     <xsl:value-of select="nf:get-element-base(local-name())"/>
+                    <xsl:text>.ofType(</xsl:text>
+                    <xsl:value-of select="@nts:dataType"/>
+                    <xsl:text>)</xsl:text>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:value-of select="local-name()"/>
