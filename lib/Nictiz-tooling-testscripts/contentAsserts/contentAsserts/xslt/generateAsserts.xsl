@@ -288,7 +288,7 @@
                     <!-- '~' (equivalence) ignores case and whitespace. replace('.', '') removes dots (or other characters - hyphens perhaps?). Or should we be allowed to define overrides in our NTS-script? -->
                     <xsl:value-of select="concat('.replace(''.'', '''') ~ ''', normalize-space(translate(@value, '.', '')), '''')"/>
                 </xsl:when>
-                <xsl:when test="$dataType = 'dateTime' and $hasValue = true() and matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
+                <xsl:when test="$dataType = 'dateTime' and $hasValue = true() and (matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}') or fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) = 1)">
                     <xsl:choose>
                         <xsl:when test="matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
                             <xsl:text> ~ </xsl:text>
@@ -313,6 +313,10 @@
                             </xsl:analyze-string>
                             <!-- If time is added to T-date, it should be added to the assert -->
                             <!--<xsl:if test=""></xsl:if>-->
+                        </xsl:when>
+                        <xsl:when test="fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) = 1">
+                            <!-- There is only 1 dateTime, so the only thing we can do is check it exists -->
+                            <xsl:text>.exists()</xsl:text>
                         </xsl:when>
                     </xsl:choose>
                 </xsl:when>
@@ -482,7 +486,7 @@
             <xsl:when test="$dataType = 'string'">
                 <xsl:value-of select="concat('''', @value, '''')"/>
             </xsl:when>
-            <xsl:when test="$dataType = 'dateTime' and $hasValue = true() and matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
+            <xsl:when test="$dataType = 'dateTime' and $hasValue = true() and (matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}') or fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) = 1)">
                 <xsl:choose>
                     <xsl:when test="matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
                         <xsl:text>with a value that equals T-date </xsl:text>
@@ -506,6 +510,9 @@
                         </xsl:analyze-string>
                         <!-- If time is added to T-date, it should be added to the assert -->
                         <!--<xsl:if test=""></xsl:if>-->
+                    </xsl:when>
+                    <xsl:when test="fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) = 1">
+                        <!-- Nothing to be added, as we only check existance -->
                     </xsl:when>
                 </xsl:choose>
             </xsl:when>
@@ -610,6 +617,9 @@
                         <xsl:text> and </xsl:text>
                     </xsl:if>
                 </xsl:for-each>
+            </xsl:when>
+            <xsl:when test="$dataType = 'Narrative' and f:status/@value = 'extensions'">
+                <!-- Nothing to add -->
             </xsl:when>
             <xsl:when test="$dataType = 'Extension'">
                 <xsl:value-of select="concat('with url ''', @url, ''' ')"/>
