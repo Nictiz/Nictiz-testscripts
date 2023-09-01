@@ -421,7 +421,7 @@
                             </xsl:for-each>
                             <xsl:text>)</xsl:text>
                         </xsl:when>
-                        <xsl:when test="$dataType = ('BackboneElement','CodeableConcept','Coding','Meta','Quantity')">
+                        <xsl:when test="$dataType = ('Annotation','BackboneElement','CodeableConcept','Coding','Meta','Quantity')">
                             <!-- Basically a container.-->
                             <xsl:choose>
                                 <xsl:when test="$topLevel = true()">
