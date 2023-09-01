@@ -18,7 +18,7 @@
     <xsl:param name="fhirVersion" select="'STU3'"/>
     
     <!-- Fixed, but could be dependant on fhirVersion -->
-    <xsl:variable name="complexDataTypes" select="('Annotation','CodeableConcept','Coding','Meta','Reference','Identifier','Narrative')"/>
+    <xsl:variable name="complexDataTypes" select="('Annotation','CodeableConcept','Coding','Meta','Quantity','Reference','Identifier','Narrative')"/>
     
     <xsl:param name="libPath" select="concat(string-join(tokenize(static-base-uri(), '/')[fn:position() lt last() - 1], '/'), '/lib/')"/>
     
@@ -312,12 +312,13 @@
         
         <xsl:variable name="expression">
             <xsl:choose>
-                <xsl:when test="$dataType = 'Boolean'">
+                <xsl:when test="$dataType = ('Boolean','decimal')">
                     <xsl:value-of select="concat(' = ', @value)"/>
                 </xsl:when>
-                <xsl:when test="$dataType = 'string' and $parentDataType = 'Coding'">
-                    <!-- This is .display, and by definition not topLevel , so we do not have to do anything -->
-                    <xsl:text>.exists()</xsl:text>
+                <xsl:when test="$dataType = 'string' and $parentDataType = ('Coding','Quantity')">
+                    <!-- This is .display (in Coding) or .unit (in Quantity), and by definition not topLevel, so we do not have to do anything -->
+                    <!-- Adding a space to indicate that this is on purpose -->
+                    <xsl:text> </xsl:text>
                 </xsl:when>
                 <xsl:when test="$dataType = 'string'">
                     <!-- '~' (equivalence) ignores case and whitespace. replace('.', '') removes dots (or other characters - hyphens perhaps?). Or should we be allowed to define overrides in our NTS-script? -->
@@ -355,54 +356,38 @@
                         </xsl:when>
                     </xsl:choose>
                 </xsl:when>
-                <xsl:when test="$dataType = 'code' or ($dataType = 'uri' and $parentDataType = 'Coding')">
+                <xsl:when test="$dataType = 'code' and $parentDataType = 'Quantity'">
+                    <!-- .code can contain UCUM parentheses -->
+                    <xsl:choose>
+                        <xsl:when test="contains(@value, '{') and contains(@value, '}') ">
+                            <xsl:text>.matches('^</xsl:text>
+                            <xsl:analyze-string select="@value" regex="\{{\w*\}}">
+                                <xsl:matching-substring>
+                                    <xsl:text>\\{.+\\}</xsl:text>
+                                </xsl:matching-substring>
+                                <xsl:non-matching-substring>
+                                    <xsl:value-of select="."/>
+                                </xsl:non-matching-substring>
+                            </xsl:analyze-string>
+                            <xsl:text>$')</xsl:text>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="concat(' = ''', @value, '''')"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:when>
+                <xsl:when test="$dataType = 'code' or ($dataType = 'uri' and $parentDataType = ('Coding','Quantity'))">
+                    <!-- For uri's in Coding and Quantity (.system) or Meta (.profile), we want an exact match. I can imagine that in some situations we want to only check for existance. -->
                     <xsl:value-of select="concat(' = ''', @value, '''')"/>
+                </xsl:when>
+                <xsl:when test="$dataType = 'uri' and $parentDataType = 'Meta'">
+                    <!-- We want an exact match, but because .profile has max cardinality of * we have to use this construction. Just using '=' would mean _all_ .profiles present would have to be @value. -->
+                    <xsl:text>.exists($this = '</xsl:text>
+                    <xsl:value-of select="@value"/>
+                    <xsl:text>')</xsl:text>
                 </xsl:when>
                 <xsl:when test="$dataType = 'id'">
                     <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
-                </xsl:when>
-                <xsl:when test="$dataType = 'Quantity'">
-                    <xsl:text>.where(</xsl:text>
-                    <xsl:if test="f:value">
-                        <xsl:text>value = </xsl:text>
-                        <xsl:value-of select="f:value/@value"/>
-                        <xsl:if test="f:unit or f:system or f:code"> and </xsl:if>
-                    </xsl:if>
-                    <!-- Do nothing with f:comparator -->
-                    <xsl:if test="f:unit">
-                        <xsl:text>unit.exists()</xsl:text>
-                        <xsl:if test="f:system or f:code"> and </xsl:if>
-                    </xsl:if>
-                    <xsl:if test="f:system">
-                        <xsl:text>system = '</xsl:text>
-                        <xsl:value-of select="f:system/@value"/>
-                        <xsl:text>'</xsl:text>
-                        <xsl:if test="f:code"> and </xsl:if>
-                    </xsl:if>
-                    <xsl:if test="f:code">
-                        <xsl:variable name="value" select="f:code/@value"/>
-                        <xsl:text>code</xsl:text>
-                        <xsl:choose>
-                            <xsl:when test="contains($value, '{') and contains($value, '}') ">
-                                <xsl:text>.matches('^</xsl:text>
-                                <xsl:analyze-string select="$value" regex="\{{\w*\}}">
-                                    <xsl:matching-substring>
-                                        <xsl:text>\\{.+\\}</xsl:text>
-                                    </xsl:matching-substring>
-                                    <xsl:non-matching-substring>
-                                        <xsl:value-of select="."/>
-                                    </xsl:non-matching-substring>
-                                </xsl:analyze-string>
-                                <xsl:text>$')</xsl:text>
-                            </xsl:when>
-                            <xsl:otherwise>
-                                <xsl:text> = '</xsl:text>
-                                <xsl:value-of select="f:code/@value"/>
-                                <xsl:text>'</xsl:text>
-                            </xsl:otherwise>
-                        </xsl:choose>
-                    </xsl:if>
-                    <xsl:text>).exists()</xsl:text>
                 </xsl:when>
                 <xsl:when test="$dataType = 'Identifier'">
                     <xsl:text>.exists(</xsl:text>
@@ -416,20 +401,6 @@
                     <!-- Check if (reference OR identifier) and display exist -->
                     <xsl:text>.exists((reference or identifier) and display)</xsl:text>
                 </xsl:when>
-                <xsl:when test="$dataType = 'Meta'">
-                    <!-- There is a general assert to check for Meta.profile, which can be removed if this specific check is applied. -->
-                    <xsl:text>.exists(</xsl:text>
-                    <xsl:for-each select="f:profile">
-                        <xsl:text>profile.exists($this = '</xsl:text>
-                        <xsl:value-of select="@value"/>
-                        <xsl:text>')</xsl:text>
-                    </xsl:for-each>
-                    <xsl:text>)</xsl:text>
-                    <!-- Not compatible with other elements being present - e.g. f:tag -->
-                    <xsl:if test="*[not(self::f:profile)]">
-                        <xsl:message select="concat('TODO EXTENSION: ',$dataType)"/>
-                    </xsl:if>
-                </xsl:when>
                 <xsl:when test="$dataType = 'Narrative' and f:status/@value = 'extensions'">
                     <!-- Narrative isn't always present in fixtures. If not present, it is generated at a later stage. We should find a way to always add this assert. -->
                     <xsl:text>.exists()</xsl:text>
@@ -437,42 +408,46 @@
                 <xsl:when test="$dataType = 'Extension'">
                     <xsl:text>('</xsl:text>
                     <xsl:value-of select="@url"/>
-                    <xsl:text>').where(</xsl:text>
+                    <xsl:text>')</xsl:text>
+                    <xsl:choose>
+                        <xsl:when test="$topLevel = true()">
+                            <xsl:text>.exists(</xsl:text>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:text>.where(</xsl:text>
+                        </xsl:otherwise>
+                    </xsl:choose>
                     <xsl:for-each select="*">
                         <xsl:call-template name="createExpression">
                             <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
-                        </xsl:call-template>
-                        <xsl:if test="not(position() = last())">
-                            <xsl:text> and </xsl:text>
-                        </xsl:if>
-                    </xsl:for-each>
-                    <xsl:text>).exists()</xsl:text>
-                </xsl:when>
-                <xsl:when test="$dataType = ('BackboneElement','CodeableConcept','Coding')">
-                    <!-- Basically a container. Problem is expressions get very complicated very quickly. But that doesn't mean we can start from there (as long as it's automatically generated -->
-                    <xsl:text>.where(</xsl:text>
-                    <xsl:for-each select="*">
-                        <xsl:call-template name="createExpression">
-                            <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
-                            <xsl:with-param name="topLevel">
-                                <xsl:choose>
-                                    <xsl:when test="$dataType = 'CodeableConcept'">
-                                        <xsl:value-of select="false()"/>
-                                    </xsl:when>
-                                    <xsl:otherwise>
-                                        <xsl:value-of select="true()"/>
-                                    </xsl:otherwise>
-                                </xsl:choose>
-                            </xsl:with-param>
+                            <xsl:with-param name="topLevel" select="false()"/>
                         </xsl:call-template>
                         <xsl:if test="not(position() = last())">
                             <xsl:text> and </xsl:text>
                         </xsl:if>
                     </xsl:for-each>
                     <xsl:text>)</xsl:text>
-                    <xsl:if test="$topLevel = true()">
-                        <xsl:text>.exists()</xsl:text>
-                    </xsl:if>
+                </xsl:when>
+                <xsl:when test="$dataType = ('BackboneElement','CodeableConcept','Coding','Meta','Quantity')">
+                    <!-- Basically a container. Problem is expressions get very complicated very quickly. But that doesn't mean we can start from there (as long as it's automatically generated -->
+                    <xsl:choose>
+                        <xsl:when test="$topLevel = true()">
+                            <xsl:text>.exists(</xsl:text>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:text>.where(</xsl:text>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                    <xsl:for-each select="*">
+                        <xsl:call-template name="createExpression">
+                            <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
+                            <xsl:with-param name="topLevel" select="false()"/>
+                        </xsl:call-template>
+                        <xsl:if test="not(position() = last())">
+                            <xsl:text> and </xsl:text>
+                        </xsl:if>
+                    </xsl:for-each>
+                    <xsl:text>)</xsl:text>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:message select="concat('TODO EXPRESSION: ', $elementPath, ' - ',$dataType)"/>
@@ -481,7 +456,10 @@
         </xsl:variable>
         
         <xsl:if test="string-length($expression) gt 0">
-            <xsl:value-of select="concat(nf:get-element-base(local-name()), $expression)"/>
+            <xsl:value-of select="nf:get-element-base(local-name())"/>
+            <xsl:if test="string-length(fn:normalize-space($expression)) gt 0">
+                <xsl:value-of select="$expression"/>
+            </xsl:if>
         </xsl:if>
         
     </xsl:template>
