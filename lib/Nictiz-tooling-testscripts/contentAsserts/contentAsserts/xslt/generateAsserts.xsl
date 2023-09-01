@@ -17,6 +17,9 @@
     <!-- FHIR version to be able to retrieve the correct FHIR core resource type StructureDefinition -->
     <xsl:param name="fhirVersion" select="'STU3'"/>
     
+    <!-- Fixed, but could be dependant on fhirVersion -->
+    <xsl:variable name="complexDataTypes" select="('Annotation','CodeableConcept','Coding','Meta','Reference','Identifier','Narrative')"/>
+    
     <xsl:param name="libPath" select="concat(string-join(tokenize(static-base-uri(), '/')[fn:position() lt last() - 1], '/'), '/lib/')"/>
     
     <!-- The main template, which will call the remaining templates. -->
@@ -101,6 +104,8 @@
                     <xsl:with-param name="structureDefinition" select="$structureDefinition" tunnel="yes"/>
                 </xsl:apply-templates>
             </xsl:variable>
+            <!-- debug -->
+            <!--<xsl:result-document href="test.xml"><xsl:copy-of select="$fixtureWithDataTypes"/></xsl:result-document>-->
             
             <test>
                 <name value="{$testName} - Check {$resourceType} {$resourceCount}"/>
@@ -141,7 +146,6 @@
                 <xsl:apply-templates select="$fixtureWithDataTypes/f:*/f:*" mode="generateAsserts">
                     <xsl:with-param name="resourceType" select="$resourceType" tunnel="yes"/>
                     <xsl:with-param name="resourceCount" select="$resourceCount" tunnel="yes"/>
-                    <xsl:with-param name="structureDefinition" select="$structureDefinition" tunnel="yes"/>
                     <xsl:with-param name="idVariable" select="$idVariable" tunnel="yes"/>
                     <xsl:with-param name="parentElementPath" select="$resourceType"/>
                     <xsl:with-param name="parentLabel" select="$resourceCount"/>
@@ -216,9 +220,39 @@
         <xsl:param name="resourceType" tunnel="yes"/>
         <xsl:param name="structureDefinition" tunnel="yes"/>
         <xsl:param name="elementPath" required="yes"/>
+        <xsl:param name="parentDataType"/>
         
         <xsl:variable name="polymorphic" select="concat(substring-before($elementPath, local-name()), nf:get-element-base(local-name()), '[x]')"/>
         <xsl:variable name="polymorphicDataType" select="substring-after(local-name(), nf:get-element-base(local-name()))"/>
+        
+        <!-- If datatype, overrule elementPath and structureDefinition -->
+        <xsl:variable name="structureDefinition">
+            <xsl:choose>
+                <xsl:when test="$parentDataType = $complexDataTypes">
+                    <xsl:copy-of select="document(concat($libPath, lower-case($fhirVersion), '/dataTypes/StructureDefinition-', $parentDataType, '.xml'))"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:copy-of select="$structureDefinition"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+        
+        <xsl:variable name="elementPath">
+            <xsl:choose>
+                <xsl:when test="$parentDataType = $complexDataTypes">
+                    <xsl:variable name="head">
+                        <xsl:call-template name="substring-before-last">
+                            <xsl:with-param name="input" select="$elementPath"/>
+                            <xsl:with-param name="substr" select="'.'"/>
+                        </xsl:call-template>
+                    </xsl:variable>
+                    <xsl:value-of select="replace($elementPath, $head, $parentDataType)"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:value-of select="$elementPath"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
         
         <xsl:choose>
             <xsl:when test="$structureDefinition/f:StructureDefinition/f:snapshot/f:element/@id = $elementPath">
@@ -229,14 +263,11 @@
                 <!-- Element is polymorphic, lets use its name to guess data type -->
                 <xsl:value-of select="$structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $polymorphic]/f:type/f:code/@value[lower-case(.) = lower-case($polymorphicDataType)]"/>
             </xsl:when>
+            <!-- If extension, datatype is extension. Not present in Snapshot -->
+            <xsl:when test="self::f:extension">Extension</xsl:when>
             <!-- If parent is extension, definition of extension isn't in Snapshot - this means datatype is either Extension or some value[x] -->
-            <xsl:when test="parent::*/local-name() = 'extension'">
-                <xsl:choose>
-                    <xsl:when test="self::f:extension">Extension</xsl:when>
-                    <xsl:otherwise>
-                        <xsl:value-of select="$polymorphicDataType"/>
-                    </xsl:otherwise>
-                </xsl:choose>
+            <xsl:when test="parent::f:extension">
+                <xsl:value-of select="$polymorphicDataType"/>
             </xsl:when>
             <xsl:otherwise>
                 <xsl:message>Could not find <xsl:value-of select="$elementPath"/></xsl:message>
@@ -275,20 +306,24 @@
     <xsl:template name="createExpression">
         <xsl:param name="elementPath"/>
         <xsl:param name="dataType" select="@nts:dataType"/>
-        
-        <!-- We should take into account that element can have extension AND that element can have extension and not a value of itself -->
-        <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
+        <xsl:param name="parentDataType" select="parent::f:*/@nts:dataType"/>
+        <!-- Only top level asserts need a .exists() function -->
+        <xsl:param name="topLevel" select="true()"/>
         
         <xsl:variable name="expression">
             <xsl:choose>
                 <xsl:when test="$dataType = 'Boolean'">
                     <xsl:value-of select="concat(' = ', @value)"/>
                 </xsl:when>
+                <xsl:when test="$dataType = 'string' and $parentDataType = 'Coding'">
+                    <!-- This is .display, and by definition not topLevel , so we do not have to do anything -->
+                    <xsl:text>.exists()</xsl:text>
+                </xsl:when>
                 <xsl:when test="$dataType = 'string'">
                     <!-- '~' (equivalence) ignores case and whitespace. replace('.', '') removes dots (or other characters - hyphens perhaps?). Or should we be allowed to define overrides in our NTS-script? -->
                     <xsl:value-of select="concat('.replace(''.'', '''') ~ ''', normalize-space(translate(@value, '.', '')), '''')"/>
                 </xsl:when>
-                <xsl:when test="$dataType = 'dateTime' and $hasValue = true() and (matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}') or fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) = 1)">
+                <xsl:when test="$dataType = 'dateTime' and (matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}') or fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) = 1)">
                     <xsl:choose>
                         <xsl:when test="matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
                             <xsl:text> ~ </xsl:text>
@@ -320,46 +355,11 @@
                         </xsl:when>
                     </xsl:choose>
                 </xsl:when>
-                <xsl:when test="$dataType = 'code' and $hasValue = true()">
+                <xsl:when test="$dataType = 'code' or ($dataType = 'uri' and $parentDataType = 'Coding')">
                     <xsl:value-of select="concat(' = ''', @value, '''')"/>
                 </xsl:when>
                 <xsl:when test="$dataType = 'id'">
                     <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
-                </xsl:when>
-                <xsl:when test="$dataType = 'Coding'">
-                    <!-- Extension? -->
-                    <xsl:text>.where(</xsl:text>
-                    <xsl:if test="f:system">
-                        <xsl:text>system = '</xsl:text>
-                        <xsl:value-of select="f:system/@value"/>
-                        <xsl:text>'</xsl:text>
-                        <xsl:if test="f:code or f:display"> and </xsl:if>
-                    </xsl:if>
-                    <!-- Do nothing with f:version -->
-                    <xsl:if test="f:code">
-                        <xsl:text>code = '</xsl:text>
-                        <xsl:value-of select="f:code/@value"/>
-                        <xsl:text>'</xsl:text>
-                        <xsl:if test="f:display"> and </xsl:if>
-                    </xsl:if>
-                    <xsl:if test="f:display">
-                        <xsl:text>display.exists()</xsl:text>
-                    </xsl:if>
-                    <xsl:text>)</xsl:text>
-                    <!-- Do nothing with f:userSelected -->
-                </xsl:when>
-                <xsl:when test="$dataType = 'CodeableConcept'">
-                    <!-- How to handle .text? We hardly use it ourselves -->
-                    <xsl:text>.where(</xsl:text>
-                    <xsl:for-each select="f:coding">
-                        <xsl:call-template name="createExpression">
-                            <xsl:with-param name="dataType" select="'Coding'"/>
-                        </xsl:call-template>
-                        <xsl:if test="not(position() = last())">
-                            <xsl:text> and </xsl:text>
-                        </xsl:if>
-                    </xsl:for-each>
-                    <xsl:text>).exists()</xsl:text>
                 </xsl:when>
                 <xsl:when test="$dataType = 'Quantity'">
                     <xsl:text>.where(</xsl:text>
@@ -448,18 +448,31 @@
                     </xsl:for-each>
                     <xsl:text>).exists()</xsl:text>
                 </xsl:when>
-                <xsl:when test="$dataType = 'BackboneElement'">
+                <xsl:when test="$dataType = ('BackboneElement','CodeableConcept','Coding')">
                     <!-- Basically a container. Problem is expressions get very complicated very quickly. But that doesn't mean we can start from there (as long as it's automatically generated -->
                     <xsl:text>.where(</xsl:text>
                     <xsl:for-each select="*">
                         <xsl:call-template name="createExpression">
                             <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
+                            <xsl:with-param name="topLevel">
+                                <xsl:choose>
+                                    <xsl:when test="$dataType = 'CodeableConcept'">
+                                        <xsl:value-of select="false()"/>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <xsl:value-of select="true()"/>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                            </xsl:with-param>
                         </xsl:call-template>
                         <xsl:if test="not(position() = last())">
                             <xsl:text> and </xsl:text>
                         </xsl:if>
                     </xsl:for-each>
-                    <xsl:text>).exists()</xsl:text>
+                    <xsl:text>)</xsl:text>
+                    <xsl:if test="$topLevel = true()">
+                        <xsl:text>.exists()</xsl:text>
+                    </xsl:if>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:message select="concat('TODO EXPRESSION: ', $elementPath, ' - ',$dataType)"/>
@@ -660,6 +673,7 @@
     
     <xsl:template match="f:*" mode="addDataTypes">
         <xsl:param name="parentElementPath"/>
+        <xsl:param name="parentDataType"/>
         <xsl:variable name="elementPath">
             <xsl:choose>
                 <xsl:when test="string-length($parentElementPath) gt 0">
@@ -673,24 +687,16 @@
         <xsl:variable name="dataType">
             <xsl:call-template name="getDataType">
                 <xsl:with-param name="elementPath" select="$elementPath"/>
+                <xsl:with-param name="parentDataType" select="$parentDataType"/>
             </xsl:call-template>
         </xsl:variable>
         <xsl:copy>
             <xsl:apply-templates select="@*"/>
             <xsl:attribute name="nts:dataType" select="$dataType"/>
-            <xsl:choose>
-                <!-- Suppress messages -->
-                <xsl:when test="$dataType = ('Meta','Narrative','Identifier','CodeableConcept','Reference')">
-                    <xsl:apply-templates select="node()" mode="#default"/>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:apply-templates select="node()" mode="#current">
-                        <xsl:with-param name="parentElementPath" select="$elementPath"/>
-                    </xsl:apply-templates>
-                </xsl:otherwise>
-            </xsl:choose>
-            
-            
+            <xsl:apply-templates select="node()" mode="#current">
+                <xsl:with-param name="parentElementPath" select="$elementPath"/>
+                <xsl:with-param name="parentDataType" select="$dataType"/>
+            </xsl:apply-templates>
         </xsl:copy>
     </xsl:template>
     
@@ -720,5 +726,21 @@
             </xsl:otherwise>
         </xsl:choose>
     </xsl:function>
+    
+    <xsl:template name="substring-before-last">
+        <xsl:param name="input" />
+        <xsl:param name="substr" />
+        <xsl:if test="$substr and contains($input, $substr)">
+            <xsl:variable name="temp" select="substring-after($input, $substr)" />
+            <xsl:value-of select="substring-before($input, $substr)" />
+            <xsl:if test="contains($temp, $substr)">
+                <xsl:value-of select="$substr" />
+                <xsl:call-template name="substring-before-last">
+                    <xsl:with-param name="input" select="$temp" />
+                    <xsl:with-param name="substr" select="$substr" />
+                </xsl:call-template>
+            </xsl:if>
+        </xsl:if>
+    </xsl:template>
     
 </xsl:stylesheet>
