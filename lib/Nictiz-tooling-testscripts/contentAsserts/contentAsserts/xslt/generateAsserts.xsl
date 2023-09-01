@@ -363,14 +363,15 @@
                     <xsl:value-of select="$expressionPrefix"/>
                     <xsl:choose>
                         <xsl:when test="@value and f:extension">
-                            <xsl:choose>
+                            <!-- Failing because of KT-393  -->
+                            <!--<xsl:choose>
                                 <xsl:when test="$topLevel = true()">
                                     <xsl:text>.exists(</xsl:text>
                                 </xsl:when>
-                                <xsl:otherwise>
-                                    <xsl:text>.where(</xsl:text>
-                                </xsl:otherwise>
-                            </xsl:choose>
+                                <xsl:otherwise>-->
+                            <xsl:text>.where(</xsl:text>
+                            <!--</xsl:otherwise>
+                            </xsl:choose>-->
                             <xsl:text>$this</xsl:text>
                             <xsl:call-template name="createExpressionSimple"/>
                             <xsl:text> and </xsl:text>
@@ -384,18 +385,28 @@
                                 </xsl:if>
                             </xsl:for-each>
                             <xsl:text>)</xsl:text>
+                            <!-- Temp because of KT-393 -->
+                            <xsl:if test="$topLevel = true()">
+                                <xsl:text>.exists()</xsl:text>
+                            </xsl:if>
                         </xsl:when>
                         <xsl:when test="$dataType = 'Identifier'">
-                            <xsl:text>.exists(</xsl:text>
+                            <!-- KT-393 -->
+                            <xsl:text>.where(</xsl:text>
+                            <!--<xsl:text>.exists(</xsl:text>-->
                             <xsl:choose>
                                 <xsl:when test="f:system">system</xsl:when>
                                 <xsl:when test="f:type">type</xsl:when>
                             </xsl:choose>
                             <xsl:text> and value)</xsl:text>
+                            <!-- KT-393 -->
+                            <xsl:text>.exists()</xsl:text>
                         </xsl:when>
                         <xsl:when test="$dataType = 'Reference'">
                             <!-- Check if (reference OR identifier) and display exist -->
-                            <xsl:text>.exists((reference or identifier) and display)</xsl:text>
+                            <!-- KT-393 -->
+                            <xsl:text>.where((reference or identifier) and display).exists()</xsl:text>
+                            <!--<xsl:text>.exists((reference or identifier) and display)</xsl:text>-->
                         </xsl:when>
                         <xsl:when test="$dataType = 'Narrative' and f:status/@value = 'extensions'">
                             <!-- Narrative isn't always present in fixtures. If not present, it is generated at a later stage. We should find a way to always add this assert. -->
@@ -405,14 +416,15 @@
                             <xsl:text>('</xsl:text>
                             <xsl:value-of select="@url"/>
                             <xsl:text>')</xsl:text>
-                            <xsl:choose>
+                            <!-- Failing because of KT-393  -->
+                            <!--<xsl:choose>
                                 <xsl:when test="$topLevel = true()">
                                     <xsl:text>.exists(</xsl:text>
                                 </xsl:when>
-                                <xsl:otherwise>
-                                    <xsl:text>.where(</xsl:text>
-                                </xsl:otherwise>
-                            </xsl:choose>
+                                <xsl:otherwise>-->
+                            <xsl:text>.where(</xsl:text>
+                            <!--</xsl:otherwise>
+                            </xsl:choose>-->
                             <xsl:for-each select="*">
                                 <xsl:call-template name="createExpression">
                                     <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
@@ -423,17 +435,22 @@
                                 </xsl:if>
                             </xsl:for-each>
                             <xsl:text>)</xsl:text>
+                            <!-- Temp because of KT-393 -->
+                            <xsl:if test="$topLevel = true()">
+                                <xsl:text>.exists()</xsl:text>
+                            </xsl:if>
                         </xsl:when>
                         <xsl:when test="$dataType = ('Annotation','BackboneElement','CodeableConcept','Coding','Meta','Quantity')">
                             <!-- Basically a container.-->
-                            <xsl:choose>
+                            <!-- Failing because of KT-393  -->
+                            <!--<xsl:choose>
                                 <xsl:when test="$topLevel = true()">
                                     <xsl:text>.exists(</xsl:text>
                                 </xsl:when>
-                                <xsl:otherwise>
+                                <xsl:otherwise>-->
                                     <xsl:text>.where(</xsl:text>
-                                </xsl:otherwise>
-                            </xsl:choose>
+                                <!--</xsl:otherwise>
+                            </xsl:choose>-->
                             <xsl:for-each select="*">
                                 <xsl:call-template name="createExpression">
                                     <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
@@ -444,6 +461,10 @@
                                 </xsl:if>
                             </xsl:for-each>
                             <xsl:text>)</xsl:text>
+                            <!-- Temp because of KT-393 -->
+                            <xsl:if test="$topLevel = true()">
+                                <xsl:text>.exists()</xsl:text>
+                            </xsl:if>
                         </xsl:when>
                         <xsl:otherwise>
                             <xsl:message select="concat('TODO EXPRESSION: ', $elementPath, ' - ',$dataType)"/>
@@ -458,7 +479,9 @@
                             <xsl:text>.exists()</xsl:text>
                         </xsl:when>
                         <xsl:otherwise>
-                            <xsl:text>exists(</xsl:text>
+                            <!-- KT-393 -->
+                            <xsl:text>where(</xsl:text>
+                            <!--<xsl:text>exists(</xsl:text>-->
                             <xsl:value-of select="$expressionPrefix"/>
                             <!-- There are multiple dateTimes. We calculate the difference with the first and put that in an assert -->
                             <xsl:variable name="dateTime1" select="preceding::*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))][last()]"/>
@@ -476,6 +499,8 @@
                             <xsl:text> + </xsl:text>
                             <xsl:value-of select="days-from-duration($duration)"/>
                             <xsl:text> days)</xsl:text>
+                            <!-- KT-393 -->
+                            <xsl:text>.exists()</xsl:text>
                         </xsl:otherwise>
                     </xsl:choose>
                 </xsl:when>
@@ -564,9 +589,13 @@
                 </xsl:when>
                 <xsl:when test="$dataType = 'uri' and $parentDataType = 'Meta'">
                     <!-- We want an exact match, but because .profile has max cardinality of * we have to use this construction. Just using '=' would mean _all_ .profiles present would have to be @value. -->
-                    <xsl:text>.exists($this = '</xsl:text>
+                    <!-- KT-393 -->
+                    <xsl:text>.where($this = '</xsl:text>
+                    <!--<xsl:text>.exists($this = '</xsl:text>-->
                     <xsl:value-of select="@value"/>
                     <xsl:text>')</xsl:text>
+                    <!-- KT-393 -->
+                    <xsl:text>.exists()</xsl:text>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:message select="concat('TODO SIMPLE EXPRESSION: ',local-name(), ' - ',$dataType)"/>
