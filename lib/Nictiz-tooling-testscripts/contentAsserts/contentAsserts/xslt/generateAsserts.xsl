@@ -214,6 +214,158 @@
         
         <xsl:variable name="dataType" select="@nts:dataType"/>
         
+        <xsl:if test="$dataType = 'dateTime'">
+            <!-- By default, we only check if dateTimes exist. Additionally, there are extra scenario's we can use to check: 
+            - If T-dates are used, we can check exact match (warningOnly = false)
+            - If multiple dates are used, we can check either:
+            - - Exact difference (calculate exact differences between dates and check with assert)
+            - - Relative difference (use < and/or > to compare them)
+            -->
+            <xsl:variable name="expressionPrefix">
+                <xsl:choose>
+                    <xsl:when test="@nts:polymorphic = 'true'">
+                        <xsl:value-of select="nf:get-element-base(local-name())"/>
+                        <xsl:text>.ofType(</xsl:text>
+                        <xsl:value-of select="@nts:dataType"/>
+                        <xsl:text>)</xsl:text>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:value-of select="local-name()"/>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:variable>
+            
+            <xsl:choose>
+                <!-- T-date -->
+                <xsl:when test="matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
+                    <xsl:variable name="expression">
+                        <xsl:text> ~ @${T} </xsl:text>
+                        <xsl:call-template name="analyzeTDate"/>
+                    </xsl:variable>
+                    <xsl:variable name="description">
+                        <xsl:text>with a value that equals T-date </xsl:text>
+                        <xsl:call-template name="analyzeTDate"/>
+                    </xsl:variable>
+                    
+                    <xsl:call-template name="createAssert">
+                        <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', substring-after($elementPath, $resourceType), ' ', $description)"/>
+                        <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
+                        <xsl:with-param name="label" select="concat($label, '-checkDateTime')"/>
+                        <xsl:with-param name="warningOnly" select="true()"/>
+                    </xsl:call-template>
+                </xsl:when>
+                <xsl:when test="fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) gt 1 and preceding::*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]">
+                    <xsl:variable name="dateTime1" select="preceding::*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))][last()]"/>
+                    <xsl:variable name="durationAsString" select="xs:string(xs:date(./@value) - xs:date($dateTime1/@value))" />
+                    
+                    <xsl:variable name="expression">
+                        <!-- KT-393 -->
+                        <xsl:text>where(</xsl:text>
+                        <!--<xsl:text>exists(</xsl:text>-->
+                        <xsl:value-of select="$expressionPrefix"/>
+                        <xsl:choose>
+                            <xsl:when test="starts-with($durationAsString, '-')"> &lt; </xsl:when>
+                            <xsl:otherwise> &gt; </xsl:otherwise>
+                        </xsl:choose>
+                        <xsl:choose>
+                            <xsl:when test="$dateTime1/@nts:polymorphic = 'true'">
+                                <xsl:value-of select="nf:get-element-base($dateTime1/local-name())"/>
+                                <xsl:text>.ofType(</xsl:text>
+                                <xsl:value-of select="$dateTime1/@nts:dataType"/>
+                                <xsl:text>)</xsl:text>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:value-of select="$dateTime1/local-name()"/>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                        <xsl:text>)</xsl:text>
+                        <!-- KT-393 -->
+                        <xsl:text>.exists()</xsl:text>
+                    </xsl:variable>
+                    <xsl:variable name="description">
+                        <xsl:text>which is </xsl:text>
+                        <xsl:choose>
+                            <xsl:when test="starts-with($durationAsString, '-')">earlier than </xsl:when>
+                            <xsl:otherwise>later than </xsl:otherwise>
+                        </xsl:choose>
+                        <xsl:value-of select="$dateTime1/local-name()"/>
+                    </xsl:variable>
+                    
+                    <xsl:call-template name="createAssert">
+                        <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', substring-after($elementPath, $resourceType), ' ', $description)"/>
+                        <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
+                        <xsl:with-param name="label" select="concat($label, '-checkDateTime')"/>
+                        <!--<xsl:with-param name="warningOnly" select="true()"/>-->
+                    </xsl:call-template>
+                </xsl:when>
+            </xsl:choose>
+            
+            <!-- Compare 2 dates -->
+            <!--<xsl:when test="$dataType = 'dateTime' and fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) gt 1">
+                        <!-\- KT-393 -\->
+                        <xsl:text>where(</xsl:text>
+                        <!-\-<xsl:text>exists(</xsl:text>-\->
+                        <xsl:value-of select="$expressionPrefix"/>
+                        <!-\- There are multiple dateTimes. We calculate the difference with the first and put that in an assert -\->
+                        <xsl:variable name="dateTime1" select="preceding::*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))][last()]"/>
+                        <!-\- Duration is in days. When taking into account leap years, I think it is difficult to split up this number in years/months/days -\->
+                        <xsl:variable name="duration" select="xs:date(./@value) - xs:date($dateTime1/@value)" />
+                        <xsl:text> ~ </xsl:text>
+                        <xsl:choose>
+                            <xsl:when test="$dateTime1/@nts:polymorphic = 'true'">
+                                <xsl:value-of select="nf:get-element-base($dateTime1/local-name())"/>
+                                <xsl:text>.ofType(</xsl:text>
+                                <xsl:value-of select="$dateTime1/@nts:dataType"/>
+                                <xsl:text>)</xsl:text>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:value-of select="$dateTime1/local-name()"/>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                        <xsl:text> + </xsl:text>
+                        <xsl:value-of select="days-from-duration($duration)"/>
+                        <xsl:text> days)</xsl:text>
+                        <!-\- KT-393 -\->
+                        <xsl:text>.exists()</xsl:text>
+                </xsl:choose>
+            </xsl:when>-->
+            
+            <!-- Description -->
+            <!--<xsl:choose>
+                <xsl:when test="matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
+                    <xsl:text>with a value that equals T-date </xsl:text>
+                    <xsl:analyze-string select="@value" regex="\$\{{DATE, T, (Y|M|D), ([-]?)(\d+)\}}">
+                        <xsl:matching-substring>
+                            <xsl:choose>
+                                <xsl:when test="regex-group(2) = '-'">- </xsl:when>
+                                <xsl:otherwise>+ </xsl:otherwise>
+                            </xsl:choose>
+                            <xsl:value-of select="regex-group(3)"/>
+                            <xsl:text> </xsl:text>
+                            <xsl:choose>
+                                <xsl:when test="regex-group(1) = 'Y'">years</xsl:when>
+                                <xsl:when test="regex-group(1) = 'M'">months</xsl:when>
+                                <xsl:when test="regex-group(1) = 'D'">days</xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:message>Unkown T-date symbol: <xsl:value-of select="regex-group(1)"/></xsl:message>
+                                </xsl:otherwise>
+                            </xsl:choose>
+                        </xsl:matching-substring>
+                    </xsl:analyze-string>
+                    <!-\- If time is added to T-date, it should be added to the assert -\->
+                    <!-\-<xsl:if test=""></xsl:if>-\->
+                </xsl:when>
+                <xsl:when test="fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) = 1">
+                    <!-\- Nothing to be added, as we only check existance -\->
+                </xsl:when>
+                
+            </xsl:choose>-->
+        </xsl:if>
+            
+        <xsl:if test="$dataType = 'Identifier'">
+            <!-- System should not contain Nictiz OID or 'example-xis' url -->
+        </xsl:if>
+        
         <!-- For some elements, we want te create additional asserts -->
         <xsl:if test="@value and f:*">
             <xsl:variable name="simpleElement">
@@ -242,10 +394,6 @@
                     <xsl:with-param name="label" select="concat($label, '-1')"/>
                 </xsl:call-template>
             </xsl:if>
-        </xsl:if>
-        
-        <xsl:if test="$dataType = 'Identifier'">
-            <!-- System should not contain Nictiz OID or 'example-xis' url -->
         </xsl:if>
                 
         <xsl:if test="($dataType = ('BackboneElement', 'Extension') and count(*) gt 1) or f:extension">
@@ -506,42 +654,6 @@
                         </xsl:otherwise>
                     </xsl:choose>
                 </xsl:when>
-                <!-- Comparing 2 elements is not simple -->
-                <xsl:when test="$dataType = 'dateTime' and fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) gt 1">
-                    <xsl:choose>
-                        <xsl:when test="not(preceding::*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))])">
-                            <xsl:value-of select="$expressionPrefix"/>
-                            <xsl:text>.exists()</xsl:text>
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <!-- KT-393 -->
-                            <xsl:text>where(</xsl:text>
-                            <!--<xsl:text>exists(</xsl:text>-->
-                            <xsl:value-of select="$expressionPrefix"/>
-                            <!-- There are multiple dateTimes. We calculate the difference with the first and put that in an assert -->
-                            <xsl:variable name="dateTime1" select="preceding::*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))][last()]"/>
-                            <!-- Duration is in days. When taking into account leap years, I think it is difficult to split up this number in years/months/days -->
-                            <xsl:variable name="duration" select="xs:date(./@value) - xs:date($dateTime1/@value)" />
-                            <xsl:text> ~ </xsl:text>
-                            <xsl:choose>
-                                <xsl:when test="$dateTime1/@nts:polymorphic = 'true'">
-                                    <xsl:value-of select="nf:get-element-base($dateTime1/local-name())"/>
-                                    <xsl:text>.ofType(</xsl:text>
-                                    <xsl:value-of select="$dateTime1/@nts:dataType"/>
-                                    <xsl:text>)</xsl:text>
-                                </xsl:when>
-                                <xsl:otherwise>
-                                    <xsl:value-of select="$dateTime1/local-name()"/>
-                                </xsl:otherwise>
-                            </xsl:choose>
-                            <xsl:text> + </xsl:text>
-                            <xsl:value-of select="days-from-duration($duration)"/>
-                            <xsl:text> days)</xsl:text>
-                            <!-- KT-393 -->
-                            <xsl:text>.exists()</xsl:text>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </xsl:when>
                 <xsl:otherwise>
                     <xsl:value-of select="$expressionPrefix"/>
                     <xsl:call-template name="createExpressionSimple"/>
@@ -567,39 +679,11 @@
                     <!-- This is .display (in Coding) or .unit (in Quantity), and by definition not topLevel, so we do not have to do anything -->
                 </xsl:when>
                 <xsl:when test="$dataType = 'string'">
-                    <!-- '~' (equivalence) ignores case and whitespace. replace('.', '') removes dots (or other characters - hyphens perhaps?). Or should we be allowed to define overrides in our NTS-script? -->
-                    <xsl:value-of select="concat('.replace(''.'', '''') ~ ''', normalize-space(translate(@value, '.', '')), '''')"/>
+                    <!-- '~' (equivalence) ignores case and whitespace. replace('.', '') removes dot and comma (or other characters - hyphens perhaps?). Or should we be allowed to define overrides in our NTS-script? -->
+                    <xsl:value-of select="concat('.replace(''.'', '''').replace('','', '''') ~ ''', normalize-space(translate(@value, '.,', '')), '''')"/>
                 </xsl:when>
-                <xsl:when test="$dataType = 'dateTime' and (matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}') or fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) = 1)">
-                    <xsl:choose>
-                        <xsl:when test="matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
-                            <xsl:text> ~ </xsl:text>
-                            <xsl:analyze-string select="@value" regex="\$\{{DATE, T, (Y|M|D), ([-]?)(\d+)\}}">
-                                <xsl:matching-substring>
-                                    <xsl:text>@${T} </xsl:text>
-                                    <xsl:choose>
-                                        <xsl:when test="regex-group(2) = '-'">- </xsl:when>
-                                        <xsl:otherwise>+ </xsl:otherwise>
-                                    </xsl:choose>
-                                    <xsl:value-of select="regex-group(3)"/>
-                                    <xsl:text> </xsl:text>
-                                    <xsl:choose>
-                                        <xsl:when test="regex-group(1) = 'Y'">years</xsl:when>
-                                        <xsl:when test="regex-group(1) = 'M'">months</xsl:when>
-                                        <xsl:when test="regex-group(1) = 'D'">days</xsl:when>
-                                        <xsl:otherwise>
-                                            <xsl:message>Unkown T-date symbol: <xsl:value-of select="regex-group(1)"/></xsl:message>
-                                        </xsl:otherwise>
-                                    </xsl:choose>
-                                </xsl:matching-substring>
-                            </xsl:analyze-string>
-                            <!-- If time is added to T-date, it should be added to the assert -->
-                            <!--<xsl:if test=""></xsl:if>-->
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <xsl:text>.exists()</xsl:text>
-                        </xsl:otherwise>
-                    </xsl:choose>
+                <xsl:when test="$dataType = 'dateTime'">
+                    <xsl:text>.exists()</xsl:text>
                 </xsl:when>
                 <xsl:when test="$dataType = 'code' and $parentDataType = 'Quantity'">
                     <!-- .code can contain UCUM parentheses -->
@@ -622,7 +706,7 @@
                     </xsl:choose>
                 </xsl:when>
                 <xsl:when test="$dataType = 'code' or ($dataType = 'uri' and $parentDataType = ('Coding','Quantity'))">
-                    <!-- For uri's in Coding and Quantity (.system) or Meta (.profile), we want an exact match. I can imagine that in some situations we want to only check for existance. -->
+                    <!-- For uri's in Coding and Quantity (.system) we want an exact match. I can imagine that in some situations we want to only check for existance. -->
                     <xsl:value-of select="concat(' = ''', @value, '''')"/>
                 </xsl:when>
                 <xsl:when test="$dataType = 'uri' and $parentDataType = 'Meta'">
@@ -647,45 +731,17 @@
     <xsl:template name="createDescription">
         <xsl:param name="elementPath"/>
         <xsl:param name="dataType" select="@nts:dataType"/>
+        <xsl:param name="parentDataType" select="parent::f:*/@nts:dataType"/>
 
         <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
         
         <xsl:choose>
-            <xsl:when test="$dataType = 'Boolean'">
+            <xsl:when test="$dataType = ('Boolean','string') or ($dataType = 'uri' and $parentDataType = ('Coding','Meta','Quantity'))">
+                <!-- For uri's in Coding and Quantity (.system) or Meta (.profile), we want an exact match. I can imagine that in some situations we want to only check for existance. -->
                 <xsl:value-of select="concat('''', @value, '''')"/>
             </xsl:when>
-            <xsl:when test="$dataType = 'string'">
-                <xsl:value-of select="concat('''', @value, '''')"/>
-            </xsl:when>
-            <xsl:when test="$dataType = 'dateTime' and $hasValue = true() and (matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}') or fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) = 1)">
-                <xsl:choose>
-                    <xsl:when test="matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
-                        <xsl:text>with a value that equals T-date </xsl:text>
-                        <xsl:analyze-string select="@value" regex="\$\{{DATE, T, (Y|M|D), ([-]?)(\d+)\}}">
-                            <xsl:matching-substring>
-                                <xsl:choose>
-                                    <xsl:when test="regex-group(2) = '-'">- </xsl:when>
-                                    <xsl:otherwise>+ </xsl:otherwise>
-                                </xsl:choose>
-                                <xsl:value-of select="regex-group(3)"/>
-                                <xsl:text> </xsl:text>
-                                <xsl:choose>
-                                    <xsl:when test="regex-group(1) = 'Y'">years</xsl:when>
-                                    <xsl:when test="regex-group(1) = 'M'">months</xsl:when>
-                                    <xsl:when test="regex-group(1) = 'D'">days</xsl:when>
-                                    <xsl:otherwise>
-                                        <xsl:message>Unkown T-date symbol: <xsl:value-of select="regex-group(1)"/></xsl:message>
-                                    </xsl:otherwise>
-                                </xsl:choose>
-                            </xsl:matching-substring>
-                        </xsl:analyze-string>
-                        <!-- If time is added to T-date, it should be added to the assert -->
-                        <!--<xsl:if test=""></xsl:if>-->
-                    </xsl:when>
-                    <xsl:when test="fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) = 1">
-                        <!-- Nothing to be added, as we only check existance -->
-                    </xsl:when>
-                </xsl:choose>
+            <xsl:when test="$dataType = 'dateTime'">
+                <!-- Nothing to be added, as we only check existance -->
             </xsl:when>
             <xsl:when test="$dataType = 'code' and $hasValue = true()">
                 <xsl:value-of select="concat('''', @value, '''')"/>
@@ -780,7 +836,7 @@
             <xsl:when test="$dataType = 'Reference'">
                 <xsl:text>with either .reference or .identifier and .display</xsl:text>
             </xsl:when>
-            <xsl:when test="$dataType = 'Meta'">
+            <!--<xsl:when test="$dataType = 'Meta'">
                 <xsl:text>with </xsl:text>
                 <xsl:for-each select="f:profile">
                     <xsl:value-of select="concat('.profile ''', @value, '''')"/>
@@ -788,7 +844,7 @@
                         <xsl:text> and </xsl:text>
                     </xsl:if>
                 </xsl:for-each>
-            </xsl:when>
+            </xsl:when>-->
             <xsl:when test="$dataType = 'Narrative' and f:status/@value = 'extensions'">
                 <!-- Nothing to add -->
             </xsl:when>
@@ -796,6 +852,19 @@
                 <xsl:value-of select="concat('with url ''', @url, ''' ')"/>
                 <xsl:for-each select="*">
                     <xsl:text>with </xsl:text>
+                    <xsl:value-of select="local-name()"/>
+                    <xsl:text> </xsl:text>
+                    <xsl:call-template name="createDescription">
+                        <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
+                    </xsl:call-template>
+                    <xsl:if test="not(position() = last())">
+                        <xsl:text> and </xsl:text>
+                    </xsl:if>
+                </xsl:for-each>
+            </xsl:when>
+            <xsl:when test="$dataType = ('Annotation','Meta')">
+                <xsl:for-each select="*">
+                    <xsl:text>with .</xsl:text>
                     <xsl:value-of select="local-name()"/>
                     <xsl:text> </xsl:text>
                     <xsl:call-template name="createDescription">
@@ -905,6 +974,29 @@
                 </xsl:call-template>
             </xsl:if>
         </xsl:if>
+    </xsl:template>
+    
+    <xsl:template name="analyzeTDate">
+        <xsl:analyze-string select="@value" regex="\$\{{DATE, T, (Y|M|D), ([-]?)(\d+)\}}">
+            <xsl:matching-substring>
+                <xsl:choose>
+                    <xsl:when test="regex-group(2) = '-'">- </xsl:when>
+                    <xsl:otherwise>+ </xsl:otherwise>
+                </xsl:choose>
+                <xsl:value-of select="regex-group(3)"/>
+                <xsl:text> </xsl:text>
+                <xsl:choose>
+                    <xsl:when test="regex-group(1) = 'Y'">years</xsl:when>
+                    <xsl:when test="regex-group(1) = 'M'">months</xsl:when>
+                    <xsl:when test="regex-group(1) = 'D'">days</xsl:when>
+                    <xsl:otherwise>
+                        <xsl:message>Unkown T-date symbol: <xsl:value-of select="regex-group(1)"/></xsl:message>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:matching-substring>
+        </xsl:analyze-string>
+        <!-- If time is added to T-date, it should be added to the assert -->
+        <!--<xsl:if test=""></xsl:if>-->
     </xsl:template>
     
 </xsl:stylesheet>
