@@ -180,7 +180,7 @@
         <xsl:variable name="label">
             <xsl:value-of select="$parentLabel"/>
             <xsl:text>-</xsl:text>
-            <xsl:value-of select="fn:count(preceding-sibling::*[not(self::f:id)])+1"/>
+            <xsl:value-of select="fn:count(preceding-sibling::*[not(self::f:id)]) + (if (parent::*/@value) then 2 else 1)"/>
         </xsl:variable>
         
         <xsl:variable name="description">
@@ -213,6 +213,41 @@
         </xsl:if>
         
         <xsl:variable name="dataType" select="@nts:dataType"/>
+        
+        <!-- For some elements, we want te create additional asserts -->
+        <xsl:if test="@value and f:*">
+            <xsl:variable name="simpleElement">
+                <xsl:apply-templates select="." mode="copyWithoutChildren"/>
+            </xsl:variable>
+            <xsl:variable name="simpleExpression">
+                <xsl:for-each select="$simpleElement/*">
+                    <xsl:call-template name="createExpression">
+                        <xsl:with-param name="elementPath" select="$elementPath"/>
+                    </xsl:call-template>
+                </xsl:for-each>
+            </xsl:variable>
+            <xsl:variable name="simpleDescription">
+                <xsl:for-each select="$simpleElement/*">
+                    <xsl:call-template name="createDescription">
+                        <xsl:with-param name="elementPath" select="$elementPath"/>
+                    </xsl:call-template>
+                    <xsl:value-of select="concat('. This assert checks only the value. Assert ', $label, ' checks if value and all children are present in the same parent')"/>
+                </xsl:for-each>
+            </xsl:variable>
+            <!-- Create additional 'simple' assert -->
+            <xsl:if test="string-length($expression) gt 0">
+                <xsl:call-template name="createAssert">
+                    <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', substring-after($elementPath, $resourceType), ' ', $simpleDescription)"/>
+                    <xsl:with-param name="expression" select="concat($expressionBase, $simpleExpression)"/>
+                    <xsl:with-param name="label" select="concat($label, '-1')"/>
+                </xsl:call-template>
+            </xsl:if>
+        </xsl:if>
+        
+        <xsl:if test="$dataType = 'Identifier'">
+            <!-- System should not contain Nictiz OID or 'example-xis' url -->
+        </xsl:if>
+                
         <xsl:if test="($dataType = ('BackboneElement', 'Extension') and count(*) gt 1) or f:extension">
             <xsl:apply-templates select="*" mode="#current">
                 <xsl:with-param name="parentElementPath">
@@ -826,6 +861,12 @@
     <xsl:template match="node()|@*" mode="#all">
         <xsl:copy>
             <xsl:apply-templates select="node()|@*" mode="#current"/>
+        </xsl:copy>
+    </xsl:template>
+    
+    <xsl:template match="node()|@*" mode="copyWithoutChildren" priority="1">
+        <xsl:copy>
+            <xsl:apply-templates select="@*" mode="#current"/>
         </xsl:copy>
     </xsl:template>
     
