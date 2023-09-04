@@ -168,6 +168,8 @@
         <xsl:variable name="elementPath" select="concat($parentElementPath, '.', local-name())"/>
         <xsl:variable name="expressionBase" select="concat('Bundle.entry.resource.ofType(', $resourceType, ').where(id = ''${', $idVariable, '}'')',substring-after($parentElementPath, $resourceType),'.')"/>
         
+        <xsl:variable name="dataType" select="@nts:dataType"/>
+        
         <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
         
         <!-- Generate (part of) expression based on datatype -->
@@ -191,11 +193,14 @@
             <xsl:if test="string-length($label) - string-length(translate($label, '-', '')) ge 2">
                 <xsl:value-of select="concat('. This assert checks only one child. Assert ', $parentLabel, ' checks if all children are present in the same parent')"/>
             </xsl:if>
+            <xsl:if test="($dataType = ('BackboneElement', 'Extension') and count(*) gt 1) or f:extension">
+                <xsl:value-of select="'. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails'"/>
+            </xsl:if>
         </xsl:variable>
         
         <xsl:if test="string-length($expression) gt 0">
             <xsl:call-template name="createAssert">
-                <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', substring-after($elementPath, $resourceType), ' ', $description)"/>
+                <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', $description)"/>
                 <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
                 <xsl:with-param name="label" select="$label"/>
                 <xsl:with-param name="warningOnly">
@@ -211,8 +216,6 @@
                 </xsl:with-param>
             </xsl:call-template>
         </xsl:if>
-        
-        <xsl:variable name="dataType" select="@nts:dataType"/>
         
         <xsl:if test="$dataType = 'dateTime'">
             <!-- By default, we only check if dateTimes exist. Additionally, there are extra scenario's we can use to check: 
@@ -234,21 +237,33 @@
                     </xsl:otherwise>
                 </xsl:choose>
             </xsl:variable>
+            <xsl:variable name="descriptionPrefix">
+                <xsl:choose>
+                    <xsl:when test="string-length($parentElementPath) gt 0">
+                        <xsl:value-of select="concat(substring-after($elementPath, $parentElementPath), ' ')"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:value-of select="concat(substring-after($elementPath, $resourceType), ' ')"/>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:variable>
             
             <xsl:choose>
                 <!-- T-date -->
                 <xsl:when test="matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
                     <xsl:variable name="expression">
+                        <xsl:value-of select="$expressionPrefix"/>
                         <xsl:text> ~ @${T} </xsl:text>
                         <xsl:call-template name="analyzeTDate"/>
                     </xsl:variable>
                     <xsl:variable name="description">
+                        <xsl:value-of select="$descriptionPrefix"/>
                         <xsl:text>with a value that equals T-date </xsl:text>
                         <xsl:call-template name="analyzeTDate"/>
                     </xsl:variable>
                     
                     <xsl:call-template name="createAssert">
-                        <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', substring-after($elementPath, $resourceType), ' ', $description)"/>
+                        <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', $description)"/>
                         <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
                         <xsl:with-param name="label" select="concat($label, '-checkDateTime')"/>
                         <xsl:with-param name="warningOnly" select="true()"/>
@@ -283,6 +298,7 @@
                         <xsl:text>.exists()</xsl:text>
                     </xsl:variable>
                     <xsl:variable name="description">
+                        <xsl:value-of select="$descriptionPrefix"/>
                         <xsl:text>which is </xsl:text>
                         <xsl:choose>
                             <xsl:when test="starts-with($durationAsString, '-')">earlier than </xsl:when>
@@ -292,10 +308,9 @@
                     </xsl:variable>
                     
                     <xsl:call-template name="createAssert">
-                        <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', substring-after($elementPath, $resourceType), ' ', $description)"/>
+                        <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', $description)"/>
                         <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
                         <xsl:with-param name="label" select="concat($label, '-checkDateTime')"/>
-                        <!--<xsl:with-param name="warningOnly" select="true()"/>-->
                     </xsl:call-template>
                 </xsl:when>
             </xsl:choose>
@@ -329,37 +344,6 @@
                         <xsl:text>.exists()</xsl:text>
                 </xsl:choose>
             </xsl:when>-->
-            
-            <!-- Description -->
-            <!--<xsl:choose>
-                <xsl:when test="matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}')">
-                    <xsl:text>with a value that equals T-date </xsl:text>
-                    <xsl:analyze-string select="@value" regex="\$\{{DATE, T, (Y|M|D), ([-]?)(\d+)\}}">
-                        <xsl:matching-substring>
-                            <xsl:choose>
-                                <xsl:when test="regex-group(2) = '-'">- </xsl:when>
-                                <xsl:otherwise>+ </xsl:otherwise>
-                            </xsl:choose>
-                            <xsl:value-of select="regex-group(3)"/>
-                            <xsl:text> </xsl:text>
-                            <xsl:choose>
-                                <xsl:when test="regex-group(1) = 'Y'">years</xsl:when>
-                                <xsl:when test="regex-group(1) = 'M'">months</xsl:when>
-                                <xsl:when test="regex-group(1) = 'D'">days</xsl:when>
-                                <xsl:otherwise>
-                                    <xsl:message>Unkown T-date symbol: <xsl:value-of select="regex-group(1)"/></xsl:message>
-                                </xsl:otherwise>
-                            </xsl:choose>
-                        </xsl:matching-substring>
-                    </xsl:analyze-string>
-                    <!-\- If time is added to T-date, it should be added to the assert -\->
-                    <!-\-<xsl:if test=""></xsl:if>-\->
-                </xsl:when>
-                <xsl:when test="fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) = 1">
-                    <!-\- Nothing to be added, as we only check existance -\->
-                </xsl:when>
-                
-            </xsl:choose>-->
         </xsl:if>
             
         <xsl:if test="$dataType = 'Identifier'">
@@ -389,7 +373,7 @@
             <!-- Create additional 'simple' assert -->
             <xsl:if test="string-length($expression) gt 0">
                 <xsl:call-template name="createAssert">
-                    <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', substring-after($elementPath, $resourceType), ' ', $simpleDescription)"/>
+                    <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', $simpleDescription)"/>
                     <xsl:with-param name="expression" select="concat($expressionBase, $simpleExpression)"/>
                     <xsl:with-param name="label" select="concat($label, '-1')"/>
                 </xsl:call-template>
@@ -595,36 +579,12 @@
                             <!-- Narrative isn't always present in fixtures. If not present, it is generated at a later stage. We should find a way to always add this assert. -->
                             <xsl:text>.exists()</xsl:text>
                         </xsl:when>
-                        <xsl:when test="$dataType = 'Extension'">
-                            <xsl:text>('</xsl:text>
-                            <xsl:value-of select="@url"/>
-                            <xsl:text>')</xsl:text>
-                            <!-- Failing because of KT-393  -->
-                            <!--<xsl:choose>
-                                <xsl:when test="$topLevel = true()">
-                                    <xsl:text>.exists(</xsl:text>
-                                </xsl:when>
-                                <xsl:otherwise>-->
-                            <xsl:text>.where(</xsl:text>
-                            <!--</xsl:otherwise>
-                            </xsl:choose>-->
-                            <xsl:for-each select="*">
-                                <xsl:call-template name="createExpression">
-                                    <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
-                                    <xsl:with-param name="topLevel" select="false()"/>
-                                </xsl:call-template>
-                                <xsl:if test="not(position() = last())">
-                                    <xsl:text> and </xsl:text>
-                                </xsl:if>
-                            </xsl:for-each>
-                            <xsl:text>)</xsl:text>
-                            <!-- Temp because of KT-393 -->
-                            <xsl:if test="$topLevel = true()">
-                                <xsl:text>.exists()</xsl:text>
+                        <xsl:when test="$dataType = ('Annotation','BackboneElement','CodeableConcept','Coding','Extension','Meta','Quantity')">
+                            <xsl:if test="$dataType = 'Extension'">
+                                <xsl:text>('</xsl:text>
+                                <xsl:value-of select="@url"/>
+                                <xsl:text>')</xsl:text>
                             </xsl:if>
-                        </xsl:when>
-                        <xsl:when test="$dataType = ('Annotation','BackboneElement','CodeableConcept','Coding','Meta','Quantity')">
-                            <!-- Basically a container.-->
                             <!-- Failing because of KT-393  -->
                             <!--<xsl:choose>
                                 <xsl:when test="$topLevel = true()">
@@ -730,156 +690,129 @@
     
     <xsl:template name="createDescription">
         <xsl:param name="elementPath"/>
+        <xsl:param name="parentElementPath"/>
         <xsl:param name="dataType" select="@nts:dataType"/>
         <xsl:param name="parentDataType" select="parent::f:*/@nts:dataType"/>
-
-        <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
+        <xsl:param name="resourceType" tunnel="yes"/>
+        
+        <xsl:variable name="descriptionPrefix">
+            <xsl:choose>
+                <xsl:when test="string-length($parentElementPath) gt 0">
+                    <xsl:value-of select="concat(substring-after($elementPath, $parentElementPath), ' ')"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:value-of select="concat(substring-after($elementPath, $resourceType), ' ')"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+        
+        <xsl:variable name="description">
+            <!-- We need to make a separation between element without children (simple data types) and with children (simple data types with extensions and complex data types). Expression for simple data types without children are ... simpler -->
+            <xsl:choose>
+                <xsl:when test="$dataType = 'id'">
+                    <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
+                </xsl:when>
+                <xsl:when test="f:*">
+                    <xsl:choose>
+                        <xsl:when test="@value and f:extension">
+                            <xsl:call-template name="createDescriptionSimple"/>
+                            <xsl:text> and </xsl:text>
+                            <xsl:for-each select="*">
+                                <xsl:call-template name="createDescription">
+                                    <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
+                                    <xsl:with-param name="parentElementPath" select="$elementPath"/>
+                                </xsl:call-template>
+                                <xsl:if test="not(position() = last())">
+                                    <xsl:text> and </xsl:text>
+                                </xsl:if>
+                            </xsl:for-each>
+                        </xsl:when>
+                        <xsl:when test="$dataType = 'Identifier'">
+                            <xsl:text>with .</xsl:text>
+                            <xsl:choose>
+                                <xsl:when test="f:system">system</xsl:when>
+                                <xsl:when test="f:type">type</xsl:when>
+                            </xsl:choose>
+                            <xsl:text> and .value</xsl:text>
+                        </xsl:when>
+                        <xsl:when test="$dataType = 'Reference'">
+                            <xsl:text>with either .reference or .identifier and .display</xsl:text>
+                        </xsl:when>
+                        <xsl:when test="$dataType = 'Narrative' and f:status/@value = 'extensions'">
+                            <!-- Nothing to add -->
+                            <xsl:text> </xsl:text>
+                        </xsl:when>
+                        <xsl:when test="$dataType = ('Annotation','BackboneElement','CodeableConcept','Coding','Extension','Meta','Quantity')">
+                            <xsl:if test="$dataType = 'Extension'">
+                                <xsl:value-of select="concat('with url ''', @url, ''' ')"/>
+                            </xsl:if>
+                            <xsl:text>with </xsl:text>
+                            <xsl:for-each select="*">
+                                <xsl:variable name="description">
+                                    <xsl:call-template name="createDescription">
+                                        <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
+                                        <xsl:with-param name="parentElementPath" select="$elementPath"/>
+                                    </xsl:call-template>
+                                </xsl:variable>
+                                <xsl:if test="fn:string-length($description) gt 0">
+                                    <xsl:value-of select="$description"/>
+                                </xsl:if>
+                                <xsl:if test="not(position() = last())">
+                                    <xsl:text> and </xsl:text>
+                                </xsl:if>
+                            </xsl:for-each>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:message select="concat('TODO DESCRIPTION: ', $elementPath, ' - ',$dataType)"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:call-template name="createDescriptionSimple"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+        
+        <xsl:if test="string-length($description) gt 0">
+            <xsl:value-of select="concat($descriptionPrefix,normalize-space($description))"/>
+        </xsl:if>
+    </xsl:template>
+    
+    <xsl:template name="createDescriptionSimple">
+        <xsl:param name="dataType" select="@nts:dataType"/>
+        <xsl:param name="parentDataType" select="parent::f:*/@nts:dataType"/>
         
         <xsl:choose>
-            <xsl:when test="$dataType = ('Boolean','string') or ($dataType = 'uri' and $parentDataType = ('Coding','Meta','Quantity'))">
+            <xsl:when test="$dataType = 'dateTime' or ($dataType = 'string' and $parentDataType = ('Coding','Quantity'))">
+                <!-- Nothing to be added, as we only check existance -->
+                <xsl:text> </xsl:text>
+            </xsl:when>
+            <xsl:when test="$dataType = ('Boolean','decimal','string') or ($dataType = 'uri' and $parentDataType = ('Coding','Meta','Quantity'))">
                 <!-- For uri's in Coding and Quantity (.system) or Meta (.profile), we want an exact match. I can imagine that in some situations we want to only check for existance. -->
                 <xsl:value-of select="concat('''', @value, '''')"/>
             </xsl:when>
-            <xsl:when test="$dataType = 'dateTime'">
-                <!-- Nothing to be added, as we only check existance -->
-            </xsl:when>
-            <xsl:when test="$dataType = 'code' and $hasValue = true()">
-                <xsl:value-of select="concat('''', @value, '''')"/>
-            </xsl:when>
-            <xsl:when test="$dataType = 'id'">
-                <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
-            </xsl:when>
-            <xsl:when test="$dataType = 'Coding'">
-                <xsl:text>with </xsl:text>
-                <xsl:if test="f:system">
-                    <xsl:text>.system '</xsl:text>
-                    <xsl:value-of select="f:system/@value"/>
-                    <xsl:text>'</xsl:text>
-                    <xsl:if test="f:code or f:display"> and </xsl:if>
-                </xsl:if>
-                <!-- Do nothing with f:version -->
-                <xsl:if test="f:code">
-                    <xsl:text>.code '</xsl:text>
-                    <xsl:value-of select="f:code/@value"/>
-                    <xsl:text>'</xsl:text>
-                    <xsl:if test="f:display"> and </xsl:if>
-                </xsl:if>
-                <xsl:if test="f:display">
-                    <xsl:text>.display</xsl:text>
-                </xsl:if>
-                <xsl:text>)</xsl:text>
-                <!-- Do nothing with f:userSelected -->
-            </xsl:when>
-            <xsl:when test="$dataType = 'CodeableConcept'">
-                <xsl:text>with </xsl:text>
-                <xsl:for-each select="f:coding">
-                    <xsl:text>.coding </xsl:text>
-                    <xsl:call-template name="createDescription">
-                        <xsl:with-param name="dataType" select="'Coding'"/>
-                    </xsl:call-template>
-                    <xsl:if test="not(position() = last())">
-                        <xsl:text> and </xsl:text>
-                    </xsl:if>
-                </xsl:for-each>
-            </xsl:when>
-            <xsl:when test="$dataType = 'Quantity'">
-                <xsl:text>with </xsl:text>
-                <xsl:if test="f:value">
-                    <xsl:text>.value '</xsl:text>
-                    <xsl:value-of select="f:value/@value"/>
-                    <xsl:text>'</xsl:text>
-                    <xsl:if test="f:unit or f:system or f:code"> and </xsl:if>
-                </xsl:if>
-                <!-- Do nothing with f:comparator -->
-                <xsl:if test="f:unit">
-                    <xsl:text>.unit</xsl:text>
-                    <xsl:if test="f:system or f:code"> and </xsl:if>
-                </xsl:if>
-                <xsl:if test="f:system">
-                    <xsl:text>.system '</xsl:text>
-                    <xsl:value-of select="f:system/@value"/>
-                    <xsl:text>'</xsl:text>
-                    <xsl:if test="f:code"> and </xsl:if>
-                </xsl:if>
-                <xsl:if test="f:code">
-                    <xsl:variable name="value" select="f:code/@value"/>
-                    <xsl:text>.code </xsl:text>
-                    <xsl:choose>
-                        <xsl:when test="contains($value, '{') and contains($value, '}') ">
-                            <xsl:text>matching regex '^</xsl:text>
-                            <xsl:analyze-string select="$value" regex="\{{\w*\}}">
-                                <xsl:matching-substring>
-                                    <xsl:text>\\{.+\\}</xsl:text>
-                                </xsl:matching-substring>
-                                <xsl:non-matching-substring>
-                                    <xsl:value-of select="."/>
-                                </xsl:non-matching-substring>
-                            </xsl:analyze-string>
-                            <xsl:text>$'</xsl:text>
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <xsl:text>'</xsl:text>
-                            <xsl:value-of select="f:code/@value"/>
-                            <xsl:text>'</xsl:text>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </xsl:if>
-            </xsl:when>
-            <xsl:when test="$dataType = 'Identifier'">
-                <xsl:text>with .</xsl:text>
+            <xsl:when test="$dataType = 'code'">
+                <xsl:variable name="value" select="@value"/>
                 <xsl:choose>
-                    <xsl:when test="f:system">system</xsl:when>
-                    <xsl:when test="f:type">type</xsl:when>
+                    <xsl:when test="$parentDataType = 'Quantity' and contains($value, '{') and contains($value, '}') ">
+                        <xsl:text>matching regex '^</xsl:text>
+                        <xsl:analyze-string select="$value" regex="\{{\w*\}}">
+                            <xsl:matching-substring>
+                                <xsl:text>\\{.+\\}</xsl:text>
+                            </xsl:matching-substring>
+                            <xsl:non-matching-substring>
+                                <xsl:value-of select="."/>
+                            </xsl:non-matching-substring>
+                        </xsl:analyze-string>
+                        <xsl:text>$'</xsl:text>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:value-of select="concat('''', @value, '''')"/>
+                    </xsl:otherwise>
                 </xsl:choose>
-                <xsl:text> and .value</xsl:text>
-            </xsl:when>
-            <xsl:when test="$dataType = 'Reference'">
-                <xsl:text>with either .reference or .identifier and .display</xsl:text>
-            </xsl:when>
-            <!--<xsl:when test="$dataType = 'Meta'">
-                <xsl:text>with </xsl:text>
-                <xsl:for-each select="f:profile">
-                    <xsl:value-of select="concat('.profile ''', @value, '''')"/>
-                    <xsl:if test="not(position() = last())">
-                        <xsl:text> and </xsl:text>
-                    </xsl:if>
-                </xsl:for-each>
-            </xsl:when>-->
-            <xsl:when test="$dataType = 'Narrative' and f:status/@value = 'extensions'">
-                <!-- Nothing to add -->
-            </xsl:when>
-            <xsl:when test="$dataType = 'Extension'">
-                <xsl:value-of select="concat('with url ''', @url, ''' ')"/>
-                <xsl:for-each select="*">
-                    <xsl:text>with </xsl:text>
-                    <xsl:value-of select="local-name()"/>
-                    <xsl:text> </xsl:text>
-                    <xsl:call-template name="createDescription">
-                        <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
-                    </xsl:call-template>
-                    <xsl:if test="not(position() = last())">
-                        <xsl:text> and </xsl:text>
-                    </xsl:if>
-                </xsl:for-each>
-            </xsl:when>
-            <xsl:when test="$dataType = ('Annotation','Meta')">
-                <xsl:for-each select="*">
-                    <xsl:text>with .</xsl:text>
-                    <xsl:value-of select="local-name()"/>
-                    <xsl:text> </xsl:text>
-                    <xsl:call-template name="createDescription">
-                        <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
-                    </xsl:call-template>
-                    <xsl:if test="not(position() = last())">
-                        <xsl:text> and </xsl:text>
-                    </xsl:if>
-                </xsl:for-each>
-            </xsl:when>
-            <xsl:when test="$dataType = 'BackboneElement'">
-                <xsl:text>with specific contents. This asserts checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails</xsl:text>
             </xsl:when>
             <xsl:otherwise>
-                <xsl:message select="concat('TODO DESCRIPTION: ',$dataType)"/>
+                <xsl:message select="concat('TODO SIMPLE DESCRIPTION: ',$dataType)"/>
                 <xsl:value-of select="'with ...'"/>
             </xsl:otherwise>
         </xsl:choose>
