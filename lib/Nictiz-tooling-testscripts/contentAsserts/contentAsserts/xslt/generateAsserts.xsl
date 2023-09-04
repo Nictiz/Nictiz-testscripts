@@ -491,6 +491,9 @@
                             <xsl:choose>
                                 <xsl:when test="$dateTime1/@nts:polymorphic = 'true'">
                                     <xsl:value-of select="nf:get-element-base($dateTime1/local-name())"/>
+                                    <xsl:text>.ofType(</xsl:text>
+                                    <xsl:value-of select="$dateTime1/@nts:dataType"/>
+                                    <xsl:text>)</xsl:text>
                                 </xsl:when>
                                 <xsl:otherwise>
                                     <xsl:value-of select="$dateTime1/local-name()"/>
