@@ -579,7 +579,7 @@
                             <!-- Narrative isn't always present in fixtures. If not present, it is generated at a later stage. We should find a way to always add this assert. -->
                             <xsl:text>.exists()</xsl:text>
                         </xsl:when>
-                        <xsl:when test="$dataType = ('Annotation','BackboneElement','CodeableConcept','Coding','Extension','Meta','Quantity')">
+                        <xsl:when test="$dataType = ('Annotation','BackboneElement','CodeableConcept','Coding','Extension','Meta','Period','Quantity')">
                             <xsl:if test="$dataType = 'Extension'">
                                 <xsl:text>('</xsl:text>
                                 <xsl:value-of select="@url"/>
@@ -616,7 +616,9 @@
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:value-of select="$expressionPrefix"/>
-                    <xsl:call-template name="createExpressionSimple"/>
+                    <xsl:call-template name="createExpressionSimple">
+                        <xsl:with-param name="topLevel" select="$topLevel"/>
+                    </xsl:call-template>
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
@@ -629,6 +631,7 @@
     <xsl:template name="createExpressionSimple">
         <xsl:param name="dataType" select="@nts:dataType"/>
         <xsl:param name="parentDataType" select="parent::f:*/@nts:dataType"/>
+        <xsl:param name="topLevel" select="true()"/>
         
         <xsl:variable name="expression">
             <xsl:choose>
@@ -643,7 +646,9 @@
                     <xsl:value-of select="concat('.replace(''.'', '''').replace('','', '''') ~ ''', normalize-space(translate(@value, '.,', '')), '''')"/>
                 </xsl:when>
                 <xsl:when test="$dataType = 'dateTime'">
-                    <xsl:text>.exists()</xsl:text>
+                    <xsl:if test="$topLevel = true()">
+                        <xsl:text>.exists()</xsl:text>
+                    </xsl:if>
                 </xsl:when>
                 <xsl:when test="$dataType = 'code' and $parentDataType = 'Quantity'">
                     <!-- .code can contain UCUM parentheses -->
