@@ -175,8 +175,6 @@
         
         <xsl:variable name="dataType" select="@nts:dataType"/>
         
-        <xsl:variable name="hasValue" select="string-length(normalize-space(@value)) gt 0"/>
-        
         <!-- Generate (part of) expression based on datatype -->
         <xsl:variable name="expression">
             <xsl:call-template name="createExpression">
@@ -187,7 +185,7 @@
         <xsl:variable name="label">
             <xsl:value-of select="$parentLabel"/>
             <xsl:text>-</xsl:text>
-            <xsl:value-of select="fn:count(preceding-sibling::*[not(self::f:id)]) + (if (parent::*/@value) then 2 else 1)"/>
+            <xsl:value-of select="fn:count(preceding-sibling::*[not(self::f:id)]) + (if (@nts:extensionsRemoved and not(@value)) then xs:integer(@nts:extensionsRemoved) else 0) + (if (parent::*/@nts:extensionsRemoved) then xs:integer(parent::*/@nts:extensionsRemoved) else 0) + (if (parent::*/@value) then 2 else 1)"/>
         </xsl:variable>
         
         <xsl:variable name="description">
@@ -356,36 +354,60 @@
         </xsl:if>
         
         <!-- For some elements, we want te create additional asserts -->
-        <xsl:if test="@value and f:*">
+        <!-- If one ore more extensions are present (and if not BackboneElement), we would like to create separate asserts for the extension and treat the rest of the element as if the extension wasn't there -->
+        <xsl:if test="f:extension and not($dataType = 'BackboneElement')">
             <xsl:variable name="simpleElement">
-                <xsl:apply-templates select="." mode="copyWithoutChildren"/>
+                <xsl:apply-templates select="." mode="copyWithoutExtensions"/>
             </xsl:variable>
-            <xsl:variable name="simpleExpression">
-                <xsl:for-each select="$simpleElement/*">
-                    <xsl:call-template name="createExpression">
-                        <xsl:with-param name="elementPath" select="$elementPath"/>
-                    </xsl:call-template>
-                </xsl:for-each>
-            </xsl:variable>
-            <xsl:variable name="simpleDescription">
-                <xsl:for-each select="$simpleElement/*">
-                    <xsl:call-template name="createDescription">
-                        <xsl:with-param name="elementPath" select="$elementPath"/>
-                    </xsl:call-template>
-                    <xsl:value-of select="concat('. This assert checks only the value. Assert ', $label, ' checks if value and all children are present in the same parent')"/>
-                </xsl:for-each>
-            </xsl:variable>
-            <!-- Create additional 'simple' assert -->
-            <xsl:if test="string-length($expression) gt 0">
-                <xsl:call-template name="createAssert">
-                    <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', $simpleDescription)"/>
-                    <xsl:with-param name="expression" select="concat($expressionBase, $simpleExpression)"/>
-                    <xsl:with-param name="label" select="concat($label, '-1')"/>
-                </xsl:call-template>
-            </xsl:if>
+            
+            <xsl:choose>
+                <!-- When there is a value, we would like to assert that first -->
+                <xsl:when test="@value">
+                    <xsl:apply-templates select="$simpleElement" mode="#current">
+                        <xsl:with-param name="parentElementPath" select="$parentElementPath"/>
+                        <xsl:with-param name="parentLabel" select="$label"/>
+                    </xsl:apply-templates>
+                    <xsl:apply-templates select="f:extension" mode="#current">
+                        <xsl:with-param name="parentElementPath">
+                            <xsl:choose>
+                                <xsl:when test="$dataType = 'Extension'">
+                                    <xsl:value-of select="concat($elementPath,'(''',@url,''')')"/>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:value-of select="$elementPath"/>
+                                </xsl:otherwise>
+                            </xsl:choose>
+                        </xsl:with-param>
+                        <xsl:with-param name="parentLabel" select="$label"/>
+                    </xsl:apply-templates>
+                </xsl:when>
+                <!-- Otherwise extensions first -->
+                <xsl:otherwise>
+                    <xsl:apply-templates select="f:extension" mode="#current">
+                        <xsl:with-param name="parentElementPath">
+                            <xsl:choose>
+                                <xsl:when test="$dataType = 'Extension'">
+                                    <xsl:value-of select="concat($elementPath,'(''',@url,''')')"/>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:value-of select="$elementPath"/>
+                                </xsl:otherwise>
+                            </xsl:choose>
+                        </xsl:with-param>
+                        <xsl:with-param name="parentLabel" select="$label"/>
+                    </xsl:apply-templates>
+                    <!-- Edge case: complex extensions where there are no children other than extensions -->
+                    <xsl:if test="*[not(self::f:extension)]">
+                        <xsl:apply-templates select="$simpleElement" mode="#current">
+                            <xsl:with-param name="parentElementPath" select="$parentElementPath"/>
+                            <xsl:with-param name="parentLabel" select="$label"/>
+                        </xsl:apply-templates>
+                    </xsl:if>
+                </xsl:otherwise>
+            </xsl:choose>
         </xsl:if>
                 
-        <xsl:if test="($dataType = ('BackboneElement', 'Extension') and count(*) gt 1) or f:extension">
+        <xsl:if test="$dataType = 'BackboneElement' and count(*) gt 1">
             <xsl:apply-templates select="*" mode="#current">
                 <xsl:with-param name="parentElementPath">
                     <xsl:choose>
@@ -563,6 +585,9 @@
                             </xsl:if>
                         </xsl:when>
                         <xsl:when test="$dataType = 'Identifier'">
+                            <xsl:if test="f:extension">
+                                <xsl:message select="concat('UNHANDLED EXTENSION EXPRESSION: ', $elementPath, ' - ',$dataType)"/>
+                            </xsl:if>
                             <!-- KT-393 -->
                             <xsl:text>.where(</xsl:text>
                             <!--<xsl:text>.exists(</xsl:text>-->
@@ -575,6 +600,19 @@
                             <xsl:text>.exists()</xsl:text>
                         </xsl:when>
                         <xsl:when test="$dataType = 'Reference'">
+                            <xsl:if test="f:extension">
+                                <xsl:text>.where(</xsl:text>
+                                <xsl:for-each select="f:extension">
+                                    <xsl:call-template name="createExpression">
+                                        <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
+                                        <xsl:with-param name="topLevel" select="false()"/>
+                                    </xsl:call-template>
+                                    <xsl:if test="not(position() = last())">
+                                        <xsl:text> and </xsl:text>
+                                    </xsl:if>
+                                </xsl:for-each>
+                                <xsl:text>)</xsl:text>
+                            </xsl:if>
                             <!-- Check if (reference OR identifier) and display exist -->
                             <!-- KT-393 -->
                             <xsl:text>.where((reference or identifier) and display).exists()</xsl:text>
@@ -738,6 +776,9 @@
                             </xsl:for-each>
                         </xsl:when>
                         <xsl:when test="$dataType = 'Identifier'">
+                            <xsl:if test="f:extension">
+                                <xsl:message select="concat('UNHANDLED EXTENSION DESCRIPTION: ', $elementPath, ' - ',$dataType)"/>
+                            </xsl:if>
                             <xsl:text>with .</xsl:text>
                             <xsl:choose>
                                 <xsl:when test="f:system">system</xsl:when>
@@ -746,6 +787,19 @@
                             <xsl:text> and .value</xsl:text>
                         </xsl:when>
                         <xsl:when test="$dataType = 'Reference'">
+                            <xsl:if test="f:extension">
+                                <xsl:text>with </xsl:text>
+                                <xsl:for-each select="f:extension">
+                                    <xsl:call-template name="createDescription">
+                                        <xsl:with-param name="elementPath" select="concat($elementPath, '.', local-name())"/>
+                                        <xsl:with-param name="parentElementPath" select="$elementPath"/>
+                                    </xsl:call-template>
+                                    <xsl:if test="position() = last()">
+                                        <xsl:text>,</xsl:text>
+                                    </xsl:if>
+                                    <xsl:text> and </xsl:text>
+                                </xsl:for-each>
+                            </xsl:if>
                             <xsl:text>with either .reference or .identifier and .display</xsl:text>
                         </xsl:when>
                         <xsl:when test="$dataType = 'Narrative' and f:status/@value = 'extensions'">
@@ -876,9 +930,14 @@
         </xsl:copy>
     </xsl:template>
     
-    <xsl:template match="node()|@*" mode="copyWithoutChildren" priority="1">
+    <xsl:template match="node()|@*" mode="copyWithoutExtensions" priority="1">
         <xsl:copy>
             <xsl:apply-templates select="@*" mode="#current"/>
+            <!-- Count the number of extensions removed to be able to adjust the label count -->
+            <xsl:if test="f:extension">
+                <xsl:attribute name="nts:extensionsRemoved" select="count(f:extension)"/>
+            </xsl:if>
+            <xsl:apply-templates select="node()[not(self::f:extension)]" mode="#current"/>
         </xsl:copy>
     </xsl:template>
     
