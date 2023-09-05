@@ -79,6 +79,17 @@
             <xsl:value-of select="string-join($tokenize[position() lt last()], '/')"/>
         </xsl:variable>
         
+        <!-- Load all fixtures -->
+        <xsl:variable name="fixtures">
+            <xsl:for-each select="nts:contentAsserts">
+                <xsl:variable name="href" select="@href"/>
+                <nts:fixture href="{$href}">
+                    <xsl:variable name="fixtureUri" select="concat($basePath, '/', $referenceBase, $href)"/>
+                    <xsl:copy-of select="document($fixtureUri)"/>
+                </nts:fixture>
+            </xsl:for-each>
+        </xsl:variable>
+        
         <xsl:for-each select="nts:contentAsserts">
             <xsl:variable name="href" select="@href"/>
             <xsl:variable name="expression" select="@expression"/>
@@ -87,18 +98,12 @@
             </xsl:if>
             <xsl:variable name="description" select="@description"/>
             
-            <!-- We use @resourceType to present a nice count to users  -->
-            <xsl:variable name="resourceType" select="@resourceType"/>
-            <xsl:variable name="resourceCount" select="count(preceding-sibling::nts:contentAsserts[@resourceType = $resourceType]) + 1"/>
+            <xsl:variable name="fixture" select="$fixtures/nts:fixture[@href = $href]/*"/>
+            <xsl:variable name="fixtureId" select="$fixture/f:id/@value"/>
             
-            <xsl:variable name="fixtureUri" select="concat($basePath, '/', $referenceBase, $href)"/>
-            <xsl:variable name="fixture" select="document($fixtureUri)"/>
-            <xsl:variable name="fixtureId" select="$fixture/f:*/f:id/@value"/>
+            <xsl:variable name="resourceType" select="$fixture/local-name()"/>
+            <xsl:variable name="resourceCount" select="count($fixture/parent::nts:fixture/preceding-sibling::nts:fixture[*/local-name() = $resourceType]) + 1"/>
             
-            <!-- Sanity check -->
-            <xsl:if test="not($resourceType = $fixture/f:*/local-name())">
-                <xsl:message terminate="yes">nts:contentAsserts[@href = '<xsl:value-of select="$href"/>']/@resourceType is absent or does not match the actual resource type of the fixture</xsl:message>
-            </xsl:if>
             <xsl:variable name="structureDefinition" select="document(concat($libPath, lower-case($fhirVersion), '/StructureDefinition-', $resourceType, '.xml'))"/>
             
             <!-- Would preferably do this in a separate step with Xproc. We'll see what the future brings -->
@@ -119,10 +124,10 @@
                     <xsl:with-param name="description">
                         <xsl:choose>
                             <xsl:when test="string-length($description) gt 0">
-                                <xsl:value-of select="concat('Response Bundle contains exactly 1 ', $description)"/>
+                                <xsl:value-of select="concat('Response Bundle contains exactly 1 ', $resourceType, ' that ', $description)"/>
                             </xsl:when>
                             <xsl:otherwise>
-                                <xsl:text>Response Bundle contains exactly 1 resource with specific contents</xsl:text>
+                                <xsl:value-of select="concat('Response Bundle contains exactly 1 ', $resourceType)"/>
                             </xsl:otherwise>
                         </xsl:choose>
                     </xsl:with-param>
