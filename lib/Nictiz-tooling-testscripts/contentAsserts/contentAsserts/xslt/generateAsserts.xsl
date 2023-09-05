@@ -752,7 +752,7 @@
                             <!-- Nothing to add -->
                             <xsl:text> </xsl:text>
                         </xsl:when>
-                        <xsl:when test="$dataType = ('Annotation','BackboneElement','CodeableConcept','Coding','Extension','Meta','Quantity')">
+                        <xsl:when test="$dataType = ('Annotation','BackboneElement','CodeableConcept','Coding','Extension','Meta','Period','Quantity')">
                             <xsl:if test="$dataType = 'Extension'">
                                 <xsl:value-of select="concat('with url ''', @url, ''' ')"/>
                             </xsl:if>
