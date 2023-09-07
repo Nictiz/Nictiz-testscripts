@@ -18,7 +18,7 @@
     <xsl:param name="fhirVersion" select="'STU3'"/>
     
     <!-- Fixed, but could be dependant on fhirVersion -->
-    <xsl:variable name="simpleDataTypes" select="('Boolean','integer','string','decimal','uri','url','canonical','instant','date','dateTime','time','code','oid','id','markdown','unsignedInt','positiveInt','uuid')"/>
+    <xsl:variable name="simpleDataTypes" select="('boolean','integer','string','decimal','uri','url','canonical','instant','date','dateTime','time','code','oid','id','markdown','unsignedInt','positiveInt','uuid')"/>
     <xsl:variable name="complexDataTypes" select="('Annotation','Coding','CodeableConcept','Quantity','SimpleQuantity','Distance','Age','Count','Duration','Money','Range','Ratio','Period','SampledData','Identifier','HumanName','Address','ContactPoint','Timing','Signature','Reference','Narrative','Meta')"/>
     <xsl:variable name="dataTypes" select="($simpleDataTypes, $complexDataTypes)"/>
     <xsl:variable name="dataTypesLower" select="for $i in $dataTypes return lower-case($i)"/>
@@ -93,7 +93,8 @@
         <xsl:for-each select="nts:contentAsserts">
             <xsl:variable name="href" select="@href"/>
             <xsl:variable name="expression" select="@expression"/>
-            <xsl:if test="ends-with(translate($expression, ' ', ''), 'count()=1') or ends-with($expression, 'exists()')">
+            <xsl:variable name="bundleExpression" select="@bundleExpression"/>
+            <xsl:if test="ends-with(translate($expression, ' ', ''), 'count()=1') or ends-with($expression, 'exists()') and not($bundleExpression = 'true')">
                 <xsl:message terminate="yes">TOEDIT: Expression shouldn't end in count() or exists() - <xsl:value-of select="$expression"/></xsl:message>
             </xsl:if>
             <xsl:variable name="description" select="@description"/>
@@ -131,13 +132,31 @@
                             </xsl:otherwise>
                         </xsl:choose>
                     </xsl:with-param>
-                    <xsl:with-param name="expression" select="concat('Bundle.entry.resource.ofType(', $resourceType, ')', $expression, '.count() = 1')"/>
+                    <xsl:with-param name="expression">
+                        <xsl:choose>
+                            <xsl:when test="$bundleExpression = 'true'">
+                                <xsl:value-of select="concat($expression, '.count() = 1')"/>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:value-of select="concat('Bundle.entry.resource.ofType(', $resourceType, ')', $expression, '.count() = 1')"/>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:with-param>
                     <xsl:with-param name="stopTestOnFail" select="true()"/>
                 </xsl:call-template>
                 <!-- Add an explicit assert to check Resource.id -->
                 <xsl:call-template name="createAssert">
                     <xsl:with-param name="description" select="concat($resourceType, ' resource evaluated in the previous assert contains an .id')"/>
-                    <xsl:with-param name="expression" select="concat('Bundle.entry.resource.ofType(', $resourceType, ')', $expression, '.id.exists()')"/>
+                    <xsl:with-param name="expression">
+                        <xsl:choose>
+                            <xsl:when test="$bundleExpression = 'true'">
+                                <xsl:value-of select="concat($expression, '.id.exists()')"/>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:value-of select="concat('Bundle.entry.resource.ofType(', $resourceType, ')', $expression, '.id.exists()')"/>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:with-param>
                     <xsl:with-param name="stopTestOnFail" select="true()"/>
                 </xsl:call-template>
                 
@@ -146,7 +165,18 @@
                 <variable>
                     <name value="{$idVariable}"/>
                     <description value="Resource.id for Observation {$resourceCount}"/>
-                    <expression value="{concat('Bundle.entry.resource.ofType(', $resourceType, ')', $expression, '.id')}"/>
+                    <expression>
+                        <xsl:attribute name="value">
+                            <xsl:choose>
+                                <xsl:when test="$bundleExpression = 'true'">
+                                    <xsl:value-of select="concat($expression, '.id')"/>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:value-of select="concat('Bundle.entry.resource.ofType(', $resourceType, ')', $expression, '.id')"/>
+                                </xsl:otherwise>
+                            </xsl:choose>
+                        </xsl:attribute>
+                    </expression>
                     <sourceId value="{$responseId}"/>
                 </variable>
                 
@@ -424,80 +454,6 @@
         </xsl:if>
     </xsl:template>
     
-    <xsl:template name="getMetaData">
-        <xsl:param name="resourceType" tunnel="yes"/>
-        <xsl:param name="structureDefinition" tunnel="yes"/>
-        <xsl:param name="elementPath" required="yes"/>
-        <xsl:param name="parentDataType"/>
-        
-        <xsl:variable name="polymorphic" select="concat(substring-before($elementPath, local-name()), nf:get-element-base(local-name()), '[x]')"/>
-        <xsl:variable name="polymorphicDataType" select="substring-after(local-name(), nf:get-element-base(local-name()))"/>
-        
-        <!-- If datatype, overrule elementPath and structureDefinition -->
-        <xsl:variable name="structureDefinition">
-            <xsl:choose>
-                <xsl:when test="$parentDataType = $complexDataTypes">
-                    <xsl:copy-of select="document(concat($libPath, lower-case($fhirVersion), '/dataTypes/StructureDefinition-', $parentDataType, '.xml'))"/>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:copy-of select="$structureDefinition"/>
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
-        
-        <xsl:variable name="elementPath">
-            <xsl:choose>
-                <xsl:when test="$parentDataType = $complexDataTypes">
-                    <xsl:variable name="head">
-                        <xsl:call-template name="substring-before-last">
-                            <xsl:with-param name="input" select="$elementPath"/>
-                            <xsl:with-param name="substr" select="'.'"/>
-                        </xsl:call-template>
-                    </xsl:variable>
-                    <xsl:value-of select="replace($elementPath, $head, $parentDataType)"/>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:value-of select="$elementPath"/>
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
-        
-        <nts:metaData>
-            <xsl:choose>
-                <xsl:when test="$structureDefinition/f:StructureDefinition/f:snapshot/f:element/@id = $elementPath">
-                    <!-- In StructureDefinitions, References have an f:type for each targetProfile. Using distinct-values to filter that (because I still want to know if it outputs multiple hits) -->
-
-                    <xsl:attribute name="nts:dataType">
-                        <xsl:value-of select="distinct-values($structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $elementPath]/f:type/f:code/@value)"/>
-                    </xsl:attribute>
-                    <xsl:attribute name="nts:polymorphic" select="'false'"/>
-                </xsl:when>
-                <xsl:when test="$structureDefinition/f:StructureDefinition/f:snapshot/f:element/@id = $polymorphic">
-                    <!-- Element is polymorphic, lets use its name to guess data type -->
-                    <xsl:attribute name="nts:dataType">
-                        <xsl:value-of select="$structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $polymorphic]/f:type/f:code/@value[lower-case(.) = lower-case($polymorphicDataType)]"/>
-                    </xsl:attribute>
-                    <xsl:attribute name="nts:polymorphic" select="'true'"/>
-                </xsl:when>
-                <!-- If extension, datatype is extension. Not present in Snapshot -->
-                <xsl:when test="self::f:extension">
-                    <xsl:attribute name="nts:dataType">Extension</xsl:attribute>
-                    <xsl:attribute name="nts:polymorphic" select="'false'"/>
-                </xsl:when>
-                <!-- If parent is extension, definition of extension isn't in Snapshot - this means datatype is value[x] -->
-                <xsl:when test="parent::f:extension">
-                    <xsl:attribute name="nts:dataType">
-                        <xsl:value-of select="$polymorphicDataType"/>
-                    </xsl:attribute>
-                    <xsl:attribute name="nts:polymorphic" select="'true'"/>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:message>Could not find <xsl:value-of select="$elementPath"/></xsl:message>
-                </xsl:otherwise>
-            </xsl:choose>
-        </nts:metaData>
-    </xsl:template>
-    
     <xsl:template name="createAssert">
         <xsl:param name="description" required="yes"/>
         <xsl:param name="expression" required="yes"/>
@@ -678,7 +634,7 @@
         
         <xsl:variable name="expression">
             <xsl:choose>
-                <xsl:when test="$dataType = ('Boolean','decimal')">
+                <xsl:when test="$dataType = ('boolean','decimal')">
                     <xsl:value-of select="concat(' = ', @value)"/>
                 </xsl:when>
                 <xsl:when test="$dataType = 'string' and $parentDataType = ('Coding','Quantity')">
@@ -698,7 +654,7 @@
                     <xsl:choose>
                         <xsl:when test="contains(@value, '{') and contains(@value, '}') ">
                             <xsl:text>.matches('^</xsl:text>
-                            <xsl:analyze-string select="@value" regex="\{{\w*\}}">
+                            <xsl:analyze-string select="@value" regex="\{{.*\}}">
                                 <xsl:matching-substring>
                                     <xsl:text>\\{.+\\}</xsl:text>
                                 </xsl:matching-substring>
@@ -851,7 +807,7 @@
                 <!-- Nothing to be added, as we only check existance -->
                 <xsl:text> </xsl:text>
             </xsl:when>
-            <xsl:when test="$dataType = ('Boolean','decimal','string') or ($dataType = 'uri' and $parentDataType = ('Coding','Meta','Quantity'))">
+            <xsl:when test="$dataType = ('boolean','decimal','string') or ($dataType = 'uri' and $parentDataType = ('Coding','Meta','Quantity'))">
                 <!-- For uri's in Coding and Quantity (.system) or Meta (.profile), we want an exact match. I can imagine that in some situations we want to only check for existance. -->
                 <xsl:value-of select="concat('''', @value, '''')"/>
             </xsl:when>
@@ -941,6 +897,80 @@
         </xsl:copy>
     </xsl:template>
     
+    <xsl:template name="getMetaData">
+        <xsl:param name="resourceType" tunnel="yes"/>
+        <xsl:param name="structureDefinition" tunnel="yes"/>
+        <xsl:param name="elementPath" required="yes"/>
+        <xsl:param name="parentDataType"/>
+        
+        <xsl:variable name="polymorphic" select="concat(substring-before($elementPath, local-name()), nf:get-element-base(local-name()), '[x]')"/>
+        <xsl:variable name="polymorphicDataType" select="nf:datatype-case(substring-after(local-name(), nf:get-element-base(local-name())))"/>
+        
+        <!-- If datatype, overrule elementPath and structureDefinition -->
+        <xsl:variable name="structureDefinition">
+            <xsl:choose>
+                <xsl:when test="$parentDataType = $complexDataTypes">
+                    <xsl:copy-of select="document(concat($libPath, lower-case($fhirVersion), '/dataTypes/StructureDefinition-', $parentDataType, '.xml'))"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:copy-of select="$structureDefinition"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+        
+        <xsl:variable name="elementPath">
+            <xsl:choose>
+                <xsl:when test="$parentDataType = $complexDataTypes">
+                    <xsl:variable name="head">
+                        <xsl:call-template name="substring-before-last">
+                            <xsl:with-param name="input" select="$elementPath"/>
+                            <xsl:with-param name="substr" select="'.'"/>
+                        </xsl:call-template>
+                    </xsl:variable>
+                    <xsl:value-of select="replace($elementPath, $head, $parentDataType)"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:value-of select="$elementPath"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+        
+        <nts:metaData>
+            <xsl:choose>
+                <xsl:when test="$structureDefinition/f:StructureDefinition/f:snapshot/f:element/@id = $elementPath">
+                    <!-- In StructureDefinitions, References have an f:type for each targetProfile. Using distinct-values to filter that (because I still want to know if it outputs multiple hits) -->
+                    
+                    <xsl:attribute name="nts:dataType">
+                        <xsl:value-of select="distinct-values($structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $elementPath]/f:type/f:code/@value)"/>
+                    </xsl:attribute>
+                    <xsl:attribute name="nts:polymorphic" select="'false'"/>
+                </xsl:when>
+                <xsl:when test="$structureDefinition/f:StructureDefinition/f:snapshot/f:element/@id = $polymorphic">
+                    <!-- Element is polymorphic, lets use its name to guess data type -->
+                    <xsl:attribute name="nts:dataType">
+                        <xsl:value-of select="$structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $polymorphic]/f:type/f:code/@value[lower-case(.) = lower-case($polymorphicDataType)]"/>
+                    </xsl:attribute>
+                    <xsl:attribute name="nts:polymorphic" select="'true'"/>
+                </xsl:when>
+                <!-- If extension, datatype is extension. Not present in Snapshot -->
+                <xsl:when test="self::f:extension">
+                    <xsl:attribute name="nts:dataType">Extension</xsl:attribute>
+                    <xsl:attribute name="nts:polymorphic" select="'false'"/>
+                </xsl:when>
+                <!-- If parent is extension, definition of extension isn't in Snapshot - this means datatype is value[x] -->
+                <xsl:when test="parent::f:extension">
+                    <xsl:attribute name="nts:dataType">
+                        <xsl:value-of select="$polymorphicDataType"/>
+                    </xsl:attribute>
+                    <xsl:attribute name="nts:polymorphic" select="'true'"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:message>Could not find <xsl:value-of select="$elementPath"/></xsl:message>
+                </xsl:otherwise>
+            </xsl:choose>
+        </nts:metaData>
+    </xsl:template>
+    
     <xsl:function name="nf:get-element-base" as="xs:string">
         <xsl:param name="localName"/>
         <xsl:variable name="output">
@@ -958,6 +988,18 @@
             </xsl:when>
             <xsl:otherwise>
                 <xsl:value-of select="$localName"/>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:function>
+    
+    <xsl:function name="nf:datatype-case" as="xs:string">
+        <xsl:param name="dataType"/>
+        <xsl:choose>
+            <xsl:when test="lower-case($dataType) = $simpleDataTypes">
+                <xsl:value-of select="lower-case($dataType)"/>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:value-of select="$dataType"/>
             </xsl:otherwise>
         </xsl:choose>
     </xsl:function>
