@@ -186,7 +186,6 @@
                     <xsl:with-param name="resourceType" select="$resourceType" tunnel="yes"/>
                     <xsl:with-param name="resourceCount" select="$resourceCount" tunnel="yes"/>
                     <xsl:with-param name="idVariable" select="$idVariable" tunnel="yes"/>
-                    <xsl:with-param name="parentElementPath" select="$resourceType"/>
                     <xsl:with-param name="parentLabel" select="$resourceCount"/>
                 </xsl:apply-templates>
             </test>
@@ -197,8 +196,8 @@
         <xsl:param name="resourceType" tunnel="yes"/>
         <xsl:param name="resourceCount" tunnel="yes"/>
         <xsl:param name="idVariable" tunnel="yes"/>
-        <xsl:param name="parentElementPath" required="yes"/>
         <xsl:param name="parentLabel" required="yes"/>
+        <xsl:param name="parentElementPath" select="parent::*/@nts:elementPath"/>
         
         <!-- Need to use element/@id or element/path/@value? So far, they are identical in STU3 -->
         <xsl:variable name="elementPath" select="concat($parentElementPath, '.', local-name())"/>
@@ -317,6 +316,7 @@
                             <xsl:when test="starts-with($durationAsString, '-')"> &lt; </xsl:when>
                             <xsl:otherwise> &gt; </xsl:otherwise>
                         </xsl:choose>
+                        <xsl:value-of select="fn:substring-before(fn:substring-after($dateTime1/@nts:elementPath, concat($resourceType, '.')),nf:get-element-base(local-name()))"/>
                         <xsl:choose>
                             <xsl:when test="$dateTime1/@nts:polymorphic = 'true'">
                                 <xsl:value-of select="nf:get-element-base($dateTime1/local-name())"/>
@@ -1106,6 +1106,17 @@
                     <xsl:message>Could not find <xsl:value-of select="$elementPath"/></xsl:message>
                 </xsl:otherwise>
             </xsl:choose>
+            <!-- For the greatest flexibility we actually need two attributes: elementPath and fhirPath. They are slightly different when it comes to handling extensions and polymorphic elements. We could probably use a third attribute specifically for the description aswell. -->
+            <xsl:attribute name="nts:elementPath">
+                <!--<xsl:choose>
+                    <xsl:when test="self::f:extension or self::f:modifierExtension">
+                        <xsl:value-of select="concat($elementPath,'(''',@url,''')')"/>
+                    </xsl:when>
+                    <xsl:otherwise>-->
+                        <xsl:value-of select="$elementPath"/>
+                    <!--</xsl:otherwise>
+                </xsl:choose>-->
+            </xsl:attribute>
         </nts:metaData>
     </xsl:template>
     
