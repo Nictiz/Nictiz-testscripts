@@ -202,7 +202,7 @@
         
         <!-- Need to use element/@id or element/path/@value? So far, they are identical in STU3 -->
         <xsl:variable name="elementPath" select="concat($parentElementPath, '.', local-name())"/>
-        <xsl:variable name="expressionBase" select="concat('Bundle.entry.resource.ofType(', $resourceType, ').where(id = ''${', $idVariable, '}'')',substring-after($parentElementPath, $resourceType),'.')"/>
+        <xsl:variable name="expressionBase" select="concat('Bundle.entry.resource.ofType(', $resourceType, ').where(id = ''${', $idVariable, '}'')')"/>
         
         <xsl:variable name="dataType" select="@nts:dataType"/>
         
@@ -235,7 +235,7 @@
         <xsl:if test="string-length($expression) gt 0">
             <xsl:call-template name="createAssert">
                 <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', $description)"/>
-                <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
+                <xsl:with-param name="expression" select="concat($expressionBase,substring-after($parentElementPath, $resourceType),'.', $expression)"/>
                 <xsl:with-param name="label" select="$label"/>
                 <xsl:with-param name="warningOnly">
                     <xsl:choose>
@@ -259,6 +259,7 @@
             - - Relative difference (use < and/or > to compare them)
             -->
             <xsl:variable name="expressionPrefix">
+                <xsl:value-of select="fn:substring-before(fn:substring-after($elementPath, concat($resourceType, '.')),nf:get-element-base(local-name()))"/>
                 <xsl:choose>
                     <xsl:when test="@nts:polymorphic = 'true'">
                         <xsl:value-of select="nf:get-element-base(local-name())"/>
@@ -298,7 +299,7 @@
                     
                     <xsl:call-template name="createAssert">
                         <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', $description)"/>
-                        <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
+                        <xsl:with-param name="expression" select="concat($expressionBase,substring-after($parentElementPath, $resourceType),'.', $expression)"/>
                         <xsl:with-param name="label" select="concat($label, '-checkDateTime')"/>
                         <xsl:with-param name="warningOnly" select="true()"/>
                     </xsl:call-template>
@@ -309,7 +310,7 @@
                     
                     <xsl:variable name="expression">
                         <!-- KT-393 -->
-                        <xsl:text>where(</xsl:text>
+                        <xsl:text>.where(</xsl:text>
                         <!--<xsl:text>exists(</xsl:text>-->
                         <xsl:value-of select="$expressionPrefix"/>
                         <xsl:choose>
@@ -336,7 +337,7 @@
                         <xsl:text>which is </xsl:text>
                         <xsl:choose>
                             <xsl:when test="starts-with($durationAsString, '-')">earlier than </xsl:when>
-                            <xsl:otherwise>later than </xsl:otherwise>
+                            <xsl:otherwise>later than .</xsl:otherwise>
                         </xsl:choose>
                         <xsl:value-of select="$dateTime1/local-name()"/>
                     </xsl:variable>
@@ -763,10 +764,10 @@
         <xsl:variable name="descriptionPrefix">
             <xsl:choose>
                 <xsl:when test="string-length($parentElementPath) gt 0">
-                    <xsl:value-of select="concat(substring-after($elementPath, $parentElementPath), ' ')"/>
+                    <xsl:value-of select="substring-after($elementPath, $parentElementPath)"/>
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:value-of select="concat(substring-after($elementPath, $resourceType), ' ')"/>
+                    <xsl:value-of select="substring-after($elementPath, $resourceType)"/>
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
@@ -891,7 +892,14 @@
         </xsl:variable>
         
         <xsl:if test="string-length($description) gt 0">
-            <xsl:value-of select="concat($descriptionPrefix,normalize-space($description))"/>
+            <xsl:choose>
+                <xsl:when test="string-length(normalize-space($description)) gt 0">
+                    <xsl:value-of select="concat($descriptionPrefix, ' ',normalize-space($description))"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:value-of select="concat($descriptionPrefix, normalize-space($description))"/>
+                </xsl:otherwise>
+            </xsl:choose>
         </xsl:if>
     </xsl:template>
     
@@ -992,6 +1000,12 @@
                 <xsl:with-param name="parentDataType" select="$parentDataType"/>
             </xsl:call-template>
         </xsl:variable>
+        
+        <xsl:choose>
+            <xsl:when test="$metaData/@nts:dataType = 'Identifier' and preceding-sibling::*[local-name() = fn:current()/local-name()]">
+                <xsl:message>Double Identifier detected: <xsl:value-of select="$elementPath"/> - Please check if this is a specific use case or not. If yes, it should be added to generateAsserts</xsl:message>
+            </xsl:when>
+            <xsl:otherwise>
         <xsl:copy>
             <xsl:apply-templates select="@*"/>
             <xsl:copy-of select="$metaData/@*"/>
@@ -1000,6 +1014,8 @@
                 <xsl:with-param name="parentDataType" select="$metaData/@nts:dataType"/>
             </xsl:apply-templates>
         </xsl:copy>
+            </xsl:otherwise>
+        </xsl:choose>
     </xsl:template>
     
     <xsl:template match="node()|@*" mode="#all">
