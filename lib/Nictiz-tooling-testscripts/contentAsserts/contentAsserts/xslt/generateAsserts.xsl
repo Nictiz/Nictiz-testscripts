@@ -15,11 +15,22 @@
     <xsl:param name="referenceBase" select="'../_reference/'"/>
     
     <!-- FHIR version to be able to retrieve the correct FHIR core resource type StructureDefinition -->
-    <xsl:param name="fhirVersion" select="'STU3'"/>
+    <xsl:param name="fhirVersion" select="'R4'"/>
     
     <!-- Fixed, but could be dependant on fhirVersion -->
-    <xsl:variable name="simpleDataTypes" select="('boolean','integer','string','decimal','uri','url','canonical','instant','date','dateTime','time','code','oid','id','markdown','unsignedInt','positiveInt','uuid')"/>
+    <xsl:variable name="simpleDataTypes" as="xs:string*">
+        <xsl:choose>
+            <xsl:when test="lower-case($fhirVersion) = 'stu3'">
+                <xsl:sequence select="('boolean','integer','string','decimal','uri','base64Binary','instant','date','dateTime','time','code','oid','id','markdown','unsignedInt','positiveInt')"/>
+            </xsl:when>
+            <xsl:otherwise>
+                <!-- R4 -->
+                <xsl:sequence select="('boolean','integer','string','decimal','uri','url','canonical','base64Binary','instant','date','dateTime','time','code','oid','id','markdown','unsignedInt','positiveInt','uuid')"/>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
     <xsl:variable name="complexDataTypes" select="('Annotation','Attachment','Coding','CodeableConcept','Quantity','SimpleQuantity','Distance','Age','Count','Duration','Money','Range','Ratio','Period','SampledData','Identifier','HumanName','Address','ContactPoint','Timing','Signature','Reference','Narrative','Meta')"/>
+    
     <xsl:variable name="dataTypes" select="($simpleDataTypes, $complexDataTypes)"/>
     <xsl:variable name="dataTypesLower" select="for $i in $dataTypes return lower-case($i)"/>
     <xsl:variable name="simpleDataTypesLower" select="for $i in $simpleDataTypes return lower-case($i)"/>
@@ -28,6 +39,9 @@
     
     <!-- The main template, which will call the remaining templates. -->
     <xsl:template name="generateAsserts" match="f:TestScript">
+        <xsl:if test="not(lower-case($fhirVersion) = ('stu3', 'r4'))">
+            <xsl:message terminate="yes">FHIR Version <xsl:value-of select="$fhirVersion"/> not supported or not set.</xsl:message>
+        </xsl:if>
         <xsl:variable name="includeDateT">
             <xsl:choose>
                 <xsl:when test="nts:includeDateT/@value = 'yes'">
@@ -508,8 +522,9 @@
         <xsl:variable name="expression">
             <!-- We need to make a separation between element without children (simple data types) and with children (simple data types with extensions and complex data types). Expression for simple data types without children are ... simpler -->
             <xsl:choose>
-                <xsl:when test="$dataType = 'id'">
+                <xsl:when test="$dataType = 'id' or ($dataType = 'http://hl7.org/fhirpath/System.String' and self::f:id)">
                     <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
+                    <!-- For some reason, the official data type of .id in R4 is this System.String thing -->
                 </xsl:when>
                 <xsl:when test="f:*">
                     <xsl:value-of select="$expressionPrefix"/>
@@ -712,7 +727,7 @@
                     <!-- For uri's in Coding and Quantity (.system) we want an exact match. I can imagine that in some situations we want to only check for existance. -->
                     <xsl:value-of select="concat(' = ''', @value, '''')"/>
                 </xsl:when>
-                <xsl:when test="$dataType = 'uri' and $parentDataType = 'Meta'">
+                <xsl:when test="$dataType = ('uri','canonical') and $parentDataType = 'Meta'">
                     <!-- We want an exact match, but because .profile has max cardinality of * we have to use this construction. Just using '=' would mean _all_ .profiles present would have to be @value. -->
                     <!-- KT-393 -->
                     <xsl:text>.where($this = '</xsl:text>
@@ -775,8 +790,9 @@
         <xsl:variable name="description">
             <!-- We need to make a separation between element without children (simple data types) and with children (simple data types with extensions and complex data types). Expression for simple data types without children are ... simpler -->
             <xsl:choose>
-                <xsl:when test="$dataType = 'id'">
+                <xsl:when test="$dataType = 'id' or ($dataType = 'http://hl7.org/fhirpath/System.String' and self::f:id)">
                     <!-- An assert for Resource.id has been made earlier in the process because it is essential. So here we do nothing -->
+                    <!-- For some reason, the official data type of .id in R4 is this System.String thing -->
                 </xsl:when>
                 <xsl:when test="f:*">
                     <xsl:choose>
@@ -916,8 +932,8 @@
                 <!-- Nothing to be added, as we only check existance -->
                 <xsl:text> </xsl:text>
             </xsl:when>
-            <xsl:when test="$dataType = ('boolean','decimal','string') or ($dataType = 'uri' and $parentDataType = ('Coding','Meta','Quantity'))">
-                <!-- For uri's in Coding and Quantity (.system) or Meta (.profile), we want an exact match. I can imagine that in some situations we want to only check for existance. -->
+            <xsl:when test="$dataType = ('boolean','decimal','string') or ($dataType = ('uri','canonical') and $parentDataType = ('Coding','Meta','Quantity'))">
+                <!-- For uri's in Coding and Quantity (.system) or Meta (.profile, uri is canonical in R4), we want an exact match. I can imagine that in some situations we want to only check for existance. -->
                 <xsl:value-of select="concat('''', @value, '''')"/>
             </xsl:when>
             <xsl:when test="$dataType = 'uri'">
@@ -1041,7 +1057,7 @@
         <xsl:param name="elementPath" required="yes"/>
         <xsl:param name="parentDataType"/>
         
-        <xsl:variable name="polymorphic" select="concat(substring-before($elementPath, local-name()), nf:get-element-base(local-name()), '[x]')"/>
+        <xsl:variable name="polymorphicElementPath" select="concat(substring-before($elementPath, local-name()), nf:get-element-base(local-name()), '[x]')"/>
         <xsl:variable name="polymorphicDataType" select="nf:datatype-case(substring-after(local-name(), nf:get-element-base(local-name())))"/>
         
         <!-- If datatype, overrule elementPath and structureDefinition -->
@@ -1083,10 +1099,10 @@
                     </xsl:attribute>
                     <xsl:attribute name="nts:polymorphic" select="'false'"/>
                 </xsl:when>
-                <xsl:when test="$structureDefinition/f:StructureDefinition/f:snapshot/f:element/@id = $polymorphic">
+                <xsl:when test="$structureDefinition/f:StructureDefinition/f:snapshot/f:element/@id = $polymorphicElementPath">
                     <!-- Element is polymorphic, lets use its name to guess data type -->
                     <xsl:attribute name="nts:dataType">
-                        <xsl:value-of select="distinct-values($structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $polymorphic]/f:type/f:code/@value[lower-case(.) = lower-case($polymorphicDataType)])"/>
+                        <xsl:value-of select="distinct-values($structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $polymorphicElementPath]/f:type/f:code/@value[lower-case(.) = lower-case($polymorphicDataType)])"/>
                     </xsl:attribute>
                     <xsl:attribute name="nts:polymorphic" select="'true'"/>
                 </xsl:when>
@@ -1123,16 +1139,22 @@
     <xsl:function name="nf:get-element-base" as="xs:string">
         <xsl:param name="localName"/>
         <xsl:variable name="output">
-            <xsl:analyze-string select="$localName" regex="^[a-z]+">
+            <xsl:analyze-string select="$localName" regex="^[a-zA-Z][a-z]+(([A-Z][a-z]+)+)">
                 <xsl:matching-substring>
-                    <xsl:value-of select="."/>
+                    <xsl:value-of select="substring-before($localName, regex-group(1))"/>
+                    <xsl:choose>
+                        <xsl:when test="lower-case(regex-group(1)) = $dataTypesLower"/>
+                        <xsl:otherwise>
+                            <xsl:value-of select="nf:get-element-base(regex-group(1))"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
                 </xsl:matching-substring>
             </xsl:analyze-string>
         </xsl:variable>
         
         <!-- Always return _something_ -->
         <xsl:choose>
-            <xsl:when test="lower-case(substring-after($localName, $output)) = $dataTypesLower">
+            <xsl:when test="string-length($output) gt 0">
                 <xsl:value-of select="$output"/>
             </xsl:when>
             <xsl:otherwise>

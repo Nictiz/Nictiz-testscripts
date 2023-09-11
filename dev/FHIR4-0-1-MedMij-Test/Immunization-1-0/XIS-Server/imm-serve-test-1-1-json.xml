@@ -48,6 +48,12 @@
       <defaultValue value="Bearer 60e3bbbe-3e2d-4ef3-a0da-d9bc1f3a3576"/>
       <description value="OAuth Token for current patient"/>
    </variable>
+   <variable>
+      <name value="imm-Immunization-02-id"/>
+      <description value="Resource.id for Observation 1"/>
+      <expression value="Bundle.entry.resource.ofType(Immunization).id"/>
+      <sourceId value="immunization-search-response"/>
+   </variable>
    <test>
       <name value="Test scenario 1.1 - Serve vaccinations"/>
       <description value="Serve Immunization resource including the patient and performer"/>
@@ -293,17 +299,6 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the response Bundle contains 1 Immunization resource(s). "/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Immunization)).count() = 1"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
             <description value="Confirm that the response Bundle contains 1 Medication resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Medication)).count() = 1"/>
@@ -408,6 +403,272 @@
             <description value="Confirm that the Bundle contains a(n) Patient with the right birth date"/>
             <direction value="response"/>
             <expression value="Bundle.entry.resource.as(Patient).birthDate=@2000-03-09"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Test scenario 1.1 - Serve vaccinations - Check Immunization 1"/>
+      <description value="Check if the previous operation results in a FHIR Immunization that contains the values that are expected following Nictiz' materials (fixture .id: imm-Immunization-02)"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Response Bundle contains exactly 1 Immunization"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Immunization resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).id.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-1"/>
+            <description value="Immunization 1 contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/nl-core-Vaccination-event'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').meta.where(profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/nl-core-Vaccination-event').exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2"/>
+            <description value="Immunization 1 contains .extension with url 'http://nictiz.nl/fhir/StructureDefinition/ext-Vaccination.PharmaceuticalProduct' with .valueReference with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').extension('http://nictiz.nl/fhir/StructureDefinition/ext-Vaccination.PharmaceuticalProduct').where(value.ofType(Reference).where((reference or identifier) and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-3"/>
+            <description value="Immunization 1 contains .identifier with .system and .value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').identifier.where(system and value).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-4"/>
+            <description value="Immunization 1 contains .status 'completed'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').status = 'completed'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-5"/>
+            <description value="Immunization 1 contains .vaccineCode with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.4.7' and .code '2978636' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').vaccineCode.where(coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.7' and code = '2978636' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6"/>
+            <description value="Immunization 1 contains .patient with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').patient.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-7"/>
+            <description value="Immunization 1 contains .occurrenceDateTime"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').occurrence.ofType(dateTime).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-8"/>
+            <description value="Immunization 1 contains .location with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').location.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-9"/>
+            <description value="Immunization 1 contains .site with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/ext-AnatomicalLocation.Laterality' with .valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '7771000' and .display and .coding with .system 'http://snomed.info/sct' and .code '68367000' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').site.where(extension('http://nictiz.nl/fhir/StructureDefinition/ext-AnatomicalLocation.Laterality').where(value.ofType(CodeableConcept).where(coding.where(system = 'http://snomed.info/sct' and code = '7771000' and display))) and coding.where(system = 'http://snomed.info/sct' and code = '68367000' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-9-1"/>
+            <description value="Immunization 1 contains .site.extension with url 'http://nictiz.nl/fhir/StructureDefinition/ext-AnatomicalLocation.Laterality' with .valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '7771000' and .display. This assert checks only one child. Assert 1-9 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').site.extension('http://nictiz.nl/fhir/StructureDefinition/ext-AnatomicalLocation.Laterality').where(value.ofType(CodeableConcept).where(coding.where(system = 'http://snomed.info/sct' and code = '7771000' and display))).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-9-2"/>
+            <description value="Immunization 1 contains .site with .coding with .system 'http://snomed.info/sct' and .code '68367000' and .display. This assert checks only one child. Assert 1-9 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').site.where(coding.where(system = 'http://snomed.info/sct' and code = '68367000' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-10"/>
+            <description value="Immunization 1 contains .route with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.4.9' and .code '2' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').route.where(coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.9' and code = '2' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-11"/>
+            <description value="Immunization 1 contains .doseQuantity with .value '0.25' and .unit and .system 'http://unitsofmeasure.org' and .code 'ml'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').doseQuantity.where(value = 0.25 and unit and system = 'http://unitsofmeasure.org' and code = 'ml').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-12"/>
+            <description value="Immunization 1 contains .performer with .function with .coding with .system 'http://terminology.hl7.org/CodeSystem/v2-0443' and .code 'AP' and .display and .actor with either .reference or .identifier and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').performer.where(function.where(coding.where(system = 'http://terminology.hl7.org/CodeSystem/v2-0443' and code = 'AP' and display)) and actor.where((reference or identifier) and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-12-1"/>
+            <description value="Immunization 1 contains .performer.function with .coding with .system 'http://terminology.hl7.org/CodeSystem/v2-0443' and .code 'AP' and .display. This assert checks only one child. Assert 1-12 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').performer.function.where(coding.where(system = 'http://terminology.hl7.org/CodeSystem/v2-0443' and code = 'AP' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-12-2"/>
+            <description value="Immunization 1 contains .performer.actor with either .reference or .identifier and .display. This assert checks only one child. Assert 1-12 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').performer.actor.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-13"/>
+            <description value="Immunization 1 contains .reasonCode with .coding with .system 'http://snomed.info/sct' and .code '159741000146107' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').reasonCode.where(coding.where(system = 'http://snomed.info/sct' and code = '159741000146107' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-14"/>
+            <description value="Immunization 1 contains .protocolApplied with .targetDisease with .coding with .system 'http://snomed.info/sct' and .code '840539006' and .display and .doseNumberString 'n/a'. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').protocolApplied.where(targetDisease.where(coding.where(system = 'http://snomed.info/sct' and code = '840539006' and display)) and doseNumber.ofType(string).replace('.', '').replace(',', '') ~ 'n/a').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-14-1"/>
+            <description value="Immunization 1 contains .protocolApplied.targetDisease with .coding with .system 'http://snomed.info/sct' and .code '840539006' and .display. This assert checks only one child. Assert 1-14 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').protocolApplied.targetDisease.where(coding.where(system = 'http://snomed.info/sct' and code = '840539006' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-14-2"/>
+            <description value="Immunization 1 contains .protocolApplied.doseNumberString 'n/a'. This assert checks only one child. Assert 1-14 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Immunization).where(id = '${imm-Immunization-02-id}').protocolApplied.doseNumber.ofType(string).replace('.', '').replace(',', '') ~ 'n/a'"/>
             <warningOnly value="false"/>
          </assert>
       </action>
