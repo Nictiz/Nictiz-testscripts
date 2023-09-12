@@ -611,7 +611,16 @@
                                 <xsl:when test="f:system">system</xsl:when>
                                 <xsl:when test="f:type">type</xsl:when>
                             </xsl:choose>
-                            <xsl:text> and value)</xsl:text>
+                            <!-- KT-393 R4 -->
+                            <xsl:if test="$fhirVersion = 'R4'">
+                                <xsl:text>.exists()</xsl:text>
+                            </xsl:if>
+                            <xsl:text> and value</xsl:text>
+                            <!-- KT-393 R4 -->
+                            <xsl:if test="$fhirVersion = 'R4'">
+                                <xsl:text>.exists()</xsl:text>
+                            </xsl:if>
+                            <xsl:text>)</xsl:text>
                             <!-- KT-393 -->
                             <xsl:text>.exists()</xsl:text>
                         </xsl:when>
@@ -621,7 +630,22 @@
                             </xsl:call-template>
                             <!-- Check if (reference OR identifier) and display exist -->
                             <!-- KT-393 -->
-                            <xsl:text>.where((reference or identifier) and display).exists()</xsl:text>
+                            <xsl:text>.where((reference</xsl:text>
+                            <!-- KT-393 R4 -->
+                            <xsl:if test="$fhirVersion = 'R4'">
+                                <xsl:text>.exists()</xsl:text>
+                            </xsl:if>
+                            <xsl:text> or identifier</xsl:text>
+                            <!-- KT-393 R4 -->
+                            <xsl:if test="$fhirVersion = 'R4'">
+                                <xsl:text>.exists()</xsl:text>
+                            </xsl:if>
+                            <xsl:text>) and display</xsl:text>
+                            <!-- KT-393 R4 -->
+                            <xsl:if test="$fhirVersion = 'R4'">
+                                <xsl:text>.exists()</xsl:text>
+                            </xsl:if>
+                            <xsl:text>).exists()</xsl:text>
                             <!--<xsl:text>.exists((reference or identifier) and display)</xsl:text>-->
                         </xsl:when>
                         <xsl:when test="$dataType = 'Narrative' and f:status/@value = 'extensions'">
@@ -653,8 +677,8 @@
                                 </xsl:if>
                             </xsl:for-each>
                             <xsl:text>)</xsl:text>
-                            <!-- Temp because of KT-393 -->
-                            <xsl:if test="$topLevel = true()">
+                            <!-- Temp because of KT-393, always apply in R4 -->
+                            <xsl:if test="$topLevel = true() or $fhirVersion = 'R4'">
                                 <xsl:text>.exists()</xsl:text>
                             </xsl:if>
                         </xsl:when>
@@ -692,6 +716,10 @@
                 </xsl:when>
                 <xsl:when test="$dataType = 'string' and $parentDataType = ('Coding','Quantity')">
                     <!-- This is .display (in Coding) or .unit (in Quantity), and by definition not topLevel, so we do not have to do anything -->
+                    <!-- KT-393 R4 -->
+                    <xsl:if test="$fhirVersion = 'R4'">
+                        <xsl:text>.exists()</xsl:text>
+                    </xsl:if>
                 </xsl:when>
                 <xsl:when test="$dataType = 'string'">
                     <!-- '~' (equivalence) ignores case and whitespace. replace('.', '') removes dot and comma (or other characters - hyphens perhaps?). Or should we be allowed to define overrides in our NTS-script? -->
@@ -699,7 +727,8 @@
                 </xsl:when>
                 <xsl:when test="$dataType = 'dateTime'">
                     <!-- For now we only check if dateTime exist -->
-                    <xsl:if test="$topLevel = true()">
+                    <!-- KT-393 R4 -->
+                    <xsl:if test="$topLevel = true() or $fhirVersion = 'R4'">
                         <xsl:text>.exists()</xsl:text>
                     </xsl:if>
                 </xsl:when>
@@ -739,7 +768,8 @@
                 </xsl:when>
                 <xsl:when test="$dataType = 'uri'">
                     <!-- For other uri's we assume there doesn't have to be an exact match. -->
-                    <xsl:if test="$topLevel = true()">
+                    <!-- KT-393 R4 -->
+                    <xsl:if test="$topLevel = true() or $fhirVersion = 'R4'">
                         <xsl:text>.exists()</xsl:text>
                     </xsl:if>
                 </xsl:when>
