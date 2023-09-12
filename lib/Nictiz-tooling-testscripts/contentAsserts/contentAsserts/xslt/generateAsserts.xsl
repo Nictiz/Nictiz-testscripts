@@ -406,10 +406,16 @@
         </xsl:if>
         
         <!-- For some elements, we want te create additional asserts -->
-        <!-- If one ore more extensions are present (and if not BackboneElement), we would like to create separate asserts for the extension and treat the rest of the element as if the extension wasn't there -->
-        <xsl:if test="(f:extension or f:modifierExtension) and not($dataType = 'BackboneElement')">
+        
+        <!-- This list of dataTypes is kind of arbitrary. I guess you can say that types like Reference or Quantity are somewhat compact (like max. 4 or 5 children?) that convey meaning _together_. The dataTypes below are more like bundles of elements that contain multiple individual pieces of information -->
+        <xsl:variable name="containerTypes" select="('Address','BackboneElement','ContactPoint','HumanName')"/>
+        
+        <!-- If one ore more extensions are present (and if not in containerTypes), we would like to create separate asserts for the extension and treat the rest of the element as if the extension wasn't there -->
+        <xsl:if test="(f:extension or f:modifierExtension) and not($dataType = $containerTypes)">
             <xsl:variable name="simpleElement">
-                <xsl:apply-templates select="." mode="copyWithoutExtensions"/>
+                <xsl:apply-templates select="." mode="copyWithoutExtensions">
+                    <xsl:with-param name="topLevel" select="true()"/>
+                </xsl:apply-templates>
             </xsl:variable>
             
             <xsl:choose>
@@ -458,8 +464,9 @@
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:if>
-                
-        <xsl:if test="$dataType = 'BackboneElement' and count(*) gt 1">
+        
+        <!-- This list of dataTypes is kind of arbitrary. I guess you can say that types like Reference or Quantity are somewhat compact (like max. 4 or 5 children?) that convey meaning _together_. The dataTypes below are more like bundles of elements that contain multiple individual pieces of information -->
+        <xsl:if test="$dataType = $containerTypes and count(*) gt 1">
             <xsl:apply-templates select="*" mode="#current">
                 <xsl:with-param name="parentElementPath">
                     <xsl:choose>
@@ -548,7 +555,10 @@
                             </xsl:choose>-->
                             <xsl:if test="@value">
                                 <xsl:text>$this</xsl:text>
-                                <xsl:call-template name="createExpressionSimple"/>
+                                <xsl:call-template name="createExpressionSimple">
+                                    <xsl:with-param name="topLevel" select="false()"/>
+                                    <xsl:with-param name="excludeWhereThis" select="true()"/>
+                                </xsl:call-template>
                                 <xsl:text> and </xsl:text>
                             </xsl:if>
                             <xsl:for-each select="*">
@@ -658,7 +668,7 @@
                             <!-- Narrative isn't always present in fixtures. If not present, it is generated at a later stage. We should find a way to always add this assert. -->
                             <xsl:text>.exists()</xsl:text>
                         </xsl:when>
-                        <xsl:when test="$dataType = ('Annotation','BackboneElement','CodeableConcept','Coding','Extension','Meta','Period','Quantity')">
+                        <xsl:when test="$dataType = ('Address','Annotation','BackboneElement','CodeableConcept','Coding','ContactPoint','Extension','HumanName','Meta','Period','Quantity')">
                             <xsl:if test="$dataType = 'Extension'">
                                 <xsl:text>('</xsl:text>
                                 <xsl:value-of select="@url"/>
@@ -710,7 +720,10 @@
     <xsl:template name="createExpressionSimple">
         <xsl:param name="dataType" select="@nts:dataType"/>
         <xsl:param name="parentDataType" select="parent::f:*/@nts:dataType"/>
+        <!-- If a call is topLevel, we need an 'exists()' statement. If a call isn't, the 'exists()' statement is constructed at a higher level, so we don't need it here.  -->
         <xsl:param name="topLevel" select="true()"/>
+        <!-- When an element has max cardinality of * and needs a .where($this ...) construction. However, when a simple datatype element also has children, this statement can be excluded. Seems independent of topLevel -->
+        <xsl:param name="excludeWhereThis" select="false()"/>
         
         <xsl:variable name="expression">
             <xsl:choose>
@@ -718,7 +731,20 @@
                     <!-- In Attachment, there is hardly anything that we can reliably check for more than existance, so we do nothing here. -->
                 </xsl:when>
                 <xsl:when test="$dataType = ('boolean','decimal')">
-                    <xsl:value-of select="concat(' = ', @value)"/>
+                    <xsl:choose>
+                        <xsl:when test="@nts:max = '*' and $excludeWhereThis = false()">
+                            <!-- KT-393 -->
+                            <xsl:text>.where($this = </xsl:text>
+                            <!--<xsl:text>.exists($this = '</xsl:text>-->
+                            <xsl:value-of select="@value"/>
+                            <xsl:text>)</xsl:text>
+                            <!-- KT-393 -->
+                            <xsl:text>.exists()</xsl:text>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="concat(' = ', @value)"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
                 </xsl:when>
                 <xsl:when test="$dataType = 'string' and $parentDataType = ('Coding','Quantity')">
                     <!-- This is .display (in Coding) or .unit (in Quantity), and by definition not topLevel, so we do not have to do anything -->
@@ -729,10 +755,23 @@
                 </xsl:when>
                 <xsl:when test="$dataType = 'string'">
                     <!-- '~' (equivalence) ignores case and whitespace. replace('.', '') removes dot and comma (or other characters - hyphens perhaps?). Or should we be allowed to define overrides in our NTS-script? -->
-                    <xsl:value-of select="concat('.replace(''.'', '''').replace('','', '''') ~ ''', normalize-space(translate(@value, '.,', '')), '''')"/>
+                    <xsl:choose>
+                        <xsl:when test="@nts:max = '*' and $excludeWhereThis = false()">
+                            <!-- KT-393 -->
+                            <xsl:text>.where($this</xsl:text>
+                            <!--<xsl:text>.exists($this</xsl:text>-->
+                            <xsl:value-of select="concat('.replace(''.'', '''').replace('','', '''') ~ ''', normalize-space(translate(@value, '.,', '')), '''')"/>
+                            <xsl:text>)</xsl:text>
+                            <!-- KT-393 -->
+                            <xsl:text>.exists()</xsl:text>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="concat('.replace(''.'', '''').replace('','', '''') ~ ''', normalize-space(translate(@value, '.,', '')), '''')"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
                 </xsl:when>
-                <xsl:when test="$dataType = 'dateTime'">
-                    <!-- For now we only check if dateTime exist -->
+                <xsl:when test="$dataType = ('dateTime','date')">
+                    <!-- For now we only check if date or dateTime exist -->
                     <!-- KT-393 R4 -->
                     <xsl:if test="$topLevel = true() or $fhirVersion = 'R4'">
                         <xsl:text>.exists()</xsl:text>
@@ -758,19 +797,22 @@
                         </xsl:otherwise>
                     </xsl:choose>
                 </xsl:when>
-                <xsl:when test="$dataType = 'code' or ($dataType = 'uri' and $parentDataType = ('Coding','Quantity'))">
-                    <!-- For uri's in Coding and Quantity (.system) we want an exact match. I can imagine that in some situations we want to only check for existance. -->
-                    <xsl:value-of select="concat(' = ''', @value, '''')"/>
-                </xsl:when>
-                <xsl:when test="$dataType = ('uri','canonical') and $parentDataType = 'Meta'">
-                    <!-- We want an exact match, but because .profile has max cardinality of * we have to use this construction. Just using '=' would mean _all_ .profiles present would have to be @value. -->
-                    <!-- KT-393 -->
-                    <xsl:text>.where($this = '</xsl:text>
-                    <!--<xsl:text>.exists($this = '</xsl:text>-->
-                    <xsl:value-of select="@value"/>
-                    <xsl:text>')</xsl:text>
-                    <!-- KT-393 -->
-                    <xsl:text>.exists()</xsl:text>
+                <xsl:when test="$dataType = 'code' or ($dataType = ('canonical','uri') and $parentDataType = ('Coding','Meta','Quantity'))">
+                    <!-- For uri's in Coding and Quantity (.system) or uri/canonical in Meta (.profile) we want an exact match. I can imagine that in some situations we want to only check for existance. -->
+                    <xsl:choose>
+                        <xsl:when test="@nts:max = '*' and $excludeWhereThis = false()">
+                            <!-- KT-393 -->
+                            <xsl:text>.where($this = '</xsl:text>
+                            <!--<xsl:text>.exists($this = '</xsl:text>-->
+                            <xsl:value-of select="@value"/>
+                            <xsl:text>')</xsl:text>
+                            <!-- KT-393 -->
+                            <xsl:text>.exists()</xsl:text>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="concat(' = ''', @value, '''')"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
                 </xsl:when>
                 <xsl:when test="$dataType = 'uri'">
                     <!-- For other uri's we assume there doesn't have to be an exact match. -->
@@ -912,7 +954,7 @@
                             <!-- Nothing to add -->
                             <xsl:text> </xsl:text>
                         </xsl:when>
-                        <xsl:when test="$dataType = ('Annotation','BackboneElement','CodeableConcept','Coding','Extension','Meta','Period','Quantity')">
+                        <xsl:when test="$dataType = ('Address','Annotation','BackboneElement','CodeableConcept','Coding','ContactPoint','Extension','HumanName','Meta','Period','Quantity')">
                             <xsl:if test="$dataType = 'Extension'">
                                 <xsl:value-of select="concat('with url ''', @url, ''' ')"/>
                             </xsl:if>
@@ -964,7 +1006,7 @@
                 <!-- In Attachment, there is hardly anything that we can reliably check for more than existance, so we do nothing here. -->
                 <xsl:text> </xsl:text>
             </xsl:when>
-            <xsl:when test="$dataType = 'dateTime' or ($dataType = 'string' and $parentDataType = ('Coding','Quantity'))">
+            <xsl:when test="$dataType = ('dateTime','date') or ($dataType = 'string' and $parentDataType = ('Coding','Quantity'))">
                 <!-- Nothing to be added, as we only check existance -->
                 <xsl:text> </xsl:text>
             </xsl:when>
@@ -1077,12 +1119,20 @@
     </xsl:template>
     
     <xsl:template match="node()|@*" mode="copyWithoutExtensions" priority="1">
+        <xsl:param name="topLevel" select="false()"/>
         <xsl:copy>
             <xsl:apply-templates select="@*" mode="#current"/>
             <!-- Count the number of extensions removed to be able to adjust the label count -->
-            <xsl:if test="f:extension or f:modifierExtension">
-                <xsl:attribute name="nts:extensionsRemoved" select="count(f:extension) + count(f:modifierExtension)"/>
-            </xsl:if>
+            <xsl:choose>
+                <xsl:when test="$topLevel = true()">
+                    <xsl:if test="(f:extension or f:modifierExtension)">
+                        <xsl:attribute name="nts:extensionsRemoved" select="count(f:extension) + count(f:modifierExtension)"/>
+                    </xsl:if>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:apply-templates select="f:extension|f:modifierExtension" mode="#default"/>
+                </xsl:otherwise>
+            </xsl:choose>
             <xsl:apply-templates select="node()[not(self::f:extension) and not(self::f:modifierExtension)]" mode="#current"/>
         </xsl:copy>
     </xsl:template>
@@ -1129,23 +1179,27 @@
             <xsl:choose>
                 <xsl:when test="$structureDefinition/f:StructureDefinition/f:snapshot/f:element/@id = $elementPath">
                     <!-- In StructureDefinitions, References have an f:type for each targetProfile. Using distinct-values to filter that (because I still want to know if it outputs multiple hits) -->
-                    
+                    <xsl:variable name="elementDefinition" select="$structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $elementPath]"/>
                     <xsl:attribute name="nts:dataType">
-                        <xsl:value-of select="distinct-values($structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $elementPath]/f:type/f:code/@value)"/>
+                        <xsl:value-of select="distinct-values($elementDefinition/f:type/f:code/@value)"/>
                     </xsl:attribute>
                     <xsl:attribute name="nts:polymorphic" select="'false'"/>
+                    <xsl:attribute name="nts:max" select="$elementDefinition/f:max/@value"/>
                 </xsl:when>
                 <xsl:when test="$structureDefinition/f:StructureDefinition/f:snapshot/f:element/@id = $polymorphicElementPath">
                     <!-- Element is polymorphic, lets use its name to guess data type -->
+                    <xsl:variable name="elementDefinition" select="$structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $polymorphicElementPath]"/>
                     <xsl:attribute name="nts:dataType">
-                        <xsl:value-of select="distinct-values($structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $polymorphicElementPath]/f:type/f:code/@value[lower-case(.) = lower-case($polymorphicDataType)])"/>
+                        <xsl:value-of select="distinct-values($elementDefinition/f:type/f:code/@value[lower-case(.) = lower-case($polymorphicDataType)])"/>
                     </xsl:attribute>
                     <xsl:attribute name="nts:polymorphic" select="'true'"/>
+                    <xsl:attribute name="nts:max" select="$elementDefinition/f:max/@value"/>
                 </xsl:when>
                 <!-- If extension, datatype is extension. Not present in Snapshot -->
                 <xsl:when test="self::f:extension or self::f:modifierExtension">
                     <xsl:attribute name="nts:dataType">Extension</xsl:attribute>
                     <xsl:attribute name="nts:polymorphic" select="'false'"/>
+                    <xsl:attribute name="nts:max" select="'UNK'"/>
                 </xsl:when>
                 <!-- If parent is extension, definition of extension isn't in Snapshot - this means datatype is value[x] -->
                 <xsl:when test="parent::f:extension or parent::f:modifierExtension">
@@ -1153,6 +1207,7 @@
                         <xsl:value-of select="$polymorphicDataType"/>
                     </xsl:attribute>
                     <xsl:attribute name="nts:polymorphic" select="'true'"/>
+                    <xsl:attribute name="nts:max" select="1"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:message>Could not find <xsl:value-of select="$elementPath"/></xsl:message>
