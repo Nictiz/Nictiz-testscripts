@@ -121,7 +121,7 @@
             <xsl:variable name="resourceCount" select="count($fixture/parent::nts:fixture/preceding-sibling::nts:fixture[*/local-name() = $resourceType]) + 1"/>
             <xsl:variable name="multipleExist" select="count($fixtures/nts:fixture[*/local-name() = $resourceType]) gt 1"/>
             
-            <xsl:variable name="structureDefinition" select="document(concat($libPath, lower-case($fhirVersion), '/StructureDefinition-', $resourceType, '.xml'))"/>
+            <xsl:variable name="structureDefinition" select="document(concat($libPath, lower-case($fhirVersion), '/', $resourceType, '.xml'))"/>
             
             <!-- Would preferably do this in a separate step with Xproc. We'll see what the future brings -->
             <xsl:variable name="fixtureWithMetaData">
@@ -1100,7 +1100,7 @@
         <xsl:variable name="structureDefinition">
             <xsl:choose>
                 <xsl:when test="$parentDataType = $complexDataTypes">
-                    <xsl:copy-of select="document(concat($libPath, lower-case($fhirVersion), '/dataTypes/StructureDefinition-', $parentDataType, '.xml'))"/>
+                    <xsl:copy-of select="document(concat($libPath, lower-case($fhirVersion), '/', $parentDataType, '.xml'))"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:copy-of select="$structureDefinition"/>
