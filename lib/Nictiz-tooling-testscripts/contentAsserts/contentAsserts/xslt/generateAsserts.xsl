@@ -119,6 +119,7 @@
             
             <xsl:variable name="resourceType" select="$fixture/local-name()"/>
             <xsl:variable name="resourceCount" select="count($fixture/parent::nts:fixture/preceding-sibling::nts:fixture[*/local-name() = $resourceType]) + 1"/>
+            <xsl:variable name="multipleExist" select="count($fixtures/nts:fixture[*/local-name() = $resourceType]) gt 1"/>
             
             <xsl:variable name="structureDefinition" select="document(concat($libPath, lower-case($fhirVersion), '/StructureDefinition-', $resourceType, '.xml'))"/>
             
@@ -131,8 +132,15 @@
             <!-- debug -->
             <!--<xsl:result-document href="test{$resourceCount}.xml"><xsl:copy-of select="$fixtureWithMetaData"/></xsl:result-document>-->
             
+            <xsl:variable name="newTestName">
+                <xsl:value-of select="concat($testName, ' - Check ', $resourceType)"/>
+                <xsl:if test="$multipleExist">
+                    <xsl:value-of select="concat(' ', $resourceCount)"/>
+                </xsl:if>
+            </xsl:variable>
+            
             <test>
-                <name value="{$testName} - Check {$resourceType} {$resourceCount}"/>
+                <name value="{$newTestName}"/>
                 <description value="Check if the previous operation results in a FHIR {$resourceType} that contains the values that are expected following Nictiz' materials (fixture .id: {$fixtureId})"/>
                 
                 <!-- According to TestScript spec, the last available request/response will be used, so we do not specifically have to add a responseId. Could (should?) be a feature though -->
@@ -198,7 +206,6 @@
                 <!-- After this, we can use the variable in all following asserts -->
                 <xsl:apply-templates select="$fixtureWithMetaData/f:*/f:*" mode="generateAsserts">
                     <xsl:with-param name="resourceType" select="$resourceType" tunnel="yes"/>
-                    <xsl:with-param name="resourceCount" select="$resourceCount" tunnel="yes"/>
                     <xsl:with-param name="idVariable" select="$idVariable" tunnel="yes"/>
                     <xsl:with-param name="parentLabel" select="$resourceCount"/>
                 </xsl:apply-templates>
@@ -208,7 +215,6 @@
     
     <xsl:template match="f:*" mode="generateAsserts">
         <xsl:param name="resourceType" tunnel="yes"/>
-        <xsl:param name="resourceCount" tunnel="yes"/>
         <xsl:param name="idVariable" tunnel="yes"/>
         <xsl:param name="parentLabel" required="yes"/>
         <xsl:param name="parentElementPath" select="parent::*/@nts:elementPath"/>
@@ -247,7 +253,7 @@
         
         <xsl:if test="string-length($expression) gt 0">
             <xsl:call-template name="createAssert">
-                <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', $description)"/>
+                <xsl:with-param name="description" select="concat('Contains ', $description)"/>
                 <xsl:with-param name="expression" select="concat($expressionBase,substring-after($parentElementPath, $resourceType),'.', $expression)"/>
                 <xsl:with-param name="label" select="$label"/>
                 <xsl:with-param name="warningOnly">
@@ -311,7 +317,7 @@
                     </xsl:variable>
                     
                     <xsl:call-template name="createAssert">
-                        <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', $description)"/>
+                        <xsl:with-param name="description" select="concat('Contains ', $description)"/>
                         <xsl:with-param name="expression" select="concat($expressionBase,substring-after($parentElementPath, $resourceType),'.', $expression)"/>
                         <xsl:with-param name="label" select="concat($label, '-checkDateTime')"/>
                         <xsl:with-param name="warningOnly" select="true()"/>
@@ -357,7 +363,7 @@
                     </xsl:variable>
                     
                     <xsl:call-template name="createAssert">
-                        <xsl:with-param name="description" select="concat($resourceType, ' ', $resourceCount, ' contains ', $description)"/>
+                        <xsl:with-param name="description" select="concat('Contains ', $description)"/>
                         <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
                         <xsl:with-param name="label" select="concat($label, '-checkDateTime')"/>
                     </xsl:call-template>
