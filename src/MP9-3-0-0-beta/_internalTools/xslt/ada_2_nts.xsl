@@ -6,7 +6,7 @@
 
     <xsl:strip-space elements="*"/>
 
-    <xsl:param name="mappingsUrl4FhirFixtures">https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/ada_2_fhir-r4/mp/9.3.0/4TouchstoneMP</xsl:param>
+    <xsl:param name="mappingsUrl4FhirFixtures">https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/ada_2_fhir-r4/mp/9.3.0/touchstone/test/4touchstone_mp</xsl:param>
 
     <!-- Send/Receive/Retrieve/Serve, this param defaults to Send -->
     <xsl:param name="transactionType">Send</xsl:param>
@@ -31,8 +31,8 @@
                     <xsl:when test="string-length(scenario-nr/@value) gt 0">
                         <xsl:value-of select="replace(scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$1')"/>
                     </xsl:when>
-                    <xsl:when test="string-length(voorstel_gegevens/(voorstel|antwoord)/identificatie/@value) gt 0">
-                        <xsl:value-of select="lower-case(nf:assure-logicalid-chars(voorstel_gegevens/(voorstel|antwoord)/identificatie/@value))"/>
+                    <xsl:when test="string-length(voorstel_gegevens/(voorstel | antwoord)/identificatie/@value) gt 0">
+                        <xsl:value-of select="lower-case(nf:assure-logicalid-chars(voorstel_gegevens/(voorstel | antwoord)/identificatie/@value))"/>
                     </xsl:when>
                 </xsl:choose>
             </xsl:variable>
@@ -156,7 +156,7 @@
                         </xsl:for-each-group>
                     </xsl:variable>
 
-                    <xsl:variable name="idString" select="replace(concat('mp9-', $testScriptString/@short, '-', normalize-space(lower-case($transactionType)), '-', $scenarioset, '-', $scenario), '(.*?)-?(-$)', '$1')"></xsl:variable>
+                    <xsl:variable name="idString" select="replace(concat('mp9-', $testScriptString/@short, '-', normalize-space(lower-case($transactionType)), '-', $scenarioset, '-', $scenario), '(.*?)-?(-$)', '$1')"/>
                     <xsl:choose>
                         <!-- Receive -->
                         <xsl:when test="$ntsScenario = 'server'">
@@ -190,8 +190,7 @@
                                         </operation>
                                     </action>
                                     <nts:include value="assert.response.success" scope="common"/>
-                                    <nts:include value="assert.response.bundleContent" scope="common"
-                                        bundleType="transaction-response"/>
+                                    <nts:include value="assert.response.bundleContent" scope="common" bundleType="transaction-response"/>
                                     <xsl:copy-of select="$includeNumResources"/>
                                 </test>
                                 <!-- teardown receive only needed for Nictiz internal tests -->
