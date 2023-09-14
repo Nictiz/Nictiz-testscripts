@@ -15,8 +15,8 @@
 
     <property name="github.mp93.dir" value="https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/ada_2_fhir-r4/mp/9.3.0/touchstone"/>
     <!-- don't know how to create fileset or resource collection from online dir, workaround: use local dir -->
-    <property name="github.mp93.dir.local" value="${build.dir}/../../../../HL7-mappings/ada_2_fhir-r4/mp/9.3.0"/>
-    <property name="mappings.url.4.fhir.fixtures" value="${github.mp93.dir}/4TouchstoneMP"/>
+    <property name="github.mp93.dir.local" value="${build.dir}/../../../../HL7-mappings/ada_2_fhir-r4/mp/9.3.0/touchstone"/>
+    <property name="mappings.url.4.fhir.fixtures" value="${github.mp93.dir}"/>
 
     <property name="usecase.mg.input" value="beschikbaarstellen_medicatiegegevens"/>
     <property name="usecase.mg.rp.input" value="raadplegen_medicatiegegevens"/>
@@ -24,10 +24,12 @@
 
     <target name="convert_ada_2_nts_930">
         <!-- this would be the umbrella target to build all scenarios -->
-        <!-- pull medicationdata -->
-        <antcall target="convert_ada2nts_pull_meddata_930"/>
+        <!-- pull medicationdata Test -->
+        <antcall target="convert_ada2nts_pull_meddata_930">
+            <param name="test.dir" value="/Test"/>
+        </antcall>
         <!-- all push scenario's -->
-        <antcall target="convert_ada2nts_push_all_930"/>
+<!--        <antcall target="convert_ada2nts_push_all_930"/>-->
     </target>
 
     <target name="convert_ada2nts_pull_meddata_930">
@@ -35,9 +37,9 @@
 
         <!-- Medication data (pull) requires a more complex analysis of files, scenarios and subscenarios, so we call a separate XSL for this  -->
 
-        <property name="xsl.input.mg" value="${github.mp93.dir.local}/${usecase.mg.input}/ada_instance"/>
+        <property name="xsl.input.mg" value="${github.mp93.dir.local}${test.dir}/${usecase.mg.input}/ada_instance"/>
         <property name="xsl.input.mg.abs" location="${xsl.input.mg}"/>
-        <property name="xsl.output.mg" value="${build.dir}/../${usecase.mg.output}"/>
+        <property name="xsl.output.mg" value="${build.dir}/..${test.dir}/${usecase.mg.output}"/>
         <property name="xsl.output.mg.abs" location="${xsl.output.mg}"/>
 
         <echo>Deleting previous results, if any</echo>
@@ -50,7 +52,6 @@
         </delete>
 
         <!-- Retrieve -->
-        <!-- MedicationAgreement -->
         <antcall target="convert_ada_2_nts_medicationdata-pull_sub">
             <param name="xsl.out" value="${xsl.output.dummy}"/>
             <param name="transaction.type" value="Retrieve"/>
@@ -59,7 +60,6 @@
         </antcall>
 
         <!-- Serve -->
-        <!-- MedicationAgreement -->
         <antcall target="convert_ada_2_nts_medicationdata-pull_sub">
             <param name="xsl.out" value="${xsl.output.dummy}"/>
             <param name="transaction.type" value="Serve"/>
@@ -115,7 +115,7 @@
     <target name="convert_ada2nts_push_meddata_930">
         <!-- medication data push -->
         <antcall target="convert_push_usecase_930_sub">
-            <param name="xsl.input.usecase" value="${github.mp93.dir.local}/sturen_medicatiegegevens/ada_instance_sets"/>
+            <param name="xsl.input.usecase" value="${github.mp93.dir.local}/sturen_medicatiegegevens/ada_instance"/>
             <param name="xsl.output.usecase" value="${build.dir}/MedicationData"/>
         </antcall>
 
@@ -315,6 +315,7 @@
         <antcall target="copy_fixtures">
             <param name="test.dir" value="Test"/>
         </antcall>
+        
         <!-- edit lab stuff -->
         <echo>Editing fixtures for Lab for Test</echo>
         <antcall target="edit-lab-fixtures-test"/>

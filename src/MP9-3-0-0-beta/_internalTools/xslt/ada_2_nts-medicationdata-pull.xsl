@@ -26,12 +26,27 @@
 
         <!-- ada files have been prepocessed per building block and scenarioset -->
         <xsl:for-each select="collection(concat($inputDirNormalized, '?select=mg-mp-mg-tst-*.xml'))">
-            <xsl:variable name="buildingBlockShort" select="substring-before(substring-after(./adaxml/data/beschikbaarstellen_medicatiegegevens/@id, 'mg-mp-mg-tst-'), '-Scenarioset')"/>
+           <xsl:variable name="scenarioset" select="xs:integer(replace(./adaxml/data/beschikbaarstellen_medicatiegegevens/scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$1'))"/>
+            <xsl:choose>
+                <!-- Do nothing for scenarioset 0, handled by manually maintaining nts due to complexities in generating this -->
+                <xsl:when test="$scenarioset = 0"/>
+                <xsl:otherwise>
+                    <xsl:variable name="buildingBlockShort" select="substring-before(substring-after(./adaxml/data/beschikbaarstellen_medicatiegegevens/@id, 'mg-mp-mg-tst-'), '-Scenarioset')"/>
+                    <xsl:call-template name="createNts">
+                        <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
+                        <xsl:with-param name="scenarioset" select="$scenarioset"/>
+                    </xsl:call-template>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:for-each>
+        <!-- consolidation -->
+        <xsl:for-each select="collection(concat($inputDirNormalized, '?select=mg-mp-mg-CONS-*.xml'))">
             <xsl:variable name="scenarioset" select="xs:integer(replace(./adaxml/data/beschikbaarstellen_medicatiegegevens/scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$1'))"/>
             <xsl:choose>
                 <!-- Do nothing for scenarioset 0, handled by manually maintaining nts due to complexities in generating this -->
                 <xsl:when test="$scenarioset = 0"/>
                 <xsl:otherwise>
+                    <xsl:variable name="buildingBlockShort" select="substring-before(substring-after(./adaxml/data/beschikbaarstellen_medicatiegegevens/@id, 'mg-mp-mg-'), '-Scenarioset')"/>
                     <xsl:call-template name="createNts">
                         <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
                         <xsl:with-param name="scenarioset" select="$scenarioset"/>
@@ -54,6 +69,7 @@
 
         <xsl:variable name="buildingBlockLong">
             <xsl:choose>
+                <!-- consolidation buildingBlockShort is a string like "CONS-MA" -->
                 <xsl:when test="contains($buildingBlockShort,'MA')">MedicationAgreement</xsl:when>
                 <xsl:when test="contains($buildingBlockShort,'MGB')">MedicationUse</xsl:when>
                 <xsl:when test="contains($buildingBlockShort,'TA')">AdministrationAgreement</xsl:when>
@@ -61,7 +77,6 @@
                 <xsl:when test="$buildingBlockShort = 'MTD'">MedicationAdministration</xsl:when>
                 <xsl:when test="$buildingBlockShort = 'MVE'">MedicationDispense</xsl:when>
                 <xsl:when test="$buildingBlockShort = 'WDS'">VariableDosingRegimen</xsl:when>                
-                <xsl:when test="$buildingBlockShort = 'CONS'">Consolidation</xsl:when>
                 <xsl:otherwise>
                     <xsl:call-template name="util:logMessage">
                         <xsl:with-param name="level" select="$logFATAL"/>
