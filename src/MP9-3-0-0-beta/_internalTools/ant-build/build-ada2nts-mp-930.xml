@@ -7,21 +7,21 @@
     If you just run ant, it expects a build.xml in the working dir and runs the default target.-->
 
 <project basedir="." default="convert_ada_2_nts_930" name="build-ada2fhir-mp-930" xmlns:if="ant:if" xmlns:unless="ant:unless">
-    <ant antfile="../../../../../../HL7-mappings/_ant-buildfiles/ant-include/ant.ivy.xml" inheritall="true" usenativebasedir="true"/>
+    <ant antfile="../../../../../HL7-mappings/_ant-buildfiles/ant-include/ant.ivy.xml" inheritall="true" usenativebasedir="true"/>
     <property name="xsl.saxon" value="${saxon.path}"/>
     <property name="xsl.saxon.class" value="net.sf.saxon.TransformerFactoryImpl"/>
 
     <property name="build.dir" value=".."/>
 
-    <property name="github.mp93.dir" value="https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/ada_2_fhir-r4/mp/9.3.0"/>
+    <property name="github.mp93.dir" value="https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/ada_2_fhir-r4/mp/9.3.0/touchstone"/>
     <!-- don't know how to create fileset or resource collection from online dir, workaround: use local dir -->
-    <property name="github.mp93.dir.local" value="${build.dir}/../../../../../HL7-mappings/ada_2_fhir-r4/mp/9.3.0"/>
+    <property name="github.mp93.dir.local" value="${build.dir}/../../../../HL7-mappings/ada_2_fhir-r4/mp/9.3.0"/>
     <property name="mappings.url.4.fhir.fixtures" value="${github.mp93.dir}/4TouchstoneMP"/>
-    
+
     <property name="usecase.mg.input" value="beschikbaarstellen_medicatiegegevens"/>
     <property name="usecase.mg.rp.input" value="raadplegen_medicatiegegevens"/>
     <property name="usecase.mg.output" value="MedicationData"/>
-    
+
     <target name="convert_ada_2_nts_930">
         <!-- this would be the umbrella target to build all scenarios -->
         <!-- pull medicationdata -->
@@ -29,17 +29,17 @@
         <!-- all push scenario's -->
         <antcall target="convert_ada2nts_push_all_930"/>
     </target>
-    
+
     <target name="convert_ada2nts_pull_meddata_930">
         <!-- target for serve medication data (pull) -->
-        
+
         <!-- Medication data (pull) requires a more complex analysis of files, scenarios and subscenarios, so we call a separate XSL for this  -->
-        
+
         <property name="xsl.input.mg" value="${github.mp93.dir.local}/${usecase.mg.input}/ada_instance"/>
         <property name="xsl.input.mg.abs" location="${xsl.input.mg}"/>
         <property name="xsl.output.mg" value="${build.dir}/../${usecase.mg.output}"/>
         <property name="xsl.output.mg.abs" location="${xsl.output.mg}"/>
-        
+
         <echo>Deleting previous results, if any</echo>
         <mkdir dir="${xsl.output.mg.abs}"/>
         <mkdir dir="${xsl.output.mg.abs}/Retrieve"/>
@@ -48,7 +48,7 @@
             <fileset dir="${xsl.output.mg.abs}/Retrieve"/>
             <fileset dir="${xsl.output.mg.abs}/Serve"/>
         </delete>
-        
+
         <!-- Retrieve -->
         <!-- MedicationAgreement -->
         <antcall target="convert_ada_2_nts_medicationdata-pull_sub">
@@ -57,7 +57,7 @@
             <param name="output.dir" value="${xsl.output.mg.abs}"/>
             <param name="input.dir" value="${xsl.input.mg.abs}"/>
         </antcall>
-        
+
         <!-- Serve -->
         <!-- MedicationAgreement -->
         <antcall target="convert_ada_2_nts_medicationdata-pull_sub">
@@ -66,10 +66,10 @@
             <param name="output.dir" value="${xsl.output.mg.abs}"/>
             <param name="input.dir" value="${xsl.input.mg.abs}"/>
         </antcall>
-        
+
         <!-- Scenarioset 0, both Retrieve and Serve -->
         <!-- Hard coded delete - can we do better? -->
-        
+
         <property name="xsl.output.dummy" value="${build.dir}/xslt/dummy.xml"/>
         <xslt force="true" style="${build.dir}/xslt/ada_2_nts-medicationdata-pull-set0.xsl" in="${build.dir}/xslt/set0-config.xml" out="${xsl.output.dummy}" useImplicitFileset="false">
             <factory name="${xsl.saxon.class}"/>
@@ -77,8 +77,8 @@
             <param name="outputDir" expression="${xsl.output.mg.abs}"/>
         </xslt>
         <delete file="${xsl.output.dummy}"/>
-     </target>
-    
+    </target>
+
     <!-- Goal is to include file 'ada_2_nts-medicationdata-pull.xsl' in 'ada_2_nts.xsl' to be able to deprecate this target. -->
     <target name="convert_ada_2_nts_medicationdata-pull_sub">
         <property name="xsl.output.dummy" value="${build.dir}/xslt/dummy.xml"/>
@@ -91,13 +91,13 @@
         </xslt>
         <delete file="${xsl.output.dummy}"/>
     </target>
-    
+
     <target name="convert_ada2nts_push_all_930">
         <!-- medication data push -->
-        <antcall target="convert_ada2nts_push_meddata_930"/>        
+        <antcall target="convert_ada2nts_push_meddata_930"/>
         <!-- prescription -->
         <antcall target="convert_ada2nts_prescription_930"/>
-        <!-- medication prescription processing -->        
+        <!-- medication prescription processing -->
         <antcall target="convert_ada2nts_prescription_processing_930"/>
         <!-- proposal medication agreement -->
         <antcall target="convert_ada2nts_prop_ma_930"/>
@@ -109,16 +109,16 @@
         <antcall target="convert_ada2nts_prop_vv_930"/>
         <!-- target for reply proposal dispense request (verstrekkingsverzoek)  -->
         <antcall target="convert_ada2nts_reply_prop_vv_930"/>
-        
+
     </target>
-    
+
     <target name="convert_ada2nts_push_meddata_930">
         <!-- medication data push -->
         <antcall target="convert_push_usecase_930_sub">
             <param name="xsl.input.usecase" value="${github.mp93.dir.local}/sturen_medicatiegegevens/ada_instance_sets"/>
             <param name="xsl.output.usecase" value="${build.dir}/MedicationData"/>
-        </antcall>  
-        
+        </antcall>
+
     </target>
 
     <target name="convert_ada2nts_prescription_930">
@@ -168,7 +168,7 @@
             <param name="xsl.output.usecase" value="${build.dir}/ReplyProposalVV"/>
         </antcall>
     </target>
-    
+
     <!--<target name="convert_ada_2_nts_930_transaction">
 
         <echo>Building blocks MTD and WDS don't contain tests w.r.t. filter criteria (scenario 0)</echo>
@@ -250,7 +250,7 @@
     </target>
 -->
     <target name="convert_push_usecase_930_sub">
-        
+
         <!-- Send -->
         <antcall target="convert_ada_2_nts_sub">
             <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
@@ -303,34 +303,57 @@
             <param name="mappingsUrl4FhirFixtures" expression="${mappings.url.4.fhir.fixtures}"/>
             <!--<param name="buildingBlockShort" expression="${buildingblock.short}"/>-->
             <param name="transactionType" expression="${transaction.type}"/>
-<!--            <param name="outputDir" expression="${output.dir}" if="output.dir"/>-->
+            <!--            <param name="outputDir" expression="${output.dir}" if="output.dir"/>-->
         </xslt>
 
     </target>
-    
-    <target name="copy_fixtures">
-        <echo>Copying Fixtures</echo>
-        <delete>
-            <fileset dir="${build.dir}/../_reference/fixtures"/>
-            <fileset dir="${build.dir}/../_reference-medmij/fixtures"/>
-        </delete>
-        <copy todir="${build.dir}/../_reference/fixtures">
-            <fileset dir="${github.mp93.dir.local}/4TouchstoneMP">
-                <include name="*.xml"/>
-            </fileset>
-        </copy>
-        <copy todir="${build.dir}/../_reference-medmij/fixtures">
-            <fileset dir="${github.mp93.dir.local}/4TouchstoneMPMedMij">
-                <include name="*.xml"/>
-            </fileset>
-        </copy>
+
+    <target name="copy_fixtures-Test">
+        <!-- copy fixtures -->
+        <echo>Copying Fixtures </echo>
         
-        <echo>Editing fixtures for Lab</echo>
-        <xslt force="true" style="${build.dir}/xslt/combine-lab-mp.xsl" in="${github.mp93.dir.local}/4TouchstoneMP/mv-mp-vo-tst-4-2-a-nierfunctie-NHG-v30.xml" out="${build.dir}/../_reference/fixtures/mv-mp-vo-tst-4-2-a-nierfunctie-NHG-v30.xml">
+        <antcall target="copy_fixtures">
+            <param name="test.dir" value="Test"/>
+        </antcall>
+        <!-- edit lab stuff -->
+        <echo>Editing fixtures for Lab for Test</echo>
+        <antcall target="edit-lab-fixtures-test"/>
+    </target>
+    <target name="copy_fixtures-Cert">
+        <antcall target="copy_fixtures">
+            <param name="test.dir" value="Cert"/>
+        </antcall>
+    </target>
+
+    <target name="copy_fixtures">
+        <!-- param test.dir -->
+        <echo>Copying Fixtures for ${test.dir}</echo>
+        <mkdir dir="${build.dir}/../${test.dir}/_reference/fixtures"/>
+        <mkdir dir="${build.dir}/../${test.dir}/_reference-medmij/fixtures"/>
+        <delete>
+            <fileset dir="${build.dir}/../${test.dir}/_reference/fixtures"/>
+            <fileset dir="${build.dir}/../${test.dir}/_reference-medmij/fixtures"/>
+        </delete>
+        <copy todir="${build.dir}/../${test.dir}/_reference/fixtures">
+            <fileset dir="${github.mp93.dir.local}/touchstone/${test.dir}/4touchstone_mp">
+                <include name="*.xml"/>
+            </fileset>
+        </copy>
+        <copy todir="${build.dir}/../${test.dir}/_reference-medmij/fixtures">
+            <fileset dir="${github.mp93.dir.local}/touchstone/${test.dir}/4touchstone_mp_medmij">
+                <include name="*.xml"/>
+            </fileset>
+        </copy>
+
+    </target>
+
+    <target name="edit-lab-fixtures-test">
+        <echo>Editing fixtures for Lab for Test</echo>
+        <xslt force="true" style="${build.dir}/xslt/combine-lab-mp.xsl" in="${github.mp93.dir.local}/touchstone/test/4touchstone_mp/mv-mp-vo-tst-4-2-a-nierfunctie-NHG-v30.xml" out="${build.dir}/../test/_reference/fixtures/mv-mp-vo-tst-4-2-a-nierfunctie-NHG-v30.xml">
             <factory name="${xsl.saxon.class}"/>
             <classpath location="${xsl.saxon}"/>
         </xslt>
-        <xslt force="true" style="${build.dir}/xslt/combine-lab-mp.xsl" in="${github.mp93.dir.local}/4TouchstoneMP/mv-mp-vo-tst-4-2-b-nierfunctie-loinc-zonder-panel-v30.xml" out="${build.dir}/../_reference/fixtures/mv-mp-vo-tst-4-2-b-nierfunctie-loinc-zonder-panel-v30.xml">
+        <xslt force="true" style="${build.dir}/xslt/combine-lab-mp.xsl" in="${github.mp93.dir.local}/touchstone/test/4touchstone_mp/mv-mp-vo-tst-4-2-b-nierfunctie-loinc-zonder-panel-v30.xml" out="${build.dir}/../test/_reference/fixtures/mv-mp-vo-tst-4-2-b-nierfunctie-loinc-zonder-panel-v30.xml">
             <factory name="${xsl.saxon.class}"/>
             <classpath location="${xsl.saxon}"/>
         </xslt>
