@@ -6,14 +6,14 @@
         
     If you just run ant, it expects a build.xml in the working dir and runs the default target.-->
 
-<project basedir="." default="convert_ada_2_nts_930" name="build-ada2fhir-mp-930" xmlns:if="ant:if" xmlns:unless="ant:unless">
+<project basedir="." name="build-ada2fhir-mp-930" xmlns:if="ant:if" xmlns:unless="ant:unless">
     <ant antfile="../../../../../HL7-mappings/_ant-buildfiles/ant-include/ant.ivy.xml" inheritall="true" usenativebasedir="true"/>
     <property name="xsl.saxon" value="${saxon.path}"/>
     <property name="xsl.saxon.class" value="net.sf.saxon.TransformerFactoryImpl"/>
 
     <property name="build.dir" value=".."/>
 
-<!--    <property name="github.mp93.dir" value="https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/ada_2_fhir-r4/mp/9.3.0/touchstone"/>-->
+    <!--    <property name="github.mp93.dir" value="https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/ada_2_fhir-r4/mp/9.3.0/touchstone"/>-->
     <property name="github.mp93.dir" value="https://raw.githubusercontent.com/Nictiz/HL7-mappings/NICTIZ-4395/ada_2_fhir-r4/mp/9.3.0/touchstone"/>
     <!-- don't know how to create fileset or resource collection from online dir, workaround: use local dir -->
     <property name="github.mp93.dir.local" value="${build.dir}/../../../../HL7-mappings/ada_2_fhir-r4/mp/9.3.0/touchstone"/>
@@ -23,7 +23,7 @@
     <property name="usecase.mg.rp.input" value="raadplegen_medicatiegegevens"/>
     <property name="usecase.mg.output" value="MedicationData"/>
 
-    <target name="convert_ada_2_nts_930">
+    <target name="convert_ada_2_nts_930_test">
         <!-- this would be the umbrella target to build all scenarios -->
         <!-- pull medicationdata Test -->
         <antcall target="convert_ada2nts_pull_meddata_930">
@@ -36,6 +36,22 @@
             <param name="test.dir" value="/Test"/>
             <!-- windows does not mind, but for the url we do need lowercase for mappings dir -->
             <param name="test.dir.lowercase" value="/test"/>
+        </antcall>
+    </target>
+
+    <target name="convert_ada_2_nts_930_cert">
+        <!-- this would be the umbrella target to build all scenarios -->
+        <!-- pull medicationdata Cert -->
+        <antcall target="convert_ada2nts_pull_meddata_930">
+            <param name="test.dir" value="/Cert"/>
+            <!-- windows does not mind, but for the url we do need lowercase for mappings dir -->
+            <param name="test.dir.lowercase" value="/cert"/>
+        </antcall>
+        <!-- all push scenario's for Cert -->
+        <antcall target="convert_ada2nts_push_all_930_cert">
+            <param name="test.dir" value="/Cert"/>
+            <!-- windows does not mind, but for the url we do need lowercase for mappings dir -->
+            <param name="test.dir.lowercase" value="/cert"/>
         </antcall>
     </target>
 
@@ -101,14 +117,14 @@
 
     <target name="convert_ada2nts_push_all_930">
         <!-- medication data push -->
-        <antcall target="convert_ada2nts_push_meddata_930"/>        
+        <antcall target="convert_ada2nts_push_meddata_930"/>
         <!-- prescription -->
-         <antcall target="convert_ada2nts_prescription_930"/>
+        <antcall target="convert_ada2nts_prescription_930"/>
         <!-- medication prescription processing -->
         <antcall target="convert_ada2nts_prescription_processing_930"/>
         <!-- proposal medication agreement -->
         <antcall target="convert_ada2nts_prop_ma_930"/>
-        <!-- dispense request (verstrekkingsverzoek) -->
+        <!-- proposal dispense request (verstrekkingsverzoek) -->
         <antcall target="convert_ada2nts_prop_vv_930"/>
         <!-- target for reply proposal medication agreement -->
         <antcall target="convert_ada2nts_reply_prop_ma_930"/>
@@ -116,7 +132,16 @@
         <antcall target="convert_ada2nts_prop_vv_930"/>
         <!-- target for reply proposal dispense request (verstrekkingsverzoek)  -->
         <antcall target="convert_ada2nts_reply_prop_vv_930"/>
+    </target>
 
+    <target name="convert_ada2nts_push_all_930_cert">
+        <!-- medication data push -->
+        <antcall target="convert_ada2nts_push_meddata_930"/>
+        <!-- prescription -->
+        <antcall target="convert_ada2nts_prescription_930"/>
+        <!-- medication prescription processing -->
+        <antcall target="convert_ada2nts_prescription_processing_930"/>
+        <!-- proposal interactions not yet available in cert -->
     </target>
 
     <target name="convert_ada2nts_push_meddata_930">
@@ -131,6 +156,7 @@
 
     <target name="convert_ada2nts_prescription_930">
         <!-- target for medication prescription -->
+        <echo>[convert_ada2nts_prescription_930] xsl.input.usecase: '${github.mp93.dir.local}${test.dir.lowercase}/sturen_medicatievoorschrift/ada_instance' and xsl.output.usecase: '${build.dir}${test.dir}/MedicationPrescription'</echo>
         <antcall target="convert_push_usecase_930_sub">
             <param name="xsl.input.usecase" value="${github.mp93.dir.local}${test.dir.lowercase}/sturen_medicatievoorschrift/ada_instance"/>
             <param name="xsl.output.usecase" value="${build.dir}${test.dir}/MedicationPrescription"/>
@@ -258,7 +284,7 @@
     </target>
 -->
     <target name="convert_push_usecase_930_sub">
-        
+
         <echo>[convert_push_usecase_930_sub] </echo>
 
         <!-- Send -->
@@ -287,7 +313,7 @@
     <target name="convert_ada_2_nts_sub">
 
         <echo>[convert_ada_2_nts_sub] test.dir = "${test.dir}", test.dir.lowercase = "${test.dir.lowercase}" xsl.in.include = "${xsl.in.include}, xsl.in.exclude = "${xsl.in.exclude}", xsl.out = "${xsl.out}"</echo>
-        
+
         <!-- Make dir if it does not exist (anymore) -->
         <mkdir dir="${xsl.out}"/>
         <echo>Deleting previous results, if any</echo>
@@ -304,12 +330,12 @@
             <include name="${xsl.in.include}" if="xsl.in.include"/>
             <exclude name="${xsl.in.exclude}" if="xsl.in.exclude"/>
         </fileset>
-        
+
         <echo>ADA 2 NTS input files ${xsl.in}/${xsl.in.include}, to be converted with: ${xsl.convert}</echo>
         <xslt force="true" style="${xsl.convert}" destdir="${xsl.out}" extension=".xml" useImplicitFileset="false">
             <fileset refid="inputFiles"/>
             <!-- make output filenames a bit more concise, beware: if regexpmapper can't make a match, you don't get any output -->
-            <regexpmapper from=".+tst-(.+)-v30.xml" to="\1.xml"/>
+            <regexpmapper from=".+(tst|kwal)-(.+)-v30.xml" to="\2.xml"/>
             <factory name="${xsl.saxon.class}"/>
             <classpath location="${xsl.saxon}"/>
             <param name="mappingsUrl4FhirFixtures" expression="${mappings.url.4.fhir.fixtures}${test.dir.lowercase}/4touchstone_mp"/>
