@@ -331,16 +331,8 @@
                 </xsl:choose>
             </xsl:variable>
             <xsl:variable name="descriptionPrefix">
-                <xsl:variable name="parentDescriptionPath" select="parent::f:*/@nts:descriptionPath"/>
                 <xsl:variable name="descriptionPath" select="@nts:descriptionPath"/>
-                <xsl:choose>
-                    <xsl:when test="string-length($parentDescriptionPath) gt 0">
-                        <xsl:value-of select="concat(substring-after($descriptionPath, $parentDescriptionPath), ' ')"/>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:value-of select="concat(substring-after($descriptionPath, $resourceType), ' ')"/>
-                    </xsl:otherwise>
-                </xsl:choose>
+                <xsl:value-of select="concat(substring-after($descriptionPath, $resourceType), ' ')"/>
             </xsl:variable>
             
             <xsl:choose>
@@ -364,14 +356,14 @@
                         <xsl:with-param name="warningOnly" select="true()"/>
                     </xsl:call-template>
                 </xsl:when>
-                <xsl:when test="fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) gt 1 and preceding::*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]">
+                <!--<xsl:when test="fn:count(ancestor::*[position()=last()]//*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]) gt 1 and preceding::*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))]">
                     <xsl:variable name="dateTime1" select="preceding::*[@nts:dataType = 'dateTime'][not(matches(@value, '\$\{DATE, T, (Y|M|D), ([-]?\d+)\}'))][last()]"/>
                     <xsl:variable name="durationAsString" select="xs:string(xs:date(./@value) - xs:date($dateTime1/@value))" />
                     
                     <xsl:variable name="expression">
-                        <!-- KT-393 -->
+                        <!-\- KT-393 -\->
                         <xsl:text>.where(</xsl:text>
-                        <!--<xsl:text>exists(</xsl:text>-->
+                        <!-\-<xsl:text>exists(</xsl:text>-\->
                         <xsl:value-of select="$expressionPrefix"/>
                         <xsl:choose>
                             <xsl:when test="starts-with($durationAsString, '-')"> &lt; </xsl:when>
@@ -379,7 +371,7 @@
                         </xsl:choose>
                         <xsl:value-of select="substring-after($dateTime1/@nts:fhirPath, concat($resourceType, '.'))"/>
                         <xsl:text>)</xsl:text>
-                        <!-- KT-393 -->
+                        <!-\- KT-393 -\->
                         <xsl:text>.exists()</xsl:text>
                     </xsl:variable>
                     <xsl:variable name="description">
@@ -397,7 +389,7 @@
                         <xsl:with-param name="expression" select="concat($expressionBase, $expression)"/>
                         <xsl:with-param name="label" select="concat($label, '-checkDateTime')"/>
                     </xsl:call-template>
-                </xsl:when>
+                </xsl:when>-->
             </xsl:choose>
             
             <!-- Compare 2 dates -->
@@ -787,7 +779,7 @@
                     </xsl:variable>
                     <xsl:value-of select="replace($expressionPrefix, $regex, $addition, 'q')"/>
                 </xsl:when>
-                <xsl:when test="matches($expressionPrefix, 'where\([^(]+(\))+$')">
+                <xsl:when test="matches($expressionPrefix, 'where\([^(]+(\))+$') and not(matches($expressionPrefix, 'modifierExtension.where\(url = [^(]+(\))+$'))">
                     <!-- Escape dollar signs ($this) -->
                     <xsl:variable name="regexAddition" select="replace($addition, '$', '\$', 'q')"/>
                     <xsl:value-of select="replace($expressionPrefix, '(\))+$', concat($regexAddition, '$1'))"/>
@@ -811,7 +803,7 @@
             </xsl:choose>
         </xsl:variable>
         
-        <!--<xsl:message>===</xsl:message>
+        <xsl:message>===</xsl:message>
         <xsl:message>
             <xsl:value-of select="$fhirPath"/>
         </xsl:message>
@@ -820,9 +812,9 @@
         </xsl:message>
         <xsl:message select="$expressionPrefix"/>
         <xsl:message select="$addition"/>
-        <!-\-<xsl:message select="$skipExtensions"/>
-        <xsl:message select="$valueOnly"/>-\->
-        <xsl:message select="$expression"/>-->
+        <!--<xsl:message select="$skipExtensions"/>
+        <xsl:message select="$valueOnly"/>-->
+        <xsl:message select="$expression"/>
         
         <xsl:if test="string-length($addition) gt 0">
             <xsl:value-of select="$expression"/>
@@ -932,7 +924,6 @@
         <xsl:param name="fhirPath" required="yes"/>
         
         <xsl:if test="f:extension">
-            <xsl:text>.where(</xsl:text>
             <xsl:for-each select="f:extension">
                 <xsl:call-template name="createExpression">
                     <xsl:with-param name="topLevel" select="false()"/>
@@ -942,7 +933,6 @@
                     <xsl:text> and </xsl:text>
                 </xsl:if>
             </xsl:for-each>
-            <xsl:text>)</xsl:text>
         </xsl:if>
     </xsl:template>
     
@@ -1322,8 +1312,11 @@
                 <xsl:otherwise>
                     <xsl:variable name="addition">
                         <xsl:choose>
-                            <xsl:when test="self::f:extension or self::f:modifierExtension">
+                            <xsl:when test="self::f:extension">
                                 <xsl:value-of select="concat(local-name(), '(''', @url, ''')')"/>
+                            </xsl:when>
+                            <xsl:when test="self::f:modifierExtension">
+                                <xsl:value-of select="concat(local-name(), '.where(url = ''', @url, ''')')"/>
                             </xsl:when>
                             <xsl:when test="$isPolymorphic = true() and not($dataType = 'Extension')">
                                 <xsl:value-of select="concat(nf:get-element-base(local-name()), '.ofType(', $dataType, ')')"/>
