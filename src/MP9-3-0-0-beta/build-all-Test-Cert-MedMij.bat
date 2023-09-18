@@ -7,5 +7,9 @@ cd Test
 @echo | call build-MP9-3-0-0-beta-Test.bat
 cd ..\Test-MedMij
 call build-MP9-3-0-0-beta-Test-MedMij.bat
+cd ..\Cert
+call build-MP9-3-0-0-beta-Cert.bat
+cd ..\Cert-MedMij
+call build-MP9-3-0-0-beta-Cert-MedMij.bat
 
 pause
