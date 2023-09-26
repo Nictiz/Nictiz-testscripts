@@ -48,6 +48,24 @@
       <defaultValue value="Bearer 7ce7c666-6f96-40a7-a8fa-922056cb18b4"/>
       <description value="OAuth Token for current patient"/>
    </variable>
+   <variable>
+      <name value="zib-Payer-medmij-bgz-test-patA-payer1-1-id"/>
+      <description value="Resource.id for Observation 1"/>
+      <expression value="Bundle.entry.resource.ofType(Coverage).where(type.coding.where(code = 'B')).id"/>
+      <sourceId value="fixture-response"/>
+   </variable>
+   <variable>
+      <name value="zib-Payer-medmij-bgz-test-patA-payer1-2-id"/>
+      <description value="Resource.id for Observation 2"/>
+      <expression value="Bundle.entry.resource.ofType(Coverage).where(type.coding.where(code = 'A')).id"/>
+      <sourceId value="fixture-response"/>
+   </variable>
+   <variable>
+      <name value="core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id"/>
+      <description value="Resource.id for Observation 1"/>
+      <expression value="Bundle.entry.resource.ofType(Organization).id"/>
+      <sourceId value="fixture-response"/>
+   </variable>
    <test>
       <name value="Scenario 1.03 - Payer"/>
       <description value="Serve Coverage resource(s) including the insurer for zib Payer"/>
@@ -72,6 +90,7 @@
                <field value="MedMij-Request-ID"/>
                <value value="${UUID}"/>
             </requestHeader>
+            <responseId value="fixture-response"/>
          </operation>
       </action>
       <action>
@@ -287,14 +306,29 @@
             <warningOnly value="true"/>
          </assert>
       </action>
+   </test>
+   <test>
+      <name value="Scenario 1.03 - Payer - Check Coverage 1"/>
+      <description value="Check if the previous operation results in a FHIR Coverage that contains the values that are expected following Nictiz' materials (fixture .id: zib-Payer-medmij-bgz-test-patA-payer1-1)"/>
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
+               <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the response Bundle contains 2 Coverage resource(s). "/>
+            <description value="Response Bundle contains exactly 1 Coverage"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Coverage)).count() = 2"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(type.coding.where(code = 'B')).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Coverage resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(type.coding.where(code = 'B')).id.exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -303,10 +337,471 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the response Bundle contains 1 Organization resource(s). "/>
+            <label value="1-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-Payer'"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Organization)).count() = 1"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(id = '${zib-Payer-medmij-bgz-test-patA-payer1-1-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-Payer').exists()"/>
             <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2"/>
+            <description value="Contains .text"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(id = '${zib-Payer-medmij-bgz-test-patA-payer1-1-id}').text.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-3"/>
+            <description value="Contains .type with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.3.11.60.101.5.1' and .code 'B' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(id = '${zib-Payer-medmij-bgz-test-patA-payer1-1-id}').type.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.3.11.60.101.5.1' and code = 'B' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-4"/>
+            <description value="Contains .subscriber with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(id = '${zib-Payer-medmij-bgz-test-patA-payer1-1-id}').subscriber.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-5"/>
+            <description value="Contains .subscriberId '12345678'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(id = '${zib-Payer-medmij-bgz-test-patA-payer1-1-id}').subscriberId.replace('.', '').replace(',', '') ~ '12345678'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6"/>
+            <description value="Contains .beneficiary with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(id = '${zib-Payer-medmij-bgz-test-patA-payer1-1-id}').beneficiary.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-7"/>
+            <description value="Contains .payor with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(id = '${zib-Payer-medmij-bgz-test-patA-payer1-1-id}').payor.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Scenario 1.03 - Payer - Check Coverage 2"/>
+      <description value="Check if the previous operation results in a FHIR Coverage that contains the values that are expected following Nictiz' materials (fixture .id: zib-Payer-medmij-bgz-test-patA-payer1-2)"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Response Bundle contains exactly 1 Coverage"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(type.coding.where(code = 'A')).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Coverage resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(type.coding.where(code = 'A')).id.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-Payer'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(id = '${zib-Payer-medmij-bgz-test-patA-payer1-2-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-Payer').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-2"/>
+            <description value="Contains .text"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(id = '${zib-Payer-medmij-bgz-test-patA-payer1-2-id}').text.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-3"/>
+            <description value="Contains .type with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.3.11.60.101.5.1' and .code 'A' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(id = '${zib-Payer-medmij-bgz-test-patA-payer1-2-id}').type.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.3.11.60.101.5.1' and code = 'A' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-4"/>
+            <description value="Contains .subscriber with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(id = '${zib-Payer-medmij-bgz-test-patA-payer1-2-id}').subscriber.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-5"/>
+            <description value="Contains .subscriberId '12345678'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(id = '${zib-Payer-medmij-bgz-test-patA-payer1-2-id}').subscriberId.replace('.', '').replace(',', '') ~ '12345678'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-6"/>
+            <description value="Contains .beneficiary with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(id = '${zib-Payer-medmij-bgz-test-patA-payer1-2-id}').beneficiary.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-7"/>
+            <description value="Contains .payor with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Coverage).where(id = '${zib-Payer-medmij-bgz-test-patA-payer1-2-id}').payor.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Scenario 1.03 - Payer - Check Organization"/>
+      <description value="Check if the previous operation results in a FHIR Organization that contains the values that are expected following Nictiz' materials (fixture .id: core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095)"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Response Bundle contains exactly 1 Organization"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Organization resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).id.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-1"/>
+            <description value="Contains .meta with .profile 'http://fhir.nl/fhir/StructureDefinition/nl-core-organization'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').meta.profile.where($this = 'http://fhir.nl/fhir/StructureDefinition/nl-core-organization').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2"/>
+            <description value="Contains .text"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').text.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-3"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').identifier.where(system and value).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-4"/>
+            <description value="Contains .name 'VGZ Zorgverzekeraar N.V.'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').name.replace('.', '').replace(',', '') ~ 'VGZ Zorgverzekeraar NV'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-5"/>
+            <description value="Contains .telecom with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-ContactInformation-TelecomType' with .valueCodeableConcept with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.3.11.60.40.4.22.1' and .code 'LL' and .display and .system 'phone' and .value '098-7654321' and .use 'work'. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').telecom.where(extension('http://nictiz.nl/fhir/StructureDefinition/zib-ContactInformation-TelecomType').value.ofType(CodeableConcept).coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.3.11.60.40.4.22.1' and code = 'LL' and display) and system = 'phone' and value.replace('.', '').replace(',', '') ~ '098-7654321' and use = 'work').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-5-1"/>
+            <description value="Contains .telecom.extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-ContactInformation-TelecomType' with .valueCodeableConcept with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.3.11.60.40.4.22.1' and .code 'LL' and .display. This assert checks only one child. Assert 1-5 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').telecom.where(extension('http://nictiz.nl/fhir/StructureDefinition/zib-ContactInformation-TelecomType').value.ofType(CodeableConcept).coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.3.11.60.40.4.22.1' and code = 'LL' and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-5-2"/>
+            <description value="Contains .telecom.system 'phone'. This assert checks only one child. Assert 1-5 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').telecom.where(system = 'phone').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-5-3"/>
+            <description value="Contains .telecom.value '098-7654321'. This assert checks only one child. Assert 1-5 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').telecom.where(value.replace('.', '').replace(',', '') ~ '098-7654321').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-5-4"/>
+            <description value="Contains .telecom.use 'work'. This assert checks only one child. Assert 1-5 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').telecom.where(use = 'work').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6"/>
+            <description value="Contains .address with .type 'postal' and .line 'Nieuwe Stationstraat 12' and with .extension with url 'http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName' with .valueString 'Nieuwe Stationstraat' and .extension with url 'http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber' with .valueString '12' and .city 'Arnhem' and .district 'Arnhem' and .postalCode '6811KS' and .country 'NLD' and with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/code-specification' with .valueCodeableConcept with .coding with .system 'urn:iso:std:iso:3166' and .version and .code 'NLD' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').address.where(type = 'postal' and line.where($this.replace('.', '').replace(',', '') ~ 'Nieuwe Stationstraat 12' and extension('http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName').value.ofType(string).replace('.', '').replace(',', '') ~ 'Nieuwe Stationstraat' and extension('http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber').value.ofType(string).replace('.', '').replace(',', '') ~ '12') and city.replace('.', '').replace(',', '') ~ 'Arnhem' and district.replace('.', '').replace(',', '') ~ 'Arnhem' and postalCode.replace('.', '').replace(',', '') ~ '6811KS' and country.where($this.replace('.', '').replace(',', '') ~ 'NLD' and extension('http://nictiz.nl/fhir/StructureDefinition/code-specification').value.ofType(CodeableConcept).coding.where(system = 'urn:iso:std:iso:3166' and version and code = 'NLD' and display))).exists()"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-1"/>
+            <description value="Contains .address.type 'postal'. This assert checks only one child. Assert 1-6 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').address.where(type = 'postal').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-2"/>
+            <description value="Contains .address.line 'Nieuwe Stationstraat 12' and with .extension with url 'http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName' with .valueString 'Nieuwe Stationstraat' and .extension with url 'http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber' with .valueString '12'. This assert checks only one child. Assert 1-6 checks if all children are present in the same parent. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').address.where(line.where($this.replace('.', '').replace(',', '') ~ 'Nieuwe Stationstraat 12' and extension('http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName').value.ofType(string).replace('.', '').replace(',', '') ~ 'Nieuwe Stationstraat' and extension('http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber').value.ofType(string).replace('.', '').replace(',', '') ~ '12').exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-2-1"/>
+            <description value="Contains .address.line 'Nieuwe Stationstraat 12'. This assert checks only one child. Assert 1-6-2 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').address.where(line.where($this.replace('.', '').replace(',', '') ~ 'Nieuwe Stationstraat 12').exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-2-2"/>
+            <description value="Contains .address.line.extension with url 'http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName' with .valueString 'Nieuwe Stationstraat'. This assert checks only one child. Assert 1-6-2 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').address.where(line.where(extension('http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName').value.ofType(string).replace('.', '').replace(',', '') ~ 'Nieuwe Stationstraat')).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-2-3"/>
+            <description value="Contains .address.line.extension with url 'http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber' with .valueString '12'. This assert checks only one child. Assert 1-6-2 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').address.where(line.where(extension('http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber').value.ofType(string).replace('.', '').replace(',', '') ~ '12')).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-3"/>
+            <description value="Contains .address.city 'Arnhem'. This assert checks only one child. Assert 1-6 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').address.where(city.replace('.', '').replace(',', '') ~ 'Arnhem').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-4"/>
+            <description value="Contains .address.district 'Arnhem'. This assert checks only one child. Assert 1-6 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').address.where(district.replace('.', '').replace(',', '') ~ 'Arnhem').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-5"/>
+            <description value="Contains .address.postalCode '6811KS'. This assert checks only one child. Assert 1-6 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').address.where(postalCode.replace('.', '').replace(',', '') ~ '6811KS').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-6"/>
+            <description value="Contains .address.country 'NLD' and with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/code-specification' with .valueCodeableConcept with .coding with .system 'urn:iso:std:iso:3166' and .version and .code 'NLD' and .display. This assert checks only one child. Assert 1-6 checks if all children are present in the same parent. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').address.where(country.where($this.replace('.', '').replace(',', '') ~ 'NLD' and extension('http://nictiz.nl/fhir/StructureDefinition/code-specification').value.ofType(CodeableConcept).coding.where(system = 'urn:iso:std:iso:3166' and version and code = 'NLD' and display)).exists()).exists()"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-6-1"/>
+            <description value="Contains .address.country 'NLD'. This assert checks only one child. Assert 1-6-6 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').address.where(country.replace('.', '').replace(',', '') ~ 'NLD').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-6-2"/>
+            <description value="Contains .address.country.extension with url 'http://nictiz.nl/fhir/StructureDefinition/code-specification' with .valueCodeableConcept with .coding with .system 'urn:iso:std:iso:3166' and .version and .code 'NLD' and .display. This assert checks only one child. Assert 1-6-6 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Organization).where(id = '${core-organization-medmij-bgz-test-2-16-840-1-113883-2-4-6-4-7095-id}').address.where(country.extension('http://nictiz.nl/fhir/StructureDefinition/code-specification').value.ofType(CodeableConcept).coding.where(system = 'urn:iso:std:iso:3166' and version and code = 'NLD' and display).exists()).exists()"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
    </test>

@@ -121,6 +121,11 @@
             <xsl:variable name="resourceCount" select="count($fixture/parent::nts:fixture/preceding-sibling::nts:fixture[*/local-name() = $resourceType]) + 1"/>
             <xsl:variable name="multipleExist" select="count($fixtures/nts:fixture[*/local-name() = $resourceType]) gt 1"/>
             
+            <!-- Sanity check -->
+            <xsl:if test="$multipleExist = true() and string-length($expression) = 0">
+                <xsl:message terminate="yes">TOEDIT: <xsl:value-of select="$testName"/> - nts:contentAsserts with a resource type that exists multiple times (<xsl:value-of select="$resourceType"/>) SHALL contain @expression</xsl:message>
+            </xsl:if>
+            
             <xsl:variable name="structureDefinition" select="document(concat($libPath, lower-case($fhirVersion), '/', $resourceType, '.xml'))"/>
             
             <!-- Would preferably do this in a separate step with Xproc. We'll see what the future brings -->
