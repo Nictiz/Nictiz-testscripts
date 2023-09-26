@@ -260,6 +260,9 @@
             <xsl:if test="($dataType = ('BackboneElement', 'Extension') and count(*) gt 1) or ((f:extension or f:modifierExtension) and $skipExtensions = false())">
                 <xsl:value-of select="'. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails'"/>
             </xsl:if>
+            <xsl:if test="$dataType = 'string'">
+                <xsl:value-of select="'. This assert is set to warning because string comparisons can have many possible caveats'"/>
+            </xsl:if>
         </xsl:variable>
         
         <!--<xsl:message>===</xsl:message>
@@ -296,6 +299,9 @@
                     <xsl:choose>
                         <!-- Impossible to determine if code-specification is required without accessing ConceptMaps, so putting them all on warningOnly for now -->
                         <xsl:when test="descendant-or-self::f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/code-specification'] and $skipExtensions = false()">
+                            <xsl:value-of select="true()"/>
+                        </xsl:when>
+                        <xsl:when test="$dataType = 'string'">
                             <xsl:value-of select="true()"/>
                         </xsl:when>
                         <xsl:otherwise>
@@ -862,7 +868,9 @@
                     <xsl:if test="$includeThis = true()">
                         <xsl:text>$this</xsl:text>
                     </xsl:if>
-                    <xsl:value-of select="concat('.replace(''.'', '''').replace('','', '''') ~ ''', normalize-space(translate(@value, '.,', '')), '''')"/>
+                    <!-- Please be aware that for regex reasons, the hyphen should be either first or last in this string -->
+                    <xsl:variable name="replaceChars" select="'[ .,_-]+'"/>
+                    <xsl:value-of select="concat('.replaceMatches(''', $replaceChars, ''', '' '') ~ ''', replace(@value, $replaceChars, ' '), '''')"/>
                 </xsl:when>
                 <xsl:when test="$dataType = ('dateTime','date')">
                     <!-- For now we only check if date or dateTime exist -->
