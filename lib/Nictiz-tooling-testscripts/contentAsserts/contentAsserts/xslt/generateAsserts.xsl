@@ -803,7 +803,7 @@
             </xsl:choose>
         </xsl:variable>
         
-        <xsl:message>===</xsl:message>
+        <!--<xsl:message>===</xsl:message>
         <xsl:message>
             <xsl:value-of select="$fhirPath"/>
         </xsl:message>
@@ -812,9 +812,9 @@
         </xsl:message>
         <xsl:message select="$expressionPrefix"/>
         <xsl:message select="$addition"/>
-        <!--<xsl:message select="$skipExtensions"/>
-        <xsl:message select="$valueOnly"/>-->
-        <xsl:message select="$expression"/>
+        <!-\-<xsl:message select="$skipExtensions"/>
+        <xsl:message select="$valueOnly"/>-\->
+        <xsl:message select="$expression"/>-->
         
         <xsl:if test="string-length($addition) gt 0">
             <xsl:value-of select="$expression"/>
@@ -1296,7 +1296,15 @@
                 <xsl:when test="$elementDefinition/f:element/f:max/@value">
                     <xsl:value-of select="$elementDefinition/f:element/f:max/@value"/>
                 </xsl:when>
-                <xsl:when test="self::f:extension or self::f:modifierExtension">UNK</xsl:when>
+                <xsl:when test="self::f:extension or self::f:modifierExtension">
+                    <xsl:variable name="url" select="@url"/>
+                    <xsl:choose>
+                        <xsl:when test="preceding-sibling::*[@url = $url] or following-sibling::*[@url = $url]">
+                            <xsl:value-of select="'*'"/>
+                        </xsl:when>
+                        <xsl:otherwise>UNK</xsl:otherwise>
+                    </xsl:choose>
+                </xsl:when>
                 <xsl:when test="parent::f:extension or parent::f:modifierExtension">1</xsl:when>
                 <xsl:otherwise>
                     <xsl:message>Could not find max cardinality - <xsl:value-of select="$elementPath"/></xsl:message>
