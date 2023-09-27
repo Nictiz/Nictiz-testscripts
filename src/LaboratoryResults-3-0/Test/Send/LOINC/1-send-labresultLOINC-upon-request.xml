@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
+    nts:scenario="client">
+    
+    <id value="TEST-xis-1-send-result-request"/>
+    <version value="R4-3.0"/>
+    <name value="LaboratoryResults - LAB-LOA - Scenario 1 - Send a LOINC coded laboratory result upon a request."/>
+    <description value="Scenario 1 - Send a LOINC coded laboratory result upon a request."/>
+    
+    <nts:fixture id="TEST-scenario-1-send-result-request-fixture"
+        href="sendreceive_request/lr-loa-TEST-LOINC-Scenario1-1.xml"/>
+    <nts:includeDateT value="yes"/>
+    
+    <test id="lab-Scenarioset1">
+        <name value="Scenario 1"/>
+        <description value="Send a LOINC coded panel of laboratory results along with a medication prescription."/>
+
+        <!--General asserts-->
+        <nts:include value="test.client.transaction" scope="common" sourceId="TEST-scenario-1-send-result-request-fixture"/>
+        <nts:include value="test.client.successfulTransaction" scope="common"/>
+        <nts:include value="assert.request.numResources" scope="common" resource="Specimen" count="1"/>
+        <nts:include value="assert.request.numResources" scope="common" resource="Organization" count="1"/>
+        <nts:include value="assert.request.numResources" scope="common" resource="Patient" count="1"/>
+        
+        <!--Initial asserts to check the lab result codes and status-->
+        <nts:include value="assert.numberofcodes" direction="request" resource="Observation" system="http://loinc.org" count="1"/>
+        <nts:include value="assert.code" direction="request" resource="Observation" labcode="51596-5" labsystem="http://loinc.org"/>
+
+        <!-- Asserts for checking the Patient resource to be compliant with the wiki page on
+        https://informatiestandaarden.nictiz.nl/wiki/Lab:V3.0.0_kwalificatie_sturen-->
+        <nts:include value="assert.identifier" direction="request" resource="Patient" system="http://fhir.nl/fhir/NamingSystem/bsn" identifier="999999114"/> 
+        
+        <!-- Asserts for checking one Observation to be compliant with the wiki page on
+            https://informatiestandaarden.nictiz.nl/wiki/Lab:V3.0.0_kwalificatie_sturen-->
+        <nts:include value="assert.identifier" direction="request" resource="Observation" system="urn:oid:2.16.840.1.113883.2.4.3.11.999.25.4298.2" identifier="54321"/>
+        <nts:include value="assert.valuequantity" direction="request" resource="Observation" labcode="51596-5" labsystem="http://loinc.org" quantity="3" system="http://unitsofmeasure.org" code="mmol/L"/>
+        <nts:include value="assert.status" direction="request" resource="Observation" labcode="51596-5" labsystem="http://loinc.org" status="final"/>
+        <nts:include value="assert.referencerange" direction="request" resource="Observation" labcode="51596-5" labsystem="http://loinc.org" range="low" rangevalue="4" system="http://unitsofmeasure.org" code="mmol/L"/>
+        <nts:include value="assert.referencerange" direction="request" resource="Observation" labcode="51596-5" labsystem="http://loinc.org" range="high" rangevalue="8" system="http://unitsofmeasure.org" code="mmol/L"/>
+        <nts:include value="assert.interpretation" direction="request" resource="Observation" labcode="51596-5" interpretation="Patiënt heeft een ernstig verlaagde glucosespiegel. "/>        
+           
+        <!-- Asserts for checking the performing Organization resource(s) to be compliant with the wiki page on
+           https://informatiestandaarden.nictiz.nl/wiki/Lab:V3.0.0_kwalificatie_sturen-->
+        <nts:include value="assert.identifier" direction="request" resource="Organization" system="http://fhir.nl/fhir/NamingSystem/ura" identifier="00003335"/>
+        
+    </test>
+</TestScript>
+
+       
