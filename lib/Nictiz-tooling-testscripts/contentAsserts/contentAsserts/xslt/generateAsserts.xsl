@@ -15,7 +15,13 @@
     <xsl:param name="referenceBase" select="'../_reference/'"/>
     
     <!-- FHIR version to be able to retrieve the correct FHIR core resource type StructureDefinition -->
-    <xsl:param name="fhirVersion" select="'STU3'"/>
+    <xsl:param name="fhirVersion">
+        <xsl:choose>
+            <xsl:when test="starts-with(lower-case(f:TestScript/f:version/@value), 'stu3')">STU3</xsl:when>
+            <xsl:when test="starts-with(lower-case(f:TestScript/f:version/@value), 'r4')">R4</xsl:when>
+            <xsl:otherwise>UNK</xsl:otherwise>
+        </xsl:choose>
+    </xsl:param>
     
     <!-- Fixed, but could be dependant on fhirVersion -->
     <xsl:variable name="simpleDataTypes" as="xs:string*">
@@ -534,17 +540,11 @@
         <xsl:variable name="dataType" select="@nts:dataType"/>
         <xsl:variable name="parentDataType" select="parent::f:*/@nts:dataType"/>
         
+        <!-- The 'local' part of the expression, which is later combined with $addition to create the FHIRpath expression. (The name 'expressionPrefix' isn't really applicable anymore, as it is not always a prefix) -->
         <xsl:variable name="expressionPrefix">
             <xsl:choose>
                 <xsl:when test="string-length(substring-after($fhirPath, $focusFhirPath)) gt 0">
-                    <!--<xsl:choose>
-                        <xsl:when test="@nts:max = '*'">
-                            <xsl:value-of select="concat(substring-after($fhirPath, concat($focusFhirPath, '.')), '.where({$_EXPR})')"/>
-                        </xsl:when>
-                        <xsl:otherwise>-->
-                            <xsl:value-of select="substring-after($fhirPath, concat($focusFhirPath, '.'))"/>
-                        <!--</xsl:otherwise>
-                    </xsl:choose>-->
+                    <xsl:value-of select="substring-after($fhirPath, concat($focusFhirPath, '.'))"/>
                 </xsl:when>
                 <xsl:when test="not($focusFhirPath = $fhirPath) and contains($focusFhirPath, '{$_EXPR}')">
                     <xsl:variable name="escapeChars" select="replace($focusFhirPath, '([.()\\])', '\\$1')"/>
@@ -577,8 +577,6 @@
                             <xsl:if test="not(@nts:max = '*')">
                                 <xsl:text>.where(</xsl:text>
                             </xsl:if>
-                            <!--</xsl:otherwise>
-                            </xsl:choose>-->
                             <xsl:if test="@value">
                                 <xsl:call-template name="createExpressionSimple">
                                     <!--<xsl:with-param name="topLevel" select="false()"/>-->
@@ -597,6 +595,10 @@
                             </xsl:for-each>
                             <xsl:if test="not(@nts:max = '*')">
                                 <xsl:text>)</xsl:text>
+                                <!-- KT-393 R4 -->
+                                <xsl:if test="$fhirVersion = 'R4'">
+                                    <xsl:text>.exists()</xsl:text>
+                                </xsl:if>
                             </xsl:if>
                             <!-- Temp because of KT-393 -->
                             <!--<xsl:if test="$topLevel = true()">
@@ -669,9 +671,11 @@
                             </xsl:if>
                             <xsl:if test="not(@nts:max = '*')">
                                 <xsl:text>)</xsl:text>
+                                <!-- KT-393 R4 -->
+                                <xsl:if test="$fhirVersion = 'R4'">
+                                    <xsl:text>.exists()</xsl:text>
+                                </xsl:if>
                             </xsl:if>
-                            <!-- KT-393 -->
-                            <!--<xsl:text>.exists()</xsl:text>-->
                         </xsl:when>
                         <xsl:when test="$dataType = 'Reference'">
                             <xsl:if test="not(@nts:max = '*')">
@@ -702,8 +706,11 @@
                             </xsl:if>
                             <xsl:if test="not(@nts:max = '*')">
                                 <xsl:text>)</xsl:text>
+                                <!-- KT-393 R4 -->
+                                <xsl:if test="$fhirVersion = 'R4'">
+                                    <xsl:text>.exists()</xsl:text>
+                                </xsl:if>
                             </xsl:if>
-                            <!--<xsl:text>.exists((reference or identifier) and display)</xsl:text>-->
                         </xsl:when>
                         <xsl:when test="$dataType = 'Narrative' and f:status/@value = 'extensions'">
                             <!-- Narrative isn't always present in fixtures. If not present, it is generated at a later stage. We should find a way to always add this assert. -->
@@ -736,6 +743,10 @@
                             </xsl:for-each>
                             <xsl:if test="count(f:*) gt 1 and not(@nts:max = '*')">
                                 <xsl:text>)</xsl:text>
+                                <!-- KT-393 R4 -->
+                                <xsl:if test="$fhirVersion = 'R4'">
+                                    <xsl:text>.exists()</xsl:text>
+                                </xsl:if>
                             </xsl:if>
                         </xsl:when>
                         <xsl:otherwise>
@@ -744,9 +755,7 @@
                     </xsl:choose>
                 </xsl:when>
                 <xsl:otherwise>
-                   
                     <xsl:call-template name="createExpressionSimple">
-                        <!--<xsl:with-param name="topLevel" select="$topLevel"/>-->
                         <xsl:with-param name="includeThis">
                             <xsl:choose>
                                 <xsl:when test="@nts:max = '*'">
@@ -764,6 +773,7 @@
         
         <xsl:variable name="expression">
             <xsl:choose>
+                <!-- When expressionPrefix contains {$_EXPR}, we want to insert addition there -->
                 <xsl:when test="contains($expressionPrefix, '{$_EXPR}')">
                     <xsl:variable name="regex">
                         <xsl:choose>
@@ -825,11 +835,13 @@
         <xsl:message select="$addition"/>
         <!-\-<xsl:message select="$skipExtensions"/>
         <xsl:message select="$valueOnly"/>-\->
+        <xsl:message select="$topLevel"/>
         <xsl:message select="$expression"/>-->
         
         <xsl:if test="string-length($addition) gt 0">
             <xsl:value-of select="$expression"/>
-            <xsl:if test="$topLevel = true() and not(matches($expression, ' (=|~) (true|false|''[^'']+'')$'))">
+            <!-- KT-393 R4 -->
+            <xsl:if test="(($topLevel = true() and not(matches($expression, ' (=|~) (true|false|''[^'']+'')$'))) or ($fhirVersion = 'R4' and matches($expressionPrefix, 'where\([^(]+(\))+$') and not(matches($expressionPrefix, 'modifierExtension.where\(url = [^(]+(\))+$')))) and not(ends-with($expression, '.exists()'))">
                 <xsl:text>.exists()</xsl:text>
             </xsl:if>
         </xsl:if>
@@ -857,11 +869,15 @@
                 </xsl:when>
                 <xsl:when test="$dataType = 'string' and $parentDataType = ('Coding','Quantity')">
                     <!-- This is .display (in Coding) or .unit (in Quantity), and by definition not topLevel, so we do not have to do anything -->
-                    <xsl:text> </xsl:text>
                     <!-- KT-393 R4 -->
-                    <xsl:if test="$fhirVersion = 'R4'">
-                        <xsl:text>.exists()</xsl:text>
-                    </xsl:if>
+                    <xsl:choose>
+                        <xsl:when test="$fhirVersion = 'R4'">
+                            <xsl:text>.exists()</xsl:text>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:text> </xsl:text>
+                        </xsl:otherwise>
+                    </xsl:choose>
                 </xsl:when>
                 <xsl:when test="$dataType = 'string'">
                     <!-- '~' (equivalence) ignores case and whitespace. replace('.', '') removes dot and comma (or other characters - hyphens perhaps?). Or should we be allowed to define overrides in our NTS-script? -->
