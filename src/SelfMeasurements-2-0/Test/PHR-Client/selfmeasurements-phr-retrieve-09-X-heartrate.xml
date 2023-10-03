@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
+    nts:scenario="client">
+    <id value="phr-1-9-retrieve-heartrate"/>
+    <version value="stu3-2.0"/>
+    <name
+        value="SelfMeasurements - PHR Server - Test Scenario 9.X - Retrieve heartrate Observation resources"/>
+    <description value="Scenario 9.X - Retrieve all heartrate Observation resources"/>
+    <nts:authToken patientResourceId="selfmeasurements-Patient-XXX-Smorenburg"/>
+    <nts:includeDateT value="yes"/>
+
+    <test id="scenario9-1-retrieve-all-heartrate">
+        <name value="Scenario 9.1"/>
+        <description value="Retrieve all heartrate Observation resources"/>
+        <nts:include value="medmij/test.phr.read" scope="common"
+            resource="Observation"
+            params="?code=http://loinc.org|8867-4"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="5"/>
+    </test>
+
+    <test id="scenario9-2-retrieve-all-heartrate">
+        <name value="Scenario 9.2"/>
+        <description value="Retrieve latest heartrate Observation resources"/>
+        <nts:include value="medmij/test.phr.read" scope="common"
+            resource="Observation"
+            params="/$lastn?code=http://loinc.org|8867-4"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+
+        <action>
+            <assert>
+                <description value="Confirm that the latest observation resource has the correct heartrate value"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).where(code.coding.code='8867-4' and code.coding.system='http://loinc.org').value.ofType(Quantity).where(value=63 and code='/min').exists()"/>
+            </assert>
+        </action>
+    </test>
+
+    <test id="scenario9-3-retrieve-all-heartrates">
+        <name value="Scenario 9.3"/>
+        <description value="Retrieve period heartrate Observation resources"/>
+        <nts:include value="medmij/test.phr.read" scope="common"
+            resource="Observation"
+            params="?code=http://loinc.org|8867-4&amp;date=ge${DATE, T, D,-15}&amp;date=le${DATE, T, D,-1}"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="2"/>
+
+        <action>
+            <assert>
+                <description value="Confirm that resources contain the correct values"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).where(code.coding.code='8867-4' and code.coding.system='http://loinc.org').value.ofType(Quantity).where(value=63 and code='/min').exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that resources contain the correct values"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).where(code.coding.code='8867-4' and code.coding.system='http://loinc.org').value.ofType(Quantity).where(value=96 and code='/min').exists()"/>
+            </assert>
+        </action>        
+    </test>
+
+    <test id="scenario9-4-retrieve-all-heartrates">
+        <name value="Scenario 9.4"/>
+        <description value="Retrieve period heartrate Observation resources"/>
+        <nts:include value="medmij/test.phr.read" scope="common"
+            resource="Observation"
+            params="?code=http://loinc.org|8867-4&amp;date=ge${DATE, T, D,-100}&amp;date=le${DATE, T, D,-50}"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="0"/>
+    </test>
+</TestScript>

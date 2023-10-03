@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
+    nts:scenario="server">
+    <id value="xis-7-3-receive-bodyweight"/>
+    <version value="stu3-2.0"/>
+    <name
+        value="SelfMeasurements - XIS Server - Scenario 7.3 - Receive most recent bodyweight Observation resource"/>
+    <description value="Scenario 7.3 - Receive most recent bodyweight Observation resource"/>
+    <nts:authToken patientResourceId="selfmeasurements-Patient-XXX-Herder"/>
+    <nts:fixture id="scenario-7-3-bundle-fixture"
+        href="bundles/receive/selfmeasurements-receive-scenario-7-1-bodyweight-bundle.{$_FORMAT}"/>
+    <nts:includeDateT value="yes"/>
+
+    <test id="scenario7-3-receive-most-recent-bodyweight">
+        <name value="Scenario 7.3"/>
+        <description value="Receive most recent bodyweight Observation resource"/>
+        <nts:include value="medmij/test.xis.successfulBatch" scope="common"
+            sourceId="scenario-7-3-bundle-fixture"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Patient" count="1"/>
+        <action>
+            <assert>
+                <description value="Confirm that the latest observation resource has the correct bodyweight value"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).where(code.coding.code='29463-7' and code.coding.system='http://loinc.org').value.ofType(Quantity).where(value=82 and code='kg').exists()"/>
+            </assert>
+        </action>
+    </test>
+</TestScript>

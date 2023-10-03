@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
+    nts:scenario="client">
+    <id value="phr-send-01-02-respiration"/>
+    <version value="stu3-2.0"/>
+    <name
+        value="SelfMeasurements - PHR Server - Scenario 1.2 - Send most recent respiration Observation resource"/>
+    <description value="Scenario 1.2 - Send most recent respiration Observation resource"/>
+    <nts:authToken patientResourceId="selfmeasurements-Patient-XXX-Herder"/>
+    <nts:fixture id="scenario-1-2-bundle-fixture"
+        href="bundles/send/selfmeasurements-send-scenario-1-2-respiration-bundle.xml"/>
+    <nts:includeDateT value="yes"/>
+
+    <test id="scenario1-2-send-most-recent-respiration">
+        <name value="Scenario 1.2"/>
+        <description value="Send most recent respiration Observation resource"/>
+        <nts:include value="medmij/test.phr.successfulBatch" scope="common"
+            sourceId="scenario-1-2-bundle-fixture"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="2"/>
+        <action>
+            <assert>
+                <description value="Confirm that the latest observation resource has the correct respiration value"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).component.where(code.coding.code='9279-1' and code.coding.system='http://loinc.org').value.ofType(Quantity).where(value=24 and code.matches('^\\{.+\\}/min$')).exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the latest observation resource has the correct respiration value"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).component.where(code.coding.code='9279-1' and code.coding.system='http://loinc.org').value.ofType(Quantity).where(value=14 and code.matches('^\\{.+\\}/min$')).exists()"/>
+            </assert>
+        </action>
+    </test>
+</TestScript>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
+    nts:scenario="client">
+    <id value="phr-1-8-retrieve-bloodglucose"/>
+    <version value="stu3-2.0"/>
+    <name
+        value="SelfMeasurements - PHR Server - Test Scenario 8.X - Retrieve bloodglucose Observation resources"/>
+    <description value="Scenario 8.X - Retrieve all bloodglucose Observation resources"/>
+    <nts:authToken patientResourceId="selfmeasurements-Patient-XXX-Smorenburg"/>
+    <nts:includeDateT value="yes"/>
+
+    <test id="scenario8-1-retrieve-all-bloodglucose">
+        <name value="Scenario 8.1"/>
+        <description value="Retrieve all bloodglucose Observation resources"/>
+        <nts:include value="medmij/test.phr.read" scope="common"
+            resource="Observation"
+            params="?code=http://loinc.org|14760-3,http://loinc.org|14743-9,http://loinc.org|14770-2"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="6"/>
+    </test>
+
+    <test id="scenario8-2-retrieve-all-bloodglucose">
+        <name value="Scenario 8.2"/>
+        <description value="Retrieve latest bloodglucose Observation resources"/>
+        <nts:include value="medmij/test.phr.read" scope="common"
+            resource="Observation"
+            params="/$lastn?code=http://loinc.org|14760-3,http://loinc.org|14770-2"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="2"/>
+
+        <action>
+            <assert>
+                <description value="Confirm that the latest observation resource has the correct bloodglucose value"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).value.where(value=5.2 and code='mmol/L').exists()"/>
+            </assert>
+        </action>
+    </test>
+
+    <test id="scenario8-3-retrieve-all-bloodglucoses">
+        <name value="Scenario 8.3"/>
+        <description value="Retrieve period bloodglucose Observation resources"/>
+        <nts:include value="medmij/test.phr.read" scope="common"
+            resource="Observation"
+            params="?code=http://loinc.org|14760-3,http://loinc.org|14743-9,http://loinc.org|14770-2&amp;date=ge${DATE, T, D,-12}&amp;date=le${DATE, T, D,-1}"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="3"/>
+
+        <action>
+            <assert>
+                <description value="Confirm that resources contain the correct values"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).value.where(value=5.2 and code='mmol/L').exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that resources contain the correct values"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).value.where(value=7.4 and code='mmol/L').exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that resources contain the correct values"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).value.where(value=7.3 and code='mmol/L').exists()"/>
+            </assert>
+        </action>
+    </test>
+
+    <test id="scenario8-4-retrieve-all-bloodglucoses">
+        <name value="Scenario 8.4"/>
+        <description value="Retrieve period bloodglucose Observation resources"/>
+        <nts:include value="medmij/test.phr.read" scope="common"
+            resource="Observation"
+            params="?code=http://loinc.org|14760-3,http://loinc.org|14743-9,http://loinc.org|14770-2&amp;date=ge${DATE, T, D,-100}&amp;date=le${DATE, T, D,-50}"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="0"/>
+    </test>
+</TestScript>
