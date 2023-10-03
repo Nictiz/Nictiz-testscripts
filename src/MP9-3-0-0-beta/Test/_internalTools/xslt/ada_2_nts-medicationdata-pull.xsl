@@ -54,13 +54,14 @@
 
         <xsl:variable name="buildingBlockLong">
             <xsl:choose>
-                <xsl:when test="$buildingBlockShort = 'MA'">MedicationAgreement</xsl:when>
-                <xsl:when test="$buildingBlockShort = 'MGB'">MedicationUse</xsl:when>
-                <xsl:when test="$buildingBlockShort = 'TA'">AdministrationAgreement</xsl:when>
+                <xsl:when test="contains($buildingBlockShort,'MA')">MedicationAgreement</xsl:when>
+                <xsl:when test="contains($buildingBlockShort,'MGB')">MedicationUse</xsl:when>
+                <xsl:when test="contains($buildingBlockShort,'TA')">AdministrationAgreement</xsl:when>
                 <xsl:when test="$buildingBlockShort = 'VV'">DispenseRequest</xsl:when>
                 <xsl:when test="$buildingBlockShort = 'MTD'">MedicationAdministration</xsl:when>
                 <xsl:when test="$buildingBlockShort = 'MVE'">MedicationDispense</xsl:when>
-                <xsl:when test="$buildingBlockShort = 'WDS'">VariableDosingRegimen</xsl:when>
+                <xsl:when test="$buildingBlockShort = 'WDS'">VariableDosingRegimen</xsl:when>                
+                <xsl:when test="$buildingBlockShort = 'CONS'">Consolidation</xsl:when>
                 <xsl:otherwise>
                     <xsl:call-template name="util:logMessage">
                         <xsl:with-param name="level" select="$logFATAL"/>
@@ -89,7 +90,7 @@
         </xsl:variable>
         <xsl:variable name="matchCategoryCode">
             <xsl:choose>
-                <xsl:when test="$buildingBlockShort = 'TA'">
+                <xsl:when test="contains($buildingBlockShort,'TA')">
                     <xsl:value-of select="$taCode"/>
                 </xsl:when>
                 <xsl:when test="$buildingBlockShort = 'VV'">
@@ -98,29 +99,29 @@
                 <xsl:when test="$buildingBlockShort = 'MTD'">
                     <xsl:value-of select="$mtdCode"/>
                 </xsl:when>
-                <xsl:when test="$buildingBlockShort = 'MA'">
+                <xsl:when test="contains($buildingBlockShort,'MA')">
                     <xsl:value-of select="$maCodeMP920"/>
                 </xsl:when>
                 <xsl:when test="$buildingBlockShort = 'MVE'">
                     <xsl:value-of select="$mveCode"/>
                 </xsl:when>
-                <xsl:when test="$buildingBlockShort = 'MGB'">
+                <xsl:when test="contains($buildingBlockShort,'MGB')">
                     <xsl:value-of select="$mgbCode"/>
                 </xsl:when>
                 <xsl:when test="$buildingBlockShort = 'WDS'">
                     <xsl:value-of select="$wdsCode"/>
                 </xsl:when>
             </xsl:choose>
-        </xsl:variable>
+        </xsl:variable>        
         <xsl:variable name="matchResource">
             <xsl:choose>
-                <xsl:when test="$buildingBlockShort = ('TA', 'MVE')">
+                <xsl:when test="contains($buildingBlockShort,'TA') or $buildingBlockShort = 'MVE'">
                     <xsl:value-of select="'MedicationDispense'"/>
                 </xsl:when>
-                <xsl:when test="$buildingBlockShort = ('VV', 'MA', 'WDS')">
+                <xsl:when test="contains($buildingBlockShort,'MA') or $buildingBlockShort = ('VV', 'WDS')">
                     <xsl:value-of select="'MedicationRequest'"/>
                 </xsl:when>
-                <xsl:when test="$buildingBlockShort = 'MGB'">
+                <xsl:when test="contains($buildingBlockShort,'MGB')">
                     <xsl:value-of select="'MedicationStatement'"/>
                 </xsl:when>
                 <xsl:when test="$buildingBlockShort = 'MTD'">
@@ -144,7 +145,7 @@
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
-        
+
         <xsl:variable name="theParamParts">
             <xsl:value-of select="concat('category=http://snomed.info/sct|', $matchCategoryCode, '&amp;_include=', $matchResource, ':medication')"/>
         </xsl:variable>
@@ -183,73 +184,90 @@
             <xsl:with-param name="level" select="$logINFO"/>
             <xsl:with-param name="msg">outputting <xsl:value-of select="$newFilename"/></xsl:with-param>
         </xsl:call-template>
-        <xsl:result-document href="{concat($outputDirNormalized,nf:first-cap($transactionTypeNormalized),'/',$buildingBlockLong,'/',$newFilename)}">
-            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
-                <id value="mp9-{$buildingBlockLong}-{$transactionTypeNormalized}-{$scenarioset}-{$scenario}"/>
-                <version value="r4-mp9-3.0.0-beta"/>
-                <name value="Medication Process 9 3.0.0-beta  - {$buildingBlockLong} - {nf:first-cap($transactionTypeNormalized)} - Scenario {$scenarioset}.{$scenario}"/>
-                <description value="Scenario {$scenarioset}.{$scenario} - {$description}"/>
-                <nts:authToken patientResourceId="nl-core-Patient-mp9-{$patientName}" nts:in-targets="MedMij"/>
-                <nts:includeDateT value="no"/>
-                
-                <test id="Scenario-{$scenarioset}-{$scenario}">
-                    <name value="Scenario {$scenarioset}.{$scenario}"/>
-                    <description value="{$description}"/>
-                    <xsl:choose>
-                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">
-                            <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
-                                <nts:with-parameter name="description" value="Test client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
-                                <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                <nts:with-parameter name="params" value="{$theScenarioParams}"/>
-                            </nts:include>
-                            <nts:include value="medmij/test.phr.search" scope="common" nts:in-targets="MedMij">
-                                <nts:with-parameter name="description" value="Test PHR client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
-                                <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
-                            </nts:include>
-                            <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
-                            <nts:include value="assert-returnCount" scope="project">
-                                <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                <nts:with-parameter name="count" value="{$returnCount}"/>
-                            </nts:include>
-                            <nts:include value="assert-returnEntryCountAtLeast" scope="project">
-                                <nts:with-parameter name="count" value="{$returnEntryCount}"/>
-                                <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
-                            </nts:include>
-                        </xsl:when>
-                        <xsl:when test="$transactionTypeNormalized = 'serve'">
-                            <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
-                                <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
-                                <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                <nts:with-parameter name="params" value="{$theScenarioParams}"/>
-                            </nts:include>
-                            <nts:include value="medmij/test.xis.search" scope="common" nts:in-targets="MedMij">
-                                <nts:with-parameter name="description" value="Test XIS server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
-                                <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
-                            </nts:include>
-                            <nts:include value="assert.response.successfulSearch" scope="common"/>
-                            <nts:include value="assert-responseBundleContent-noMM"/>
-                            <nts:include value="assert-returnCountAtLeast" scope="project">
-                                <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                <nts:with-parameter name="count" value="{$returnCount}"/>
-                            </nts:include>
-                            <nts:include value="assert-returnEntryCountAtLeast" scope="project">
-                                <nts:with-parameter name="count" value="{$returnEntryCount}"/>
-                                <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
-                            </nts:include>
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <xsl:call-template name="util:logMessage">
-                                <xsl:with-param name="level" select="$logFATAL"/>
-                                <xsl:with-param name="msg">Different xslt should be called for transactionType: <xsl:value-of select="$transactionTypeNormalized"/></xsl:with-param>
-                                <xsl:with-param name="terminate" select="true()"/>
-                            </xsl:call-template>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </test>
-            </TestScript>
-        </xsl:result-document>
+        <xsl:choose>
+            <xsl:when test="$transactionTypeNormalized = ('retrieve','serve')">
+                <xsl:choose>
+                    <!--Only the individual Consolidation ada instances (i.e. CONS-MA, CONS-MGB and CONS-TA) need to be converted to a retrieve test script-->
+                    <!--For Consolidation there is no serve use case-->
+                    <xsl:when test="($transactionTypeNormalized = 'retrieve' and $buildingBlockShort != 'CONS') or ($transactionTypeNormalized = 'serve' and not(contains($buildingBlockShort,'CONS')))">
+                        <xsl:result-document href="{concat($outputDirNormalized,nf:first-cap($transactionTypeNormalized),'/',$buildingBlockLong,'/',$newFilename)}">
+                            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                                <id value="mp9-{if(contains($buildingBlockShort,'CONS')) then 'Consolidation-' else ''}{$buildingBlockLong}-{$transactionTypeNormalized}-{$scenarioset}-{$scenario}"/>
+                                <version value="r4-mp9-3.0.0-beta"/>
+                                <name value="Medication Process 9 3.0.0-beta  - {if(contains($buildingBlockShort,'CONS')) then 'Consolidation - ' else ''}{$buildingBlockLong} - {nf:first-cap($transactionTypeNormalized)} - Scenario {$scenarioset}.{$scenario}"/>
+                                <description value="Scenario {$scenarioset}.{$scenario} - {$description}"/>
+                                <nts:authToken patientResourceId="nl-core-Patient-mp9-{$patientName}" nts:in-targets="MedMij"/>
+                                <nts:includeDateT value="no"/>
+                                
+                                <test id="Scenario-{$scenarioset}-{$scenario}">
+                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
+                                    <description value="{$description}"/>
+                                    <xsl:choose>
+                                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">
+                                            <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
+                                                <nts:with-parameter name="description" value="Test client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                                <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                                <nts:with-parameter name="params" value="{$theScenarioParams}"/>
+                                            </nts:include>
+                                            <nts:include value="medmij/test.phr.search" scope="common" nts:in-targets="MedMij">
+                                                <nts:with-parameter name="description" value="Test PHR client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                                <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                                <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
+                                            </nts:include>
+                                            <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+                                            <nts:include value="assert-returnCount" scope="project">
+                                                <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                                <nts:with-parameter name="count" value="{$returnCount}"/>
+                                            </nts:include>
+                                            <nts:include value="assert-returnEntryCountAtLeast" scope="project">
+                                                <nts:with-parameter name="count" value="{$returnEntryCount}"/>
+                                                <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
+                                            </nts:include>
+                                        </xsl:when>
+                                        <xsl:when test="$transactionTypeNormalized = 'serve'">
+                                            <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
+                                                <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                                <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                                <nts:with-parameter name="params" value="{$theScenarioParams}"/>
+                                            </nts:include>
+                                            <nts:include value="medmij/test.xis.search" scope="common" nts:in-targets="MedMij">
+                                                <nts:with-parameter name="description" value="Test XIS server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                                <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                                <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
+                                            </nts:include>
+                                            <nts:include value="assert.response.successfulSearch" scope="common"/>
+                                            <nts:include value="assert-responseBundleContent-noMM"/>
+                                            <nts:include value="assert-returnCountAtLeast" scope="project">
+                                                <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                                <nts:with-parameter name="count" value="{$returnCount}"/>
+                                            </nts:include>
+                                            <nts:include value="assert-returnEntryCountAtLeast" scope="project">
+                                                <nts:with-parameter name="count" value="{$returnEntryCount}"/>
+                                                <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
+                                            </nts:include>
+                                        </xsl:when>
+                                    </xsl:choose>
+                                </test>
+                            </TestScript>
+                        </xsl:result-document>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:call-template name="util:logMessage">
+                            <xsl:with-param name="level" select="$logINFO"/>
+                            <xsl:with-param name="msg">No test script is generated for transactionType: <xsl:value-of select="$transactionTypeNormalized"/> and buildingBlock <xsl:value-of select="$buildingBlockShort"/></xsl:with-param>
+                            <xsl:with-param name="terminate" select="false()"/>
+                        </xsl:call-template>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:call-template name="util:logMessage">
+                    <xsl:with-param name="level" select="$logFATAL"/>
+                    <xsl:with-param name="msg">Different xslt should be called for transactionType: <xsl:value-of select="$transactionTypeNormalized"/></xsl:with-param>
+                    <xsl:with-param name="terminate" select="true()"/>
+                </xsl:call-template>
+            </xsl:otherwise>
+        </xsl:choose>
     </xsl:template>
 
     <xd:doc>

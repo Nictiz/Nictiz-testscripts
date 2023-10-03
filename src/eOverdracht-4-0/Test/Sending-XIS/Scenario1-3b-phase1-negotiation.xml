@@ -10,11 +10,16 @@
     
     <nts:includeDateT value="yes"/>
     <nts:authToken patientResourceId="nl-core-patient-eov-test-1-3b-01"/>
-    
+
+    <!--
+        EOVDR-444/KT-384: Declare a (unused) fixture as a workaround for a Touchstone bug.
+        The line below should be put back in the setup once KT-384 has been resolved.
+    -->
+    <nts:fixture
+        id="initial-task-fixture"
+        href="resources/resources-specific/eOverdracht-Task-eov-test-1_3b-REQUESTED.xml"/>
+
     <setup nts:in-targets="Nictiz-only">
-        <nts:fixture
-            id="initial-task-fixture"
-            href="resources/resources-specific/eOverdracht-Task-eov-test-1_3b-REQUESTED.xml"/>
         <nts:include value="setup.general.initializeTask"
             task-fixture-id="initial-task-fixture"
             description="At the sending XIS, a new Task is created in status 'requested'."/>
@@ -31,6 +36,14 @@
         <nts:include value="test.sendingxis.serveTask"
             taskStatus="requested"
             responseId="requested-task-response"/>
+
+        <nts:include value="rewrite.response.taskWithAlternativeDate"
+            fixtureId="on-hold-task-fixture"
+            newDate="${DATE, T, d, 2}"/>
+
+        <nts:include nts:in-targets="Nictiz-only" value="rewrite.response.taskStatus" scope="common"
+            newStatus="cancelled"
+            fixtureId="cancelled-task-fixture"/>
     </test>
     
     <test>
@@ -47,10 +60,6 @@
         <name value="Alternative date proposed"/>
         <description value="The sending XIS should handle an update to the Task where the status is set to 'on-hold' and the Task.output:alternativeDate slice is filled out to signal that the receiving XIS is able to transfer the patient only at some alternative date and time. This should be an update operation where the original Task is sent, with only the status and output elements changed."/>
         
-        <nts:fixture
-            id="on-hold-task-fixture"
-            href="resources/resources-specific/eOverdracht-Task-eov-test-1_3b-ON-HOLD.{$_FORMAT}"/>
-        
         <nts:include value="test.sendingxis.handleTaskUpdate"
             taskStatus="on-hold"
             taskFixtureId="on-hold-task-fixture"/>
@@ -60,9 +69,6 @@
         <name value="Set Task to 'cancelled'"/>
         <description value="The sending XIS now sets the status of the Task to 'cancelled' to signal the receiving XIS that the patient will not be transferred."/>
         
-        <nts:fixture
-            id="cancelled-task-fixture"
-            href="resources/resources-specific/eOverdracht-Task-eov-test-1_3b-CANCELLED.xml"/>
         <nts:include value="action.general.updateTaskBySendingXis"
             task-fixture-id="cancelled-task-fixture"
             description="Set the eOverdracht Task resource to 'in-progress'."/>

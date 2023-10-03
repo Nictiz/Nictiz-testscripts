@@ -9,10 +9,15 @@
     
     <nts:authToken patientResourceId="nl-core-patient-eov-cert-1-1b-01"/>
     
+    <!--
+        EOVDR-444/KT-384: Declare a (unused) fixture as a workaround for a Touchstone bug.
+        The line below should be put back in the setup once KT-384 has been resolved.
+    -->
+    <nts:fixture
+        id="initial-task-fixture"
+        href="resources/resources-specific/eOverdracht-Task-eov-cert-1_1b-IN-PROGRESS.xml"/>
+
     <setup nts:in-targets="Nictiz-only">
-        <nts:fixture
-            id="initial-task-fixture"
-            href="resources/resources-specific/eOverdracht-Task-eov-cert-1_1b-IN-PROGRESS.xml"/>
         <nts:include value="setup.general.initializeTask"
             task-fixture-id="initial-task-fixture"
             description="At the sending XIS, a new Task is created in status 'in-progress'."/>
@@ -29,6 +34,10 @@
         <nts:include value="test.sendingxis.serveTask"
             taskStatus="in-progress"
             responseId="in-progress-task-response"/>
+
+        <nts:include value="rewrite.response.taskStatus" scope="common"
+            newStatus="completed"
+            fixtureId="completed-task-fixture"/>
     </test>
 
     <test>
@@ -45,10 +54,6 @@
         <name value="Handle Task update to 'completed'"/>
         <description value="The sending XIS should handle an update of the Task with the status 'completed' which the receiving uses to signal that has received the nursing handoff."/>
 
-        <nts:fixture
-            id="completed-task-fixture"
-            href="resources/resources-specific/eOverdracht-Task-eov-cert-1_1b-COMPLETED.{$_FORMAT}"/>
-        
         <nts:include value="test.sendingxis.handleTaskUpdate"
             taskStatus="completed"
             taskFixtureId="completed-task-fixture"/>

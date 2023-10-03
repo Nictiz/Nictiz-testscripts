@@ -4,8 +4,24 @@
    <meta>
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
+   <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-rule">
+      <extension url="ruleId">
+         <valueId value="rewrite-response-taskWithAlternativeDate"/>
+      </extension>
+      <extension url="path">
+         <valueString value="../_reference/rules/rewrite-response-taskWithAlternativeDate.groovy"/>
+      </extension>
+   </extension>
+   <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-rule">
+      <extension url="ruleId">
+         <valueId value="modifyTask"/>
+      </extension>
+      <extension url="path">
+         <valueString value="../_reference/rules/rewrite-response-taskStatus.groovy"/>
+      </extension>
+   </extension>
    <url value="http://nictiz.nl/fhir/TestScript/Sending-XIS-scenario1.2b-negotiation-json"/>
-   <version value="stu3-4.0-patchlevel 2023-06"/>
+   <version value="stu3-4.0-patchlevel 2023-09"/>
    <name value="Sending-XIS-scenario1.2b-negotiation - JSON Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -46,18 +62,11 @@
          <code value="FHIR-Server"/>
       </profile>
    </destination>
-   <fixture id="on-hold-task-fixture">
+   <fixture id="initial-task-fixture">
       <autocreate value="false"/>
       <autodelete value="false"/>
       <resource>
-         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-test-1_2b-ON-HOLD.json"/>
-      </resource>
-   </fixture>
-   <fixture id="accepted-task-fixture">
-      <autocreate value="false"/>
-      <autodelete value="false"/>
-      <resource>
-         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-test-1_2b-ACCEPTED.json"/>
+         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-test-1_2b-REQUESTED.xml"/>
       </resource>
    </fixture>
    <profile id="eOverdracht-Task">
@@ -171,6 +180,46 @@
             </extension>
             <label value="Make sure that the Task has status=requested."/>
             <expression value="Task.status = 'requested'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="rewrite-response-taskWithAlternativeDate"/>
+               </extension>
+               <extension url="param">
+                  <extension url="name">
+                     <valueString value="fixtureId"/>
+                  </extension>
+                  <extension url="value">
+                     <valueString value="on-hold-task-fixture"/>
+                  </extension>
+               </extension>
+               <extension url="param">
+                  <extension url="name">
+                     <valueString value="newDate"/>
+                  </extension>
+                  <extension url="value">
+                     <valueString value="${DATE, T, d, 2}"/>
+                  </extension>
+               </extension>
+               <extension url="output">
+                  <extension url="name">
+                     <valueString value="on-hold-task-fixture"/>
+                  </extension>
+                  <extension url="type">
+                     <valueString value="document"/>
+                  </extension>
+                  <extension url="contentType">
+                     <valueString value="json"/>
+                  </extension>
+               </extension>
+            </extension>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -328,17 +377,6 @@
             <description value="Confirm that the fullUrl is an absolute URL, an uuid or an oid."/>
             <direction value="response"/>
             <expression value="Bundle.entry.fullUrl.all( startsWith('http://') or startsWith('https://') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that literal References (Reference.reference) are an absolute URL, a relative URL or an internal fragment reference (contained), see: http://hl7.org/fhir/stu3/references.html#literal."/>
-            <direction value="response"/>
-            <expression value="Bundle.descendants().where($this as Reference).reference.all( startsWith('http://') or startsWith('https://') or startsWith('#') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or (startsWith('urn:').not() and startsWith('#').not() and matches('^[A-Za-z]{3,}/[^/]+$')) )"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -553,6 +591,46 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="modifyTask"/>
+               </extension>
+               <extension url="param">
+                  <extension url="name">
+                     <valueString value="newStatus"/>
+                  </extension>
+                  <extension url="value">
+                     <valueString value="accepted"/>
+                  </extension>
+               </extension>
+               <extension url="param">
+                  <extension url="name">
+                     <valueString value="fixtureId"/>
+                  </extension>
+                  <extension url="value">
+                     <valueString value="accepted-task-fixture"/>
+                  </extension>
+               </extension>
+               <extension url="output">
+                  <extension url="name">
+                     <valueString value="accepted-task-fixture"/>
+                  </extension>
+                  <extension url="type">
+                     <valueString value="document"/>
+                  </extension>
+                  <extension url="contentType">
+                     <valueString value="json"/>
+                  </extension>
+               </extension>
+            </extension>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
    </test>
    <test>
       <name value="Serve new advance notice"/>
@@ -707,17 +785,6 @@
             <description value="Confirm that the fullUrl is an absolute URL, an uuid or an oid."/>
             <direction value="response"/>
             <expression value="Bundle.entry.fullUrl.all( startsWith('http://') or startsWith('https://') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that literal References (Reference.reference) are an absolute URL, a relative URL or an internal fragment reference (contained), see: http://hl7.org/fhir/stu3/references.html#literal."/>
-            <direction value="response"/>
-            <expression value="Bundle.descendants().where($this as Reference).reference.all( startsWith('http://') or startsWith('https://') or startsWith('#') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or (startsWith('urn:').not() and startsWith('#').not() and matches('^[A-Za-z]{3,}/[^/]+$')) )"/>
             <warningOnly value="false"/>
          </assert>
       </action>
