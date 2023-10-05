@@ -48,6 +48,30 @@
       <defaultValue value="Bearer 7ce7c666-6f96-40a7-a8fa-922056cb18b4"/>
       <description value="OAuth Token for current patient"/>
    </variable>
+   <variable>
+      <name value="zib-MedicationUse-medmij-bgz-test-patA-meduse1-id"/>
+      <description value="Resource.id for Observation 1"/>
+      <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(status = 'on-hold').id"/>
+      <sourceId value="fixture-response"/>
+   </variable>
+   <variable>
+      <name value="zib-MedicationUse-medmij-bgz-test-patA-meduse2-id"/>
+      <description value="Resource.id for Observation 2"/>
+      <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(status = 'stopped').id"/>
+      <sourceId value="fixture-response"/>
+   </variable>
+   <variable>
+      <name value="zib-Product-medmij-bgz-test-patA-product1-id"/>
+      <description value="Resource.id for Observation 1"/>
+      <expression value="Bundle.entry.resource.ofType(Medication).where(code.where(coding.where(code = '2182416'))).id"/>
+      <sourceId value="fixture-response"/>
+   </variable>
+   <variable>
+      <name value="zib-Product-medmij-bgz-test-patA-product2-id"/>
+      <description value="Resource.id for Observation 2"/>
+      <expression value="Bundle.entry.resource.ofType(Medication).where(code.where(coding.where(code = '2613093'))).id"/>
+      <sourceId value="fixture-response"/>
+   </variable>
    <test>
       <name value="Scenario 1.11.3 - MedicationUse"/>
       <description value="Serve MedicationStatement resource(s) for zib MedicationUse and include Medication"/>
@@ -72,6 +96,7 @@
                <field value="MedMij-Request-ID"/>
                <value value="${UUID}"/>
             </requestHeader>
+            <responseId value="fixture-response"/>
          </operation>
       </action>
       <action>
@@ -295,6 +320,782 @@
             <description value="Confirm that the response Bundle contains 2 Medication resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Medication)).count() = 2"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Scenario 1.11.3 - MedicationUse - Check MedicationStatement 1"/>
+      <description value="Check if the previous operation results in a FHIR MedicationStatement that contains the values that are expected following Nictiz' materials (fixture .id: zib-MedicationUse-medmij-bgz-test-patA-meduse1)"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Response Bundle contains exactly 1 MedicationStatement that contains .status = 'on-hold'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(status = 'on-hold').count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="MedicationStatement resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(status = 'on-hold').id.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2"/>
+            <description value="Contains .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse-Prescriber' with .valueReference with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').extension('http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse-Prescriber').value.ofType(Reference).where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-3"/>
+            <description value="Contains .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse-ReasonForChangeOrDiscontinuationOfUse' with .valueCodeableConcept with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.3.11.60.20.77.5.2.2' and .code '13' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').extension('http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse-ReasonForChangeOrDiscontinuationOfUse').value.ofType(CodeableConcept).coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.3.11.60.20.77.5.2.2' and code = '13' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-4"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').identifier.where(system and value).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-5"/>
+            <description value="Contains .status 'on-hold'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').status = 'on-hold'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6"/>
+            <description value="Contains .category with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.3.11.60.20.77.5.3' and .code '6' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').category.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.3.11.60.20.77.5.3' and code = '6' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-7"/>
+            <description value="Contains .medicationReference with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').medication.ofType(Reference).where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-8"/>
+            <description value="Contains .effectivePeriod with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse-Duration' with .valueDuration with .value '14' and .unit 'dagen' and .system and .code 'd' and .start. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').effective.ofType(Period).where(extension('http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse-Duration').value.ofType(Duration).where(value = 14 and unit.replaceMatches('[ .,_-]+', ' ') ~ 'dagen' and system and code = 'd') and start).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-8-1"/>
+            <description value="Contains .effectivePeriod.extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse-Duration' with .valueDuration with .value '14' and .unit 'dagen' and .system and .code 'd'. This assert checks only one child. Assert 1-8 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').effective.ofType(Period).extension('http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse-Duration').value.ofType(Duration).where(value = 14 and unit.replaceMatches('[ .,_-]+', ' ') ~ 'dagen' and system and code = 'd').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-8-2"/>
+            <description value="Contains .effectivePeriod with .start. This assert checks only one child. Assert 1-8 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').effective.ofType(Period).where(start).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-9"/>
+            <description value="Contains .dateAsserted"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').dateAsserted.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-10"/>
+            <description value="Contains .subject with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').subject.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-11"/>
+            <description value="Contains .taken 'y'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').taken = 'y'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-12"/>
+            <description value="Contains .reasonCode with .text 'Plaatsing Knieprothese'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').reasonCode.where(text.replaceMatches('[ .,_-]+', ' ') ~ 'Plaatsing Knieprothese').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-13"/>
+            <description value="Contains .note with .text 'Volgens afspraak 2 weken na plaatsing kunstknie gestopt met medicatie'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').note.where(text.replaceMatches('[ .,_-]+', ' ') ~ 'Volgens afspraak 2 weken na plaatsing kunstknie gestopt met medicatie').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-14"/>
+            <description value="Contains .dosage with .sequence '1' and .text 'Vanaf 28 november, gedurende 14 dagen, 2 maal per dag 1T, oraal' and .timing with .repeat with .boundsDuration with .value '14' and .unit 'dagen' and .system and .code 'd' and .when 'MORN' and .when 'NIGHT' and .route with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.4.9' and .code '9' and .display and .doseQuantity with .value '2.5' and .unit and .system 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and .code '229'. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').dosage.where(sequence = 1 and text.replaceMatches('[ .,_-]+', ' ') ~ 'Vanaf 28 november gedurende 14 dagen 2 maal per dag 1T oraal' and timing.repeat.where(bounds.ofType(Duration).where(value = 14 and unit.replaceMatches('[ .,_-]+', ' ') ~ 'dagen' and system and code = 'd') and when.where($this = 'MORN') and when.where($this = 'NIGHT')) and route.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.9' and code = '9' and display) and dose.ofType(Quantity).where(value = 2.5 and unit and system = 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and code = '229')).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-14-1"/>
+            <description value="Contains .dosage.sequence '1'. This assert checks only one child. Assert 1-14 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').dosage.where(sequence = 1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-14-2"/>
+            <description value="Contains .dosage.text 'Vanaf 28 november, gedurende 14 dagen, 2 maal per dag 1T, oraal'. This assert checks only one child. Assert 1-14 checks if all children are present in the same parent. This assert is set to warning because string comparisons can have many possible caveats"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').dosage.where(text.replaceMatches('[ .,_-]+', ' ') ~ 'Vanaf 28 november gedurende 14 dagen 2 maal per dag 1T oraal').exists()"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-14-3"/>
+            <description value="Contains .dosage.timing with .repeat with .boundsDuration with .value '14' and .unit 'dagen' and .system and .code 'd' and .when 'MORN' and .when 'NIGHT'. This assert checks only one child. Assert 1-14 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').dosage.where(timing.repeat.where(bounds.ofType(Duration).where(value = 14 and unit.replaceMatches('[ .,_-]+', ' ') ~ 'dagen' and system and code = 'd') and when.where($this = 'MORN') and when.where($this = 'NIGHT')).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-14-4"/>
+            <description value="Contains .dosage.route with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.4.9' and .code '9' and .display. This assert checks only one child. Assert 1-14 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').dosage.where(route.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.9' and code = '9' and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-14-5"/>
+            <description value="Contains .dosage.doseQuantity with .value '2.5' and .unit and .system 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and .code '229'. This assert checks only one child. Assert 1-14 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse1-id}').dosage.where(dose.ofType(Quantity).where(value = 2.5 and unit and system = 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and code = '229').exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Scenario 1.11.3 - MedicationUse - Check MedicationStatement 2"/>
+      <description value="Check if the previous operation results in a FHIR MedicationStatement that contains the values that are expected following Nictiz' materials (fixture .id: zib-MedicationUse-medmij-bgz-test-patA-meduse2)"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Response Bundle contains exactly 1 MedicationStatement that contains .status = 'stopped'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(status = 'stopped').count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="MedicationStatement resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(status = 'stopped').id.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-2"/>
+            <description value="Contains .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse-AsAgreedIndicator' with .valueBoolean 'true'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').extension('http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse-AsAgreedIndicator').value.ofType(boolean) = true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-3"/>
+            <description value="Contains .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse-Prescriber' with .valueReference with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').extension('http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse-Prescriber').value.ofType(Reference).where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-4"/>
+            <description value="Contains .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse-ReasonForChangeOrDiscontinuationOfUse' with .valueCodeableConcept with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.3.11.60.20.77.5.2.2' and .code '12' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').extension('http://nictiz.nl/fhir/StructureDefinition/zib-MedicationUse-ReasonForChangeOrDiscontinuationOfUse').value.ofType(CodeableConcept).coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.3.11.60.20.77.5.2.2' and code = '12' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-5"/>
+            <description value="Contains .modifierExtension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-Medication-RepeatPeriodCyclicalSchedule' with .valueDuration with .value '8' and .unit 'dagen' and .system and .code 'd'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').modifierExtension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/zib-Medication-RepeatPeriodCyclicalSchedule').value.ofType(Duration).where(value = 8 and unit.replaceMatches('[ .,_-]+', ' ') ~ 'dagen' and system and code = 'd').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-6"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').identifier.where(system and value).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-7"/>
+            <description value="Contains .status 'stopped'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').status = 'stopped'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-8"/>
+            <description value="Contains .category with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.3.11.60.20.77.5.3' and .code '6' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').category.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.3.11.60.20.77.5.3' and code = '6' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-9"/>
+            <description value="Contains .medicationReference with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').medication.ofType(Reference).where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-10"/>
+            <description value="Contains .effectivePeriod with .start and .end"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').effective.ofType(Period).where(start and end).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-11"/>
+            <description value="Contains .dateAsserted"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').dateAsserted.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-12"/>
+            <description value="Contains .subject with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').subject.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-13"/>
+            <description value="Contains .taken 'y'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').taken = 'y'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-14"/>
+            <description value="Contains .reasonCode with .text 'Plaatsing Knieprothese'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').reasonCode.where(text.replaceMatches('[ .,_-]+', ' ') ~ 'Plaatsing Knieprothese').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-15"/>
+            <description value="Contains .note with .text '2 weken na plaatsing kunstknie gestopt met medicatie wegens niet meer nodig'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').note.where(text.replaceMatches('[ .,_-]+', ' ') ~ '2 weken na plaatsing kunstknie gestopt met medicatie wegens niet meer nodig').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-16"/>
+            <description value="Contains .dosage with .sequence '1' and .text 'Gedurende 24 dagen, cyclus van 8 dagen: steeds gedurende 7 dagen, elke 4 uur één tablet, zo nodig één tablet extra, oraal' and .additionalInstruction with .text 'Na 7 dagen één dag niet gebruiken' and .timing with .repeat with .boundsDuration with .value '21' and .unit 'dagen' and .system and .code 'd' and .period '4' and .periodUnit 'h' and .route with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.4.9' and .code '9' and .display and .doseQuantity with .value '600' and .unit and .system 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and .code '229'. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').dosage.where(sequence = 1 and text.replaceMatches('[ .,_-]+', ' ') ~ 'Gedurende 24 dagen cyclus van 8 dagen: steeds gedurende 7 dagen elke 4 uur één tablet zo nodig één tablet extra oraal' and additionalInstruction.where(text.replaceMatches('[ .,_-]+', ' ') ~ 'Na 7 dagen één dag niet gebruiken') and timing.repeat.where(bounds.ofType(Duration).where(value = 21 and unit.replaceMatches('[ .,_-]+', ' ') ~ 'dagen' and system and code = 'd') and period = 4 and periodUnit = 'h') and route.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.9' and code = '9' and display) and dose.ofType(Quantity).where(value = 600 and unit and system = 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and code = '229')).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-16-1"/>
+            <description value="Contains .dosage.sequence '1'. This assert checks only one child. Assert 2-16 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').dosage.where(sequence = 1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-16-2"/>
+            <description value="Contains .dosage.text 'Gedurende 24 dagen, cyclus van 8 dagen: steeds gedurende 7 dagen, elke 4 uur één tablet, zo nodig één tablet extra, oraal'. This assert checks only one child. Assert 2-16 checks if all children are present in the same parent. This assert is set to warning because string comparisons can have many possible caveats"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').dosage.where(text.replaceMatches('[ .,_-]+', ' ') ~ 'Gedurende 24 dagen cyclus van 8 dagen: steeds gedurende 7 dagen elke 4 uur één tablet zo nodig één tablet extra oraal').exists()"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-16-3"/>
+            <description value="Contains .dosage.additionalInstruction with .text 'Na 7 dagen één dag niet gebruiken'. This assert checks only one child. Assert 2-16 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').dosage.where(additionalInstruction.where(text.replaceMatches('[ .,_-]+', ' ') ~ 'Na 7 dagen één dag niet gebruiken').exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-16-4"/>
+            <description value="Contains .dosage.timing with .repeat with .boundsDuration with .value '21' and .unit 'dagen' and .system and .code 'd' and .period '4' and .periodUnit 'h'. This assert checks only one child. Assert 2-16 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').dosage.where(timing.repeat.where(bounds.ofType(Duration).where(value = 21 and unit.replaceMatches('[ .,_-]+', ' ') ~ 'dagen' and system and code = 'd') and period = 4 and periodUnit = 'h').exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-16-5"/>
+            <description value="Contains .dosage.route with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.4.9' and .code '9' and .display. This assert checks only one child. Assert 2-16 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').dosage.where(route.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.9' and code = '9' and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-16-6"/>
+            <description value="Contains .dosage.doseQuantity with .value '600' and .unit and .system 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and .code '229'. This assert checks only one child. Assert 2-16 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').dosage.where(dose.ofType(Quantity).where(value = 600 and unit and system = 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and code = '229').exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-17"/>
+            <description value="Contains .dosage with .sequence '1' and .asNeededCodeableConcept with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.4.5' and .code '1028' and .display and .doseRange with .high with .value '600' and .unit and .system 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and .code '229' and .maxDosePerPeriod with .numerator with .value '600' and .unit and .system 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and .code '229' and .denominator with .value '1' and .unit and .system 'http://unitsofmeasure.org' and .code 'd'. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').dosage.where(sequence = 1 and asNeeded.ofType(CodeableConcept).coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.5' and code = '1028' and display) and dose.ofType(Range).high.where(value = 600 and unit and system = 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and code = '229') and maxDosePerPeriod.where(numerator.where(value = 600 and unit and system = 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and code = '229') and denominator.where(value = 1 and unit and system = 'http://unitsofmeasure.org' and code = 'd'))).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-17-1"/>
+            <description value="Contains .dosage.sequence '1'. This assert checks only one child. Assert 2-17 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').dosage.where(sequence = 1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-17-2"/>
+            <description value="Contains .dosage.asNeededCodeableConcept with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.4.5' and .code '1028' and .display. This assert checks only one child. Assert 2-17 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').dosage.where(asNeeded.ofType(CodeableConcept).coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.5' and code = '1028' and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-17-3"/>
+            <description value="Contains .dosage.doseRange with .high with .value '600' and .unit and .system 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and .code '229'. This assert checks only one child. Assert 2-17 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').dosage.where(dose.ofType(Range).high.where(value = 600 and unit and system = 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and code = '229').exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-17-4"/>
+            <description value="Contains .dosage.maxDosePerPeriod with .numerator with .value '600' and .unit and .system 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and .code '229' and .denominator with .value '1' and .unit and .system 'http://unitsofmeasure.org' and .code 'd'. This assert checks only one child. Assert 2-17 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(MedicationStatement).where(id = '${zib-MedicationUse-medmij-bgz-test-patA-meduse2-id}').dosage.where(maxDosePerPeriod.where(numerator.where(value = 600 and unit and system = 'urn:oid:2.16.840.1.113883.2.4.4.1.900.2' and code = '229') and denominator.where(value = 1 and unit and system = 'http://unitsofmeasure.org' and code = 'd')).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Scenario 1.11.3 - MedicationUse - Check Medication 1"/>
+      <description value="Check if the previous operation results in a FHIR Medication that contains the values that are expected following Nictiz' materials (fixture .id: zib-Product-medmij-bgz-test-patA-product1)"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Response Bundle contains exactly 1 Medication that contains .code.coding.code = '2182416'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Medication).where(code.where(coding.where(code = '2182416'))).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Medication resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Medication).where(code.where(coding.where(code = '2182416'))).id.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-Product'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Medication).where(id = '${zib-Product-medmij-bgz-test-patA-product1-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-Product').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2"/>
+            <description value="Contains .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-Product-Description' with .valueString '2.5mg Apixaban filmomhulde tabletten'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Medication).where(id = '${zib-Product-medmij-bgz-test-patA-product1-id}').extension('http://nictiz.nl/fhir/StructureDefinition/zib-Product-Description').value.ofType(string).replaceMatches('[ .,_-]+', ' ') ~ '2 5mg Apixaban filmomhulde tabletten'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-3"/>
+            <description value="Contains .code with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.4.7' and .code '2182416' and .display and .text 'Apixaban 2.5mg'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Medication).where(id = '${zib-Product-medmij-bgz-test-patA-product1-id}').code.where(coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.7' and code = '2182416' and display) and text.replaceMatches('[ .,_-]+', ' ') ~ 'Apixaban 2 5mg').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-4"/>
+            <description value="Contains .form with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.4.11' and .code '230' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Medication).where(id = '${zib-Product-medmij-bgz-test-patA-product1-id}').form.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.11' and code = '230' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Scenario 1.11.3 - MedicationUse - Check Medication 2"/>
+      <description value="Check if the previous operation results in a FHIR Medication that contains the values that are expected following Nictiz' materials (fixture .id: zib-Product-medmij-bgz-test-patA-product2)"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Response Bundle contains exactly 1 Medication that contains .code.coding.code = '2613093'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Medication).where(code.where(coding.where(code = '2613093'))).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Medication resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Medication).where(code.where(coding.where(code = '2613093'))).id.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-Product'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Medication).where(id = '${zib-Product-medmij-bgz-test-patA-product2-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-Product').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-2"/>
+            <description value="Contains .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-Product-Description' with .valueString '600mg ibuprofen filmomhulde tabletten'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Medication).where(id = '${zib-Product-medmij-bgz-test-patA-product2-id}').extension('http://nictiz.nl/fhir/StructureDefinition/zib-Product-Description').value.ofType(string).replaceMatches('[ .,_-]+', ' ') ~ '600mg ibuprofen filmomhulde tabletten'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-3"/>
+            <description value="Contains .code with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.4.7' and .code '2613093' and .display and .text 'Ibuprofen 600mg'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Medication).where(id = '${zib-Product-medmij-bgz-test-patA-product2-id}').code.where(coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.7' and code = '2613093' and display) and text.replaceMatches('[ .,_-]+', ' ') ~ 'Ibuprofen 600mg').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-4"/>
+            <description value="Contains .form with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.4.11' and .code '230' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Medication).where(id = '${zib-Product-medmij-bgz-test-patA-product2-id}').form.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.11' and code = '230' and display).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>

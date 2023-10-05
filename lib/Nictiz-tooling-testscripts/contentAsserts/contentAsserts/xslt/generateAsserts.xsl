@@ -35,7 +35,7 @@
             </xsl:otherwise>
         </xsl:choose>
     </xsl:variable>
-    <xsl:variable name="complexDataTypes" select="('Annotation','Attachment','Coding','CodeableConcept','Quantity','SimpleQuantity','Distance','Age','Count','Duration','Money','Range','Ratio','Period','SampledData','Identifier','HumanName','Address','ContactPoint','Timing','Signature','Reference','Narrative','Meta')"/>
+    <xsl:variable name="complexDataTypes" select="('Annotation','Attachment','Coding','CodeableConcept','Quantity','SimpleQuantity','Distance','Age','Count','Duration','Money','Range','Ratio','Period','SampledData','Identifier','HumanName','Address','ContactPoint','Timing','Signature','Reference','Narrative',(:'Extension',:)'Meta','Dosage')"/>
     
     <xsl:variable name="dataTypes" select="($simpleDataTypes, $complexDataTypes)"/>
     <xsl:variable name="dataTypesLower" select="for $i in $dataTypes return lower-case($i)"/>
@@ -254,6 +254,9 @@
         <!--<xsl:message>===</xsl:message>
         <xsl:message select="$label"/>-->
         
+        <!-- This list of dataTypes is kind of arbitrary. I guess you can say that types like Reference or Quantity are somewhat compact (like max. 4 or 5 children?) that convey meaning _together_. The dataTypes below are more like bundles of elements that contain multiple individual pieces of information -->
+        <xsl:variable name="containerTypes" select="('Address','BackboneElement','Element','ContactPoint','Dosage','HumanName','Timing')"/>
+        
         <xsl:variable name="description">
             <xsl:call-template name="createDescription">
                 <xsl:with-param name="resourceTypeFocus" select="true()"/>
@@ -263,7 +266,7 @@
             <xsl:if test="string-length($label) - string-length(translate($label, '-', '')) ge 2">
                 <xsl:value-of select="concat('. This assert checks only one child. Assert ', $parentLabel, ' checks if all children are present in the same parent')"/>
             </xsl:if>
-            <xsl:if test="($dataType = ('BackboneElement', 'Extension') and count(*) gt 1) or ((f:extension or f:modifierExtension) and $skipExtensions = false())">
+            <xsl:if test="($dataType = $containerTypes and count(*) gt 1) or ((f:extension or f:modifierExtension) and $skipExtensions = false())">
                 <xsl:value-of select="'. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails'"/>
             </xsl:if>
             <xsl:if test="$dataType = 'string'">
@@ -326,11 +329,7 @@
             <!-- System should not contain Nictiz OID or 'example-xis' url -->
         </xsl:if>
         
-        <!-- For some elements, we want te create additional asserts -->
-        
-        <!-- This list of dataTypes is kind of arbitrary. I guess you can say that types like Reference or Quantity are somewhat compact (like max. 4 or 5 children?) that convey meaning _together_. The dataTypes below are more like bundles of elements that contain multiple individual pieces of information -->
-        <xsl:variable name="containerTypes" select="('Address','BackboneElement','ContactPoint','HumanName')"/>
-        
+        <!-- For some elements, we want te create additional asserts -->        
         <xsl:if test="$dataType = $containerTypes and count(*) gt 1 or ((f:extension or f:modifierExtension) and $skipExtensions = false())">
             <xsl:if test="@value">
                 <xsl:variable name="expression">
@@ -598,7 +597,7 @@
                             <!-- Narrative isn't always present in fixtures. If not present, it is generated at a later stage. We should find a way to always add this assert. -->
                             <xsl:text> </xsl:text>
                         </xsl:when>
-                        <xsl:when test="$dataType = ('Address','Annotation','BackboneElement','CodeableConcept','Coding','ContactPoint','Extension','HumanName','Meta','Period','Quantity')">
+                        <xsl:when test="$dataType = ('Address','Annotation','BackboneElement', 'Element','CodeableConcept','Coding','ContactPoint','Dosage','Duration','Extension','HumanName','Meta','Period','Quantity','Range','Ratio','Timing')">
                             <!-- If there are multiple children, we need a where statement -->
                             <xsl:if test="count(f:*) gt 1 and not(@nts:max = '*')">
                                 <xsl:text>where(</xsl:text>
@@ -723,7 +722,7 @@
         <xsl:if test="string-length($addition) gt 0">
             <xsl:value-of select="$expression"/>
             <!-- KT-393 R4 -->
-            <xsl:if test="(($topLevel = true() and not(matches($expression, ' (=|~) (true|false|''[^'']+'')$'))) or ($fhirVersion = 'R4' and matches($expressionPrefix, 'where\([^(]+(\))+$') and not(matches($expressionPrefix, 'modifierExtension.where\(url = [^(]+(\))+$')))) and not(ends-with($expression, '.exists()'))">
+            <xsl:if test="(($topLevel = true() and not(matches($expression, ' (=|~) (true|false|''[^'']+''|[\d.]+)$'))) or ($fhirVersion = 'R4' and matches($expressionPrefix, 'where\([^(]+(\))+$') and not(matches($expressionPrefix, 'modifierExtension.where\(url = [^(]+(\))+$')))) and not(ends-with($expression, '.exists()'))">
                 <xsl:text>.exists()</xsl:text>
             </xsl:if>
         </xsl:if>
@@ -743,7 +742,7 @@
                     <!-- In Attachment, there is hardly anything that we can reliably check for more than existance, so we do nothing here. -->
                     <xsl:text> </xsl:text>
                 </xsl:when>
-                <xsl:when test="$dataType = ('boolean', 'decimal')">
+                <xsl:when test="$dataType = ('boolean', 'decimal','integer')">
                     <xsl:if test="$includeThis = true()">
                         <xsl:text>$this</xsl:text>
                     </xsl:if>
@@ -770,7 +769,7 @@
                     <xsl:variable name="replaceChars" select="'[ .,_-]+'"/>
                     <xsl:value-of select="concat('.replaceMatches(''', $replaceChars, ''', '' '') ~ ''', replace(@value, $replaceChars, ' '), '''')"/>
                 </xsl:when>
-                <xsl:when test="$dataType = ('dateTime','date')">
+                <xsl:when test="$dataType = ('dateTime','date','instant')">
                     <!-- For now we only check if date or dateTime exist -->
                     <xsl:text> </xsl:text>
                     <!-- KT-393 R4 -->
@@ -967,7 +966,7 @@
                             <!-- Nothing to add -->
                             <xsl:text> </xsl:text>
                         </xsl:when>
-                        <xsl:when test="$dataType = ('Address','Annotation','BackboneElement','CodeableConcept','Coding','ContactPoint','Extension','HumanName','Meta','Period','Quantity')">
+                        <xsl:when test="$dataType = ('Address','Annotation','BackboneElement', 'Element','CodeableConcept','Coding','ContactPoint','Dosage','Duration','Extension','HumanName','Meta','Period','Quantity','Range','Ratio','Timing')">
                             <xsl:if test="$dataType = 'Extension'">
                                 <xsl:value-of select="concat('with url ''', @url, ''' ')"/>
                             </xsl:if>
@@ -1029,11 +1028,11 @@
                 <!-- In Attachment, there is hardly anything that we can reliably check for more than existance, so we do nothing here. -->
                 <xsl:text> </xsl:text>
             </xsl:when>
-            <xsl:when test="$dataType = ('dateTime','date') or ($dataType = 'string' and $parentDataType = ('Coding','Quantity'))">
+            <xsl:when test="$dataType = ('dateTime','date','instant') or ($dataType = 'string' and $parentDataType = ('Coding','Quantity'))">
                 <!-- Nothing to be added, as we only check existance -->
                 <xsl:text> </xsl:text>
             </xsl:when>
-            <xsl:when test="$dataType = ('boolean','decimal','string') or ($dataType = ('uri','canonical') and $parentDataType = ('Coding','Meta','Quantity'))">
+            <xsl:when test="$dataType = ('boolean','decimal','integer','string') or ($dataType = ('uri','canonical') and $parentDataType = ('Coding','Meta','Quantity'))">
                 <!-- For uri's in Coding and Quantity (.system) or Meta (.profile, uri is canonical in R4), we want an exact match. I can imagine that in some situations we want to only check for existance. -->
                 <xsl:value-of select="concat('''', @value, '''')"/>
             </xsl:when>
@@ -1099,16 +1098,27 @@
         <xsl:param name="parentFhirPath"/>
         <xsl:param name="parentDescriptionPath"/>
         <xsl:param name="parentDataType"/>
+        <xsl:param name="sdElementPath"/>
+        <xsl:param name="sdDataType"/>
         <xsl:param name="structureDefinition" tunnel="yes"/>
         
         <!-- We need to assume what would be the polymorphicElementPath if the element is indeed polymorphic -->
-        <xsl:variable name="polymorphicElementPath" select="concat($parentElementPath, '.',  nf:get-element-base(local-name()), '[x]')"/>
+        <xsl:variable name="polymorphicElementPath">
+            <xsl:choose>
+                <xsl:when test="string-length($sdDataType) gt 0">
+                    <xsl:value-of select="replace(concat($parentElementPath, '.', nf:get-element-base(local-name()), '[x]'), $sdElementPath, $sdDataType,'q')"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:value-of select="concat($parentElementPath, '.',  nf:get-element-base(local-name()), '[x]')"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
         
         <!-- If datatype, overrule structureDefinition -->
         <xsl:variable name="structureDefinition">
             <xsl:choose>
-                <xsl:when test="$parentDataType = $complexDataTypes">
-                    <xsl:copy-of select="document(concat($libPath, lower-case($fhirVersion), '/', $parentDataType, '.xml'))"/>
+                <xsl:when test="$sdDataType = $complexDataTypes and not($sdDataType = 'Extension')">
+                    <xsl:copy-of select="document(concat($libPath, lower-case($fhirVersion), '/', $sdDataType, '.xml'))"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:copy-of select="$structureDefinition"/>
@@ -1135,8 +1145,8 @@
                     <xsl:value-of select="local-name()"/>
                 </xsl:when>
                 <!-- Complex datatypes aren't included in snapshot, so we find them this way -->
-                <xsl:when test="$parentDataType = $complexDataTypes">
-                    <xsl:variable name="head">
+                <xsl:when test="$sdDataType = $complexDataTypes">
+                    <!--<xsl:variable name="head">
                         <xsl:variable name="regexReplace">
                             <xsl:call-template name="substring-before-last">
                                 <xsl:with-param name="input" select="concat($parentElementPath, '.', local-name())"/>
@@ -1144,8 +1154,8 @@
                             </xsl:call-template>
                         </xsl:variable>
                         <xsl:value-of select="replace($regexReplace,'((\]|\[))','\\$1')"/>
-                    </xsl:variable>
-                    <xsl:value-of select="replace(concat($parentElementPath, '.', local-name()), $head, $parentDataType)"/>
+                    </xsl:variable>-->
+                    <xsl:value-of select="replace(concat($parentElementPath, '.', local-name()), $sdElementPath, $sdDataType,'q')"/>
                 </xsl:when>
                 <xsl:when test="self::f:extension or self::f:modifierExtension">Extension</xsl:when>
                 <xsl:when test="$isPolymorphic = true()">
@@ -1173,6 +1183,13 @@
                 
                 <xsl:otherwise>
                     <xsl:message>Could not find ElementDefinition <xsl:value-of select="$elementPath"/></xsl:message>
+                    <xsl:message select="$sdDataType"/>
+                    <xsl:message select="$parentDataType"/>
+                    <xsl:message select="concat($structureDefinition/f:StructureDefinition/f:id/@value,'')"/>
+                    <xsl:message select="$isPolymorphic"/>
+                    <xsl:message select="$polymorphicElementPath"/>
+                    <xsl:message select="$sdElementPath"/>
+                    <xsl:message select="$parentElementPath"/>
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
@@ -1297,11 +1314,32 @@
                     <xsl:attribute name="nts:elementPath" select="$elementPath"/>
                     <xsl:attribute name="nts:fhirPath" select="$fhirPath"/>
                     <xsl:attribute name="nts:descriptionPath" select="$descriptionPath"/>
+                    
                     <xsl:apply-templates select="node()" mode="#current">
                         <xsl:with-param name="parentElementPath" select="$elementPath"/>
                         <xsl:with-param name="parentFhirPath" select="$fhirPath"/>
                         <xsl:with-param name="parentDescriptionPath" select="$descriptionPath"/>
                         <xsl:with-param name="parentDataType" select="$dataType"/>
+                        <xsl:with-param name="sdElementPath">
+                            <xsl:choose>
+                                <xsl:when test="$dataType = $complexDataTypes">
+                                    <xsl:value-of select="$elementPath"/>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:value-of select="$parentElementPath"/>
+                                </xsl:otherwise>
+                            </xsl:choose>
+                        </xsl:with-param>
+                        <xsl:with-param name="sdDataType">
+                            <xsl:choose>
+                                <xsl:when test="$dataType = $complexDataTypes">
+                                    <xsl:value-of select="$dataType"/>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:value-of select="$parentDataType"/>
+                                </xsl:otherwise>
+                            </xsl:choose>
+                        </xsl:with-param>
                     </xsl:apply-templates>
                 </xsl:copy>
             </xsl:otherwise>
