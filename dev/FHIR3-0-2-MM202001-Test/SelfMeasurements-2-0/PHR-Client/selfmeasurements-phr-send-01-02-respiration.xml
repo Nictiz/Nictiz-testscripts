@@ -68,6 +68,7 @@
                <field value="MedMij-Request-ID"/>
                <value value="${UUID}"/>
             </requestHeader>
+            <requestId value="fixture-scenario1-2-send-most-recent-respiration"/>
             <sourceId value="scenario-1-2-bundle-fixture"/>
          </operation>
       </action>
@@ -294,14 +295,18 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+   </test>
+   <test>
+      <name value="Scenario 1.2 - Check Observation 1"/>
+      <description value="Check if the previous operation results in a FHIR Observation that contains the values that are expected following Nictiz' materials (fixture .id: selfmeasurements-send-Respiration2)"/>
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
+               <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the response Bundle contains 2 Observation resource(s). "/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 2"/>
+            <description value="Request Bundle contains exactly 1 Observation that contains a component with code = '9279-1' and valueQuantity.value = '24'"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).count() = 1"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -310,9 +315,10 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the latest observation resource has the correct respiration value"/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.resource.ofType(Observation).component.where(code.coding.code='9279-1' and code.coding.system='http://loinc.org').value.ofType(Quantity).where(value=24 and code.matches('^\\{.+\\}/min$')).exists()"/>
+            <label value="1-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-Respiration'"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-Respiration').exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -321,9 +327,457 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the latest observation resource has the correct respiration value"/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.resource.ofType(Observation).component.where(code.coding.code='9279-1' and code.coding.system='http://loinc.org').value.ofType(Quantity).where(value=14 and code.matches('^\\{.+\\}/min$')).exists()"/>
+            <label value="1-2"/>
+            <description value="Contains .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-Respiration-AdministeredOxygen' with .extension with url 'extraOxygenAdministration' with .valueBoolean 'true' and .extension with url 'fiO2' with .valueQuantity with .value '0.4' and .unit and .system 'http://unitsofmeasure.org'. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).extension('http://nictiz.nl/fhir/StructureDefinition/zib-Respiration-AdministeredOxygen').where(extension('extraOxygenAdministration').value.ofType(boolean) = true and extension('fiO2').value.ofType(Quantity).where(value = 0.4 and unit and system = 'http://unitsofmeasure.org')).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2-1"/>
+            <description value="Contains .extension('http://nictiz.nl/fhir/StructureDefinition/zib-Respiration-AdministeredOxygen').extension with url 'extraOxygenAdministration' with .valueBoolean 'true'. This assert checks only one child. Assert 1-2 checks if all children are present in the same parent"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).extension('http://nictiz.nl/fhir/StructureDefinition/zib-Respiration-AdministeredOxygen').extension('extraOxygenAdministration').value.ofType(boolean) = true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2-2"/>
+            <description value="Contains .extension('http://nictiz.nl/fhir/StructureDefinition/zib-Respiration-AdministeredOxygen').extension with url 'fiO2' with .valueQuantity with .value '0.4' and .unit and .system 'http://unitsofmeasure.org'. This assert checks only one child. Assert 1-2 checks if all children are present in the same parent"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).extension('http://nictiz.nl/fhir/StructureDefinition/zib-Respiration-AdministeredOxygen').extension('fiO2').value.ofType(Quantity).where(value = 0.4 and unit and system = 'http://unitsofmeasure.org').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-3"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).identifier.where(system and value).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-4"/>
+            <description value="Contains .status 'final'"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).status = 'final'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-5"/>
+            <description value="Contains .category with .coding with .system 'http://hl7.org/fhir/observation-category' and .code 'vital-signs' and .display"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).category.where(coding.where(system = 'http://hl7.org/fhir/observation-category' and code = 'vital-signs' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6"/>
+            <description value="Contains .code with .coding with .system 'http://snomed.info/sct' and .code '422834003' and .display"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).code.coding.where(system = 'http://snomed.info/sct' and code = '422834003' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-7"/>
+            <description value="Contains .subject with either .reference or .identifier and .display"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).subject.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-8"/>
+            <description value="Contains .effectiveDateTime"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).effective.ofType(dateTime).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-9"/>
+            <description value="Contains .performer with either .reference or .identifier and .display"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).performer.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-10"/>
+            <description value="Contains .comment 'Na halve marathon'. This assert is set to warning because string comparisons can have many possible caveats"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).comment.replaceMatches('[ .,_-]+', ' ') ~ 'Na halve marathon'"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-11"/>
+            <description value="Contains .component with .code with .coding with .system 'http://loinc.org' and .code '9279-1' and .display and .valueQuantity with .value '24' and .unit and .system 'http://unitsofmeasure.org' and .code matching regex '^\\{.+\\}/min$'. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).component.where(code.coding.where(system = 'http://loinc.org' and code = '9279-1' and display) and value.ofType(Quantity).where(value = 24 and unit and system = 'http://unitsofmeasure.org' and code.matches('^\\{.+\\}/min$'))).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-11-1"/>
+            <description value="Contains .component.code with .coding with .system 'http://loinc.org' and .code '9279-1' and .display. This assert checks only one child. Assert 1-11 checks if all children are present in the same parent"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).component.where(code.coding.where(system = 'http://loinc.org' and code = '9279-1' and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-11-2"/>
+            <description value="Contains .component.valueQuantity with .value '24' and .unit and .system 'http://unitsofmeasure.org' and .code matching regex '^\\{.+\\}/min$'. This assert checks only one child. Assert 1-11 checks if all children are present in the same parent"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).component.where(value.ofType(Quantity).where(value = 24 and unit and system = 'http://unitsofmeasure.org' and code.matches('^\\{.+\\}/min$')).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-12"/>
+            <description value="Contains .component with .code with .coding with .system 'http://snomed.info/sct' and .code '48064009' and .display and .valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '5467003' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).component.where(code.coding.where(system = 'http://snomed.info/sct' and code = '48064009' and display) and value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '5467003' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-12-1"/>
+            <description value="Contains .component.code with .coding with .system 'http://snomed.info/sct' and .code '48064009' and .display. This assert checks only one child. Assert 1-12 checks if all children are present in the same parent"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).component.where(code.coding.where(system = 'http://snomed.info/sct' and code = '48064009' and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-12-2"/>
+            <description value="Contains .component.valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '5467003' and .display. This assert checks only one child. Assert 1-12 checks if all children are present in the same parent"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).component.where(value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '5467003' and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-13"/>
+            <description value="Contains .component with .code with .coding with .system 'http://snomed.info/sct' and .code '271626009' and .display and .valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '301284009' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).component.where(code.coding.where(system = 'http://snomed.info/sct' and code = '271626009' and display) and value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '301284009' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-13-1"/>
+            <description value="Contains .component.code with .coding with .system 'http://snomed.info/sct' and .code '271626009' and .display. This assert checks only one child. Assert 1-13 checks if all children are present in the same parent"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).component.where(code.coding.where(system = 'http://snomed.info/sct' and code = '271626009' and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-13-2"/>
+            <description value="Contains .component.valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '301284009' and .display. This assert checks only one child. Assert 1-13 checks if all children are present in the same parent"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 24)).component.where(value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '301284009' and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Scenario 1.2 - Check Observation 2"/>
+      <description value="Check if the previous operation results in a FHIR Observation that contains the values that are expected following Nictiz' materials (fixture .id: selfmeasurements-send-Respiration3)"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Request Bundle contains exactly 1 Observation that contains a component with code = '9279-1' and valueQuantity.value = '14'"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-Respiration'"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-Respiration').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-2"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).identifier.where(system and value).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-3"/>
+            <description value="Contains .status 'final'"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).status = 'final'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-4"/>
+            <description value="Contains .category with .coding with .system 'http://hl7.org/fhir/observation-category' and .code 'vital-signs' and .display"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).category.where(coding.where(system = 'http://hl7.org/fhir/observation-category' and code = 'vital-signs' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-5"/>
+            <description value="Contains .code with .coding with .system 'http://snomed.info/sct' and .code '422834003' and .display"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).code.coding.where(system = 'http://snomed.info/sct' and code = '422834003' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-6"/>
+            <description value="Contains .subject with either .reference or .identifier and .display"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).subject.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-7"/>
+            <description value="Contains .effectiveDateTime"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).effective.ofType(dateTime).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-8"/>
+            <description value="Contains .performer with either .reference or .identifier and .display"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).performer.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-9"/>
+            <description value="Contains .component with .code with .coding with .system 'http://loinc.org' and .code '9279-1' and .display and .valueQuantity with .value '14' and .unit and .system 'http://unitsofmeasure.org' and .code matching regex '^\\{.+\\}/min$'. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).component.where(code.coding.where(system = 'http://loinc.org' and code = '9279-1' and display) and value.ofType(Quantity).where(value = 14 and unit and system = 'http://unitsofmeasure.org' and code.matches('^\\{.+\\}/min$'))).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-9-1"/>
+            <description value="Contains .component.code with .coding with .system 'http://loinc.org' and .code '9279-1' and .display. This assert checks only one child. Assert 2-9 checks if all children are present in the same parent"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).component.where(code.coding.where(system = 'http://loinc.org' and code = '9279-1' and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-9-2"/>
+            <description value="Contains .component.valueQuantity with .value '14' and .unit and .system 'http://unitsofmeasure.org' and .code matching regex '^\\{.+\\}/min$'. This assert checks only one child. Assert 2-9 checks if all children are present in the same parent"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).component.where(value.ofType(Quantity).where(value = 14 and unit and system = 'http://unitsofmeasure.org' and code.matches('^\\{.+\\}/min$')).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-10"/>
+            <description value="Contains .component with .code with .coding with .system 'http://snomed.info/sct' and .code '48064009' and .display and .valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '5467003' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).component.where(code.coding.where(system = 'http://snomed.info/sct' and code = '48064009' and display) and value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '5467003' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-10-1"/>
+            <description value="Contains .component.code with .coding with .system 'http://snomed.info/sct' and .code '48064009' and .display. This assert checks only one child. Assert 2-10 checks if all children are present in the same parent"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).component.where(code.coding.where(system = 'http://snomed.info/sct' and code = '48064009' and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-10-2"/>
+            <description value="Contains .component.valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '5467003' and .display. This assert checks only one child. Assert 2-10 checks if all children are present in the same parent"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).component.where(value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '5467003' and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-11"/>
+            <description value="Contains .component with .code with .coding with .system 'http://snomed.info/sct' and .code '271626009' and .display and .valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '301284009' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).component.where(code.coding.where(system = 'http://snomed.info/sct' and code = '271626009' and display) and value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '301284009' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-11-1"/>
+            <description value="Contains .component.code with .coding with .system 'http://snomed.info/sct' and .code '271626009' and .display. This assert checks only one child. Assert 2-11 checks if all children are present in the same parent"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).component.where(code.coding.where(system = 'http://snomed.info/sct' and code = '271626009' and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-11-2"/>
+            <description value="Contains .component.valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '301284009' and .display. This assert checks only one child. Assert 2-11 checks if all children are present in the same parent"/>
+            <direction value="request"/>
+            <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '9279-1') and value.ofType(Quantity).value = 14)).component.where(value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '301284009' and display).exists()).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
