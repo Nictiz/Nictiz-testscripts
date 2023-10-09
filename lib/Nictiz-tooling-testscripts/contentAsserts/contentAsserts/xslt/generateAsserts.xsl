@@ -196,7 +196,7 @@
                     <!-- If the assert above passes, we know by definition that this variable will be evaluated. TestScripts will fail with an error if a variable cannot be evaluated, but to users it is not really clear what happens. The setup with the asserts above will prevent that hopefully. -->
                     <variable>
                         <name value="{$idVariable}"/>
-                        <description value="Resource.id for Observation {$resourceCount}"/>
+                        <description value="Resource.id for {$resourceType} {$resourceCount}"/>
                         <expression>
                             <xsl:attribute name="value">
                                 <xsl:choose>
@@ -292,22 +292,6 @@
                 <xsl:value-of select="'. This assert is set to warning because string comparisons can have many possible caveats'"/>
             </xsl:if>
         </xsl:variable>
-        
-        <!--<xsl:message>===</xsl:message>
-        <xsl:message>
-            <xsl:value-of select="$parentFhirPath"/>
-        </xsl:message>
-        <xsl:message select="$expression"/>
-        <xsl:message>
-            <xsl:choose>
-                <xsl:when test="contains($parentFhirPath, '{$_EXPR}')">
-                    <xsl:value-of select="concat($expressionBase,substring-after(replace($parentFhirPath, '{$_EXPR}', normalize-space($expression), 'q'), $resourceType),'.exists()')"/>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:value-of select="concat($expressionBase,substring-after($parentFhirPath, $resourceType), '.', $expression)"/>
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:message>-->
         
         <xsl:if test="string-length($expression) gt 0">
             <xsl:call-template name="createAssert">
@@ -480,12 +464,6 @@
                     <xsl:choose>
                         <!-- When simple data type (may or may not have @value) contains extension -->
                         <xsl:when test="$dataType = $simpleDataTypes and f:extension and $skipExtensions = false()">
-                            <!-- Failing because of KT-393  -->
-                            <!--<xsl:choose>
-                                <xsl:when test="$topLevel = true()">
-                                    <xsl:text>.exists(</xsl:text>
-                                </xsl:when>
-                                <xsl:otherwise>-->
                             <xsl:if test="not(@nts:max = '*')">
                                 <xsl:text>.where(</xsl:text>
                             </xsl:if>
@@ -507,15 +485,7 @@
                             </xsl:for-each>
                             <xsl:if test="not(@nts:max = '*')">
                                 <xsl:text>)</xsl:text>
-                                <!-- KT-393 R4 -->
-                                <xsl:if test="$fhirVersion = 'R4'">
-                                    <xsl:text>.exists()</xsl:text>
-                                </xsl:if>
                             </xsl:if>
-                            <!-- Temp because of KT-393 -->
-                            <!--<xsl:if test="$topLevel = true()">
-                                <xsl:text>.exists()</xsl:text>
-                            </xsl:if>-->
                         </xsl:when>
                         <xsl:when test="$dataType = 'Attachment'">
                             <xsl:if test="$skipExtensions = false()">
@@ -566,27 +536,13 @@
                             <xsl:if test="not(@nts:max = '*')">
                                 <xsl:text>.where(</xsl:text>
                             </xsl:if>
-                            <!-- KT-393 -->
-                            <!--<xsl:text>.exists(</xsl:text>-->
                             <xsl:choose>
                                 <xsl:when test="f:system">system</xsl:when>
                                 <xsl:when test="f:type">type</xsl:when>
                             </xsl:choose>
-                            <!-- KT-393 R4 -->
-                            <xsl:if test="$fhirVersion = 'R4'">
-                                <xsl:text>.exists()</xsl:text>
-                            </xsl:if>
                             <xsl:text> and value</xsl:text>
-                            <!-- KT-393 R4 -->
-                            <xsl:if test="$fhirVersion = 'R4'">
-                                <xsl:text>.exists()</xsl:text>
-                            </xsl:if>
                             <xsl:if test="not(@nts:max = '*')">
                                 <xsl:text>)</xsl:text>
-                                <!-- KT-393 R4 -->
-                                <xsl:if test="$fhirVersion = 'R4'">
-                                    <xsl:text>.exists()</xsl:text>
-                                </xsl:if>
                             </xsl:if>
                         </xsl:when>
                         <xsl:when test="$dataType = 'Reference'">
@@ -600,28 +556,11 @@
                                 <xsl:if test="f:extension|f:modifierExtension"> and </xsl:if>
                             </xsl:if>
                             <!-- Check if (reference OR identifier) and display exist -->
-                            <!-- KT-393 -->
                             <xsl:text>(reference</xsl:text>
-                            <!-- KT-393 R4 -->
-                            <xsl:if test="$fhirVersion = 'R4'">
-                                <xsl:text>.exists()</xsl:text>
-                            </xsl:if>
                             <xsl:text> or identifier</xsl:text>
-                            <!-- KT-393 R4 -->
-                            <xsl:if test="$fhirVersion = 'R4'">
-                                <xsl:text>.exists()</xsl:text>
-                            </xsl:if>
                             <xsl:text>) and display</xsl:text>
-                            <!-- KT-393 R4 -->
-                            <xsl:if test="$fhirVersion = 'R4'">
-                                <xsl:text>.exists()</xsl:text>
-                            </xsl:if>
                             <xsl:if test="not(@nts:max = '*')">
                                 <xsl:text>)</xsl:text>
-                                <!-- KT-393 R4 -->
-                                <xsl:if test="$fhirVersion = 'R4'">
-                                    <xsl:text>.exists()</xsl:text>
-                                </xsl:if>
                             </xsl:if>
                         </xsl:when>
                         <xsl:when test="$dataType = 'Narrative' and f:status/@value = 'extensions'">
@@ -655,10 +594,6 @@
                             </xsl:for-each>
                             <xsl:if test="count(f:*) gt 1 and not(@nts:max = '*')">
                                 <xsl:text>)</xsl:text>
-                                <!-- KT-393 R4 -->
-                                <xsl:if test="$fhirVersion = 'R4'">
-                                    <xsl:text>.exists()</xsl:text>
-                                </xsl:if>
                             </xsl:if>
                         </xsl:when>
                         <xsl:otherwise>
@@ -752,8 +687,7 @@
         
         <xsl:if test="string-length($addition) gt 0">
             <xsl:value-of select="$expression"/>
-            <!-- KT-393 R4 -->
-            <xsl:if test="(($topLevel = true() and not(matches($expression, ' (=|~) (true|false|''[^'']+''|[\d.]+)$'))) or ($fhirVersion = 'R4' and matches($expressionPrefix, 'where\([^(]+(\))+$') and not(matches($expressionPrefix, 'modifierExtension.where\(url = [^(]+(\))+$')))) and not(ends-with($expression, '.exists()'))">
+            <xsl:if test="$topLevel = true() and not(matches($expression, ' (=|~) (true|false|''[^'']+''|[\d.]+)$')) and not(ends-with($expression, '.exists()'))">
                 <xsl:text>.exists()</xsl:text>
             </xsl:if>
         </xsl:if>
@@ -762,8 +696,6 @@
     <xsl:template name="createExpressionSimple">
         <xsl:param name="dataType" select="@nts:dataType"/>
         <xsl:param name="parentDataType" select="parent::f:*/@nts:dataType"/>
-        <!-- If a call is topLevel, we need an 'exists()' statement. If a call isn't, the 'exists()' statement is constructed at a higher level, so we don't need it here.  -->
-        <!--<xsl:param name="topLevel" select="true()"/>-->
         <!-- Whether to include '$this' at the start of expression -->
         <xsl:param name="includeThis" select="false()"/>
         
@@ -780,16 +712,8 @@
                     <xsl:value-of select="concat(' = ', @value)"/>
                 </xsl:when>
                 <xsl:when test="$dataType = 'string' and $parentDataType = ('Coding','Quantity')">
-                    <!-- This is .display (in Coding) or .unit (in Quantity), and by definition not topLevel, so we do not have to do anything -->
-                    <!-- KT-393 R4 -->
-                    <xsl:choose>
-                        <xsl:when test="$fhirVersion = 'R4'">
-                            <xsl:text>.exists()</xsl:text>
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <xsl:text> </xsl:text>
-                        </xsl:otherwise>
-                    </xsl:choose>
+                    <!-- This is .display (in Coding) or .unit (in Quantity), so we only check for existence. No need to add .exists() -->
+                    <xsl:text> </xsl:text>
                 </xsl:when>
                 <xsl:when test="$dataType = 'string'">
                     <!-- '~' (equivalence) ignores case and whitespace. replace('.', '') removes dot and comma (or other characters - hyphens perhaps?). Or should we be allowed to define overrides in our NTS-script? -->
@@ -803,10 +727,6 @@
                 <xsl:when test="$dataType = ('dateTime','date','instant')">
                     <!-- For now we only check if date or dateTime exist -->
                     <xsl:text> </xsl:text>
-                    <!-- KT-393 R4 -->
-                    <!--<xsl:if test="$fhirVersion = 'R4'">
-                        <xsl:text>.exists()</xsl:text>
-                    </xsl:if>-->
                 </xsl:when>
                 <xsl:when test="$dataType = 'code' and $parentDataType = 'Quantity'">
                     <xsl:if test="$includeThis = true()">
