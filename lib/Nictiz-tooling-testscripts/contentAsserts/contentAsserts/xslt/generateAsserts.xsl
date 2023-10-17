@@ -558,7 +558,11 @@
                             <!-- Check if (reference OR identifier) and display exist -->
                             <xsl:text>(reference</xsl:text>
                             <xsl:text> or identifier</xsl:text>
-                            <xsl:text>) and display</xsl:text>
+                            <xsl:text>) and </xsl:text>
+                            <xsl:if test="$fhirPath = 'R4'">
+                                <xsl:text>type and </xsl:text>
+                            </xsl:if>
+                            <xsl:text>display</xsl:text>
                             <xsl:if test="not(@nts:max = '*')">
                                 <xsl:text>)</xsl:text>
                             </xsl:if>
