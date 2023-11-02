@@ -6,18 +6,25 @@
     <xsl:strip-space elements="*"/>
 
     <xsl:param name="outputDir"/>
+    
+    <xsl:param name="testGoal" as="xs:string?">
+        <xsl:choose>
+            <xsl:when test="contains(upper-case($outputDir), 'CERT')">Cert</xsl:when>
+            <xsl:otherwise>Test</xsl:otherwise>
+        </xsl:choose>
+    </xsl:param>
 
     <!-- We default to this patient for test scenario 0 -->
     <xsl:param name="patientBsn">
         <xsl:choose>
-            <xsl:when test="contains(upper-case($outputDir), 'CERT')">999900596</xsl:when>
+            <xsl:when test="$testGoal = 'Cert'">999900596</xsl:when>
             <xsl:otherwise>999901084</xsl:otherwise>
         </xsl:choose>
     </xsl:param>
     <!-- Used for MedMij token file -->
     <xsl:param name="patientName">    
         <xsl:choose>
-            <xsl:when test="contains(upper-case($outputDir), 'CERT')">G-XXX-Groot</xsl:when>
+            <xsl:when test="$testGoal = 'Cert'">G-XXX-Groot</xsl:when>
             <xsl:otherwise>R-vanXXX-Sonnenberg</xsl:otherwise>
         </xsl:choose>
     </xsl:param>
@@ -33,9 +40,9 @@
             <xsl:with-param name="msg">Processing ScenarioSet0</xsl:with-param>
         </xsl:call-template>
 
-
         <!-- Transaction Type (Retrieve/Serve) -->
-        <xsl:for-each select="ScenarioSet0/*">
+        <!-- only the current testgoal stuff -->
+        <xsl:for-each select="ScenarioSet0/*[local-name()=$testGoal]/*">
             <xsl:variable name="transactionType" select="lower-case(local-name())"/>
             <xsl:variable name="ntsScenario" as="xs:string?">
                 <xsl:choose>
@@ -46,12 +53,12 @@
                     </xsl:otherwise>
                 </xsl:choose>
             </xsl:variable>
-
+            
             <xsl:call-template name="util:logMessage">
                 <xsl:with-param name="level" select="$logINFO"/>
                 <xsl:with-param name="msg">Processing transactionType '<xsl:value-of select="$transactionType"/>'</xsl:with-param>
             </xsl:call-template>
-
+            
             <!-- Building Block -->
             <xsl:for-each select="*">
                 <xsl:variable name="buildingBlockLong" select="local-name()"/>
@@ -114,26 +121,26 @@
                         </xsl:when>
                     </xsl:choose>
                 </xsl:variable>
-
+                
                 <xsl:call-template name="util:logMessage">
                     <xsl:with-param name="level" select="$logINFO"/>
                     <xsl:with-param name="msg">Processing buildingBlock '<xsl:value-of select="$buildingBlockLong"/>'</xsl:with-param>
                 </xsl:call-template>
-
+                
                 <xsl:for-each select="TestScript">
-
+                    
                     <!-- Should be 0, but I guess you could use this setup for other non-ADA scenario's. -->
                     <xsl:variable name="scenarioset" select="scenarioSet/@value"/>
                     <xsl:variable name="scenario" select="scenario/@value"/>
-
+                    
                     <!-- We should change this to something simpler. Building block and transaction type are already in folder names. Leaving it as is for refactoring purposes -->
                     <xsl:variable name="newFilename" select="concat($buildingBlockShort, '-Scenario', $scenarioset, '-', $scenario, '.xml')"/>
-
+                    
                     <xsl:call-template name="util:logMessage">
                         <xsl:with-param name="level" select="$logINFO"/>
                         <xsl:with-param name="msg">Processing <xsl:value-of select="$newFilename"/></xsl:with-param>
                     </xsl:call-template>
-
+                    
                     <xsl:variable name="additionalScenarioParams" select="params/@value"/>
                     <xsl:variable name="theParamParts">
                         <xsl:variable name="additionalScenarioParamsNormalized">
@@ -153,7 +160,7 @@
                     </xsl:variable>
                     <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts)"/>
                     <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts)"/>
-
+                    
                     <xsl:variable name="description" as="xs:string?" select="description/@value"/>
                     <xsl:variable name="returnCount" select="xs:integer(returnCount/@value)"/>
                     <!-- Huge assumption here, but it seems correct for current scenario's -->
@@ -168,14 +175,14 @@
                             </xsl:otherwise>
                         </xsl:choose>
                     </xsl:variable>
-
+                    
                     <xsl:result-document href="{concat($outputDirNormalized,nf:first-cap($transactionType),'/',$buildingBlockLong,'/',$newFilename)}">
                         <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                             <!-- Currently 'include' is used to inject filter-identifier variable. We just copy, NTS handles correct positioning -->
                             <xsl:if test="include/*">
                                 <xsl:apply-templates select="include/*" mode="copy"/>
                             </xsl:if>
-
+                            
                             <id value="mp9-{lower-case($buildingBlockShort)}-{$transactionType}-{$scenarioset}-{$scenario}"/>
                             <version value="r4-mp9-3.0.0-beta"/>
                             <name value="Medication Process 9 3.0.0-beta  - {$buildingBlockLong} - {nf:first-cap($transactionType)} - Scenario {$scenarioset}.{$scenario}"/>
@@ -184,13 +191,13 @@
                             <xsl:if test="contains($additionalScenarioParams, '${DATE, T,')">
                                 <nts:includeDateT value="yes"/>
                             </xsl:if>
-
+                            
                             <test id="Scenario-{$scenarioset}-{$scenario}">
                                 <name value="Scenario {$scenarioset}.{$scenario}"/>
                                 <description value="{$description}"/>
                                 <xsl:choose>
                                     <xsl:when test="$transactionType = 'retrieve'">
-
+                                        
                                         <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
                                             <nts:with-parameter name="description" value="Test client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                             <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -201,7 +208,7 @@
                                             <nts:with-parameter name="resource" value="{$matchResource}"/>
                                             <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
                                         </nts:include>
-
+                                        
                                         <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
                                         <nts:include value="assert-returnCount" scope="project">
                                             <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -223,7 +230,7 @@
                                             <nts:with-parameter name="resource" value="{$matchResource}"/>
                                             <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
                                         </nts:include>
-
+                                        
                                         <nts:include value="assert.response.successfulSearch" scope="common"/>
                                         <nts:include value="assert-responseBundleContent-noMM"/>
                                         <nts:include value="assert-returnCount" scope="project">
@@ -248,10 +255,9 @@
                     </xsl:result-document>
                 </xsl:for-each>
             </xsl:for-each>
-
         </xsl:for-each>
     </xsl:template>
-
+    
     <!-- Remove 'f:' namespace prefix -->
     <xsl:template match="f:*" mode="copy">
         <xsl:element name="{local-name()}" namespace="http://hl7.org/fhir">
