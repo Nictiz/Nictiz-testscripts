@@ -37,6 +37,9 @@
     </xsl:variable>
     <xsl:variable name="complexDataTypes" select="('Annotation','Attachment','Coding','CodeableConcept','Quantity','SimpleQuantity','Distance','Age','Count','Duration','Money','Range','Ratio','Period','SampledData','Identifier','HumanName','Address','ContactPoint','Timing','Signature','Reference','Narrative',(:'Extension',:)'Meta','Dosage')"/>
     
+    <!-- This list of dataTypes is kind of arbitrary. I guess you can say that types like Reference or Quantity are somewhat compact (like max. 4 or 5 children?) that convey meaning _together_. The dataTypes below are more like bundles of elements that contain multiple individual pieces of information -->
+    <xsl:variable name="containerTypes" select="('Address','BackboneElement','Element','ContactPoint','Dosage','HumanName','Timing')"/>
+    
     <xsl:variable name="dataTypes" select="($simpleDataTypes, $complexDataTypes)"/>
     <xsl:variable name="dataTypesLower" select="for $i in $dataTypes return lower-case($i)"/>
     <xsl:variable name="simpleDataTypesLower" select="for $i in $simpleDataTypes return lower-case($i)"/>
@@ -79,6 +82,23 @@
                 <xsl:otherwise>
                     <xsl:message>TOCHECK: responseId/responseId and test/@id not found, reverting to default.</xsl:message>
                     <xsl:value-of select="generate-id()"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+        <xsl:variable name="operationType">
+            <xsl:choose>
+                <xsl:when test="f:action/f:operation/f:type/f:code/@value">
+                    <xsl:value-of select="f:action/f:operation/f:type/f:code/@value"/>
+                </xsl:when>
+                <xsl:when test="nts:include[@value = 'medmij/test.xis.successfulSearch']">
+                    <xsl:value-of select="'search'"/>
+                </xsl:when>
+                <xsl:when test="nts:include[@value = 'medmij/test.xis.successfulRead']">
+                    <xsl:value-of select="'read'"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:message>TOCHECK: unknown operationType, reverting to default (search).</xsl:message>
+                    <xsl:value-of select="'search'"/>
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
@@ -146,6 +166,8 @@
             </xsl:variable>
             
             <test>
+                <xsl:copy-of select="parent::f:test/@nts:*"/>
+                <xsl:copy-of select="@nts:*"/>
                 <name value="{$newTestName}"/>
                 <description value="Check if the previous operation results in a FHIR {$resourceType} that contains the values that are expected following Nictiz' materials (fixture .id: {$fixtureId})"/>
                 
@@ -154,6 +176,9 @@
                     <xsl:with-param name="description">
                         <xsl:variable name="direction" select="if ($scenario = 'server') then 'Response' else 'Request'"/>
                         <xsl:choose>
+                            <xsl:when test="$operationType = 'read'">
+                                <xsl:value-of select="concat($direction, ' contains exactly 1 ', $resourceType)"/>
+                            </xsl:when>
                             <xsl:when test="string-length($description) gt 0">
                                 <xsl:value-of select="concat($direction, ' Bundle contains exactly 1 ', $resourceType, ' that ', $description)"/>
                             </xsl:when>
@@ -164,6 +189,9 @@
                     </xsl:with-param>
                     <xsl:with-param name="expression">
                         <xsl:choose>
+                            <xsl:when test="$operationType = 'read'">
+                                <xsl:value-of select="concat($resourceType, '.count() = 1')"/>
+                            </xsl:when>
                             <xsl:when test="$bundleExpression = 'true'">
                                 <xsl:value-of select="concat($expression, '.count() = 1')"/>
                             </xsl:when>
@@ -182,6 +210,9 @@
                         <xsl:with-param name="description" select="concat($resourceType, ' resource evaluated in the previous assert contains an .id')"/>
                         <xsl:with-param name="expression">
                             <xsl:choose>
+                                <xsl:when test="$operationType = 'read'">
+                                    <xsl:value-of select="concat($resourceType, '.id.exists()')"/>
+                                </xsl:when>
                                 <xsl:when test="$bundleExpression = 'true'">
                                     <xsl:value-of select="concat($expression, '.id.exists()')"/>
                                 </xsl:when>
@@ -200,6 +231,9 @@
                         <expression>
                             <xsl:attribute name="value">
                                 <xsl:choose>
+                                    <xsl:when test="$operationType = 'read'">
+                                        <xsl:value-of select="concat($resourceType, '.id')"/>
+                                    </xsl:when>
                                     <xsl:when test="$bundleExpression = 'true'">
                                         <xsl:value-of select="concat($expression, '.id')"/>
                                     </xsl:when>
@@ -234,6 +268,7 @@
                 
                 <!-- After this, we can use the variable in all following asserts -->
                 <xsl:apply-templates select="$fixtureWithMetaData/f:*/f:*" mode="generateAsserts">
+                    <xsl:with-param name="operationType" select="$operationType" tunnel="yes"/>
                     <xsl:with-param name="resourceType" select="$resourceType" tunnel="yes"/>
                     <xsl:with-param name="resourceIdExpression" select="$resourceIdExpression" tunnel="yes"/>
                     <xsl:with-param name="parentLabel" select="$resourceCount"/>
@@ -243,6 +278,7 @@
     </xsl:template>
     
     <xsl:template match="f:*" mode="generateAsserts">
+        <xsl:param name="operationType" tunnel="yes"/>
         <xsl:param name="resourceType" tunnel="yes"/>
         <xsl:param name="scenario" tunnel="yes"/>
         <xsl:param name="resourceIdExpression" tunnel="yes"/>
@@ -252,7 +288,16 @@
         <xsl:variable name="parentFhirPath" select="parent::*/@nts:fhirPath"/>
         <xsl:variable name="fhirPath" select="@nts:fhirPath"/>
         
-        <xsl:variable name="expressionBase" select="concat('Bundle.entry.resource.ofType(', $resourceType, ')',$resourceIdExpression)"/>
+        <xsl:variable name="expressionBase">
+            <xsl:choose>
+                <xsl:when test="$operationType = 'read'">
+                    <xsl:value-of select="concat($resourceType, $resourceIdExpression)"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:value-of select="concat('Bundle.entry.resource.ofType(', $resourceType, ')',$resourceIdExpression)"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
         
         <xsl:variable name="dataType" select="@nts:dataType"/>
         
@@ -272,9 +317,6 @@
         
         <!--<xsl:message>===</xsl:message>
         <xsl:message select="$label"/>-->
-        
-        <!-- This list of dataTypes is kind of arbitrary. I guess you can say that types like Reference or Quantity are somewhat compact (like max. 4 or 5 children?) that convey meaning _together_. The dataTypes below are more like bundles of elements that contain multiple individual pieces of information -->
-        <xsl:variable name="containerTypes" select="('Address','BackboneElement','Element','ContactPoint','Dosage','HumanName','Timing')"/>
         
         <xsl:variable name="description">
             <xsl:call-template name="createDescription">
@@ -720,13 +762,14 @@
                     <xsl:text> </xsl:text>
                 </xsl:when>
                 <xsl:when test="$dataType = 'string'">
-                    <!-- '~' (equivalence) ignores case and whitespace. replace('.', '') removes dot and comma (or other characters - hyphens perhaps?). Or should we be allowed to define overrides in our NTS-script? -->
+                    <!--<!-\- '~' (equivalence) ignores case and whitespace. replace('.', '') removes dot and comma (or other characters - hyphens perhaps?). Or should we be allowed to define overrides in our NTS-script? -\->
                     <xsl:if test="$includeThis = true()">
                         <xsl:text>$this</xsl:text>
                     </xsl:if>
-                    <!-- Please be aware that for regex reasons, the hyphen should be either first or last in this string -->
+                    <!-\- Please be aware that for regex reasons, the hyphen should be either first or last in this string -\->
                     <xsl:variable name="replaceChars" select="'[ .,_-]+'"/>
-                    <xsl:value-of select="concat('.replaceMatches(''', $replaceChars, ''', '' '') ~ ''', replace(@value, $replaceChars, ' '), '''')"/>
+                    <xsl:value-of select="concat('.replaceMatches(''', $replaceChars, ''', '' '') ~ ''', replace(@value, $replaceChars, ' '), '''')"/>-->
+                    <xsl:text> </xsl:text>
                 </xsl:when>
                 <xsl:when test="$dataType = ('dateTime','date','instant')">
                     <!-- For now we only check if date or dateTime exist -->
@@ -806,6 +849,7 @@
         <!-- If true, the resource type is the focus of the description -->
         <xsl:param name="resourceTypeFocus" select="false()"/>
         <xsl:param name="skipExtensions" select="false()"/>
+        <xsl:param name="topLevel" select="true()"/>
         
         <xsl:variable name="parentDescriptionPath" select="parent::f:*/@nts:descriptionPath"/>
         <xsl:variable name="descriptionPath" select="@nts:descriptionPath"/>
@@ -857,7 +901,9 @@
                             </xsl:if>
                             <xsl:text>with </xsl:text>
                             <xsl:for-each select="*">
-                                <xsl:call-template name="createDescription"/>
+                                <xsl:call-template name="createDescription">
+                                    <xsl:with-param name="topLevel" select="false()"/>
+                                </xsl:call-template>
                                 <xsl:if test="not(position() = last())">
                                     <xsl:text> and </xsl:text>
                                 </xsl:if>
@@ -870,7 +916,9 @@
                             <xsl:text>with </xsl:text>
                             <xsl:for-each select="*[self::f:contentType or self::f:language]">
                                 <xsl:variable name="description">
-                                    <xsl:call-template name="createDescription"/>
+                                    <xsl:call-template name="createDescription">
+                                        <xsl:with-param name="topLevel" select="false()"/>
+                                    </xsl:call-template>
                                 </xsl:variable>
                                 <xsl:if test="fn:string-length($description) gt 0">
                                     <xsl:value-of select="$description"/>
@@ -890,7 +938,9 @@
                             </xsl:if>
                             <xsl:for-each select="*[not(self::f:contentType) and not(self::f:language) and not(self::f:data) and not(self::f:url)]">
                                 <xsl:variable name="description">
-                                    <xsl:call-template name="createDescription"/>
+                                    <xsl:call-template name="createDescription">
+                                        <xsl:with-param name="topLevel" select="false()"/>
+                                    </xsl:call-template>
                                 </xsl:variable>
                                 <xsl:if test="fn:string-length($description) gt 0">
                                     <xsl:value-of select="$description"/>
@@ -929,7 +979,9 @@
                             <xsl:if test="$skipExtensions = false()">
                                 <xsl:for-each select="f:extension|f:modifierExtension">
                                     <xsl:variable name="description">
-                                        <xsl:call-template name="createDescription"/>
+                                        <xsl:call-template name="createDescription">
+                                            <xsl:with-param name="topLevel" select="false()"/>
+                                        </xsl:call-template>
                                     </xsl:variable>
                                     <xsl:if test="fn:string-length($description) gt 0">
                                         <xsl:value-of select="$description"/>
@@ -941,12 +993,17 @@
                             </xsl:if>
                             <xsl:for-each select="*[not(self::f:extension) and not(self::f:modifierExtension)]">
                                 <xsl:variable name="description">
-                                    <xsl:call-template name="createDescription"/>
+                                    <xsl:call-template name="createDescription">
+                                        <xsl:with-param name="topLevel" select="false()"/>
+                                    </xsl:call-template>
                                 </xsl:variable>
                                 <xsl:if test="fn:string-length($description) gt 0">
                                     <xsl:value-of select="$description"/>
                                 </xsl:if>
                                 <xsl:if test="not(position() = last())">
+                                    <xsl:if test="$topLevel = true() and $dataType = $containerTypes">
+                                        <xsl:text>,</xsl:text>
+                                    </xsl:if>
                                     <xsl:text> and </xsl:text>
                                 </xsl:if>
                             </xsl:for-each>
@@ -983,11 +1040,11 @@
                 <!-- In Attachment, there is hardly anything that we can reliably check for more than existance, so we do nothing here. -->
                 <xsl:text> </xsl:text>
             </xsl:when>
-            <xsl:when test="$dataType = ('dateTime','date','instant') or ($dataType = 'string' and $parentDataType = ('Coding','Quantity'))">
+            <xsl:when test="$dataType = ('dateTime','date','instant','string')(: or ($dataType = 'string' and $parentDataType = ('Coding','Quantity')):)">
                 <!-- Nothing to be added, as we only check existance -->
                 <xsl:text> </xsl:text>
             </xsl:when>
-            <xsl:when test="$dataType = ('boolean','decimal','integer','string') or ($dataType = ('uri','canonical') and $parentDataType = ('Coding','Meta','Quantity'))">
+            <xsl:when test="$dataType = ('boolean','decimal','integer'(:,'string':)) or ($dataType = ('uri','canonical') and $parentDataType = ('Coding','Meta','Quantity'))">
                 <!-- For uri's in Coding and Quantity (.system) or Meta (.profile, uri is canonical in R4), we want an exact match. I can imagine that in some situations we want to only check for existance. -->
                 <xsl:value-of select="concat('''', @value, '''')"/>
             </xsl:when>
@@ -1026,7 +1083,9 @@
         <xsl:if test="f:extension">
             <xsl:text>with </xsl:text>
             <xsl:for-each select="f:extension">
-                <xsl:call-template name="createDescription"/>
+                <xsl:call-template name="createDescription">
+                    <xsl:with-param name="topLevel" select="false()"/>
+                </xsl:call-template>
                 <xsl:if test="position() = last()">
                     <xsl:text>,</xsl:text>
                 </xsl:if>
@@ -1037,7 +1096,7 @@
     
     <xsl:template match="nts:contentAsserts" mode="modifyNts"/>
     
-    <xsl:template match="nts:include[@value = ('test.server.successfulSearch','medmij/test.xis.successfulSearch')]" mode="modifyNts">
+    <xsl:template match="nts:include[@value = ('test.server.successfulSearch','medmij/test.xis.successfulSearch','medmij/test.xis.successfulRead')]" mode="modifyNts">
         <xsl:param name="scenario" tunnel="yes"/>
         <xsl:param name="requestResponseId" tunnel="yes"/>
         <xsl:copy>

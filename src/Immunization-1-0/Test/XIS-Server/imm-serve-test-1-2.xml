@@ -11,19 +11,34 @@
         <name value="Test scenario 1.2 - Serve vaccinations"/>
         <description value="Serve Immunization resource including the patient and performer"/>
         <nts:include value="medmij/test.xis.successfulSearch" scope="common" resource="Immunization" params="?_include=Immunization:patient&#38;_include=Immunization:performer&#38;_include=Immunization:location" responseId="immunization-search-response"/>
-        <nts:include value="assert.response.numResources" scope="common" resource="Immunization" count="3"/>
-        <nts:include value="assert.response.numResources" scope="common" resource="Medication" count="3" nts:in-targets="#default"/>
+        
         <nts:include value="assert.response.numResources" scope="common" resource="Patient" count="1"/>
         <nts:include value="assert.response.numResources" scope="common" resource="Organization" count="2"/>
         <nts:include value="assert.response.numResources" scope="common" resource="Location" count="3"/>
 
-        <!-- Immunization -->
-        <nts:include value="assert.numIdentifier" direction="response" resource="Immunization" count="3"/>
-        <nts:include value="assert.numMedicationReference" direction="response" resource="Immunization" count="3"/>
-
         <!-- Patient -->
         <nts:include value="assert.birthdate" direction="response" resource="Patient" date="1965-02-02"/>
-
+        
+        <nts:contentAsserts href="resources/imm-Immunization-03-01.xml" 
+            description="contains doseQuantity.value = '0.5' and has an .occurenceDateTime earlier than the other Immunization resource with this dose"
+            expression="iif(Bundle.entry.resource.ofType(Immunization).where(dose.ofType(Quantity).value = 0.5)[0].occurence &lt; Bundle.entry.resource.ofType(Immunization).where(dose.ofType(Quantity).value = 0.5)[1].occurence, Bundle.entry.resource.ofType(Immunization).where(dose.ofType(Quantity).value = 0.5)[0], Bundle.entry.resource.ofType(Immunization).where(dose.ofType(Quantity).value = 0.5)[1])" 
+            bundleExpression="true"/>
+        <nts:contentAsserts href="resources/imm-PharmaceuticalProduct-03-01.xml" nts:in-targets="#default" 
+            description="contains batch.lotNumber = '3002184'" 
+            expression=".where(batch.lotNumber = '3002184')"/>
+        <nts:contentAsserts href="resources/imm-Immunization-03-02.xml" 
+            description="contains doseQuantity.value = '0.5' and has an .occuranceDateTime later than the other Immunization resource with this dose"
+            expression="iif(Bundle.entry.resource.ofType(Immunization).where(dose.ofType(Quantity).value = 0.25)[0].occurence &lt; Bundle.entry.resource.ofType(Immunization).where(dose.ofType(Quantity).value = 0.5)[1].occurence, Bundle.entry.resource.ofType(Immunization).where(dose.ofType(Quantity).value = 0.5)[1], Bundle.entry.resource.ofType(Immunization).where(dose.ofType(Quantity).value = 0.5)[0])"
+            bundleExpression="true"/>
+        <nts:contentAsserts href="resources/imm-PharmaceuticalProduct-03-02.xml" nts:in-targets="#default" 
+            description="contains batch.lotNumber = '3003186'" 
+            expression=".where(batch.lotNumber = '3003186')"/>
+        <nts:contentAsserts href="resources/imm-Immunization-03-03.xml" 
+            description="contains doseQuantity.value = '0.25'" 
+            expression=".where(dose.ofType(Quantity).value = 0.25)"/>
+        <nts:contentAsserts href="resources/imm-PharmaceuticalProduct-03-03.xml" nts:in-targets="#default" 
+            description="contains code.coding.code = '2978636'" 
+            expression=".where(code.where(coding.where(code = '2978636')))"/>
     </test>
     <!-- Test Medication resource 1 -->
     <test nts:in-targets="GetMedication">
@@ -31,6 +46,8 @@
         <name value="Scenario 1.2 - Read Medication resource 1"/>
         <description value="Serve PharmaceuticalProduct via an HTTP get."/>
         <nts:include value="medmij/test.xis.successfulRead" resource="Medication" url="${pharmaceuticalProduct-url-1}" scope="common"/>
+        
+        <nts:contentAsserts href="resources/imm-PharmaceuticalProduct-03-01.xml"/>
     </test>
     
     <!-- Test Medication resource 2 -->
@@ -39,6 +56,8 @@
         <name value="Scenario 1.2 - Read Medication resource 2"/>
         <description value="Serve PharmaceuticalProduct via an HTTP get."/>
         <nts:include value="medmij/test.xis.successfulRead" resource="Medication" url="${pharmaceuticalProduct-url-2}" scope="common"/>
+        
+        <nts:contentAsserts href="resources/imm-PharmaceuticalProduct-03-02.xml"/>
     </test>
     
     <!-- Test Medication resource 3 -->
@@ -47,5 +66,7 @@
         <name value="Scenario 1.2 - Read Medication resource 3"/>
         <description value="Serve PharmaceuticalProduct via an HTTP get."/>
         <nts:include value="medmij/test.xis.successfulRead" resource="Medication" url="${pharmaceuticalProduct-url-3}" scope="common"/>
+        
+        <nts:contentAsserts href="resources/imm-PharmaceuticalProduct-03-03.xml"/>
     </test>
 </TestScript>
