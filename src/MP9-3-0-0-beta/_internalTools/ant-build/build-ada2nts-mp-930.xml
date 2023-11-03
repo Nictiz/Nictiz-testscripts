@@ -91,15 +91,26 @@
             <param name="input.dir" value="${xsl.input.mg.abs}"/>
         </antcall>
 
-        <!-- Scenarioset 0, both Retrieve and Serve -->
-        <!-- Hard coded delete - can we do better? -->
-        <property name="xsl.output.dummy" value="${build.dir}/xslt/dummy.xml"/>
-        <xslt force="true" style="${build.dir}/xslt/ada_2_nts-medicationdata-pull-set0.xsl" in="${build.dir}/xslt/set0-config.xml" out="${xsl.output.dummy}" useImplicitFileset="false">
-            <factory name="${xsl.saxon.class}"/>
-            <classpath location="${xsl.saxon}"/>
-            <param name="outputDir" expression="${xsl.output.mg.abs}"/>
-        </xslt>
-        <delete file="${xsl.output.dummy}"/>
+        <!-- Scenarioset 0 -->
+        <property name="xsl.input.mg.filter" value="${github.mp93.dir.local}${test.dir.lowercase}/${usecase.mg.input}/ada_instance_filter"/>
+        <property name="xsl.input.mg.filter.abs" location="${xsl.input.mg.filter}"/>
+        
+        <!-- Retrieve -->
+        <antcall target="convert_ada_2_nts_medicationdata-pull_sub">
+            <param name="xsl.out" value="${xsl.output.dummy}"/>
+            <param name="transaction.type" value="Retrieve"/>
+            <param name="output.dir" value="${xsl.output.mg.abs}"/>
+            <param name="input.dir" value="${xsl.input.mg.filter.abs}"/>
+        </antcall>
+       
+        <!-- Serve -->
+        <antcall target="convert_ada_2_nts_medicationdata-pull_sub">
+            <param name="xsl.out" value="${xsl.output.dummy}"/>
+            <param name="transaction.type" value="Serve"/>
+            <param name="output.dir" value="${xsl.output.mg.abs}"/>
+            <param name="input.dir" value="${xsl.input.mg.filter.abs}"/>
+        </antcall>
+      
     </target>
 
     <!-- Goal is to include file 'ada_2_nts-medicationdata-pull.xsl' in 'ada_2_nts.xsl' to be able to deprecate this target. -->
@@ -368,6 +379,7 @@
     </target>
 
     <target name="copy_fixtures">
+        
         <!-- param test.dir -->
         <echo>Copying Fixtures for ${test.dir}</echo>
         <mkdir dir="${build.dir}/../${test.dir}/_reference/fixtures"/>
