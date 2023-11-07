@@ -1,0 +1,481 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Common ANT build script for Nictiz NTS projects.
+    
+    # Use of this build script
+    
+    The normal use of this build script is to import it from another ANT build script.
+    
+    # Parameters
+    
+    To run it, the following parameters are expected:
+    - input.dir               : The folder where the input files reside. See below for an explanation on folder structures.
+                                NOTE: This parameter MUST be set before build.properties is read, so it should be set it in
+                                      a derived build script, passed on the command line or the property files should be 
+                                      explicitly loaded using ANT's -propertyfile flag.
+    - output.dir              : The folder where the output should be placed. See below for an explanation on folder structures.
+    - commoncomonents.dir     : The directory containing the common components.
+    - lib.dir                 : The directory where all build dependency's will be placed. It's a good idea to add this to
+                                .gitignore.
+    - [components.dir]        : Optional - the directory containing the project components, relative to input.dir. Defaults to '_components'.
+    - [tokens.json]           : Optional - the relative path to a JSON file linking Patient resource id's to authorization tokens. This is a feature specifically for the mocked authorization mechanism on Touchstone.
+    - [loadresources.exclude] : Optional - A relative path to a folder containing the fixtures or to specific filenames to be excluded from 
+                                the LoadResources script. Multiple entries can be comma separated. `*` is accepted as a wildcard.
+    - [processfixtures.skip]  : Optional - If 'true' (or any other non-empty value) processing fixtures is skipped.
+    - [reference.subdir]      : Optional - The _name_ (not the path!) of the folder containing fixtures. Defaults to '_reference'.
+    - [targets]               : Optional - All targets to be built, including the 'default'-target. Defaults to '#default,[targets.additional]'. 
+    - [targets.additional]    : Optional - The additional targets to be built.
+
+    Additionally, the following optional parameters may be used:
+    - outputLevel: the verbosity level of the script output  
+
+    # Project dirs
+    
+    Projects should be organized using the following folder structure: 
+        ProjectDir/
+            build.properties: properties  
+            InputFolder1/   : folder containing NTS files (may contain nested folders with more NTS files)
+            InputFolder2/   : folder containing NTS files (may contain nested folders with more NTS files)
+            _components/    : the components specific for that project - may be overridden using the components.dir parameter
+            _reference/     : the fixtures for that project
+    The input folder structure will be recreated in the output directory, together with the _reference folder.
+
+    # build.properties
+    
+    It is possible to define the properties for a project in a build.properties file. This should be placed at the root
+    of the project dir.
+
+-->
+
+<project xmlns:ivy="antlib:org.apache.ivy.ant" basedir="." name="buildNTSProject" default="build">
+    <!-- Make the directories passed as parameters absolute (except for output.dir.abs, because we first need to
+         guarantee that this folder exists. This is done in check-input. -->
+    <property name="input.dir.abs"            location="${input.dir}"/>
+    <property name="components.dir"           location="${input.dir}/_components"/>
+    <property name="components.dir.abs"       location="${components.dir}"/>
+    <property name="commoncomponents.dir.abs" location="${commoncomponents.dir}"/>
+    <property name="reference.subdir"         value="_reference"/>
+    
+    <!-- Construct a file URL to the tokens JSON file. -->
+    <pathconvert property="tokens.json.url" targetos="unix">
+        <path location="${tokens.json}"/>
+        <mapper type="regexp" from="(.*)" to="file:/\1"/>
+    </pathconvert>
+    
+    <!-- Try to read all project property's defined in build.properties -->
+    <property file="${input.dir.abs}/build.properties"/>
+    
+    <!-- Set testscripttools.dir if it is not supplied by the including build file. -->
+    <dirname property="testscripttools.dir" file="${ant.file.buildNTSProject}/.."/>
+    
+    <property name="ivy.install.version" value="2.5.0-rc1" />
+    <property name="ivy.jar.file" value="${ant.library.dir}/ivy.jar" />
+    <property name="ivy.dep.file" value="${testscripttools.dir}/ant/ivy.xml" />
+    
+    <property name="xslt.dir" value="${testscripttools.dir}/xslt" />
+    <property name="dependency.dir" value="${lib.dir}/ant-dependencies"/>
+    <property name="ivy.local.jar.file" value="${dependency.dir}/ivy.jar" />
+    
+    <property name="version.addition" value=""/>
+    
+    <property name="targets.additional" value=""/> <!-- By default, we don't build additional targets -->
+    <property name="targets" value="#default,${targets.additional}"/>
+    
+    <!-- Set the verbosity level of the output.
+         0 = error
+         1 = warn
+         2 = info
+         3 = verbose
+         4 = debug -->
+    <property name="outputLevel" value="1" />
+    <!-- Can we do this smarter? Using ${groovy.jar} is not available until after Ivy has ran -->
+    <property name="groovy.jar.file" location="${dependency.dir}/jar/groovy-4.0.9.jar" />
+    <property name="groovy-ant.jar.file" location="${dependency.dir}/jar/groovy-ant-4.0.9.jar" />
+    
+    <!-- LOGGING -->
+    <target name="check-groovy">
+        <!-- We need Groovy, and we need Ivy to get that, but we also need this script to suppress Ivy output. 
+        So this part does not work the first time you run the script. After that, Groovy is available and the setting works, after outputting some Ant task names-->
+        <condition property="groovy.exists">
+            <and>
+                <available file="${groovy.jar.file}" type="file"/>
+                <available file="${groovy-ant.jar.file}" type="file"/>
+            </and>
+        </condition>
+    </target>
+    
+    <target name="set-logging" depends="check-groovy" if="groovy.exists">
+        <taskdef name="groovy" classname="org.codehaus.groovy.ant.Groovy">
+            <classpath>
+                <pathelement location="${groovy.jar.file}"/>
+                <pathelement location="${groovy-ant.jar.file}"/>
+            </classpath>
+        </taskdef>
+        <groovy>
+            <arg value="${outputLevel}"/>
+            int outputLevel = args[0] as int
+            project.getBuildListeners()[0].setMessageOutputLevel(outputLevel)
+        </groovy>
+    </target>
+    
+    <!-- IVY -->
+    
+    <target name="check-ivy">
+        <condition property="ivy.exists">
+            <or>
+                <available file="${ivy.jar.file}" type="file"/>
+                <available file="${ivy.local.jar.file}" type="file"/>
+            </or>
+        </condition>
+        <mkdir dir="${dependency.dir}"/>
+    </target>
+    
+    <target name="download-ivy" depends="check-ivy" unless="ivy.exists">
+        <echo message="Installing Ivy"/>
+        <get src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
+            dest="${ivy.local.jar.file}" usetimestamp="true"/>
+    </target>
+    
+    <target name="install-ivy" depends="download-ivy" unless="ivy.exists, ivy.loaded">
+        <path id="ivy.lib.path">
+            <fileset dir="${dependency.dir}" includes="*.jar"/>
+        </path>
+        <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+        <property name="ivy.loaded" value="true" />
+    </target>
+    
+    <!-- SAXON, ANT-CONTRIB -->
+    
+    <target name="retrieve" depends="check-ivy, install-ivy">
+        <ivy:retrieve pattern="${dependency.dir}/[type]/[artifact]-[revision].[ext]"/>
+        <ivy:artifactproperty name="[module].[artifact]" value="${dependency.dir}/[type]/[artifact]-[revision].[ext]" />
+        <ivy:artifactproperty name="[artifact].[type]" value="${dependency.dir}/[type]/[artifact]-[revision].[ext]" />
+    </target>
+    
+    <target name="load" depends="retrieve" unless="ant.contrib.loaded">
+        <taskdef resource="net/sf/antcontrib/antlib.xml">
+            <classpath>
+                <pathelement location="${ant-contrib.ant-contrib}" />
+            </classpath>
+        </taskdef>
+        <property name="ant.contrib.loaded" value="true" />
+        
+        <!-- If Groovy didn't exist before, it does now after Ivy, so now we can set the logging correctly even if it's the first time running -->
+        <if>
+            <not>
+                <isset property="groovy.exists"/>
+            </not>
+            <then>
+                <sequential>
+                    <!-- We can only set taskdef and groovy task after we are sure the jar exists, so unfortunately we have to repeat this. Cannot place it in a macrodef -->
+                    <taskdef name="groovy" classname="org.codehaus.groovy.ant.Groovy">
+                        <classpath>
+                            <pathelement location="${groovy.jar.file}"/>
+                            <pathelement location="${groovy-ant.jar.file}"/>
+                        </classpath>
+                    </taskdef>
+                    <groovy>
+                        <arg value="${outputLevel}"/>
+                        int outputLevel = args[0] as int
+                        project.getBuildListeners()[0].setMessageOutputLevel(outputLevel)
+                    </groovy>
+                </sequential>
+            </then>
+        </if>
+    </target>
+    
+    <!-- BUILD XML -->
+    
+    <target name="check-input">
+        <sequential>
+            <if>
+                <not>
+                    <and>
+                        <isset property="input.dir"/>
+                        <available file="${input.dir.abs}" type="dir"/>
+                    </and>
+                </not>
+                <then>
+                    <fail message="Please set 'input.dir' to a directory containing the project files."/>
+                </then>
+            </if>
+            
+            <if>
+                <not>
+                    <isset property="output.dir"/>
+                </not>
+                <then>
+                    <fail message="Please set 'output.dir' to the directory where the output should be placed."/>
+                </then>
+            </if>
+            <!-- In order to construct output.dir.abs, the directory needs to exist, so we create it here and
+                 then set output.dir.abs -->
+            <mkdir dir="${output.dir}"/>
+            <property name="output.dir.abs" location="${output.dir}"/>
+            
+            <if>
+                <not>
+                    <and>
+                        <isset property="commoncomponents.dir"/>
+                        <available file="${commoncomponents.dir.abs}" type="dir"/>
+                    </and>
+                </not>
+                <then>
+                    <fail message="Please set 'commoncomponents.dir' to the directory that holds the folder with common components."/>
+                </then>
+            </if>
+            
+            <if>
+                <not>
+                    <and>
+                        <isset property="lib.dir"/>
+                    </and>
+                </not>
+                <then>
+                    <fail message="Please set 'lib.dir' to a place where build dependency's may be stored."/>
+                </then>
+            </if>
+            
+        </sequential>
+    </target>
+    
+    <macrodef name="saxon-transform" description="Custom task to run an XSLT transformation using Saxon (HE)">
+        <attribute name="style" description="The path to the stylesheet to use for the transformation"/>
+        <attribute name="in" description="The path to the input file" default="@{style}"/>
+        <attribute name="out" description="The path to the output file"/>
+        <element name="parameters" optional="yes" description="Optionally, a group of 'param' elements as understood by the XSLT task"/>
+
+        <sequential>
+            <xslt force="true" style="@{style}" in="@{in}" out="@{out}">
+                <factory name="net.sf.saxon.TransformerFactoryImpl">
+                    <attribute name="http://saxon.sf.net/feature/recoveryPolicy" value="2"/>
+                </factory>
+                <classpath location="${Saxon-HE.jar}"/>
+                <parameters/>
+            </xslt>
+        </sequential>
+    </macrodef>
+    
+    <macrodef name="transform-NTS-folder" description="Custom task to perform the transformation of a folder with NTS files">
+        <attribute name="references.file" description="The (temporary) text file to collect the list of fixtures to. See the collect-fixtures macrodef for more information."/>
+        <attribute name="target.dir" default="#default" description="The name of the target to build; choose '#default' to build the default target."/>
+        
+        <sequential>
+            <propertyregex property="components.dir.abs.normalized" input="${components.dir.abs}" regexp="[\\]" replace="/" global="true" defaultValue="${components.dir.abs}"/>
+            <propertyregex property="commoncomponents.dir.abs.normalized" input="${commoncomponents.dir.abs}" regexp="[\\]" replace="/" global="true" defaultValue="${commoncomponents.dir.abs}"/>
+            
+            <java classname="net.sf.saxon.Transform" classpath="${Saxon-HE.jar}" logError="true">
+                <classpath location="${Saxon-HE.jar}"/>
+                <arg value="-it:initialTemplate" />
+                <arg value="-xsl:${xslt.dir}/generateTestScript.xsl" />
+                <arg value="inputDir=${input.dir.temp.abs}"/>
+                <arg value="outputDir=${output.dir.abs}"/>
+                <arg value="referenceDir=${reference.dir}"/>
+                <arg value="commonComponentFolder=${commoncomponents.dir.abs.normalized}"/>
+                <arg value="projectComponentFolder=${components.dir.abs.normalized}"/>
+                <arg value="target.dir=@{target.dir}"/>
+                <arg value="versionAddition=${version.addition}"/>
+                <arg value="tokensJsonFile=${tokens.json.url}"/>
+                <arg value="referencesFile=@{references.file}"/> 
+            </java>
+        </sequential>
+    </macrodef>
+    
+    <macrodef name="collect-references" description="Analyze a FHIR TestScript for the fixtures and rules used, and store them in a file.">
+        <attribute name="references.file" description="The file to store the list of references fixtures and rules to, formatted as an Ant property file with the property's 'fixtures' and 'rules', each containing a list of files separated by a semicolon. If there are already fixtures/rules listed in this file, the new ones are appended."/>
+        
+        <sequential>
+            <java classname="net.sf.saxon.Transform" classpath="${Saxon-HE.jar}" logError="true">
+                <classpath location="${Saxon-HE.jar}"/>
+                <arg value="-it:initialTemplate" />
+                <arg value="-xsl:${xslt.dir}/collectReferences.xsl" />
+                <arg value="outputDir=${output.dir.abs}"/>
+                <arg value="referencesFile=@{references.file}"/>
+                <arg value="includesDir=../${reference.subdir}/"/>
+            </java>
+        </sequential>
+    </macrodef>
+    
+    <macrodef name="process-references" description="Process the fixtures and rules in the _references folder and copy the result to the destination folder. Processing means that the nts:includeFixture tag will be resolved to the referenced file, that a check is done for the existence of fixtures and rules which are referenced from the TestScript, and that rules from the global scope will be included in the output.">
+        <attribute name="references.file" description="A property file with the fixtures and rules. See the documentation on collect-references for more info."/>
+        
+        <sequential>
+            <!-- Load the list of fixtures and rules that are referenced in the FHIR TestScripts -->
+            <local name="fixtures"/>
+            <local name="rules"/>
+            <property file="@{references.file}"/>
+            
+            <!-- Check if all declared fixtures exist or, when it is a JSON fixture, an XML equivalent exists. -->
+            <for param="fixture" list="${fixtures}" delimiter=";">
+                <sequential>
+                    <local name="fixture.asxml"/>
+                    <propertyregex property="fixture.asxml" input="@{fixture}" regexp="\.json" replace=".xml" defaultValue="@{fixture}"/>
+                    <if>
+                        <not>
+                            <available file="${input.dir.abs}/${reference.subdir}/@{fixture}"/>
+                        </not>
+                        <then>
+                            <if>
+                                <and>
+                                    <available file="${input.dir.abs}/${reference.subdir}/${fixture.asxml}"/>
+                                    <isset property="convert.to.json.file"/>
+                                </and>
+                                <then>
+                                    <echo message="@{fixture} will need to be generated from its XML counterpart."/>
+                                    <echo message="${output.dir.abs}/${reference.subdir}/${fixture.asxml} " file="${convert.to.json.file}" append="true"/>
+                                </then>
+                                <else>
+                                    <fail message="Fixture '@{fixture}' is referenced but doesn't exist"/>
+                                </else>
+                            </if>
+                        </then>
+                    </if>
+                </sequential>
+            </for>
+            
+            <!-- Copy over the _reference dir with fixtures and rules -->
+            <copy todir="${output.dir.abs}/${reference.subdir}">
+                <fileset dir="${reference.dir}"/>
+            </copy>
+            
+            <if>
+                <not>
+                    <!-- Set this property to 'true' (or any other non-empty value) to skip processFixtures, for example when fixtures are generated themselves -->
+                    <isset property="processfixtures.skip"/>
+                </not>
+                <then>
+                    <sequential>
+                        <!-- Resolve all includes in _all_ (not only referenced) fixtures and (if applicable) rewrite .id, .fullUrl and References. This overwrites the fixture copied earlier -->
+                        <java classname="net.sf.saxon.Transform" classpath="${Saxon-HE.jar}" logError="true">
+                            <classpath location="${Saxon-HE.jar}"/>
+                            <arg value="-it:initialTemplate" />
+                            <arg value="-xsl:${xslt.dir}/processFixtures.xsl" />
+                            <arg value="inputDir=${input.dir.temp.abs}"/>
+                            <arg value="outputDir=${output.dir.abs}"/>
+                            <arg value="referenceSubDir=${reference.subdir}"/>
+                        </java>
+                    </sequential>
+                </then>
+            </if>
+            
+            <!-- Copy all rules from the global scope if they don't exist in the local scope, or fail if they don't
+                 exist there as well. -->
+            <for param="rule" list="${rules}" delimiter=";">
+                <sequential>
+                    <if>
+                        <not>
+                            <available file="${reference.dir}/@{rule}"/>
+                        </not>
+                        <then>
+                            <if>
+                                <available file="${commoncomponents.dir.abs}/_reference/@{rule}"/>
+                                <then>
+                                    <copy file="${commoncomponents.dir.abs}/_reference/@{rule}" tofile="${output.dir.abs}/${reference.subdir}/@{rule}"/>
+                                </then>
+                                <else>
+                                    <fail message="Rule '@{rule}' is referenced but doesn't exist in the local or global scope"/>
+                                </else>
+                            </if>
+                        </then>
+                    </if>
+                </sequential>
+            </for>
+        </sequential>
+    </macrodef>
+    
+    <macrodef name="generate-loadresources" description="Generate a LoadResources TestScript to load all fixtures to the WildFHIR server.">
+        <sequential>
+            <property name="loadresources.file" value="${output.dir.abs}/_LoadResources/load-resources-purgecreateupdate-xml.xml"/>
+            <dirname property="loadresources.file.dir" file="${loadresources.file}"/>
+            <property name="reference.dir.loadresourcesrelative" location="${output.dir.abs}/${reference.subdir}" relative="true" basedir="${loadresources.file.dir}"/>
+            <!-- Convert backslashes to forward slashes if needed -->
+            <propertyregex property="reference.dir.loadresourcesrelative.normalized" input="${reference.dir.loadresourcesrelative}" regexp="[\\]" replace="/" global="true" defaultValue="${reference.dir.loadresourcesrelative}"/>
+            
+            <saxon-transform style="${xslt.dir}/generateLoadResources.xsl" out="${loadresources.file}">
+                <parameters>
+                    <param name="referenceBase" expression="${reference.dir.loadresourcesrelative.normalized}"/>
+                    <param name="referenceDir" expression="${input.dir.abs}/${reference.subdir}/"/>
+                    <param name="loadResourcesExclude" expression="${loadresources.exclude}"/>
+                    <param name="tokensJsonFile" expression="${tokens.json.url}"/>
+                </parameters>
+            </saxon-transform>
+            
+            <!-- Check if output is empty. If yes, delete -->
+            <if>
+                <length file="${loadresources.file}" when="equal" length="0" />
+                <then>
+                    <delete dir="${loadresources.file.dir}"/>
+                </then>
+            </if>
+        </sequential>
+    </macrodef>
+    
+    <target name="cleanBuildDir">
+        <sequential>
+            <echo message="Deleting previous output dir"/>
+            <delete dir="${output.dir.abs}"/>
+        </sequential>
+    </target>
+    
+    <target name="build" depends="set-logging, load, check-input, cleanBuildDir">        
+        <property name="reference.dir" location="${input.dir.temp.abs}/${reference.subdir}"/>
+        
+        <!-- Set default loadresources.exclude to nothing -->
+        <property name="loadresources.exclude" value=""/>
+        
+        <!-- Collect the XML files to transform -->
+        <fileset id="nts.files" dir="${input.dir.temp.abs}">
+            <include name="*/**/*.xml"/>
+            <exclude name="**/_*/"/><!-- Exclude every dir that starts with '_' -->
+        </fileset>
+        
+        <!-- Create a temporary file to collect all the used fixtures -->
+        <tempfile property="references.file" suffix=".txt" createfile="true" deleteonexit="true"/>
+        
+        <!-- Check if there are files in the fileset. -->
+        <condition property="nts.files.available">
+            <resourcecount count="0" when="gt">
+                <fileset refid="nts.files"/>
+            </resourcecount>
+        </condition>
+        
+        <!-- Fail if no input files are found - otherwise the build just fails at process-references without any warning -->
+        <if>
+            <equals arg1="${nts.files.available}" arg2="true"/>
+            <then>
+                <sequential>
+                    <echo message="Transforming NTS files"/>
+                    
+                    <!-- Iteratate over all targets that are defined as build parameter (targets.additional) plus the 
+                         default target ('#default') -->
+                    <for list="${targets}" delimiter="," param="target.dir">
+                        <sequential>
+                            <if>
+                                <equals arg1="@{target.dir}" arg2="#default"/>
+                                <then>
+                                    <echo>- default target</echo>
+                                </then>
+                                <else>
+                                    <echo message="- @{target.dir}"/>
+                                </else>
+                            </if>
+                            
+                            <transform-NTS-folder
+                                target.dir="@{target.dir}"
+                                references.file="${references.file}"/>
+                            <collect-references references.file="${references.file}"/>
+                        </sequential>
+                    </for>
+                    
+                    <!-- Copy over all fixtures and rules -->
+                    <echo message="Processing fixtures and rules"/>
+                    <process-references references.file="${references.file}"/>
+                    <generate-loadresources/>
+                </sequential>
+            </then>
+            <else>
+                <fail message="No input files found in ${input.dir.abs}."/>
+            </else>
+        </if>
+        
+    </target>
+</project>
