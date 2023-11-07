@@ -301,94 +301,42 @@
         
         <xsl:variable name="dataType" select="@nts:dataType"/>
         
-        <!-- Generate (part of) expression based on datatype -->
-        <xsl:variable name="expression">
-            <xsl:call-template name="createExpression">
-                <xsl:with-param name="focusFhirPath" select="$parentFhirPath"/>
-                <xsl:with-param name="skipExtensions" select="$skipExtensions"/>
-            </xsl:call-template>
-        </xsl:variable>
-        
-        <xsl:variable name="label">
-            <xsl:value-of select="$parentLabel"/>
-            <xsl:text>-</xsl:text>
-            <xsl:value-of select="(if ($skipExtensions = false()) then count(preceding-sibling::*[not(self::f:id)]) else count(f:extension|f:modifierExtension)) + (if (parent::*/@value) then 2 else 1)"/>
-        </xsl:variable>
-        
-        <!--<xsl:message>===</xsl:message>
-        <xsl:message select="$label"/>-->
-        
-        <xsl:variable name="description">
-            <xsl:call-template name="createDescription">
-                <xsl:with-param name="resourceTypeFocus" select="true()"/>
-                <xsl:with-param name="skipExtensions" select="$skipExtensions"/>
-            </xsl:call-template>
-            <!-- If there are two hyphens or more in label -->
-            <xsl:if test="string-length($label) - string-length(translate($label, '-', '')) ge 2">
-                <xsl:value-of select="concat('. This assert checks only one child. Assert ', $parentLabel, ' checks if all children are present in the same parent')"/>
-            </xsl:if>
-            <xsl:if test="($dataType = $containerTypes and count(*) gt 1) or ((f:extension or f:modifierExtension) and $skipExtensions = false())">
-                <xsl:value-of select="'. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails'"/>
-            </xsl:if>
-            <xsl:if test="$dataType = 'string'">
-                <xsl:value-of select="'. This assert is set to warning because string comparisons can have many possible caveats'"/>
-            </xsl:if>
-        </xsl:variable>
-        
-        <xsl:if test="string-length($expression) gt 0">
-            <xsl:call-template name="createAssert">
-                <xsl:with-param name="description" select="concat('Contains ', $description)"/>
-                <xsl:with-param name="expression">
-                    <xsl:choose>
-                        <xsl:when test="contains($parentFhirPath, '{$_EXPR}')">
-                            <xsl:value-of select="concat($expressionBase,substring-after(replace($parentFhirPath, '{$_EXPR}', normalize-space($expression), 'q'), $resourceType),'.exists()')"/>
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <xsl:value-of select="concat($expressionBase,substring-after($parentFhirPath, $resourceType), '.', $expression)"/>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </xsl:with-param>
-                <xsl:with-param name="label" select="$label"/>
-                <xsl:with-param name="warningOnly">
-                    <xsl:choose>
-                        <!-- Impossible to determine if code-specification is required without accessing ConceptMaps, so putting them all on warningOnly for now -->
-                        <xsl:when test="descendant-or-self::f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/code-specification'] and $skipExtensions = false()">
-                            <xsl:value-of select="true()"/>
-                        </xsl:when>
-                        <xsl:when test="$dataType = 'string'">
-                            <xsl:value-of select="true()"/>
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <xsl:value-of select="false()"/>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </xsl:with-param>
-            </xsl:call-template>
-        </xsl:if>
-        
-        <xsl:if test="$dataType = 'dateTime'">
-            <!-- Remomved everything here 2023-10-05 - because it just wasn't working properly. Compare some dates? Sure! But when T-dates, times and time zones are involved, there are too many caveats at the moment. -->
-        </xsl:if>
+        <xsl:if test="not($dataType = 'Narrative')">
+            <!-- Generate (part of) expression based on datatype -->
+            <xsl:variable name="expression">
+                <xsl:call-template name="createExpression">
+                    <xsl:with-param name="focusFhirPath" select="$parentFhirPath"/>
+                    <xsl:with-param name="skipExtensions" select="$skipExtensions"/>
+                </xsl:call-template>
+            </xsl:variable>
             
-        <xsl:if test="$dataType = 'Identifier'">
-            <!-- System should not contain Nictiz OID or 'example-xis' url -->
-        </xsl:if>
-        
-        <!-- For some elements, we want te create additional asserts -->        
-        <xsl:if test="$dataType = $containerTypes and count(*) gt 1 or ((f:extension or f:modifierExtension) and $skipExtensions = false())">
-            <xsl:if test="@value">
-                <xsl:variable name="expression">
-                    <xsl:call-template name="createExpression">
-                        <xsl:with-param name="focusFhirPath" select="$parentFhirPath"/>
-                        <xsl:with-param name="valueOnly" select="true()"/>
-                    </xsl:call-template>
-                </xsl:variable>
-                <xsl:variable name="description">
-                    <xsl:value-of select="substring-after(@nts:descriptionPath, $resourceType)"/>
-                    <xsl:text> </xsl:text>
-                    <xsl:call-template name="createDescriptionSimple"/>
-<xsl:value-of select="concat('. This assert checks only one child. Assert ', $label, ' checks if all children are present in the same parent')"/>
-                </xsl:variable>
+            <xsl:variable name="label">
+                <xsl:value-of select="$parentLabel"/>
+                <xsl:text>-</xsl:text>
+                <xsl:value-of select="(if ($skipExtensions = false()) then count(preceding-sibling::*[not(self::f:id)]) else count(f:extension|f:modifierExtension)) + (if (parent::*/@value) then 2 else 1) + (if (preceding-sibling::*/@nts:dataType = 'Narrative') then -1 else 0)"/>
+            </xsl:variable>
+            
+            <!--<xsl:message>===</xsl:message>
+        <xsl:message select="$label"/>-->
+            
+            <xsl:variable name="description">
+                <xsl:call-template name="createDescription">
+                    <xsl:with-param name="resourceTypeFocus" select="true()"/>
+                    <xsl:with-param name="skipExtensions" select="$skipExtensions"/>
+                </xsl:call-template>
+                <!-- If there are two hyphens or more in label -->
+                <xsl:if test="string-length($label) - string-length(translate($label, '-', '')) ge 2">
+                    <xsl:value-of select="concat('. This assert checks only one child. Assert ', $parentLabel, ' checks if all children are present in the same parent')"/>
+                </xsl:if>
+                <xsl:if test="($dataType = $containerTypes and count(*) gt 1) or ((f:extension or f:modifierExtension) and $skipExtensions = false())">
+                    <xsl:value-of select="'. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails'"/>
+                </xsl:if>
+                <xsl:if test="$dataType = 'string'">
+                    <xsl:value-of select="'. This assert only checks existence of a value, because string comparisons can have many possible caveats'"/>
+                </xsl:if>
+            </xsl:variable>
+            
+            <xsl:if test="string-length($expression) gt 0">
                 <xsl:call-template name="createAssert">
                     <xsl:with-param name="description" select="concat('Contains ', $description)"/>
                     <xsl:with-param name="expression">
@@ -401,30 +349,85 @@
                             </xsl:otherwise>
                         </xsl:choose>
                     </xsl:with-param>
-                    <xsl:with-param name="label" select="concat($label,'-1')"/>
+                    <xsl:with-param name="label" select="$label"/>
+                    <xsl:with-param name="warningOnly">
+                        <xsl:choose>
+                            <!-- Impossible to determine if code-specification is required without accessing ConceptMaps, so putting them all on warningOnly for now -->
+                            <xsl:when test="descendant-or-self::f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/code-specification'] and $skipExtensions = false()">
+                                <xsl:value-of select="true()"/>
+                            </xsl:when>
+                            <xsl:when test="$dataType = 'string'">
+                                <xsl:value-of select="true()"/>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:value-of select="false()"/>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:with-param>
                 </xsl:call-template>
             </xsl:if>
-            <xsl:if test="$skipExtensions = false() and ((not(@value) and count(f:*) gt 1) or @value and f:*)">
-                <xsl:apply-templates select="f:extension|f:modifierExtension" mode="#current">
-                    <xsl:with-param name="parentLabel" select="$label"/>
-                </xsl:apply-templates>
+            
+            <xsl:if test="$dataType = 'dateTime'">
+                <!-- Remomved everything here 2023-10-05 - because it just wasn't working properly. Compare some dates? Sure! But when T-dates, times and time zones are involved, there are too many caveats at the moment. -->
             </xsl:if>
-            <xsl:choose>
-                <xsl:when test="$dataType = $containerTypes">
-                    <xsl:apply-templates select="*[not(self::f:extension) and not(self::f:modifierExtension)]" mode="#current">
+            
+            <xsl:if test="$dataType = 'Identifier'">
+                <!-- System should not contain Nictiz OID or 'example-xis' url -->
+            </xsl:if>
+            
+            <!-- For some elements, we want te create additional asserts -->        
+            <xsl:if test="$dataType = $containerTypes and count(*) gt 1 or ((f:extension or f:modifierExtension) and $skipExtensions = false())">
+                <xsl:if test="@value">
+                    <xsl:variable name="expression">
+                        <xsl:call-template name="createExpression">
+                            <xsl:with-param name="focusFhirPath" select="$parentFhirPath"/>
+                            <xsl:with-param name="valueOnly" select="true()"/>
+                        </xsl:call-template>
+                    </xsl:variable>
+                    <xsl:variable name="description">
+                        <xsl:value-of select="substring-after(@nts:descriptionPath, $resourceType)"/>
+                        <xsl:text> </xsl:text>
+                        <xsl:call-template name="createDescriptionSimple"/>
+                        <xsl:value-of select="concat('. This assert checks only one child. Assert ', $label, ' checks if all children are present in the same parent')"/>
+                    </xsl:variable>
+                    <xsl:call-template name="createAssert">
+                        <xsl:with-param name="description" select="concat('Contains ', $description)"/>
+                        <xsl:with-param name="expression">
+                            <xsl:choose>
+                                <xsl:when test="contains($parentFhirPath, '{$_EXPR}')">
+                                    <xsl:value-of select="concat($expressionBase,substring-after(replace($parentFhirPath, '{$_EXPR}', normalize-space($expression), 'q'), $resourceType),'.exists()')"/>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:value-of select="concat($expressionBase,substring-after($parentFhirPath, $resourceType), '.', $expression)"/>
+                                </xsl:otherwise>
+                            </xsl:choose>
+                        </xsl:with-param>
+                        <xsl:with-param name="label" select="concat($label,'-1')"/>
+                    </xsl:call-template>
+                </xsl:if>
+                <xsl:if test="$skipExtensions = false() and ((not(@value) and count(f:*) gt 1) or @value and f:*)">
+                    <xsl:apply-templates select="f:extension|f:modifierExtension" mode="#current">
                         <xsl:with-param name="parentLabel" select="$label"/>
                     </xsl:apply-templates>
-                </xsl:when>
-                <xsl:when test="$skipExtensions = true()"/>
-                <xsl:when test="not(*[not(self::f:extension) and not(self::f:modifierExtension)])"/>
-                <xsl:otherwise>
-                    <xsl:apply-templates select="." mode="#current">
-                        <xsl:with-param name="parentLabel" select="$label"/>
-                        <xsl:with-param name="skipExtensions" select="true()"/>
-                    </xsl:apply-templates>
-                </xsl:otherwise>
-            </xsl:choose>
+                </xsl:if>
+                <xsl:choose>
+                    <xsl:when test="$dataType = $containerTypes">
+                        <xsl:apply-templates select="*[not(self::f:extension) and not(self::f:modifierExtension)]" mode="#current">
+                            <xsl:with-param name="parentLabel" select="$label"/>
+                        </xsl:apply-templates>
+                    </xsl:when>
+                    <xsl:when test="$skipExtensions = true()"/>
+                    <xsl:when test="not(*[not(self::f:extension) and not(self::f:modifierExtension)])"/>
+                    <xsl:otherwise>
+                        <xsl:apply-templates select="." mode="#current">
+                            <xsl:with-param name="parentLabel" select="$label"/>
+                            <xsl:with-param name="skipExtensions" select="true()"/>
+                        </xsl:apply-templates>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:if>
         </xsl:if>
+        
     </xsl:template>
     
     <xsl:template name="createAssert">
@@ -609,7 +612,7 @@
                                 <xsl:text>)</xsl:text>
                             </xsl:if>
                         </xsl:when>
-                        <xsl:when test="$dataType = 'Narrative' and f:status/@value = 'extensions'">
+                        <xsl:when test="$dataType = 'Narrative' and f:status/@value = ('extensions','generated')">
                             <!-- Narrative isn't always present in fixtures. If not present, it is generated at a later stage. We should find a way to always add this assert. -->
                             <xsl:text> </xsl:text>
                         </xsl:when>
@@ -670,6 +673,9 @@
                 <xsl:when test="contains($expressionPrefix, '{$_EXPR}')">
                     <xsl:variable name="regex">
                         <xsl:choose>
+                            <xsl:when test="string-length(fn:normalize-space($addition)) = 0 and contains($expressionPrefix, '.where({$_EXPR})')">
+                                <xsl:value-of select="'.where({$_EXPR})'"/>
+                            </xsl:when>
                             <xsl:when test="starts-with($addition, ' ') or starts-with($addition, '.') and contains($expressionPrefix, '.{$_EXPR}')">
                                 <xsl:value-of select="'.{$_EXPR}'"/>
                             </xsl:when>
@@ -728,12 +734,12 @@
         <xsl:message select="$addition"/>
         <!-\-<xsl:message select="$skipExtensions"/>
         <xsl:message select="$valueOnly"/>-\->
-        <xsl:message select="$topLevel"/>
+        <!-\-<xsl:message select="$topLevel"/>-\->
         <xsl:message select="$expression"/>-->
         
         <xsl:if test="string-length($addition) gt 0">
             <xsl:value-of select="$expression"/>
-            <xsl:if test="$topLevel = true() and not(matches($expression, ' (=|~) (true|false|''[^'']+''|[\d.]+)$')) and not(ends-with($expression, '.exists()'))">
+            <xsl:if test="$topLevel = true() and not(matches($expression, ' (=|~) (true|false|''[^'']+''|[\d.]+)$')) and not(ends-with($expression, '.exists()')) and not(ends-with($expression, '.hasValue()'))">
                 <xsl:text>.exists()</xsl:text>
             </xsl:if>
         </xsl:if>
@@ -769,7 +775,10 @@
                     <!-\- Please be aware that for regex reasons, the hyphen should be either first or last in this string -\->
                     <xsl:variable name="replaceChars" select="'[ .,_-]+'"/>
                     <xsl:value-of select="concat('.replaceMatches(''', $replaceChars, ''', '' '') ~ ''', replace(@value, $replaceChars, ' '), '''')"/>-->
-                    <xsl:text> </xsl:text>
+                    <xsl:if test="$includeThis = true()">
+                        <xsl:text>$this</xsl:text>
+                    </xsl:if>
+                    <xsl:text>.hasValue()</xsl:text>
                 </xsl:when>
                 <xsl:when test="$dataType = ('dateTime','date','instant')">
                     <!-- For now we only check if date or dateTime exist -->
@@ -967,7 +976,7 @@
                             </xsl:if>
                             <xsl:text>with either .reference or .identifier and .display</xsl:text>
                         </xsl:when>
-                        <xsl:when test="$dataType = 'Narrative' and f:status/@value = 'extensions'">
+                        <xsl:when test="$dataType = 'Narrative' and f:status/@value = ('extensions','generated')">
                             <!-- Nothing to add -->
                             <xsl:text> </xsl:text>
                         </xsl:when>
@@ -1040,9 +1049,12 @@
                 <!-- In Attachment, there is hardly anything that we can reliably check for more than existance, so we do nothing here. -->
                 <xsl:text> </xsl:text>
             </xsl:when>
-            <xsl:when test="$dataType = ('dateTime','date','instant','string')(: or ($dataType = 'string' and $parentDataType = ('Coding','Quantity')):)">
+            <xsl:when test="$dataType = ('dateTime','date','instant') or ($dataType = 'string' and $parentDataType = ('Coding','Quantity'))">
                 <!-- Nothing to be added, as we only check existance -->
                 <xsl:text> </xsl:text>
+            </xsl:when>
+            <xsl:when test="$dataType = 'string'">
+                <xsl:text>with a value</xsl:text>
             </xsl:when>
             <xsl:when test="$dataType = ('boolean','decimal','integer'(:,'string':)) or ($dataType = ('uri','canonical') and $parentDataType = ('Coding','Meta','Quantity'))">
                 <!-- For uri's in Coding and Quantity (.system) or Meta (.profile, uri is canonical in R4), we want an exact match. I can imagine that in some situations we want to only check for existance. -->
@@ -1207,7 +1219,6 @@
                 <xsl:when test="$isPolymorphic = true()">
                     <xsl:copy-of select="$structureDefinition/f:StructureDefinition/f:snapshot/f:element[@id = $polymorphicElementPath]"/>
                 </xsl:when>
-                
                 <xsl:otherwise>
                     <xsl:message>Could not find ElementDefinition <xsl:value-of select="$elementPath"/></xsl:message>
                     <xsl:message select="$sdDataType"/>
@@ -1342,32 +1353,34 @@
                     <xsl:attribute name="nts:fhirPath" select="$fhirPath"/>
                     <xsl:attribute name="nts:descriptionPath" select="$descriptionPath"/>
                     
-                    <xsl:apply-templates select="node()" mode="#current">
-                        <xsl:with-param name="parentElementPath" select="$elementPath"/>
-                        <xsl:with-param name="parentFhirPath" select="$fhirPath"/>
-                        <xsl:with-param name="parentDescriptionPath" select="$descriptionPath"/>
-                        <xsl:with-param name="parentDataType" select="$dataType"/>
-                        <xsl:with-param name="sdElementPath">
-                            <xsl:choose>
-                                <xsl:when test="$dataType = $complexDataTypes">
-                                    <xsl:value-of select="$elementPath"/>
-                                </xsl:when>
-                                <xsl:otherwise>
-                                    <xsl:value-of select="$parentElementPath"/>
-                                </xsl:otherwise>
-                            </xsl:choose>
-                        </xsl:with-param>
-                        <xsl:with-param name="sdDataType">
-                            <xsl:choose>
-                                <xsl:when test="$dataType = $complexDataTypes">
-                                    <xsl:value-of select="$dataType"/>
-                                </xsl:when>
-                                <xsl:otherwise>
-                                    <xsl:value-of select="$parentDataType"/>
-                                </xsl:otherwise>
-                            </xsl:choose>
-                        </xsl:with-param>
-                    </xsl:apply-templates>
+                    <xsl:if test="not($dataType = 'Narrative')">
+                        <xsl:apply-templates select="node()" mode="#current">
+                            <xsl:with-param name="parentElementPath" select="$elementPath"/>
+                            <xsl:with-param name="parentFhirPath" select="$fhirPath"/>
+                            <xsl:with-param name="parentDescriptionPath" select="$descriptionPath"/>
+                            <xsl:with-param name="parentDataType" select="$dataType"/>
+                            <xsl:with-param name="sdElementPath">
+                                <xsl:choose>
+                                    <xsl:when test="$dataType = $complexDataTypes">
+                                        <xsl:value-of select="$elementPath"/>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <xsl:value-of select="$parentElementPath"/>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                            </xsl:with-param>
+                            <xsl:with-param name="sdDataType">
+                                <xsl:choose>
+                                    <xsl:when test="$dataType = $complexDataTypes">
+                                        <xsl:value-of select="$dataType"/>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <xsl:value-of select="$parentDataType"/>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                            </xsl:with-param>
+                        </xsl:apply-templates>
+                    </xsl:if>
                 </xsl:copy>
             </xsl:otherwise>
         </xsl:choose>
