@@ -355,7 +355,7 @@
             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                 <!-- Currently 'include' is used to inject filter-identifier variable. We just copy, NTS handles correct positioning -->
                 <xsl:if test="$configCurrentScenario/include/*">
-                    <xsl:apply-templates select="include/*" mode="copy"/>
+                    <xsl:apply-templates select="$configCurrentScenario/include/*" mode="copy"/>
                 </xsl:if>
 
                 <id value="mp9-{lower-case($buildingBlockShort)}-{$transactionType}-{$theScenarioForTestscript}"/>
