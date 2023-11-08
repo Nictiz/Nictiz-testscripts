@@ -264,7 +264,6 @@
         <xsl:param name="buildingBlockShort"/>
         <xsl:param name="scenarioset"/>
         
-        <xsl:variable name="set0config" select="document('set0-config.xml')"/>
         <xsl:variable name="adaInstance" select="adaxml/data/beschikbaarstellen_medicatiegegevens"/>
         
         <!-- Should be 0, but I guess you could use this setup for other non-ADA scenario's. -->
@@ -299,8 +298,11 @@
             <xsl:with-param name="level" select="$logINFO"/>
             <xsl:with-param name="msg">Processing <xsl:value-of select="$newFilename"/></xsl:with-param>
         </xsl:call-template>
-
-        <xsl:variable name="additionalScenarioParams" select="$set0config//*[local-name() = $testGoal]/*[local-name() = nf:first-cap($transactionTypeNormalized)]/*[local-name() = $buildingBlockLong]/TestScript[scenarioFullNumber/@value = $theScenario]/params/@value" as="xs:string?"/>
+        
+        <xsl:variable name="set0config" select="document('set0-config.xml')"/>
+        <xsl:variable name="configCurrentScenario" select="$set0config//*[local-name() = $testGoal]/*[local-name() = nf:first-cap($transactionTypeNormalized)]/*[local-name() = $buildingBlockLong]/TestScript[scenarioFullNumber/@value = $theScenario]"/>
+        
+        <xsl:variable name="additionalScenarioParams" select="$configCurrentScenario/params/@value" as="xs:string?"/>
         <xsl:variable name="theParamParts">
             <xsl:variable name="additionalScenarioParamsNormalized">
                 <xsl:choose>
@@ -352,7 +354,7 @@
             
             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                 <!-- Currently 'include' is used to inject filter-identifier variable. We just copy, NTS handles correct positioning -->
-                <xsl:if test="include/*">
+                <xsl:if test="$configCurrentScenario/include/*">
                     <xsl:apply-templates select="include/*" mode="copy"/>
                 </xsl:if>
 
