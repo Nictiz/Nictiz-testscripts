@@ -67,11 +67,11 @@
         <xsl:param name="scenario" tunnel="yes"/>
         <xsl:variable name="requestResponseId">
             <xsl:choose>
-                <xsl:when test="nts:include[@value = 'medmij/test.xis.successfulSearch']/@responseId">
-                    <xsl:value-of select="nts:include[@value = 'medmij/test.xis.successfulSearch']/@responseId"/>
+                <xsl:when test="nts:include[@value = ('medmij/test.xis.successfulSearch','test.server.successfulSearch')]/@responseId">
+                    <xsl:value-of select="nts:include[@value = ('medmij/test.xis.successfulSearch','test.server.successfulSearch')]/@responseId"/>
                 </xsl:when>
-                <xsl:when test="nts:include[@value = 'medmij/test.xis.successfulSearch']/@requestId">
-                    <xsl:value-of select="nts:include[@value = 'medmij/test.xis.successfulSearch']/@requestId"/>
+                <xsl:when test="nts:include[@value = ('medmij/test.xis.successfulSearch','test.server.successfulSearch')]/@requestId">
+                    <xsl:value-of select="nts:include[@value = ('medmij/test.xis.successfulSearch','test.server.successfulSearch')]/@requestId"/>
                 </xsl:when>
                 <xsl:when test="fn:string-length(@id) gt 0">
                     <xsl:value-of select="concat('fixture-',@id)"/>
@@ -90,7 +90,7 @@
                 <xsl:when test="f:action/f:operation/f:type/f:code/@value">
                     <xsl:value-of select="f:action/f:operation/f:type/f:code/@value"/>
                 </xsl:when>
-                <xsl:when test="nts:include[@value = 'medmij/test.xis.successfulSearch']">
+                <xsl:when test="nts:include[@value = ('medmij/test.xis.successfulSearch','test.server.successfulSearch')]">
                     <xsl:value-of select="'search'"/>
                 </xsl:when>
                 <xsl:when test="nts:include[@value = 'medmij/test.xis.successfulRead']">
