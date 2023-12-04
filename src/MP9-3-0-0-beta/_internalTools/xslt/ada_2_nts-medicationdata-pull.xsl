@@ -52,11 +52,18 @@
             <xsl:choose>
                 <!-- Special handling for scenarioset 0 -->
                 <xsl:when test="$scenarioset = 0">
-                    <xsl:call-template name="handleFilterScenario">
-                        <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
-                        <xsl:with-param name="scenarioset" select="$scenarioset"/>
-                    </xsl:call-template>
-                </xsl:when>
+                    <xsl:choose>
+                        <xsl:when test="./adaxml/data/beschikbaarstellen_medicatiegegevens/scenario-nr/@value = '0'">
+                            <!-- do nothing, filter scenario's are handled using ada_instance_filter folder, those are 0.x format-->                            
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:call-template name="handleFilterScenario">
+                                <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
+                                <xsl:with-param name="scenarioset" select="$scenarioset"/>
+                            </xsl:call-template>
+                        </xsl:otherwise>
+                    </xsl:choose>                   
+                  </xsl:when>
                 <xsl:otherwise>
                     <xsl:call-template name="createNts">
                         <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
@@ -269,7 +276,7 @@
         <!-- Should be 0, but I guess you could use this setup for other non-ADA scenario's. -->
         <xsl:variable name="theScenarioSet" select="$scenarioset"/>
         <xsl:variable name="theScenario" select="$adaInstance/scenario-nr/@value"/>
-        <xsl:variable name="theScenarioForTestscript" select="replace($theScenario, '\.', '-')"/>
+        <xsl:variable name="theScenarioForTestscript" select="replace(nf:removeSpecialCharacters($theScenario), '\.', '-')"/>
         <xsl:variable name="patient" select="$adaInstance/patient"/>
         <xsl:variable name="patientBsn" select="$patient/identificatienummer/@value"/>
         <xsl:variable name="patientName">
