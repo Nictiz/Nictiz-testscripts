@@ -1,0 +1,42 @@
+<TestScript xmlns:nts="http://nictiz.nl/xsl/testscript"
+            xmlns="http://hl7.org/fhir"
+            nts:scenario="server">
+   <id value="mp9-mgb-Serve-0-6"/>
+   <version value="r4-mp9-3.0.0-beta"/>
+   <name value="Medication Process 9 3.0.0-beta  - MedicationUse - Serve - Scenario 0.6"/>
+   <description value="Scenario 0.6 - Medicatiegebruik met een filter op gebruiksperiode – ingangsdatum én einddatum (alles vanaf T-14 tot en met T-11)&#xA;(Antwoord: bericht met 2x medicatiegebruik)"/>
+   <nts:authToken patientResourceId="nl-core-Patient-mp9-G-XXX-Groot"
+                  nts:in-targets="MedMij"/>
+   <nts:includeDateT value="yes"/>
+   <test id="Scenario-0-6">
+      <name value="Scenario 0.6"/>
+      <description value="Medicatiegebruik met een filter op gebruiksperiode – ingangsdatum én einddatum (alles vanaf T-14 tot en met T-11)&#xA;(Antwoord: bericht met 2x medicatiegebruik)"/>
+      <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
+         <nts:with-parameter name="description"
+                             value="Test server to serve MedicationStatement resource(s) representing MP9 building block MedicationUse"/>
+         <nts:with-parameter name="resource" value="MedicationStatement"/>
+         <nts:with-parameter name="params"
+                             value="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999900596&amp;category=http://snomed.info/sct|422979000&amp;period-of-use=ge${DATE, T, D,-14}&amp;period-of-use=le${DATE, T, D,-11}&amp;_include=MedicationStatement:medication"/>
+      </nts:include>
+      <nts:include value="medmij/test.xis.search"
+                   scope="common"
+                   nts:in-targets="MedMij">
+         <nts:with-parameter name="description"
+                             value="Test XIS server to serve MedicationStatement resource(s) representing MP9 building block MedicationUse"/>
+         <nts:with-parameter name="resource" value="MedicationStatement"/>
+         <nts:with-parameter name="params"
+                             value="?category=http://snomed.info/sct|422979000&amp;period-of-use=ge${DATE, T, D,-14}&amp;period-of-use=le${DATE, T, D,-11}&amp;_include=MedicationStatement:medication"/>
+      </nts:include>
+      <nts:include value="assert.response.successfulSearch" scope="common"/>
+      <nts:include value="assert-responseBundleContent-noMM"/>
+      <nts:include value="assert-returnCount" scope="project">
+         <nts:with-parameter name="resource" value="MedicationStatement"/>
+         <nts:with-parameter name="count" value="2"/>
+      </nts:include>
+      <nts:include value="assert-returnEntryCountAtLeast" scope="project">
+         <nts:with-parameter name="count" value="4"/>
+         <nts:with-parameter name="breakdown"
+                             value="(Consists of 2 MedicationStatement and 2 Medication resources.)"/>
+      </nts:include>
+   </test>
+</TestScript>
