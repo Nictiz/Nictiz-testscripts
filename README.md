@@ -16,7 +16,7 @@ In addition to building each project folder individually, the `buildscripts` fol
 
 ## Folder structure
 
-NTS source folders are organized according to the (NTS defaults)[https://github.com/Nictiz/Nictiz-tooling-testscripts/tree/main/generate#folder-structure] and use some defaults for inclusions and exclusions of building loadscripts and generating narratives.
+NTS source folders are organized according to the [NTS defaults](https://github.com/Nictiz/Nictiz-tooling-testscripts/tree/main/generate#folder-structure) and use some defaults for inclusions and exclusions of building loadscripts and generating narratives.
 
 ```
 - Standard/            : Root folder for all materials pertaining the standard
