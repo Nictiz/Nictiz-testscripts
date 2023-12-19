@@ -1,0 +1,41 @@
+<TestScript xmlns:nts="http://nictiz.nl/xsl/testscript"
+            xmlns="http://hl7.org/fhir"
+            nts:scenario="client">
+   <id value="mp9-mve-Retrieve-0-4"/>
+   <version value="r4-mp9-3.0.0-beta"/>
+   <name value="Medication Process 9 3.0.0-beta  - MedicationDispense - Retrieve - Scenario 0.4"/>
+   <description value="Scenario 0.4 - &lt;div&gt;Verstrekking met een filter op verstrekkingsperiode – ingangsdatum (alles vanaf T-18) (Antwoord: bericht met 2 verstrekkingen)&lt;/div&gt;"/>
+   <nts:authToken patientResourceId="nl-core-Patient-mp9-G-XXX-Groot"
+                  nts:in-targets="MedMij"/>
+   <nts:includeDateT value="yes"/>
+   <test id="Scenario-0-4">
+      <name value="Scenario 0.4"/>
+      <description value="&lt;div&gt;Verstrekking met een filter op verstrekkingsperiode – ingangsdatum (alles vanaf T-18) (Antwoord: bericht met 2 verstrekkingen)&lt;/div&gt;"/>
+      <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
+         <nts:with-parameter name="description"
+                             value="Test client to retrieve MedicationDispense resource(s) representing MP9 building block MedicationDispense"/>
+         <nts:with-parameter name="resource" value="MedicationDispense"/>
+         <nts:with-parameter name="params"
+                             value="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999900596&amp;category=http://snomed.info/sct|373784005&amp;whenhandedover=ge${DATE, T, D,-18}&amp;_include=MedicationDispense:medication"/>
+      </nts:include>
+      <nts:include value="medmij/test.phr.search"
+                   scope="common"
+                   nts:in-targets="MedMij">
+         <nts:with-parameter name="description"
+                             value="Test PHR client to retrieve MedicationDispense resource(s) representing MP9 building block MedicationDispense"/>
+         <nts:with-parameter name="resource" value="MedicationDispense"/>
+         <nts:with-parameter name="params"
+                             value="?category=http://snomed.info/sct|373784005&amp;whenhandedover=ge${DATE, T, D,-18}&amp;_include=MedicationDispense:medication"/>
+      </nts:include>
+      <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+      <nts:include value="assert-returnCount" scope="project">
+         <nts:with-parameter name="resource" value="MedicationDispense"/>
+         <nts:with-parameter name="count" value="2"/>
+      </nts:include>
+      <nts:include value="assert-returnEntryCountAtLeast" scope="project">
+         <nts:with-parameter name="count" value="4"/>
+         <nts:with-parameter name="breakdown"
+                             value="(Consists of 2 MedicationDispense and 2 Medication resources.)"/>
+      </nts:include>
+   </test>
+</TestScript>

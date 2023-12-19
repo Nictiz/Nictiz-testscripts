@@ -1,0 +1,41 @@
+<TestScript xmlns:nts="http://nictiz.nl/xsl/testscript"
+            xmlns="http://hl7.org/fhir"
+            nts:scenario="server">
+   <id value="mp9-ma-Serve-0-3"/>
+   <version value="r4-mp9-3.0.0-beta"/>
+   <name value="Medication Process 9 3.0.0-beta  - MedicationAgreement - Serve - Scenario 0.3"/>
+   <description value="Scenario 0.3 - Medicatieafspraken met een filter op productcode (PRK 1783)&#xA;(Antwoord: bericht met 1 medicatieafspraak)&#xA;Optioneel voor raadplegende systemen"/>
+   <nts:authToken patientResourceId="nl-core-Patient-mp9-G-XXX-Groot"
+                  nts:in-targets="MedMij"/>
+   <test id="Scenario-0-3">
+      <name value="Scenario 0.3"/>
+      <description value="Medicatieafspraken met een filter op productcode (PRK 1783)&#xA;(Antwoord: bericht met 1 medicatieafspraak)&#xA;Optioneel voor raadplegende systemen"/>
+      <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
+         <nts:with-parameter name="description"
+                             value="Test server to serve MedicationRequest resource(s) representing MP9 building block MedicationAgreement"/>
+         <nts:with-parameter name="resource" value="MedicationRequest"/>
+         <nts:with-parameter name="params"
+                             value="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999900596&amp;category=http://snomed.info/sct|33633005&amp;medication.code=urn:oid:2.16.840.1.113883.2.4.4.10|1783&amp;_include=MedicationRequest:medication"/>
+      </nts:include>
+      <nts:include value="medmij/test.xis.search"
+                   scope="common"
+                   nts:in-targets="MedMij">
+         <nts:with-parameter name="description"
+                             value="Test XIS server to serve MedicationRequest resource(s) representing MP9 building block MedicationAgreement"/>
+         <nts:with-parameter name="resource" value="MedicationRequest"/>
+         <nts:with-parameter name="params"
+                             value="?category=http://snomed.info/sct|33633005&amp;medication.code=urn:oid:2.16.840.1.113883.2.4.4.10|1783&amp;_include=MedicationRequest:medication"/>
+      </nts:include>
+      <nts:include value="assert.response.successfulSearch" scope="common"/>
+      <nts:include value="assert-responseBundleContent-noMM"/>
+      <nts:include value="assert-returnCount" scope="project">
+         <nts:with-parameter name="resource" value="MedicationRequest"/>
+         <nts:with-parameter name="count" value="1"/>
+      </nts:include>
+      <nts:include value="assert-returnEntryCountAtLeast" scope="project">
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="breakdown"
+                             value="(Consists of 1 MedicationRequest and 1 Medication resources.)"/>
+      </nts:include>
+   </test>
+</TestScript>
