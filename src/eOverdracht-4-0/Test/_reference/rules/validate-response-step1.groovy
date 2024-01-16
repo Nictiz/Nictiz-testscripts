@@ -7,7 +7,8 @@ try {
     response.assertValidWithProfileId("Bundle-profile");
 } catch (Throwable e) {
     //logger.info(e.properties.toString());
-    output["validationResult"] = e.getMessage();
+    output["validationErrors"] = e.getMessage();
+    output["validationWarnings"] = e.warningMessage;
     // def msg = e.getMessage.split('\n').findAll {line ==~ /.*ERROR.*/}
     // def filtered = e.getMessage().split('\n').findAll {it -> true}
     // warn(e.getMessage().split(',')[1]);
