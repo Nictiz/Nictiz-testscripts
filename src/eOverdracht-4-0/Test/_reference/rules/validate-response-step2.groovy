@@ -1,11 +1,9 @@
 /*
  rule.summary=Perform profile validation
  rule.description=Perform profile validation (description)
- rule.param.validationErrors.required=true
- rule.param.validationWarnings.required=true
 */
 
-def output = param['validationErrors']
+def output = ruleOutputs.get('validationErrors').getBody().body
 def pattern = ~/ERROR: /
 def matcher = pattern.matcher(output)
 
@@ -21,5 +19,6 @@ while (matcher.find()) {
 issues.push("ERROR: " + output.substring(prev_end, output.length() - 2))
 
 def filtered = issues.findAll { (!(it ==~ /.*ERROR: Slicing cannot be evaluated: Error in discriminator at .* no children, no type.*/)) }
-def e = new net.aegis.touchstone.data.model.testexecution.AssertionErrorAndWarning("Result:[" + String.join(", ", issues) + "]", param['validationWarnings'])
+def e = new net.aegis.touchstone.data.model.testexecution.AssertionErrorAndWarning("Result:[" + String.join(", ", issues) + "]",
+    ruleOutputs.get('validationWarnings').getBody().body)
 throw e
