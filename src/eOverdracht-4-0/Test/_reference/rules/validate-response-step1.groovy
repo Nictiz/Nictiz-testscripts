@@ -1,55 +1,19 @@
 /*
- rule.summary=Perform profile validation
- rule.description=Perform profile validation (description)
+ rule.summary=Pre-check for profile validation
+ rule.description=This check can be ignored. It is meant to produce the output for the next step.
 */
 
+// This rule performs profile validation on the response, but doesn't result in an actual check. Instead, the output is
+// captured and exported as two text variables: "validationErrors" and "validationWarnings". This way, the output can
+// be filtered in a future step.
+// NOTE 1: The filtering could be done here, but this results in a timeout on Touchstone.
+// NOTE 2: In the TestScript, the output's should be defined as "document", otherwise the output is shown verbatim on
+//         the Touchstone interface.
+// NOTE 3: Yes, this is a hack, needed to suppress false error messages by the Touchstone validator. I hope it's
+//         temporary until the actual bug on Touchstone is resolved.
 try {
     response.assertValidWithProfileId("Bundle-profile");
 } catch (Throwable e) {
-    //logger.info(e.properties.toString());
     output["validationErrors"] = e.getMessage();
     output["validationWarnings"] = e.warningMessage;
-    // def msg = e.getMessage.split('\n').findAll {line ==~ /.*ERROR.*/}
-    // def filtered = e.getMessage().split('\n').findAll {it -> true}
-    // warn(e.getMessage().split(',')[1]);
-    // e.getMessage().split('\n').each {line ->
-        // if (!(line ==~ /.*ERROR: Slicing cannot be evaluated: Error in discriminator at .*: no children, no type.*/)) {
-        // warn(line);
-        // }
-    // }
-    // logger.info("warningMessage:")
-    // logger.info(e.warningMessage)
-    // logger.info("Class: " + e.warningMessage.class)
-
-    // def messages = e.warningMessage.split(", (WARNING|ERROR)");
-    // logger.info(messages[0]);
-    // logger.info(messages[1]);
-    // logger.info(messages[2]);
-    // logger.info(messages[3]);
-    // logger.info(messages[4]);
-    // logger.info(messages[5]);
-    // logger.info(messages[6]);
-    // logger.info(messages[7]);
-    // logger.info(messages[8]);
-    // logger.info(messages[9]);
-    // logger.info(messages[10]);
-    // logger.info(messages[11]);
-    // logger.info(messages[12]);
-    // for (int i = 0; i < 1; i++) {
-    //     logger.info("Foo");
-    // }
-
-    // e.warningMessage.split(", (WARNING|ERROR)").each {
-    //     warn(it)
-    // }
-    // logger.info("detailMessage")
-    // logger.info(e.detailMessage)
-    // logger.info("Class: " + e.detailMessage.class)
-    
-    // warn(e.dump());
-    // warn(e.inspect());
-    // e.getMessage().split("\\n").each() { message ->
-        // warn(e.getMessage())
-    // }
-    // errorsAndWarnings.registerAndContinue(e);
 }
