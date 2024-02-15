@@ -1,5 +1,6 @@
 #@setlocal enableextensions
 #@echo off
+JAVA_HOME=`/usr/libexec/java_home -v 1.8`
 PWD=`dirname $0`
 
 rm -f "$PWD/_reference/resources/*.xml"
