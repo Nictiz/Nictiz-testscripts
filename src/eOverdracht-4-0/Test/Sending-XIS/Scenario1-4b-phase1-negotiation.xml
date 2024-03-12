@@ -10,10 +10,15 @@
     
     <nts:authToken patientResourceId="nl-core-patient-eov-test-1-4b-01"/>
     
+    <!--
+        EOVDR-444/KT-384: Declare a (unused) fixture as a workaround for a Touchstone bug.
+        The line below should be put back in the setup once KT-384 has been resolved.
+    -->
+    <nts:fixture
+        id="initial-task-fixture"
+        href="resources/resources-specific/eOverdracht-Task-eov-test-1_4b-REQUESTED.xml"/>
+
     <setup nts:in-targets="Nictiz-only">
-        <nts:fixture
-            id="initial-task-fixture"
-            href="resources/resources-specific/eOverdracht-Task-eov-test-1_4b-REQUESTED.xml"/>
         <nts:include value="setup.general.initializeTask"
             task-fixture-id="initial-task-fixture"
             description="At the sending XIS, a new Task is created in status 'requested'."/>
@@ -30,6 +35,14 @@
         <nts:include value="test.sendingxis.serveTask"
             taskStatus="requested"
             responseId="requested-task-response"/>
+
+        <nts:include value="rewrite.response.taskStatus" scope="common"
+            newStatus="rejected"
+            fixtureId="rejected-task-fixture"/>
+
+        <nts:include nts:in-targets="Nictiz-only" value="rewrite.response.taskStatus" scope="common"
+            newStatus="cancelled"
+            fixtureId="cancelled-task-fixture"/>
     </test>
     
     <test>
@@ -45,11 +58,7 @@
     <test>
         <name value="Handle Task update to 'rejected'"/>
         <description value="The sending XIS should handle an update to the Task where the status is set to 'rejected' by the receiving XIS to signal that it is unable to receive the patient. This should be an update operation where the original Task is sent, with only the status element changed."/>
-        
-        <nts:fixture
-            id="rejected-task-fixture"
-            href="resources/resources-specific/eOverdracht-Task-eov-test-1_4b-REJECTED.{$_FORMAT}"/>
-        
+                
         <nts:include value="test.sendingxis.handleTaskUpdate"
             taskStatus="rejected"
             taskFixtureId="rejected-task-fixture"/>
@@ -59,9 +68,6 @@
         <name value="Set Task to 'cancelled'"/>
         <description value="The sending XIS now sets the status of the Task to 'cancelled' to confirm to the receiving XIS that the transfer of the patient has been cancelled."/>
         
-        <nts:fixture
-            id="cancelled-task-fixture"
-            href="resources/resources-specific/eOverdracht-Task-eov-test-1_4b-CANCELLED.xml"/>
         <nts:include value="action.general.updateTaskBySendingXis"
             task-fixture-id="cancelled-task-fixture"
             description="Set the eOverdracht Task resource to 'cancelled'."/>

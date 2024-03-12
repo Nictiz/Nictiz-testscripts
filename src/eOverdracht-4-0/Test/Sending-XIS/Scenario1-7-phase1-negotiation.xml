@@ -10,10 +10,15 @@
     
     <nts:authToken patientResourceId="nl-core-patient-eov-test-1-7-01"/>
     
+    <!--
+        EOVDR-444/KT-384: Declare a (unused) fixture as a workaround for a Touchstone bug.
+        The line below should be put back in the setup once KT-384 has been resolved.
+    -->
+    <nts:fixture
+        id="initial-task-fixture"
+        href="resources/resources-specific/eOverdracht-Task-eov-test-1_7-REQUESTED.xml"/>
+
     <setup nts:in-targets="Nictiz-only">
-        <nts:fixture
-            id="initial-task-fixture"
-            href="resources/resources-specific/eOverdracht-Task-eov-test-1_7-REQUESTED.xml"/>
         <nts:include value="setup.general.initializeTask"
             task-fixture-id="initial-task-fixture"
             description="At the sending XIS, a new Task is created in status 'requested'."/>
@@ -30,6 +35,14 @@
         <nts:include value="test.sendingxis.serveTask"
             taskStatus="requested"
             responseId="requested-task-response"/>
+
+        <nts:include value="rewrite.response.taskStatus" scope="common"
+            newStatus="accepted"
+            fixtureId="accepted-task-fixture"/>
+
+        <nts:include nts:in-targets="Nictiz-only" value="rewrite.response.taskStatus" scope="common"
+            newStatus="in-progress"
+            fixtureId="in-progress-task-fixture"/>
     </test>
     
     <test>
@@ -46,10 +59,6 @@
         <name value="Handle Task update to 'accepted'"/>
         <description value="The sending XIS should handle an update of the Task with the status 'accepted' which the receiving uses to signal that it is able to transfer the patient at the requested date and time."/>
         
-        <nts:fixture
-            id="accepted-task-fixture"
-            href="resources/resources-specific/eOverdracht-Task-eov-test-1_7-ACCEPTED.{$_FORMAT}"/>
-        
         <nts:include value="test.sendingxis.handleTaskUpdate"
             taskStatus="accepted"
             taskFixtureId="accepted-task-fixture"/>
@@ -59,9 +68,6 @@
         <name value="Set Task to 'in-progress'"/>
         <description value="The sending XIS now sets the status of the Task to 'in-progress' to signal the receiving XIS that it agrees to transfer the patient at the specified date and time."/>
         
-        <nts:fixture
-            id="in-progress-task-fixture"
-            href="resources/resources-specific/eOverdracht-Task-eov-test-1_7-IN-PROGRESS.xml"/>
         <nts:include value="action.general.updateTaskBySendingXis"
             task-fixture-id="in-progress-task-fixture"
             description="Set the eOverdracht Task resource to 'in-progress'"/>
