@@ -20,6 +20,7 @@
     <xsl:variable name="transactionTypeNormalized" select="normalize-space(lower-case($transactionType))"/>
     <xsl:variable name="inputDirNormalized" select="nf:normalize-path($inputDir)"/>
     <xsl:variable name="outputDirNormalized" select="nf:normalize-path($outputDir)"/>
+    
 
     <xd:doc>
         <xd:desc>Start template. Handles some ada transactions, converts them to nts. Very specific for each transaction.</xd:desc>
@@ -27,7 +28,7 @@
     <xsl:template match="/">
         <xsl:call-template name="util:logMessage">
             <xsl:with-param name="level" select="$logINFO"/>
-            <xsl:with-param name="msg">transactionTypeNormalized: <xsl:value-of select="$transactionTypeNormalized"/> - inputDir: <xsl:value-of select="$inputDirNormalized"/> - outputDir: <xsl:value-of select="$outputDirNormalized"/></xsl:with-param>
+            <xsl:with-param name="msg">inputDir:  <xsl:value-of select="$inputDir"/> - transactionTypeNormalized: <xsl:value-of select="$transactionTypeNormalized"/> - inputDir: <xsl:value-of select="$inputDirNormalized"/> - outputDir: <xsl:value-of select="$outputDirNormalized"/></xsl:with-param>
         </xsl:call-template>
 
         <!-- ada files have been prepocessed per building block and scenarioset -->
@@ -449,6 +450,9 @@
             <xsl:choose>
                 <xsl:when test="starts-with($fixSlashes, 'file:/')">
                     <xsl:value-of select="$fixSlashes"/>
+                </xsl:when>
+                <xsl:when test="not(starts-with($fixSlashes, 'file:/')) and starts-with($fixSlashes, '/')">
+                    <xsl:value-of select="concat('file://', $fixSlashes)"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:value-of select="concat('file:/', $fixSlashes)"/>
