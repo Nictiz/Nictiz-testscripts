@@ -12,6 +12,7 @@ JAVA_HOME=`/usr/libexec/java_home -v 1.8`
 
 echo =========================================================
 echo JAVA_HOME=$JAVA_HOME
+java -version
 echo =========================================================
 
 ant -f $PWD/../../build-single.xml -propertyfile $PWD/build.properties $*
