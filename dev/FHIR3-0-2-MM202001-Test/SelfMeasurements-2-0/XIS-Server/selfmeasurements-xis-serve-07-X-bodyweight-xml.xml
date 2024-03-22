@@ -13,7 +13,7 @@
       </extension>
    </extension>
    <url value="http://nictiz.nl/fhir/TestScript/xis-1-7-serve-bodyweight-xml"/>
-   <version value="stu3-2.0-patchlevel 2023-10"/>
+   <version value="stu3-2.0-patchlevel 2024-02"/>
    <name value="SelfMeasurements - XIS Server - Test Scenario 7.X - Serve bodyweight Observation resources - XML Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -54,28 +54,9 @@
       <description value="Date that data and queries are expected to be relative to."/>
    </variable>
    <variable>
-      <name value="selfmeasurements-kwalificatie1-id"/>
-      <description value="Resource.id for Observation 1"/>
-      <expression value="Bundle.entry.resource.ofType(Observation).where(value.ofType(Quantity).value = 81).id"/>
-      <sourceId value="fixture-scenario7-1-serve-all-bodyweight"/>
-   </variable>
-   <variable>
-      <name value="selfmeasurements-kwalificatie2-id"/>
-      <description value="Resource.id for Observation 2"/>
-      <expression value="Bundle.entry.resource.ofType(Observation).where(value.ofType(Quantity).value = 82.5).id"/>
-      <sourceId value="fixture-scenario7-1-serve-all-bodyweight"/>
-   </variable>
-   <variable>
-      <name value="selfmeasurements-kwalificatie3-id"/>
-      <description value="Resource.id for Observation 3"/>
-      <expression value="Bundle.entry.resource.ofType(Observation).where(value.ofType(Quantity).value = 84).id"/>
-      <sourceId value="fixture-scenario7-1-serve-all-bodyweight"/>
-   </variable>
-   <variable>
-      <name value="selfmeasurements-kwalificatie4-id"/>
-      <description value="Resource.id for Observation 4"/>
-      <expression value="Bundle.entry.resource.ofType(Observation).where(value.ofType(Quantity).value = 90).id"/>
-      <sourceId value="fixture-scenario7-1-serve-all-bodyweight"/>
+      <name value="X-Correlation-ID"/>
+      <defaultValue value="${UUID}"/>
+      <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
    </variable>
    <test id="scenario7-1-serve-all-bodyweight">
       <name value="Scenario 7.1"/>
@@ -101,7 +82,10 @@
                <field value="MedMij-Request-ID"/>
                <value value="${UUID}"/>
             </requestHeader>
-            <responseId value="fixture-scenario7-1-serve-all-bodyweight"/>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
          </operation>
       </action>
       <action>
@@ -320,6 +304,33 @@
             <expression value="Bundle.entry.resource.ofType(Observation).where(value.ofType(Quantity).value = 81).count() = 1"/>
             <warningOnly value="false"/>
          </assert>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/$lastn?code=http://loinc.org|29463-7"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+         </operation>
       </action>
       <action>
          <assert>
@@ -561,6 +572,33 @@
             <expression value="Bundle.entry.resource.ofType(Observation).where(id = '${selfmeasurements-kwalificatie2-id}').code.coding.where(system = 'http://loinc.org' and code = '29463-7' and display).exists()"/>
             <warningOnly value="false"/>
          </assert>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?code=http://loinc.org|29463-7&amp;date=ge${DATE, T, D,-250}&amp;date=le${DATE, T, D,-75}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+         </operation>
       </action>
       <action>
          <assert>
@@ -821,15 +859,31 @@
       <name value="Scenario 7.1 - Check Observation 4"/>
       <description value="Check if the previous operation results in a FHIR Observation that contains the values that are expected following Nictiz' materials (fixture .id: selfmeasurements-kwalificatie4)"/>
       <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="true"/>
-            </extension>
-            <description value="Response Bundle contains exactly 1 Observation that contains valueQuantity.value = '90'"/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.resource.ofType(Observation).where(value.ofType(Quantity).value = 90).count() = 1"/>
-            <warningOnly value="false"/>
-         </assert>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?code=http://loinc.org|29463-7&amp;date=ge${DATE, T, D,-50}&amp;date=le${DATE, T, D,-25}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+         </operation>
       </action>
       <action>
          <assert>
