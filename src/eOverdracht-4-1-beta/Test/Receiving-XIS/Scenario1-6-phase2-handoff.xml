@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="client">
+    
+    <id value="Receiving-XIS-scenario1.6-handoff"/>
+    <version value="stu3-4.0"/>
+    <name value="Receiving-XIS-scenario1.6-handoff"/>
+    <description value="Scenario 1.6, test 2/2 for eOverdracht receiving systems. This test focuses on the handoff phase ('overdrachtfase'). In a normal scenario, the test for the negotiation phase ('aanmeldfase') has been completed before running this test, although it may be performed in isolation."/>
+    
+    <nts:authToken patientResourceId="nl-core-patient-eov-test-1-6-01"/>
+    
+    <setup>
+        <nts:fixture
+            id="initial-task-fixture"
+            href="resources/resources-specific/eOverdracht-Task-eov-test-1_6-IN-PROGRESS2.xml"/>
+        <nts:include value="setup.general.initializeTask"
+            task-fixture-id="initial-task-fixture"
+            description="At the sending XIS, the Task resulting from the negotiation phase is updated with a reference to the nursing handoff Composition on Task.input."/>
+    </setup>
+
+    <nts:include value="action.receivingxis.awaitNotification"
+        name="Await nursing handoff addition notification"
+        description="The sending XIS sends a notification to the receiving XIS because the Task has been updated with a reference to the nursing handoff Composition."/>
+    
+    <test>
+        <name value="Read Task with nursing handoff"/>
+        <description value="The receiving XIS should perform a read on the Task after receiving a notification that the Task has been updated."/>
+        
+        <nts:include value="test.receivingxis.readTask"
+            taskStatus="in-progress"
+            responseId="in-progress-task-response"/>
+    </test>
+
+     <test>
+        <name value="Read nursing handoff"/>
+        <description value="After reading the Task, the receiving XIS should detect that a reference to the nursing handoff Composition has been added and subsequently perform a read to retrieve this Composition."/>
+        
+        <nts:include value="test.receivingxis.readComposition"
+            taskFixtureId="in-progress-task-response"
+            sliceSystem="http://snomed.info/sct" sliceCode="11171000146100"/>
+    </test>
+    
+     <test nts:in-targets="#default">
+        <name value="Set Task to 'completed'"/>
+        <description value="The receiving XIS should set the status of the Task to 'completed'. This should be an update operation where the original Task is sent, with only the status element changed."/>
+        
+        <nts:fixture
+            id="completed-task-fixture"
+            href="resources/resources-specific/eOverdracht-Task-eov-test-1_6-COMPLETED.xml"/>
+        
+        <nts:include value="test.receivingxis.updateTask"
+            taskStatus="completed"
+            taskFixtureId="completed-task-fixture"/>
+        
+        <action>
+            <assert>
+                <description value="Confirm that the Task resource contains 1 Composition reference for the nursing handoff."/>
+                <direction value="request"/>
+                <expression value="Task.input.where(type.coding.system = 'http://snomed.info/sct'  and type.coding.code = '11171000146100').exists()"/>
+            </assert>
+        </action>
+    </test>
+    
+</TestScript>

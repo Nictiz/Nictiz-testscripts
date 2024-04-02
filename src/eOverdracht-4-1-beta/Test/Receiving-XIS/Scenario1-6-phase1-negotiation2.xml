@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="client">
+    
+    <id value="Receiving-XIS-scenario1.6-negotiation"/>
+    <version value="stu3-4.0"/>
+    <name value="Receiving-XIS-scenario1.6-negatiation"/>
+    <description value="Scenario 1.6, test 1/2, part 2 for eOverdracht receiving systems. This test (part 1 and part 2 together) focuses on the negotiation phase ('aanmeldfase') where a receiving xis agrees to transfer the patient at the proposed date and time. After completion of this test, the test for the transfer phase ('overdrachtfase') can be run."/>
+    
+    <nts:authToken patientResourceId="nl-core-patient-eov-test-1-6-01"/>
+            
+    <test>
+        <name value="Set Task to 'accepted'"/>
+        <description value="The receiving XIS should set the status of the Task to 'accepted' to signal that it is able to transfer the patient at the requested date and time. This should be an update operation where the original Task is sent, with only the status element changed."/>
+        
+        <nts:fixture
+            id="accepted-task-fixture"
+            href="resources/resources-specific/eOverdracht-Task-eov-test-1_6-ACCEPTED.xml"/>
+
+        <variable>
+            <name value="task-id" />
+            <expression value="Task.id"/>
+            <sourceId value="accepted-task-fixture"/>
+        </variable>
+        
+        <nts:include value="test.receivingxis.updateTask"
+            taskStatus="accepted"
+            taskFixtureId="accepted-task-fixture"/>
+        
+        <action>
+            <assert>
+                <description value="Confirm that the Task resource contains 1 Composition reference for the advance notice."/>
+                <direction value="request"/>
+                <expression value="Task.input.type.coding.code"/>
+                <operator value="equals"/>
+                <value value="721915006" />
+            </assert>
+        </action>
+    </test>
+    
+    <test>
+        <name value="Task is set to 'in-progress'"/>
+        <description value="The sending XIS now sets the status of the Task to 'in-progress' to signal the receiving XIS that it agrees to transfer the patient at the specified date and time."/>
+
+        <nts:fixture
+            id="in-progress-task-fixture"
+            href="resources/resources-specific/eOverdracht-Task-eov-test-1_6-IN-PROGRESS.xml"/>
+        <nts:include value="action.general.updateTaskBySendingXis"
+            description="Set the eOverdracht Task resource to 'in-progress'."
+            task-fixture-id="in-progress-task-fixture" />
+    </test>
+    
+    <nts:include value="action.receivingxis.awaitNotification"
+        name="Await 'in-progress' Task notification"
+        description="The sending XIS sends a notification to the receiving XIS because a new Task has been set to status 'in-progress'."/>
+    
+    <test>
+        <name value="Read 'in-progress' Task"/>
+        <description value="The receiving XIS should perform a read on the Task after receiving a notification that the Task has been updated."/>
+        
+        <nts:include value="test.receivingxis.readTask"
+            taskStatus="in-progress"/>
+    </test>
+</TestScript>
