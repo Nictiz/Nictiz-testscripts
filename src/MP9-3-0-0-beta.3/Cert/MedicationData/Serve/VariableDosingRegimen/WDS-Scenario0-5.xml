@@ -1,0 +1,42 @@
+<TestScript xmlns:nts="http://nictiz.nl/xsl/testscript"
+            xmlns="http://hl7.org/fhir"
+            nts:scenario="server">
+   <id value="mp9-wds-Serve-0-5"/>
+   <version value="r4-mp9-3.0.0-beta"/>
+   <name value="Medication Process 9 3.0.0-beta  - VariableDosingRegimen - Serve - Scenario 0.5"/>
+   <description value="Scenario 0.5 - WDS-en met een filter op gebruiksperiode – einddatum (alles voor T-14)&#xA;(Antwoord: bericht met 2 WDS-en)"/>
+   <nts:authToken patientResourceId="nl-core-Patient-mp9-G-XXX-Groot"
+                  nts:in-targets="MedMij"/>
+   <nts:includeDateT value="yes"/>
+   <test id="Scenario-0-5">
+      <name value="Scenario 0.5"/>
+      <description value="WDS-en met een filter op gebruiksperiode – einddatum (alles voor T-14)&#xA;(Antwoord: bericht met 2 WDS-en)"/>
+      <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
+         <nts:with-parameter name="description"
+                             value="Test server to serve MedicationRequest resource(s) representing MP9 building block VariableDosingRegimen"/>
+         <nts:with-parameter name="resource" value="MedicationRequest"/>
+         <nts:with-parameter name="params"
+                             value="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999900596&amp;category=http://snomed.info/sct|395067002&amp;period-of-use=lt${DATE, T, D,-14}&amp;_include=MedicationRequest:medication"/>
+      </nts:include>
+      <nts:include value="medmij/test.xis.search"
+                   scope="common"
+                   nts:in-targets="MedMij">
+         <nts:with-parameter name="description"
+                             value="Test XIS server to serve MedicationRequest resource(s) representing MP9 building block VariableDosingRegimen"/>
+         <nts:with-parameter name="resource" value="MedicationRequest"/>
+         <nts:with-parameter name="params"
+                             value="?category=http://snomed.info/sct|395067002&amp;period-of-use=lt${DATE, T, D,-14}&amp;_include=MedicationRequest:medication"/>
+      </nts:include>
+      <nts:include value="assert.response.successfulSearch" scope="common"/>
+      <nts:include value="assert-responseBundleContent-noMM"/>
+      <nts:include value="assert-returnCount" scope="project">
+         <nts:with-parameter name="resource" value="MedicationRequest"/>
+         <nts:with-parameter name="count" value="2"/>
+      </nts:include>
+      <nts:include value="assert-returnEntryCountAtLeast" scope="project">
+         <nts:with-parameter name="count" value="3"/>
+         <nts:with-parameter name="breakdown"
+                             value="(Consists of 2 MedicationRequest and 1 Medication resources.)"/>
+      </nts:include>
+   </test>
+</TestScript>
