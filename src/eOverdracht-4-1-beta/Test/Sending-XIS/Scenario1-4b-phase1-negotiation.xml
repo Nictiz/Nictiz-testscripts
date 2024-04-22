@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
+    nts:scenario="server" nts:numOrigins="2" nts:numDestinations="2" >
+    
+    <id value="Sending-XIS-scenario1.4b-negotiation"/>
+    <version value="stu3-4.0"/>
+    <name value="Sending-XIS-scenario1.4b-negotiation"/>
+    <description value="Scenario 1.4b for eOverdracht receiving systems. This test focuses on the negotiation phase ('aanmeldfase') and simulates the situation where the receiving system rejects the proposed transfer of the patient (hence, there's no subsequent script for the transfer phase ('overdrachtfase')."/>
+    
+    <nts:authToken patientResourceId="nl-core-patient-eov-test-1-4b-01"/>
+    
+    <!--
+        EOVDR-444/KT-384: Declare a (unused) fixture as a workaround for a Touchstone bug.
+        The line below should be put back in the setup once KT-384 has been resolved.
+    -->
+    <nts:fixture
+        id="initial-task-fixture"
+        href="resources/resources-specific/eOverdracht-Task-eov-test-1_4b-REQUESTED.xml"/>
+
+    <setup nts:in-targets="Nictiz-only">
+        <nts:include value="setup.general.initializeTask"
+            task-fixture-id="initial-task-fixture"
+            description="At the sending XIS, a new Task is created in status 'requested'."/>
+    </setup>
+    
+    <nts:include value="action.sendingxis.sendNotification"
+        name="Notify new Task"
+        description="The sending XIS should send a notification to the receiving XIS because a new Task has been created with status 'requested'."/>
+    
+    <test>
+        <name value="Serve 'requested' Task"/>
+        <description value="The sending XIS should serve the Task specified in the notification."/>
+        
+        <nts:include value="test.sendingxis.serveTask"
+            taskStatus="requested"
+            responseId="requested-task-response"/>
+
+        <nts:include value="rewrite.response.taskStatus" scope="common"
+            newStatus="rejected"
+            fixtureId="rejected-task-fixture"/>
+
+        <nts:include nts:in-targets="Nictiz-only" value="rewrite.response.taskStatus" scope="common"
+            newStatus="cancelled"
+            fixtureId="cancelled-task-fixture"/>
+    </test>
+    
+    <test>
+        <name value="Serve inital advance notice"/>
+        <description value="After reading the Task, the receiving XIS performs a read operation on the advance notice Composition that is referenced on Task.input."/>
+        
+        <nts:include value="test.sendingxis.serveComposition"
+            taskFixtureId="requested-task-response"
+            sliceSystem="http://snomed.info/sct" sliceCode="721915006"
+            validateWarningOnly="true" />
+    </test>
+    
+    <test>
+        <name value="Handle Task update to 'rejected'"/>
+        <description value="The sending XIS should handle an update to the Task where the status is set to 'rejected' by the receiving XIS to signal that it is unable to receive the patient. This should be an update operation where the original Task is sent, with only the status element changed."/>
+                
+        <nts:include value="test.sendingxis.handleTaskUpdate"
+            taskStatus="rejected"
+            taskFixtureId="rejected-task-fixture"/>
+    </test>
+    
+    <test nts:in-targets="Nictiz-only">
+        <name value="Set Task to 'cancelled'"/>
+        <description value="The sending XIS now sets the status of the Task to 'cancelled' to confirm to the receiving XIS that the transfer of the patient has been cancelled."/>
+        
+        <nts:include value="action.general.updateTaskBySendingXis"
+            task-fixture-id="cancelled-task-fixture"
+            description="Set the eOverdracht Task resource to 'cancelled'."/>
+    </test>
+    
+    <nts:include value="action.sendingxis.sendNotification"
+        name="Notify 'cancelled' Task"
+        description="The sending XIS should send a notification to the receiving XIS because the Task has been set to status 'cancelled'."/>
+       
+    <test>
+        <name value="Serve 'cancelled' Task"/>
+        <description value="The sending XIS should serve the Task with status 'cancelled'."/>
+        
+        <nts:include value="test.sendingxis.serveTask"
+            taskStatus="cancelled"/>
+    </test>
+</TestScript>

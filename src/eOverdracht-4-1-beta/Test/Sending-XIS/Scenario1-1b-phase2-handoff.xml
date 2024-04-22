@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
+    nts:scenario="server" nts:numOrigins="2" nts:numDestinations="2" >
+    
+    <id value="Sending-XIS-scenario1.1b-handoff"/>
+    <version value="stu3-4.0"/>
+    <name value="Sending-XIS-scenario1.1b-handoff"/>
+    <description value="Scenario 1.1b, test 2/2 for eOverdracht sending systems. This test focuses on the handoff phase ('overdrachtfase'). In a normal scenario, the test for the negotiation phase ('aanmeldfase') has been completed before running this test, although it may be performed in isolation."/>
+    
+    <nts:authToken patientResourceId="nl-core-patient-eov-test-1-1b-01"/>
+
+    <!--
+        EOVDR-444/KT-384: Declare a (unused) fixture as a workaround for a Touchstone bug.
+        The line below should be put back in the setup once KT-384 has been resolved.
+    -->    
+    <nts:fixture
+        id="initial-task-fixture"
+        href="resources/resources-specific/eOverdracht-Task-eov-test-1_1b-IN-PROGRESS2.xml"/>
+
+    <setup nts:in-targets="Nictiz-only">
+        <nts:include value="setup.general.initializeTask"
+            task-fixture-id="initial-task-fixture"
+            description="At the sending XIS, a new Task is created in status 'in-progress'."/>
+    </setup>
+
+    <nts:include value="action.sendingxis.sendNotification"
+        name="Notify new Task"
+        description="The sending XIS should send a notification to the receiving XIS because a new Task has been created with status 'requested'."/>
+    
+    <test>
+        <name value="Serve 'in-progress' Task"/>
+        <description value="The sending XIS should serve the Task specified in the notification."/>
+        
+        <nts:include value="test.sendingxis.serveTask"
+            taskStatus="in-progress"
+            responseId="in-progress-task-response"/>
+
+        <nts:include value="rewrite.response.taskStatus" scope="common"
+            newStatus="completed"
+            fixtureId="completed-task-fixture"/>
+    </test>
+    
+    <test>
+        <name value="Serve nursing handoff"/>
+        <description value="After reading the Task, the receiving XIS performs a read operation on the nursing handoff Composition that is referenced on Task.input."/>
+        
+        <nts:include value="test.sendingxis.serveComposition"
+            taskFixtureId="in-progress-task-response"
+            sliceSystem="http://snomed.info/sct" sliceCode="11171000146100"
+            validateWarningOnly="true" />
+    </test>
+            
+    <test>
+        <name value="Handle Task update to 'completed'"/>
+        <description value="The sending XIS should handle an update of the Task with the status 'completed' which the receiving uses to signal that has received the nursing handoff."/>
+        
+        <nts:include value="test.sendingxis.handleTaskUpdate"
+            taskStatus="completed"
+            taskFixtureId="completed-task-fixture"/>
+    </test>
+</TestScript>

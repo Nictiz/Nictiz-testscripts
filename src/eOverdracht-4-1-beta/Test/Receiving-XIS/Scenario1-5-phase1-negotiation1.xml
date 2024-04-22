@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="client">
+    
+    <id value="Receiving-XIS-scenario1.5-negotiation"/>
+    <version value="stu3-4.0"/>
+    <name value="Receiving-XIS-scenario1.5-negatiation"/>
+    <description value="Scenario 1.5, test 1/2, part 1 for eOverdracht receiving systems. This test (part 1 and part 2 together) focuses on the negotiation phase ('aanmeldfase') where a receiving xis agrees to transfer the patient at the proposed date and time. After completion of this test, the test for the transfer phase ('overdrachtfase') can be run."/>
+    
+    <nts:authToken patientResourceId="nl-core-patient-eov-test-1-5-01"/>
+    
+    <setup>
+        <nts:fixture
+            id="initial-task-fixture"
+            href="resources/resources-specific/eOverdracht-Task-eov-test-1_5-REQUESTED.xml"/>
+        <nts:include value="setup.general.initializeTask"
+            task-fixture-id="initial-task-fixture"
+            description="At the sending XIS, a new Task is created in status 'requested'."/>
+    </setup>
+
+    <nts:include value="action.receivingxis.awaitNotification"
+        name="Await new Task notification"
+        description="The sending XIS sends a notification to the receiving XIS because a new Task has been created with status 'requested'."/>
+    
+    <test>
+        <name value="Read 'requested' Task"/>
+        <description value="The receiving XIS should perform a read on the Task after receiving a notification that the Task has been created."/>
+        
+        <nts:include value="test.receivingxis.readTask"
+            taskStatus="requested"
+            responseId="requested-task-response"/>
+    </test>
+    
+    <test>
+        <name value="Read advance notice"/>
+        <description value="After reading the Task, the receiving XIS should perform a read operation on the advance notice Composition that is referenced on Task.input."/>
+        
+        <nts:include value="test.receivingxis.readComposition"
+            taskFixtureId="requested-task-response"
+            sliceSystem="http://snomed.info/sct" sliceCode="721915006"/>
+    </test>           
+</TestScript>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="client">
+    
+    <id value="Receiving-XIS-scenario1.4b-negotiation"/>
+    <version value="stu3-4.0"/>
+    <name value="Receiving-XIS-scenario1.4b-negotiation"/>
+    <description value="Scenario 1.4b, test 1/2, part 2 for eOverdracht receiving systems. This test (part 1 and part 2 together) focuses on the negotiation phase ('aanmeldfase') and simulates the situation where the receiving system rejects the proposed transfer of the patient (hence, there's no subsequent script for the transfer phase ('overdrachtfase')."/>
+    
+    <nts:authToken patientResourceId="nl-core-patient-eov-test-1-4b-01"/>
+    
+    <test>
+        <name value="Set Task to 'rejected'"/>
+        <description value="The receiving XIS should set the status of the Task to 'rejected' to signal that it is unable to receive the patient. This should be an update operation where the original Task is sent, with only the status element changed."/>
+        
+        <nts:fixture
+            id="rejected-task-fixture"
+            href="resources/resources-specific/eOverdracht-Task-eov-test-1_4b-REJECTED.xml"/>
+        
+        <variable>
+            <name value="task-id" />
+            <expression value="Task.id"/>
+            <sourceId value="rejected-task-fixture"/>
+        </variable>
+        
+        <nts:include value="test.receivingxis.updateTask"
+            taskStatus="rejected"
+            taskFixtureId="rejected-task-fixture"/>
+        
+        <action>
+            <assert>
+                <description value="Confirm that the Task resource contains 1 Composition reference for the advance notice."/>
+                <direction value="request"/>
+                <expression value="Task.input.type.coding.code"/>
+                <operator value="equals"/>
+                <value value="721915006" />
+            </assert>
+        </action>
+    </test>
+    
+    <test>
+        <name value="Task is set to 'cancelled'"/>
+        <description value="The sending XIS now sets the status of the Task to 'cancelled' to confirm to the receiving XIS that the transfer of the patient has been cancelled."/>
+        
+        <nts:fixture
+            id="cancelled-task-fixture"
+            href="resources/resources-specific/eOverdracht-Task-eov-test-1_4b-CANCELLED.xml"/>
+        <nts:include value="action.general.updateTaskBySendingXis"
+            description="Set the eOverdracht Task resource to 'cancelled'."
+            task-fixture-id="cancelled-task-fixture" />
+    </test>
+    
+    <nts:include value="action.receivingxis.awaitNotification"
+        name="Await 'cancelled' Task notification"
+        description="The sending XIS sends a notification to the receiving XIS because a new Task has been set to status 'cancelled'."/>
+    
+    <test>
+        <name value="Read 'cancelled' Task"/>
+        <description value="The receiving XIS should perform a read on the Task after receiving a notification that the Task has been updated."/>
+        
+        <nts:include value="test.receivingxis.readTask"
+            taskStatus="cancelled"/>
+    </test>
+</TestScript>
