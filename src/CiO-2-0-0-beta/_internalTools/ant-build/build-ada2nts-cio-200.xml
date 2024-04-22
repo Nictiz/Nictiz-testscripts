@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+    <!--Apache ANT build file that sets up (target = setup) or by default converts transaction with references to full ada xml (target = resolve-refs)
+    Apache ANT is based on Java and may be found here: https://ant.apache.org/
+    run on command line or from a batch file: 
+        ant [-f build.xml] [target]
+        
+    If you just run ant, it expects a build.xml in the working dir and runs the default target.-->
+
+<project basedir="." name="build-ada2fhir-cio-200" xmlns:if="ant:if" xmlns:unless="ant:unless">
+    <ant antfile="../../../../../HL7-mappings/_ant-buildfiles/ant-include/ant.ivy.xml" inheritall="true" usenativebasedir="true"/>
+    <property name="xsl.saxon" value="${saxon.path}"/>
+    <property name="xsl.saxon.class" value="net.sf.saxon.TransformerFactoryImpl"/>
+
+    <property name="build.dir" value=".."/>
+
+    <property name="github.cio200.dir" value="${build.dir}/../../../../HL7-mappings/ada_2_fhir-r4/cio/2.0.0"/>
+    <property name="mappings.url.4.fhir.fixtures" value="${github.cio200.dir}"/>
+
+    <property name="usecase.go.input" value="beschikbaarstellen_geneesmiddelovergevoeligheden"/>
+    <property name="usecase.mci.input" value="beschikbaarstellen_medicatie_contra_indicaties"/>
+
+    <target name="copy_fixtures-Test">
+        
+        <!-- copy fixtures -->
+        <echo>Copying Fixtures </echo>
+
+        <antcall target="copy_fixtures">
+            <param name="test.dir" value="Test"/>
+        </antcall>
+        
+    </target>
+
+    <target name="copy_fixtures">
+        
+        <!-- param test.dir -->
+        <echo>Copying Fixtures for ${test.dir}</echo>
+        
+        <mkdir dir="${build.dir}/../${test.dir}/_reference/fixtures"/>
+        <delete>
+            <fileset dir="${build.dir}/../${test.dir}/_reference/fixtures"/>
+        </delete>
+        <copy todir="${build.dir}/../${test.dir}/_reference/fixtures">
+            <fileset dir="${github.cio200.dir}/${usecase.go.input}/fhir_instance">
+                <include name="*.xml"/>
+            </fileset>
+            <fileset dir="${github.cio200.dir}/${usecase.mci.input}/fhir_instance">
+                <include name="*.xml"/>
+            </fileset>
+        </copy>
+
+    </target>
+
+</project>
