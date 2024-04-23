@@ -455,7 +455,7 @@
                     <xsl:value-of select="concat('file://', $fixSlashes)"/>
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:value-of select="concat('file:/', $fixSlashes)"/>
+                    <xsl:value-of select="concat('file:///', $fixSlashes)"/>
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
