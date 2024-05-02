@@ -450,6 +450,9 @@
                 <xsl:when test="starts-with($fixSlashes, 'file:/')">
                     <xsl:value-of select="$fixSlashes"/>
                 </xsl:when>
+                <xsl:when test="not(starts-with($fixSlashes, 'file:/')) and starts-with($fixSlashes, '/')">
+                    <xsl:value-of select="concat('file://', $fixSlashes)"/>
+                </xsl:when>
                 <xsl:otherwise>
                     <xsl:value-of select="concat('file:/', $fixSlashes)"/>
                 </xsl:otherwise>
