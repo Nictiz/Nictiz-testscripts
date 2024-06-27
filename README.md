@@ -10,6 +10,7 @@ To transform the source NTS materials to their output, [Apache ANT](https://ant.
 
 * Transforming one or more NTS project(s) to output containing the TestScript resources, fixtures and loadscripts.
 * Adding narratives to the fixtures.
+* Converting appropriate XML fixtures to JSON format.
 * Centralizing loadscripts to a common folder.
 
 In addition to building each project folder individually, the `buildscripts` folder contains scripts to build sets of projects that should be released together. 
@@ -38,6 +39,12 @@ NTS source folders are organized according to the [NTS defaults](https://github.
 #### General
 * `components.dir` - The directory of the dir with components for this project, _relative to the base dir of this repo_. Normally not needed.
 * `version.addition` - A string that will be added verbatim to the value in the TestScript.version from the input file. The default is defined in the folder 'buildscripts/version.addition.properties'.
+* `*.tool.version` - Override the tool version for one of the specific steps in the build process (the tool version is the full name of a git branch or tag). The wildcard aligns with the ANT project names of the build files in the `src` folder, so:
+  * `generateContentAssertsForProject.tool.version` overrides the version for the script that converts a single NTS folder.
+  * `generateContentAssertsForProjects.tool.version` overrides the version for the script that converts a multiple NTS folders.
+  * `addNarrativesForFolder.tool.version` overrides the version for the narrative generator (this should be the name of a release, not a branch or tag).
+  * `convertFixtures.tool.version` overrides the version of the tool that converts fixture from XML to JSON.
+  * `centralizeLoadResources.tool.version` overrides the version for the script to centralize loadscripts.
 
 #### build.properties in an NTS target directory
 * `input.dir` - The directory of the NTS target, _relative to the base dir of this repo_. Required.
@@ -50,6 +57,7 @@ NTS source folders are organized according to the [NTS defaults](https://github.
 ### For building narratives
 * `generate.narratives.pattern` - The root folder of the fixtures where the narrative needs to be added. Needs to be defined in the build.properties for multiple targets, but is normally not needed in the build.properties for a single target.
 * `dontgenerate.narratives.pattern` - Comma seperated list of additional file name patterns that should be excluded from narrative generation. By default, the 'minimum' folder and '-token.xml' files are excluded.
+* `fhir.version` - The FHIR version to target.
 
 ### For loadscripts
 * `loadresources.exclude` - Comma separated list of folders to exclude from loadscript generation, _relative to the folder containing the fixtures_.
