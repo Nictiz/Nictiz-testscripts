@@ -13,7 +13,11 @@
       </extension>
    </extension>
    <url value="http://nictiz.nl/fhir/TestScript/medmij-bgz-test-xis-1-16-xml"/>
+<<<<<<< HEAD
+   <version value="stu3-3.0-patchlevel 2024-01"/>
+=======
    <version value="stu3-3.0-patchlevel 2024-03"/>
+>>>>>>> main
    <name value="BgZ - XIS Server - Test - Scenario 1.16 - Serve BgZ Procedure resources of XXX_Rijn - XML Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -49,9 +53,10 @@
       <description value="OAuth Token for current patient"/>
    </variable>
    <variable>
-      <name value="X-Correlation-ID"/>
-      <defaultValue value="${UUID}"/>
-      <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
+      <name value="zib-Procedure-medmij-bgz-test-patA-procedure1-id"/>
+      <description value="Resource.id for Procedure 1"/>
+      <expression value="Bundle.entry.resource.ofType(Procedure).id"/>
+      <sourceId value="fixture-response"/>
    </variable>
    <test>
       <name value="Scenario 1.16 - Procedure"/>
@@ -77,10 +82,7 @@
                <field value="MedMij-Request-ID"/>
                <value value="${UUID}"/>
             </requestHeader>
-            <requestHeader>
-               <field value="X-Correlation-ID"/>
-               <value value="${X-Correlation-ID}"/>
-            </requestHeader>
+            <responseId value="fixture-response"/>
          </operation>
       </action>
       <action>
@@ -285,14 +287,209 @@
             <warningOnly value="true"/>
          </assert>
       </action>
+   </test>
+   <test>
+      <name value="Scenario 1.16 - Procedure - Check Procedure"/>
+      <description value="Check if the previous operation results in a FHIR Procedure that contains the values that are expected following Nictiz' materials (fixture .id: zib-Procedure-medmij-bgz-test-patA-procedure1)"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Response Bundle contains exactly 1 Procedure"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Procedure resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).id.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the response Bundle contains 1 Procedure resource(s). "/>
+            <label value="1-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-Procedure'"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Procedure)).count() = 1"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-Procedure').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2"/>
+            <description value="Contains .extension with url 'http://hl7.org/fhir/StructureDefinition/procedure-method' with .valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '129284003' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').extension('http://hl7.org/fhir/StructureDefinition/procedure-method').value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '129284003' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-3"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').identifier.where(system and value).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-4"/>
+            <description value="Contains .basedOn with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').basedOn.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-5"/>
+            <description value="Contains .status 'completed'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').status = 'completed'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6"/>
+            <description value="Contains .category with .coding with .system 'http://snomed.info/sct' and .code '387713003' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').category.coding.where(system = 'http://snomed.info/sct' and code = '387713003' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-7"/>
+            <description value="Contains .code with .coding with .system 'http://snomed.info/sct' and .code '392238003' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').code.coding.where(system = 'http://snomed.info/sct' and code = '392238003' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-8"/>
+            <description value="Contains .subject with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').subject.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-9"/>
+            <description value="Contains .performedPeriod with .start and .end"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').performed.ofType(Period).where(start and end).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-10"/>
+            <description value="Contains .performer with .actor with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').performer.where(actor.where((reference or identifier) and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-11"/>
+            <description value="Contains .reasonReference with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').reasonReference.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-12"/>
+            <description value="Contains .bodySite with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/BodySite-Qualifier' with .valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '24028007' and .display and .coding with .system 'http://snomed.info/sct' and .code '49076000' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').bodySite.where(extension('http://nictiz.nl/fhir/StructureDefinition/BodySite-Qualifier').value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '24028007' and display) and coding.where(system = 'http://snomed.info/sct' and code = '49076000' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-12-1"/>
+            <description value="Contains .bodySite.extension with url 'http://nictiz.nl/fhir/StructureDefinition/BodySite-Qualifier' with .valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '24028007' and .display. This assert checks only one child. Assert 1-12 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').bodySite.where(extension('http://nictiz.nl/fhir/StructureDefinition/BodySite-Qualifier').value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '24028007' and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-12-1"/>
+            <description value="Contains .bodySite with .coding with .system 'http://snomed.info/sct' and .code '49076000' and .display. This assert checks only one child. Assert 1-12 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').bodySite.where(coding.where(system = 'http://snomed.info/sct' and code = '49076000' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-13"/>
+            <description value="Contains .focalDevice with .manipulated with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Procedure).where(id = '${zib-Procedure-medmij-bgz-test-patA-procedure1-id}').focalDevice.where(manipulated.where((reference or identifier) and display)).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>

@@ -13,7 +13,11 @@
       </extension>
    </extension>
    <url value="http://nictiz.nl/fhir/TestScript/medmij-bgz-test-xis-1-17-json"/>
+<<<<<<< HEAD
+   <version value="stu3-3.0-patchlevel 2024-01"/>
+=======
    <version value="stu3-3.0-patchlevel 2024-03"/>
+>>>>>>> main
    <name value="BgZ - XIS Server - Test - Scenario 1.17 - Serve BgZ Encounter resources of XXX_Rijn - JSON Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -49,9 +53,22 @@
       <description value="OAuth Token for current patient"/>
    </variable>
    <variable>
-      <name value="X-Correlation-ID"/>
-      <defaultValue value="${UUID}"/>
-      <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
+      <name value="zib-Encounter-medmij-bgz-test-patA-encounter1-id"/>
+      <description value="Resource.id for Encounter 1"/>
+      <expression value="Bundle.entry.resource.ofType(Encounter).where(diagnosis.where(condition.where(reference.startsWith('Condition')))).id"/>
+      <sourceId value="fixture-response"/>
+   </variable>
+   <variable>
+      <name value="zib-Encounter-medmij-bgz-test-patA-encounter2-id"/>
+      <description value="Resource.id for Encounter 2"/>
+      <expression value="Bundle.entry.resource.ofType(Encounter).where(diagnosis.where(condition.where(reference.startsWith('Procedure')))).id"/>
+      <sourceId value="fixture-response"/>
+   </variable>
+   <variable>
+      <name value="zib-Encounter-medmij-bgz-test-patA-encounter3-id"/>
+      <description value="Resource.id for Encounter 3"/>
+      <expression value="Bundle.entry.resource.ofType(Encounter).where(reason.text).id"/>
+      <sourceId value="fixture-response"/>
    </variable>
    <test>
       <name value="Scenario 1.17 - Encounter"/>
@@ -77,10 +94,7 @@
                <field value="MedMij-Request-ID"/>
                <value value="${UUID}"/>
             </requestHeader>
-            <requestHeader>
-               <field value="X-Correlation-ID"/>
-               <value value="${X-Correlation-ID}"/>
-            </requestHeader>
+            <responseId value="fixture-response"/>
          </operation>
       </action>
       <action>
@@ -285,14 +299,729 @@
             <warningOnly value="true"/>
          </assert>
       </action>
+   </test>
+   <test>
+      <name value="Scenario 1.17 - Encounter - Check Encounter 1"/>
+      <description value="Check if the previous operation results in a FHIR Encounter that contains the values that are expected following Nictiz' materials (fixture .id: zib-Encounter-medmij-bgz-test-patA-encounter1)"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Response Bundle contains exactly 1 Encounter that contains .diagnosis.condition with a reference to Condition"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(diagnosis.where(condition.where(reference.startsWith('Condition')))).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Encounter resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(diagnosis.where(condition.where(reference.startsWith('Condition')))).id.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the response Bundle contains 3 Encounter resource(s). "/>
+            <label value="1-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-Encounter'"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Encounter)).count() = 3"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-Encounter').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').identifier.where(system and value).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-3"/>
+            <description value="Contains .status 'finished'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').status = 'finished'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-4"/>
+            <description value="Contains .class with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/code-specification' with .valueCodeableConcept with .coding with .system 'http://hl7.org/fhir/v3/ActCode' and .code 'IMP' and .display and .system 'http://hl7.org/fhir/v3/ActCode' and .code 'IMP' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').class.where(extension('http://nictiz.nl/fhir/StructureDefinition/code-specification').value.ofType(CodeableConcept).coding.where(system = 'http://hl7.org/fhir/v3/ActCode' and code = 'IMP' and display) and system = 'http://hl7.org/fhir/v3/ActCode' and code = 'IMP' and display).exists()"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-4-1"/>
+            <description value="Contains .class.extension with url 'http://nictiz.nl/fhir/StructureDefinition/code-specification' with .valueCodeableConcept with .coding with .system 'http://hl7.org/fhir/v3/ActCode' and .code 'IMP' and .display. This assert checks only one child. Assert 1-4 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').class.extension('http://nictiz.nl/fhir/StructureDefinition/code-specification').value.ofType(CodeableConcept).coding.where(system = 'http://hl7.org/fhir/v3/ActCode' and code = 'IMP' and display).exists()"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-4-1"/>
+            <description value="Contains .class with .system 'http://hl7.org/fhir/v3/ActCode' and .code 'IMP' and .display. This assert checks only one child. Assert 1-4 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').class.where(system = 'http://hl7.org/fhir/v3/ActCode' and code = 'IMP' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-5"/>
+            <description value="Contains .subject with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').subject.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6"/>
+            <description value="Contains .participant with .type with .coding with .system 'http://hl7.org/fhir/v3/ParticipationType' and .code 'PRF' and .display, and .individual with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference' with .valueReference with either .reference or .identifier and .display, and with either .reference or .identifier and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').participant.where(type.where(coding.where(system = 'http://hl7.org/fhir/v3/ParticipationType' and code = 'PRF' and display)) and individual.where(extension('http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference').value.ofType(Reference).where((reference or identifier) and display) and (reference or identifier) and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-1"/>
+            <description value="Contains .participant.type with .coding with .system 'http://hl7.org/fhir/v3/ParticipationType' and .code 'PRF' and .display. This assert checks only one child. Assert 1-6 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').participant.where(type.where(coding.where(system = 'http://hl7.org/fhir/v3/ParticipationType' and code = 'PRF' and display)).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-2"/>
+            <description value="Contains .participant.individual with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference' with .valueReference with either .reference or .identifier and .display, and with either .reference or .identifier and .display. This assert checks only one child. Assert 1-6 checks if all children are present in the same parent. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').participant.where(individual.where(extension('http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference').value.ofType(Reference).where((reference or identifier) and display) and (reference or identifier) and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-2-1"/>
+            <description value="Contains .participant.individual.extension with url 'http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference' with .valueReference with either .reference or .identifier and .display. This assert checks only one child. Assert 1-6-2 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').participant.where(individual.extension('http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference').value.ofType(Reference).where((reference or identifier) and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6-2-2"/>
+            <description value="Contains .participant.individual with either .reference or .identifier and .display. This assert checks only one child. Assert 1-6-2 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').participant.where(individual.where((reference or identifier) and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-7"/>
+            <description value="Contains .period with .start and .end"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').period.where(start and end).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-8"/>
+            <description value="Contains .diagnosis with .condition with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').diagnosis.where(condition.where((reference or identifier) and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-9"/>
+            <description value="Contains .hospitalization with .admitSource with .coding with .system 'http://snomed.info/sct' and .code '264362003' and .display, and .dischargeDisposition with .coding with .system 'http://snomed.info/sct' and .code '264362003' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').hospitalization.where(admitSource.coding.where(system = 'http://snomed.info/sct' and code = '264362003' and display) and dischargeDisposition.coding.where(system = 'http://snomed.info/sct' and code = '264362003' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-9-1"/>
+            <description value="Contains .hospitalization.admitSource with .coding with .system 'http://snomed.info/sct' and .code '264362003' and .display. This assert checks only one child. Assert 1-9 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').hospitalization.admitSource.coding.where(system = 'http://snomed.info/sct' and code = '264362003' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-9-2"/>
+            <description value="Contains .hospitalization.dischargeDisposition with .coding with .system 'http://snomed.info/sct' and .code '264362003' and .display. This assert checks only one child. Assert 1-9 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').hospitalization.dischargeDisposition.coding.where(system = 'http://snomed.info/sct' and code = '264362003' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-10"/>
+            <description value="Contains .serviceProvider with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter1-id}').serviceProvider.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Scenario 1.17 - Encounter - Check Encounter 2"/>
+      <description value="Check if the previous operation results in a FHIR Encounter that contains the values that are expected following Nictiz' materials (fixture .id: zib-Encounter-medmij-bgz-test-patA-encounter2)"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Response Bundle contains exactly 1 Encounter that contains .diagnosis.condition with a reference to Procedure"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(diagnosis.where(condition.where(reference.startsWith('Procedure')))).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Encounter resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(diagnosis.where(condition.where(reference.startsWith('Procedure')))).id.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-Encounter'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-Encounter').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-2"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').identifier.where(system and value).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-3"/>
+            <description value="Contains .status 'finished'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').status = 'finished'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-4"/>
+            <description value="Contains .class with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/code-specification' with .valueCodeableConcept with .coding with .system 'http://hl7.org/fhir/v3/ActCode' and .code 'IMP' and .display and .system 'http://hl7.org/fhir/v3/ActCode' and .code 'IMP' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').class.where(extension('http://nictiz.nl/fhir/StructureDefinition/code-specification').value.ofType(CodeableConcept).coding.where(system = 'http://hl7.org/fhir/v3/ActCode' and code = 'IMP' and display) and system = 'http://hl7.org/fhir/v3/ActCode' and code = 'IMP' and display).exists()"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-4-1"/>
+            <description value="Contains .class.extension with url 'http://nictiz.nl/fhir/StructureDefinition/code-specification' with .valueCodeableConcept with .coding with .system 'http://hl7.org/fhir/v3/ActCode' and .code 'IMP' and .display. This assert checks only one child. Assert 2-4 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').class.extension('http://nictiz.nl/fhir/StructureDefinition/code-specification').value.ofType(CodeableConcept).coding.where(system = 'http://hl7.org/fhir/v3/ActCode' and code = 'IMP' and display).exists()"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-4-1"/>
+            <description value="Contains .class with .system 'http://hl7.org/fhir/v3/ActCode' and .code 'IMP' and .display. This assert checks only one child. Assert 2-4 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').class.where(system = 'http://hl7.org/fhir/v3/ActCode' and code = 'IMP' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-5"/>
+            <description value="Contains .subject with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').subject.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-6"/>
+            <description value="Contains .participant with .type with .coding with .system 'http://hl7.org/fhir/v3/ParticipationType' and .code 'PRF' and .display, and .individual with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference' with .valueReference with either .reference or .identifier and .display, and with either .reference or .identifier and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').participant.where(type.where(coding.where(system = 'http://hl7.org/fhir/v3/ParticipationType' and code = 'PRF' and display)) and individual.where(extension('http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference').value.ofType(Reference).where((reference or identifier) and display) and (reference or identifier) and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-6-1"/>
+            <description value="Contains .participant.type with .coding with .system 'http://hl7.org/fhir/v3/ParticipationType' and .code 'PRF' and .display. This assert checks only one child. Assert 2-6 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').participant.where(type.where(coding.where(system = 'http://hl7.org/fhir/v3/ParticipationType' and code = 'PRF' and display)).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-6-2"/>
+            <description value="Contains .participant.individual with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference' with .valueReference with either .reference or .identifier and .display, and with either .reference or .identifier and .display. This assert checks only one child. Assert 2-6 checks if all children are present in the same parent. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').participant.where(individual.where(extension('http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference').value.ofType(Reference).where((reference or identifier) and display) and (reference or identifier) and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-6-2-1"/>
+            <description value="Contains .participant.individual.extension with url 'http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference' with .valueReference with either .reference or .identifier and .display. This assert checks only one child. Assert 2-6-2 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').participant.where(individual.extension('http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference').value.ofType(Reference).where((reference or identifier) and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-6-2-2"/>
+            <description value="Contains .participant.individual with either .reference or .identifier and .display. This assert checks only one child. Assert 2-6-2 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').participant.where(individual.where((reference or identifier) and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-7"/>
+            <description value="Contains .period with .start and .end"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').period.where(start and end).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-8"/>
+            <description value="Contains .diagnosis with .condition with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').diagnosis.where(condition.where((reference or identifier) and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-9"/>
+            <description value="Contains .hospitalization with .admitSource with .coding with .system 'http://snomed.info/sct' and .code '264362003' and .display, and .dischargeDisposition with .coding with .system 'http://snomed.info/sct' and .code '264362003' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').hospitalization.where(admitSource.coding.where(system = 'http://snomed.info/sct' and code = '264362003' and display) and dischargeDisposition.coding.where(system = 'http://snomed.info/sct' and code = '264362003' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-9-1"/>
+            <description value="Contains .hospitalization.admitSource with .coding with .system 'http://snomed.info/sct' and .code '264362003' and .display. This assert checks only one child. Assert 2-9 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').hospitalization.admitSource.coding.where(system = 'http://snomed.info/sct' and code = '264362003' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-9-2"/>
+            <description value="Contains .hospitalization.dischargeDisposition with .coding with .system 'http://snomed.info/sct' and .code '264362003' and .display. This assert checks only one child. Assert 2-9 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').hospitalization.dischargeDisposition.coding.where(system = 'http://snomed.info/sct' and code = '264362003' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="2-10"/>
+            <description value="Contains .serviceProvider with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter2-id}').serviceProvider.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Scenario 1.17 - Encounter - Check Encounter 3"/>
+      <description value="Check if the previous operation results in a FHIR Encounter that contains the values that are expected following Nictiz' materials (fixture .id: zib-Encounter-medmij-bgz-test-patA-encounter3)"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Response Bundle contains exactly 1 Encounter that contains .reason.text"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(reason.text).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Encounter resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(reason.text).id.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-Encounter'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-Encounter').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-2"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').identifier.where(system and value).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-3"/>
+            <description value="Contains .status 'finished'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').status = 'finished'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-4"/>
+            <description value="Contains .class with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/code-specification' with .valueCodeableConcept with .coding with .system 'http://hl7.org/fhir/v3/ActCode' and .code 'IMP' and .display and .system 'http://hl7.org/fhir/v3/ActCode' and .code 'IMP' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').class.where(extension('http://nictiz.nl/fhir/StructureDefinition/code-specification').value.ofType(CodeableConcept).coding.where(system = 'http://hl7.org/fhir/v3/ActCode' and code = 'IMP' and display) and system = 'http://hl7.org/fhir/v3/ActCode' and code = 'IMP' and display).exists()"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-4-1"/>
+            <description value="Contains .class.extension with url 'http://nictiz.nl/fhir/StructureDefinition/code-specification' with .valueCodeableConcept with .coding with .system 'http://hl7.org/fhir/v3/ActCode' and .code 'IMP' and .display. This assert checks only one child. Assert 3-4 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').class.extension('http://nictiz.nl/fhir/StructureDefinition/code-specification').value.ofType(CodeableConcept).coding.where(system = 'http://hl7.org/fhir/v3/ActCode' and code = 'IMP' and display).exists()"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-4-1"/>
+            <description value="Contains .class with .system 'http://hl7.org/fhir/v3/ActCode' and .code 'IMP' and .display. This assert checks only one child. Assert 3-4 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').class.where(system = 'http://hl7.org/fhir/v3/ActCode' and code = 'IMP' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-5"/>
+            <description value="Contains .subject with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').subject.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-6"/>
+            <description value="Contains .participant with .type with .coding with .system 'http://hl7.org/fhir/v3/ParticipationType' and .code 'PRF' and .display, and .individual with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference' with .valueReference with either .reference or .identifier and .display, and with either .reference or .identifier and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').participant.where(type.where(coding.where(system = 'http://hl7.org/fhir/v3/ParticipationType' and code = 'PRF' and display)) and individual.where(extension('http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference').value.ofType(Reference).where((reference or identifier) and display) and (reference or identifier) and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-6-1"/>
+            <description value="Contains .participant.type with .coding with .system 'http://hl7.org/fhir/v3/ParticipationType' and .code 'PRF' and .display. This assert checks only one child. Assert 3-6 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').participant.where(type.where(coding.where(system = 'http://hl7.org/fhir/v3/ParticipationType' and code = 'PRF' and display)).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-6-2"/>
+            <description value="Contains .participant.individual with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference' with .valueReference with either .reference or .identifier and .display, and with either .reference or .identifier and .display. This assert checks only one child. Assert 3-6 checks if all children are present in the same parent. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').participant.where(individual.where(extension('http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference').value.ofType(Reference).where((reference or identifier) and display) and (reference or identifier) and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-6-2-1"/>
+            <description value="Contains .participant.individual.extension with url 'http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference' with .valueReference with either .reference or .identifier and .display. This assert checks only one child. Assert 3-6-2 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').participant.where(individual.extension('http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference').value.ofType(Reference).where((reference or identifier) and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-6-2-2"/>
+            <description value="Contains .participant.individual with either .reference or .identifier and .display. This assert checks only one child. Assert 3-6-2 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').participant.where(individual.where((reference or identifier) and display).exists()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-7"/>
+            <description value="Contains .period with .start and .end"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').period.where(start and end).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-8"/>
+            <description value="Contains .reason with .text with a value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').reason.where(text.hasValue()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-9"/>
+            <description value="Contains .hospitalization with .admitSource with .coding with .system 'http://snomed.info/sct' and .code '264362003' and .display, and .dischargeDisposition with .coding with .system 'http://snomed.info/sct' and .code '264362003' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').hospitalization.where(admitSource.coding.where(system = 'http://snomed.info/sct' and code = '264362003' and display) and dischargeDisposition.coding.where(system = 'http://snomed.info/sct' and code = '264362003' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-9-1"/>
+            <description value="Contains .hospitalization.admitSource with .coding with .system 'http://snomed.info/sct' and .code '264362003' and .display. This assert checks only one child. Assert 3-9 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').hospitalization.admitSource.coding.where(system = 'http://snomed.info/sct' and code = '264362003' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-9-2"/>
+            <description value="Contains .hospitalization.dischargeDisposition with .coding with .system 'http://snomed.info/sct' and .code '264362003' and .display. This assert checks only one child. Assert 3-9 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').hospitalization.dischargeDisposition.coding.where(system = 'http://snomed.info/sct' and code = '264362003' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="3-10"/>
+            <description value="Contains .serviceProvider with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Encounter).where(id = '${zib-Encounter-medmij-bgz-test-patA-encounter3-id}').serviceProvider.where((reference or identifier) and display).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>

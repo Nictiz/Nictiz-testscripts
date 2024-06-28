@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">  
+    <id value="mp9-ta-serve-0-1-contentAsserts-xml"/>  
+    <meta> 
+        <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/> 
+    </meta>  
+    <url value="http://nictiz.nl/fhir/TestScript/mp9-ta-serve-0-1-contentAsserts-xml"/>  
+    <version value="r4-mp9-3.0.0-beta"/>  
+    <name value="Medication Process 9 3.0.0-beta  - AdministrationAgreement - Serve - Scenario 0.1 - target contentAsserts - XML Format"/>  
+    <status value="active"/>  
+    <publisher value="Nictiz"/>  
+    <contact> 
+        <name value="Nictiz"/>  
+        <telecom> 
+            <system value="email"/>  
+            <value value="kwalificatie@nictiz.nl"/>  
+            <use value="work"/> 
+        </telecom> 
+    </contact>  
+    <description value="Scenario 0.1 - Alle toedieningsafspraken van de patiënt, zonder aanvullend filtercriterium (Antwoord: bericht met 6 toedieningsafspraken)"/>  
+    <origin> 
+        <index value="1"/>  
+        <profile> 
+            <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>  
+            <code value="FHIR-Client"/> 
+        </profile> 
+    </origin>  
+    <destination> 
+        <index value="1"/>  
+        <profile> 
+            <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>  
+            <code value="FHIR-Server"/> 
+        </profile> 
+    </destination>  
+    <profile id="Bundle-profile"> 
+        <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/> 
+    </profile>  
+    <variable> 
+        <name value="ta1-id"/>  
+        <expression value="Bundle.entry.select(resource as MedicationDispense).where(medication.resolve().code.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.7' and code = '641898')).id"/>  
+        <sourceId value="search-response"/> 
+    </variable>  
+    <variable> 
+        <name value="ta2-id"/>  
+        <expression value="Bundle.entry.select(resource as MedicationDispense).where(medication.resolve().code.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.7' and code = '101079')).id"/>  
+        <sourceId value="search-response"/> 
+    </variable>  
+    <variable> 
+        <name value="t-date"/>  
+        <expression value="Bundle.entry.select(resource as MedicationDispense).where(id = 'mp-AdmAgr-mp9-MBH300QA1TA').extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.AdministrationAgreementDateTime').value"/>  
+        <sourceId value="search-response"/> 
+    </variable>  
+    <variable> 
+        <name value="t-date2"/>  
+        <expression value="Bundle.entry.select(resource as MedicationDispense).where(id = 'mp-AdmAgr-mp9-MBH300QA1TA').extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.AdministrationAgreementDateTime').value - 20 days - 9 hours"/>  
+        <sourceId value="search-response"/> 
+    </variable>  
+    <variable> 
+        <name value="t-date3"/>  
+        <expression value="Bundle.entry.select(resource as MedicationDispense).where(id = 'mp-AdmAgr-mp9-MBH300QA1TA').extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.AdministrationAgreementDateTime').value.toDate() - 20 days"/>  
+        <sourceId value="search-response"/> 
+    </variable>  
+    <variable> 
+        <name value="t-date5"/>  
+        <expression value="@2023-04-11T09:00:00+02:00 - 20 days - 9 hours"/>  
+        <sourceId value="search-response"/> 
+    </variable>  
+    <variable> 
+        <name value="t-date6"/>  
+        <expression value="@2023-04-11 - 20 days"/>  
+        <sourceId value="search-response"/> 
+    </variable>  
+    <test id="Scenario-0-1"> 
+        <name value="Scenario 0.1"/>  
+        <description value="Alle toedieningsafspraken van de patiënt, zonder aanvullend filtercriterium (Antwoord: bericht met 6 toedieningsafspraken)"/>  
+        <action> 
+            <operation> 
+                <type> 
+                    <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>  
+                    <code value="search"/> 
+                </type>  
+                <resource value="MedicationDispense"/>  
+                <description value="Test server to serve MedicationDispense resource(s) representing MP9 building block AdministrationAgreement"/>  
+                <accept value="xml"/>  
+                <destination value="1"/>  
+                <encodeRequestUrl value="true"/>  
+                <origin value="1"/>  
+                <params value="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901084&amp;category=http://snomed.info/sct|422037009&amp;_include=MedicationDispense:medication"/>  
+                <responseId value="search-response"/> 
+            </operation> 
+        </action> 
+    </test>  
+    <test id="Scenario-0-1-TA1-check"> 
+        <name value="Scenario 0.1 - check content of TA1"/>  
+        <description value="Controleer of de inhoud van ToedieningAfspraak1 voldoet aan de verwachtingen."/>  
+        <!-- If there is only 1 T-date in the resource, you cannot check much. If there are multiple, you can put one in a variable and check the rest -->  
+        <action> 
+            <assert> 
+                <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail"> 
+                    <valueBoolean value="false"/> 
+                </extension>  
+                <description value="Confirm that ToedieningAfspraak1 contains extension 'ext-AdministrationAgreement.AdministrationAgreementDateTime' with a value."/>  
+                <expression value="Bundle.entry.select(resource as MedicationDispense).where(id = '${ta1-id}').extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.AdministrationAgreementDateTime').value ~ @${t-date}"/>  
+                <sourceId value="search-response"/>  
+                <warningOnly value="false"/> 
+            </assert> 
+        </action>  
+        <action> 
+            <assert> 
+                <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail"> 
+                    <valueBoolean value="false"/> 
+                </extension>  
+                <description value="Confirm that ToedieningAfspraak1 contains extension 'ext-AdministrationAgreement.AdministrationAgreementDateTime' with a value."/>  
+                <expression value="Bundle.entry.select(resource as MedicationDispense).where(id = '${ta1-id}').extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.AdministrationAgreementDateTime').value ~ @${t-date2} + 20 days + 9 hours"/>  
+                <sourceId value="search-response"/>  
+                <warningOnly value="false"/> 
+            </assert> 
+        </action>  
+        <action> 
+            <assert> 
+                <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail"> 
+                    <valueBoolean value="false"/> 
+                </extension>  
+                <description value="Confirm that ToedieningAfspraak1 contains extension 'ext-AdministrationAgreement.AdministrationAgreementDateTime' with a value."/>  
+                <expression value="Bundle.entry.select(resource as MedicationDispense).where(id = '${ta1-id}').extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.AdministrationAgreementDateTime').value ~ ${t-date3} + 20 days + 9 hours"/>  
+                <sourceId value="search-response"/>  
+                <warningOnly value="false"/> 
+            </assert> 
+        </action>  
+        <action> 
+            <assert> 
+                <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail"> 
+                    <valueBoolean value="false"/> 
+                </extension>  
+                <description value="Confirm that ToedieningAfspraak1 contains extension 'ext-AdministrationAgreement.AdministrationAgreementDateTime' with a value."/>  
+                <expression value="Bundle.entry.select(resource as MedicationDispense).where(id = '${ta1-id}').extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.AdministrationAgreementDateTime').value ~ ${t-date}.toDate() + 20 days + 9 hours"/>  
+                <sourceId value="search-response"/>  
+                <warningOnly value="false"/> 
+            </assert> 
+        </action>  
+        <action> 
+            <assert> 
+                <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail"> 
+                    <valueBoolean value="false"/> 
+                </extension>  
+                <description value="Confirm that ToedieningAfspraak1 contains extension 'ext-AdministrationAgreement.AdministrationAgreementDateTime' with a value."/>  
+                <expression value="Bundle.entry.select(resource as MedicationDispense).where(id = '${ta1-id}').extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.AdministrationAgreementDateTime').value ~ @${t-date2}.toDate() + 20 days + 9 hours"/>  
+                <sourceId value="search-response"/>  
+                <warningOnly value="false"/> 
+            </assert> 
+        </action>  
+        <action> 
+            <assert> 
+                <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail"> 
+                    <valueBoolean value="false"/> 
+                </extension>  
+                <description value="Confirm that ToedieningAfspraak1 contains extension 'ext-AdministrationAgreement.AdministrationAgreementDateTime' with a value."/>  
+                <expression value="Bundle.entry.select(resource as MedicationDispense).where(id = '${ta1-id}').extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.AdministrationAgreementDateTime').value ~ '${t-date2}'.toDate() + 20 days + 9 hours"/>  
+                <sourceId value="search-response"/>  
+                <warningOnly value="false"/> 
+            </assert> 
+        </action>  
+        <action> 
+            <assert> 
+                <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail"> 
+                    <valueBoolean value="false"/> 
+                </extension>  
+                <description value="Confirm that ToedieningAfspraak1 contains extension 'ext-AdministrationAgreement.AdministrationAgreementDateTime' with a value."/>  
+                <expression value="Bundle.entry.select(resource as MedicationDispense).where(id = '${ta1-id}').extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.AdministrationAgreementDateTime').value ~ @${t-date5} + 20 days + 9 hours"/>  
+                <sourceId value="search-response"/>  
+                <warningOnly value="false"/> 
+            </assert> 
+        </action>  
+        <action> 
+            <assert> 
+                <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail"> 
+                    <valueBoolean value="false"/> 
+                </extension>  
+                <description value="Confirm that ToedieningAfspraak1 contains extension 'ext-AdministrationAgreement.AdministrationAgreementDateTime' with a value."/>  
+                <expression value="Bundle.entry.select(resource as MedicationDispense).where(id = '${ta1-id}').extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.AdministrationAgreementDateTime').value ~ @${t-date6} + 20 days + 9 hours"/>  
+                <sourceId value="search-response"/>  
+                <warningOnly value="false"/> 
+            </assert> 
+        </action> 
+    </test> 
+</TestScript>

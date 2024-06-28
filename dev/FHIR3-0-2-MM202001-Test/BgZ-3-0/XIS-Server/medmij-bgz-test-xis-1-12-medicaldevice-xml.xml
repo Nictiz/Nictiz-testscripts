@@ -13,7 +13,11 @@
       </extension>
    </extension>
    <url value="http://nictiz.nl/fhir/TestScript/medmij-bgz-test-xis-1-12-xml"/>
+<<<<<<< HEAD
+   <version value="stu3-3.0-patchlevel 2024-01"/>
+=======
    <version value="stu3-3.0-patchlevel 2024-03"/>
+>>>>>>> main
    <name value="BgZ - XIS Server - Test - Scenario 1.12 - Serve BgZ MedicalDevice resources of XXX_Rijn - XML Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -49,9 +53,16 @@
       <description value="OAuth Token for current patient"/>
    </variable>
    <variable>
-      <name value="X-Correlation-ID"/>
-      <defaultValue value="${UUID}"/>
-      <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
+      <name value="zib-MedicalDeviceProduct-medmij-bgz-test-patA-medDevice1-id"/>
+      <description value="Resource.id for Device 1"/>
+      <expression value="Bundle.entry.resource.ofType(Device).id"/>
+      <sourceId value="fixture-response"/>
+   </variable>
+   <variable>
+      <name value="zib-MedicalDevice-medmij-bgz-test-patA-medDevice1-id"/>
+      <description value="Resource.id for DeviceUseStatement 1"/>
+      <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).id"/>
+      <sourceId value="fixture-response"/>
    </variable>
    <test>
       <name value="Scenario 1.12 - MedicalDevice"/>
@@ -77,10 +88,7 @@
                <field value="MedMij-Request-ID"/>
                <value value="${UUID}"/>
             </requestHeader>
-            <requestHeader>
-               <field value="X-Correlation-ID"/>
-               <value value="${X-Correlation-ID}"/>
-            </requestHeader>
+            <responseId value="fixture-response"/>
          </operation>
       </action>
       <action>
@@ -285,14 +293,29 @@
             <warningOnly value="true"/>
          </assert>
       </action>
+   </test>
+   <test>
+      <name value="Scenario 1.12 - MedicalDevice - Check Device"/>
+      <description value="Check if the previous operation results in a FHIR Device that contains the values that are expected following Nictiz' materials (fixture .id: zib-MedicalDeviceProduct-medmij-bgz-test-patA-medDevice1)"/>
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
+               <valueBoolean value="true"/>
             </extension>
-            <description value="Confirm that the response Bundle contains 1 DeviceUseStatement resource(s). "/>
+            <description value="Response Bundle contains exactly 1 Device"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(DeviceUseStatement)).count() = 1"/>
+            <expression value="Bundle.entry.resource.ofType(Device).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Device resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Device).id.exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -301,9 +324,264 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the response Bundle contains 1 Device resource(s). "/>
+            <label value="1-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicalDeviceProduct'"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Device)).count() = 1"/>
+            <expression value="Bundle.entry.resource.ofType(Device).where(id = '${zib-MedicalDeviceProduct-medmij-bgz-test-patA-medDevice1-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicalDeviceProduct').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Device).where(id = '${zib-MedicalDeviceProduct-medmij-bgz-test-patA-medDevice1-id}').identifier.where(system and value).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-3"/>
+            <description value="Contains .udi with .carrierHRF with a value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Device).where(id = '${zib-MedicalDeviceProduct-medmij-bgz-test-patA-medDevice1-id}').udi.carrierHRF.hasValue()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-4"/>
+            <description value="Contains .status 'active'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Device).where(id = '${zib-MedicalDeviceProduct-medmij-bgz-test-patA-medDevice1-id}').status = 'active'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-5"/>
+            <description value="Contains .type with .coding with .system 'http://snomed.info/sct' and .code '363753007' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Device).where(id = '${zib-MedicalDeviceProduct-medmij-bgz-test-patA-medDevice1-id}').type.coding.where(system = 'http://snomed.info/sct' and code = '363753007' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6"/>
+            <description value="Contains .patient with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Device).where(id = '${zib-MedicalDeviceProduct-medmij-bgz-test-patA-medDevice1-id}').patient.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-7"/>
+            <description value="Contains .note with .text with a value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Device).where(id = '${zib-MedicalDeviceProduct-medmij-bgz-test-patA-medDevice1-id}').note.where(text.hasValue()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Scenario 1.12 - MedicalDevice - Check DeviceUseStatement"/>
+      <description value="Check if the previous operation results in a FHIR DeviceUseStatement that contains the values that are expected following Nictiz' materials (fixture .id: zib-MedicalDevice-medmij-bgz-test-patA-medDevice1)"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Response Bundle contains exactly 1 DeviceUseStatement"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="DeviceUseStatement resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).id.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicalDevice'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).where(id = '${zib-MedicalDevice-medmij-bgz-test-patA-medDevice1-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicalDevice').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2"/>
+            <description value="Contains .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicalDevice-Organization' with .valueReference with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).where(id = '${zib-MedicalDevice-medmij-bgz-test-patA-medDevice1-id}').extension('http://nictiz.nl/fhir/StructureDefinition/zib-MedicalDevice-Organization').value.ofType(Reference).where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-3"/>
+            <description value="Contains .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicalDevice-Practitioner' with .valueReference with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).where(id = '${zib-MedicalDevice-medmij-bgz-test-patA-medDevice1-id}').extension('http://nictiz.nl/fhir/StructureDefinition/zib-MedicalDevice-Practitioner').value.ofType(Reference).where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-4"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).where(id = '${zib-MedicalDevice-medmij-bgz-test-patA-medDevice1-id}').identifier.where(system and value).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-5"/>
+            <description value="Contains .status 'active'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).where(id = '${zib-MedicalDevice-medmij-bgz-test-patA-medDevice1-id}').status = 'active'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6"/>
+            <description value="Contains .subject with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).where(id = '${zib-MedicalDevice-medmij-bgz-test-patA-medDevice1-id}').subject.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-7"/>
+            <description value="Contains .whenUsed with .start"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).where(id = '${zib-MedicalDevice-medmij-bgz-test-patA-medDevice1-id}').whenUsed.start.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-8"/>
+            <description value="Contains .device with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).where(id = '${zib-MedicalDevice-medmij-bgz-test-patA-medDevice1-id}').device.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-9"/>
+            <description value="Contains .indication with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-MedicalDevice-Problem' with .valueReference with either .reference or .identifier and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).where(id = '${zib-MedicalDevice-medmij-bgz-test-patA-medDevice1-id}').indication.where(extension('http://nictiz.nl/fhir/StructureDefinition/zib-MedicalDevice-Problem').value.ofType(Reference).where((reference or identifier) and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-10"/>
+            <description value="Contains .bodySite with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/BodySite-Qualifier' with .valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '51440002' and .display and .coding with .system 'http://snomed.info/sct' and .code '49076000' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).where(id = '${zib-MedicalDevice-medmij-bgz-test-patA-medDevice1-id}').bodySite.where(extension('http://nictiz.nl/fhir/StructureDefinition/BodySite-Qualifier').value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '51440002' and display) and coding.where(system = 'http://snomed.info/sct' and code = '49076000' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-10-1"/>
+            <description value="Contains .bodySite.extension with url 'http://nictiz.nl/fhir/StructureDefinition/BodySite-Qualifier' with .valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '51440002' and .display. This assert checks only one child. Assert 1-10 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).where(id = '${zib-MedicalDevice-medmij-bgz-test-patA-medDevice1-id}').bodySite.extension('http://nictiz.nl/fhir/StructureDefinition/BodySite-Qualifier').value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '51440002' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-10-1"/>
+            <description value="Contains .bodySite with .coding with .system 'http://snomed.info/sct' and .code '49076000' and .display. This assert checks only one child. Assert 1-10 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).where(id = '${zib-MedicalDevice-medmij-bgz-test-patA-medDevice1-id}').bodySite.where(coding.where(system = 'http://snomed.info/sct' and code = '49076000' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-11"/>
+            <description value="Contains .note with .text with a value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(DeviceUseStatement).where(id = '${zib-MedicalDevice-medmij-bgz-test-patA-medDevice1-id}').note.where(text.hasValue()).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>

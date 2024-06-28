@@ -13,7 +13,11 @@
       </extension>
    </extension>
    <url value="http://nictiz.nl/fhir/TestScript/medmij-bgz-test-xis-1-04-2-xml"/>
+<<<<<<< HEAD
+   <version value="stu3-3.0-patchlevel 2024-01"/>
+=======
    <version value="stu3-3.0-patchlevel 2024-03"/>
+>>>>>>> main
    <name value="BgZ - XIS Server - Test - Scenario 1.04.2.2 - Serve BgZ TreatmentDirective resources of XXX_Rijn - XML Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -49,9 +53,10 @@
       <description value="OAuth Token for current patient"/>
    </variable>
    <variable>
-      <name value="X-Correlation-ID"/>
-      <defaultValue value="${UUID}"/>
-      <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
+      <name value="zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id"/>
+      <description value="Resource.id for Consent 1"/>
+      <expression value="Bundle.entry.resource.ofType(Consent).id"/>
+      <sourceId value="fixture-response"/>
    </variable>
    <test>
       <name value="Scenario 1.04.2.2 - TreatmentDirective"/>
@@ -77,10 +82,7 @@
                <field value="MedMij-Request-ID"/>
                <value value="${UUID}"/>
             </requestHeader>
-            <requestHeader>
-               <field value="X-Correlation-ID"/>
-               <value value="${X-Correlation-ID}"/>
-            </requestHeader>
+            <responseId value="fixture-response"/>
          </operation>
       </action>
       <action>
@@ -285,14 +287,245 @@
             <warningOnly value="true"/>
          </assert>
       </action>
+   </test>
+   <test>
+      <name value="Scenario 1.04.2.2 - TreatmentDirective - Check Consent"/>
+      <description value="Check if the previous operation results in a FHIR Consent that contains the values that are expected following Nictiz' materials (fixture .id: zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1)"/>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Response Bundle contains exactly 1 Consent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Consent resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).id.exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the response Bundle contains 1 Consent resource(s). "/>
+            <label value="1-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective'"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Consent)).count() = 1"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2"/>
+            <description value="Contains .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-Verification' with .extension with url 'Verified' with .valueBoolean 'true' and .extension with url 'VerifiedWith' with .valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '116154003' and .display and .extension with url 'VerificationDate' with .valueDateTime. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').extension('http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-Verification').where(extension('Verified').value.ofType(boolean) = true and extension('VerifiedWith').value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '116154003' and display) and extension('VerificationDate').value.ofType(dateTime)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2-1"/>
+            <description value="Contains .extension('http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-Verification').extension with url 'Verified' with .valueBoolean 'true'. This assert checks only one child. Assert 1-2 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').extension('http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-Verification').extension('Verified').value.ofType(boolean) = true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2-2"/>
+            <description value="Contains .extension('http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-Verification').extension with url 'VerifiedWith' with .valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '116154003' and .display. This assert checks only one child. Assert 1-2 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').extension('http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-Verification').extension('VerifiedWith').value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '116154003' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-2-3"/>
+            <description value="Contains .extension('http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-Verification').extension with url 'VerificationDate' with .valueDateTime. This assert checks only one child. Assert 1-2 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').extension('http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-Verification').extension('VerificationDate').value.ofType(dateTime).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-3"/>
+            <description value="Contains .extension with url 'http://nictiz.nl/fhir/StructureDefinition/Comment' with .valueString with a value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').extension('http://nictiz.nl/fhir/StructureDefinition/Comment').value.ofType(string).hasValue()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-4"/>
+            <description value="Contains .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-Treatment' with .valueCodeableConcept with .coding with .system 'http://snomed.info/sct' and .code '40617009' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').extension('http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-Treatment').value.ofType(CodeableConcept).coding.where(system = 'http://snomed.info/sct' and code = '40617009' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-5"/>
+            <description value="Contains .modifierExtension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-TreatmentPermitted' with .valueCodeableConcept with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.3.11.60.40.4' and .code 'JA_MAAR' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').modifierExtension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-TreatmentPermitted').value.ofType(CodeableConcept).coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.3.11.60.40.4' and code = 'JA_MAAR' and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-6"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').identifier.where(system and value).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-7"/>
+            <description value="Contains .status 'active'"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').status = 'active'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-8"/>
+            <description value="Contains .category with .coding with .system 'http://snomed.info/sct' and .code '11291000146105' and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').category.where(coding.where(system = 'http://snomed.info/sct' and code = '11291000146105' and display)).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-9"/>
+            <description value="Contains .patient with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').patient.where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-10"/>
+            <description value="Contains .period with .start and .end"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').period.where(start and end).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-11"/>
+            <description value="Contains .sourceReference with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').source.ofType(Reference).where((reference or identifier) and display).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-12"/>
+            <description value="Contains .policy with .uri"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').policy.where(uri).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-13"/>
+            <description value="Contains .except with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-Restrictions' with .valueString with a value and .type 'deny'. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').except.where(extension('http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-Restrictions').value.ofType(string).hasValue() and type = 'deny').exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-13-1"/>
+            <description value="Contains .except.extension with url 'http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-Restrictions' with .valueString with a value. This assert checks only one child. Assert 1-13 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').except.where(extension('http://nictiz.nl/fhir/StructureDefinition/zib-TreatmentDirective-Restrictions').value.ofType(string).hasValue()).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="1-13-2"/>
+            <description value="Contains .except.type 'deny'. This assert checks only one child. Assert 1-13 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.ofType(Consent).where(id = '${zib-TreatmentDirective-medmij-bgz-test-patA-treatmentdir1-id}').except.where(type = 'deny').exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
