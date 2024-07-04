@@ -1,0 +1,511 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="gbz-fhir3-0-2-ikz-xis-4-3-json"/>
+   <meta>
+      <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
+   </meta>
+   <url value="http://nictiz.nl/fhir/TestScript/gbz-fhir3-0-2-ikz-xis-4-3-json"/>
+   <version value="stu3-3.0-patchlevel 2024-03"/>
+   <name value="Nictiz Geboortezorg - Server - Scenario 4.3 - Serve Integrale Zwangerschapskaart resources of Micha Yassien-Mohamed (perinatal and maternal death) - JSON Format"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Scenario 4.3: Serve Integrale Zwangerschapskaart resources of Micha Yassien-Mohamed  (perinatal and maternal death)"/>
+   <origin>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
+         <code value="FHIR-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <fixture id="episodeofcare-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
+      <resource>
+         <reference value="../_reference/Verloskunde-Casus3/medmij-gbz-bc-MaternalRecord-ca7cf58a-200b-417c-acb5-8aa6a6e692d5.xml"/>
+      </resource>
+   </fixture>
+   <variable>
+      <name value="patient-token-id"/>
+      <defaultValue value="Bearer d7a212d5-ff26-43ef-9478-1146b993f870"/>
+      <description value="OAuth Token for current patient"/>
+   </variable>
+   <variable>
+      <name value="episode-id"/>
+      <expression value="EpisodeOfCare.id"/>
+      <sourceId value="episodeofcare-fixture"/>
+   </variable>
+   <variable>
+      <name value="T"/>
+      <defaultValue value="${CURRENTDATE}"/>
+   </variable>
+   <test id="1-ServeWoman">
+      <name value="1-ServeWoman"/>
+      <description value="Query Patient resource for HCIM Patient"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Patient"/>
+            <description value="Test XIS server to serve Patient resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?_include=Patient:link"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 1 Patient resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Patient)).count() &gt;= 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="2-ServePayer">
+      <name value="2-ServePayer"/>
+      <description value="Query Coverage resource for HCIM Payer"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Coverage"/>
+            <description value="Test XIS server to serve Coverage resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 0 Coverage resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Coverage)).count() &gt;= 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="3-ServeFamilyMemberHistory">
+      <name value="3-ServeFamilyMemberHistory"/>
+      <description value="Query FamilyMemberHistory resource for FamilyMemberHistory"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="FamilyMemberHistory"/>
+            <description value="Test XIS server to serve FamilyMemberHistory resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 0 FamilyMemberHistory resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(FamilyMemberHistory)).count() &gt;= 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="4-ServeDeviceUseStatement">
+      <name value="4-ServeDeviceUseStatement"/>
+      <description value="Query DeviceUseStatement resource for HCIM BladderFunction-UrineCatheter"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="DeviceUseStatement"/>
+            <description value="Test XIS server to serve DeviceUseStatement resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?_include=DeviceUseStatement:device"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 0 DeviceUseStatement resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(DeviceUseStatement)).count() &gt;= 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="5-ServeMaternalRecord">
+      <name value="5-ServeMaternalRecord"/>
+      <description value="Test Server query operation for MaternalRecord (EpisodeOfCare) including managing organization (Organization) and care manager (Practitioner)"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="EpisodeOfCare"/>
+            <description value="Test XIS server to serve EpisodeOfCare resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?type=http://snomed.info/sct|364320009&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 1 EpisodeOfCare resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(EpisodeOfCare)).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 1 Organization resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Organization)).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 1 Practitioner resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Practitioner)).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="6-ServeConditions">
+      <name value="6-ServeConditions"/>
+      <description value="Test Server query operation for Conditions (including Pregnancy)"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Condition"/>
+            <description value="Test XIS server to serve Condition resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?context=EpisodeOfCare/${episode-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 1 Condition resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Condition)).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Zwangerschap -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Condition resource(s) with code http://snomed.info/sct | 118185001. (Zwangerschap)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Condition)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '118185001').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="7-ServeEncounters">
+      <name value="7-ServeEncounters"/>
+      <description value="Test Server query operation for Encounters"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Encounter"/>
+            <description value="Test XIS server to serve Encounter resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?episodeofcare=${episode-id}&amp;_include=Encounter:practitioner"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 2 Encounter resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Encounter)).count() = 2"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 1 Practitioner resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Practitioner)).count() = 1"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Prenatale controle -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 2 Encounter resource(s) that contains type.coding.code = 11429006. (ContactSoort)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.select(resource as Encounter).where(type.coding.code.where($this='11429006').exists()).count() = 2"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="8a-ServeObservations">
+      <name value="8a-ServeObservations"/>
+      <description value="Test Server query operation for Observations"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?context=EpisodeOfCare/${episode-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <!-- parity -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 11977-6. (parity)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '11977-6').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- gravidity -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 11996-6. (gravidity)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '11996-6').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- geschatte a terme datum -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 161714006. (geschatte a terme datum)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '161714006').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="8b-ServeObservations">
+      <name value="8b-ServeObservations"/>
+      <description value="Test Server query operation for Observations"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?context:Encounter.episodeofcare=EpisodeOfCare/${episode-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <!-- foetale sterfte -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 276507005. (bloeddruk)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '276507005').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="9-ServeProcedures">
+      <name value="9-ServeProcedures"/>
+      <description value="Test Server query operation for (Obstetric) Procedures"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="Procedure"/>
+            <description value="Test XIS server to serve Procedure resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?context=EpisodeOfCare/${episode-id}&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 0 Procedure resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Procedure)).count() = 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 0 Organization resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Organization)).count() = 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 0 ProcedureRequest resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(ProcedureRequest)).count() = 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="10-ServeCareTeam">
+      <name value="10-ServeCareTeam"/>
+      <description value="Test Server query operation for CareTeam"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <code value="search"/>
+            </type>
+            <resource value="CareTeam"/>
+            <description value="Test XIS server to serve CareTeam resources."/>
+            <accept value="json"/>
+            <encodeRequestUrl value="true"/>
+            <params value="?context=EpisodeOfCare/${episode-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the response Bundle contains 0 CareTeam resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(CareTeam)).count() = 0"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
