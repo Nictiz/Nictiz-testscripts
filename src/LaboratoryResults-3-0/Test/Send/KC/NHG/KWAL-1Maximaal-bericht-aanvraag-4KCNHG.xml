@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
+    nts:scenario="client">
+  
+    <id value="KWAL-l2z-1Maximaal-bericht-aanvraag-4KCNHG"/>
+    <version value="R4-3.0"/>
+    <name value="LaboratoryResults - Maximaal bericht aanvraag - Scenario 4 KC NHG."/>
+    <description value="Scenario 4 KC NHG - Send KC results with a NHG code."/>
+ 
+    <nts:fixture id="KWAL-loa-1-4KCNHG"
+        href="Sending-XIS/lr-loa-KWAL-l2z-1Maximaal-bericht-aanvraag-4KCNHG.xml"/>
+    <nts:includeDateT value="yes"/>
+
+    <test id="Maximaal-bericht Scenario 4 KC NHG">
+        <name value="Scenario 4 KC NHG"/>
+        <description value="Send KC laboratory results with a NHG code."/>
+        <nts:include value="test.client.transaction" scope="common" sourceId="KWAL-loa-1-4KCNHG"/>
+        <nts:include value="test.client.successfulTransaction" scope="common"/>
+        <nts:include value="assert.request.numResources" scope="common" resource="Observation" count="1"/>
+        <nts:include value="assert.request.numResources" scope="common" resource="Specimen" count="1"/>
+        <nts:include value="assert.request.numResources" scope="common" resource="Organization" count="1"/>
+        <nts:include value="assert.request.numResources" scope="common" resource="Patient" count="1"/>
+        
+ <!--Asserts for checking the Patient resource -->
+        <nts:include value="assert.identifier.bsn"  direction="request" resource="Patient"
+            system="http://fhir.nl/fhir/NamingSystem/bsn"
+            identifier="999999114"/>
+        <nts:include value="assert.gender" direction="request" resource="Patient"
+            gender="female"
+                url="http://nictiz.nl/fhir/StructureDefinition/ext-CodeSpecification"
+                    system="http://terminology.hl7.org/CodeSystem/v3-AdministrativeGender"
+                    code="F"
+                    display="Vrouw"/>
+        <nts:include value="assert.birthdate" direction="request" resource="Patient"
+            date="1950-11-01"/>
+
+
+<!-- Asserts for checking the first Observation resource -->
+        <nts:include value="assert.status" direction="request" resource="Observation"
+            status="final"/>
+        <nts:include value="assert.code" direction="request" resource="Observation"
+            labsystem="https://referentiemodel.nhg.org/tabellen/nhg-tabel-45-diagnostische-bepalingen"
+            labcode="382"
+            display="Glucose nuchter, draagbare meter"/>
+        <nts:include value="assert.valuequantity" direction="request" resource="Observation"
+            quantity="3"
+            system="http://unitsofmeasure.org"
+            code="mmol/L"
+            unit="mmol/L"/>
+        <nts:include value="assert.interpretation" direction="request" resource="Observation"
+            interpretation="Patiënt heeft een ernstig verlaagde glucosespiegel."/>
+        <nts:include value="assert.lowerreferencerange" direction="request" resource="Observation"
+            quantity="4"
+            unit="mmol/L"
+            system="http://unitsofmeasure.org"
+            code="mmol/L"/>
+        <nts:include value="assert.higherreferencerange" direction="request" resource="Observation"
+            quantity="8"
+            unit="mmol/L"
+            system="http://unitsofmeasure.org"
+            code="mmol/L"/>
+
+<!-- Asserts for checking the Specimen resource -->
+        <nts:include value="assert.identifier" direction="request" resource="Specimen" 
+            system="urn:oid:2.16.840.1.113883.2.4.3.11.999.25.4267.4"
+            identifier="12081992"/>
+        <nts:include value="assert.type" direction="request" resource="Specimen" 
+            system="http://snomed.info/sct"
+            code="122554006"
+            display="capillair bloed"/>
+                
+<!-- Asserts for checking the Organization resource --> 
+        <nts:include value="assert.identifier" direction="request" resource="Organization" 
+            system="http://fhir.nl/fhir/NamingSystem/ura" 
+            identifier="00003335"/>
+        <nts:include value="assert.type" direction="request" resource="Organization" 
+            system="http://nictiz.nl/fhir/NamingSystem/organization-type" 
+            code="L1" 
+            display="Laboratorium"/>
+        <nts:include value="assert.name" direction="request" resource="Organization" 
+            name="Klinisch chemisch Lab de Erlenmeyer"/>
+        <nts:include value="assert.telecom" direction="request" resource="Organization" 
+            system="phone" 
+            telecomvalue="06-11122255" 
+            use="work" 
+            urltelecom="http://nictiz.nl/fhir/StructureDefinition/ext-Comment" 
+            comment="Bel met vragen"/>
+        <nts:include value="assert.telecom" direction="request" resource="Organization" 
+            system="email" 
+            telecomvalue="tproefje@lab.nl" 
+            use="work"
+            urltelecom="" 
+            comment=""/>
+        <nts:include value="assert.address" direction="request" resource="Organization"
+            urlstreet="http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName"
+            street="Kerkstraat"
+            urlhousenumber="http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber"
+            housenumber="101"
+            urlbuildingsuffixnumber="A"
+            suffixnumber=""
+            city="Zorgstad"
+            postalcode="2143BB"
+            urltype="http://nictiz.nl/fhir/StructureDefinition/ext-AddressInformation.AddressType"
+            systemtype="http://terminology.hl7.org/CodeSystem/v3-AddressUse"
+            codetype="WP"
+            display="Werkadres"
+            use="work"/>
+    </test>
+</TestScript>
