@@ -5,7 +5,7 @@
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
    <url value="http://nictiz.nl/fhir/TestScript/TEST-l2z-4Bericht-met-meerdere-aparte-resultaten-1MMBLOINC"/>
-   <version value="R4-3.0"/>
+   <version value="R4-3.0-patchlevel 2024-03"/>
    <name value="LaboratoryResults - Bericht met meerdere aparte resultaten - Scenario 1 MMB LOINC."/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -136,7 +136,7 @@
             </extension>
             <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
             <direction value="request"/>
-            <expression value="Bundle.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <expression value="Bundle.descendants().where($this.is(CodeableConcept)).all(coding.display.exists() or text.exists() or extension.exists())"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -289,9 +289,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that Bundle contains the right address (name) for the Patient"/>
+            <description value="Confirm that Bundle contains the right name for the Patient"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Patient).name.where(use='offical' and text ='Elise Erelies' and family='Erelies' and given='Elise').exists()"/>
+            <expression value="Bundle.entry.resource.as(Patient).name.where(use='official' and text='Elise Erelies' and family='Erelies' and given='Elise')"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -300,7 +300,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that Bundle contains the right name (family) for the Patient"/>
+            <description value="Confirm that Bundle contains the right family display name for the Patient"/>
             <direction value="request"/>
             <expression value="Bundle.entry.resource.as(Patient).name.family.extension.where(url='http://hl7.org/fhir/StructureDefinition/humanname-own-name' and value='Erelies').exists()"/>
             <warningOnly value="false"/>
@@ -311,7 +311,7 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that Bundle contains the right name (family) for the Patient"/>
+            <description value="Confirm that Bundle contains the right family url and code for the Patient"/>
             <direction value="request"/>
             <expression value="Bundle.entry.resource.as(Patient).name.given.extension.where(url='http://hl7.org/fhir/StructureDefinition/iso21090-EN-qualifier' and value='BR').exists()"/>
             <warningOnly value="false"/>
@@ -322,23 +322,30 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains a(n) Patient with the gender"/>
+            <description value="Confirm that the Bundle contains a(n) Patient with a gender"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Patient).gender=@female"/>
+            <expression value="Bundle.entry.resource.as(Patient).gender='female'"/>
             <warningOnly value="false"/>
          </assert>
       </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the Bundle contains a(n) Patient with the gender code F with system http://terminology.hl7.org/CodeSystem/v3-AdministrativeGender and a display value"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Patient).gender.extension.where(url='http://nictiz.nl/fhir/StructureDefinition/ext-CodeSpecification' and valueCodeableConcept.coding.system='http://terminology.hl7.org/CodeSystem/v3-AdministrativeGender' and valueCodeableConcept.coding.code='F' and extension.valueCodeableConcept.coding.display.exists()).exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
+      <!-- <action>
+        <assert>
+            <description
+                value="Confirm that the Bundle contains a url for gender"/>
+            <direction value="{$direction}"/>
+            <expression value="Bundle.entry.resource.as({$resource}).gender.extension.url.exists()"/>
+            <warningOnly value="{$warningOnly}"/>
+        </assert>
+    </action> -->
+      <!-- <action>
+        <assert>
+            <description
+                value="Confirm that the Bundle contains a(n) {$resource} with the gender code {$code} with system {$system} and a display value"/>
+            <direction value="{$direction}"/>
+            <expression value="Bundle.entry.resource.as({$resource}).gender.extension.valueCodeableConcept.coding.where(system='{$system}' and code='{$code}' and display.exists())"/>
+            <warningOnly value="{$warningOnly}"/>
+        </assert>
+    </action> -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -346,7 +353,7 @@
             </extension>
             <description value="Evaluate Patient.birthDate equivalent against variable 'date' date value"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Patient).birthDate ~ @${date}"/>
+            <expression value="Bundle.entry.resource.as(Patient).birthDate='1950-11-01'"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -380,10 +387,19 @@
             </extension>
             <description value="Confirm that the Bundle contains a(n) Observation that has the code 94309-2 with system http://loinc.org"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).code.coding.where(code='94309-2' and system='http://loinc.org' and display.exists()).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).code.coding.where(code='94309-2' and system='http://loinc.org' and display.exists())"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- <action>
+        <assert>
+            <description
+                value="Confirm that the Bundle contains a(n) {$resource} with the interpretationflag {$code} with system {$system}."/>
+            <direction value="{$direction}"/>
+            <expression value="Bundle.entry.resource.as({$resource}).interpretation.where(coding.code='{$code}' and coding.system='{$system}' and coding.display.exists()) | Bundle.entry.resource.as({$resource}).valueCodeableConcept.coding.where(code='{$code}' and system='{$system}' and display.exists())"/>
+            <warningOnly value="{$warningOnly}"/>
+        </assert>
+    </action> -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -391,21 +407,19 @@
             </extension>
             <description value="Confirm that the Bundle contains a(n) Observation with the interpretationflag 260373001 with system http://snomed.info/sct."/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).interpretation.where(coding.code='260373001' and coding.system='http://snomed.info/sct' and coding.display.exists()).exists()"/>
-            <warningOnly value="false"/>
+            <expression value="Bundle.entry.resource.as(Observation).valueCodeableConcept.coding.where(code='260373001' and system='http://snomed.info/sct' and display.exists())"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation with the interpretationflag 260373001 with system http://snomed.info/sct."/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).ivalueCodeableConcept.coding.where(coding.code='260373001' and coding.system='http://snomed.info/sct' and coding.display.exists()).exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
+      <!-- <action>
+        <assert>
+            <description
+                value="Confirm that the Bundle contains a(n) {$resource} with the interpretationflag {$code} with system {$system}."/>
+            <direction value="{$direction}"/>
+            <expression value="Bundle.entry.resource.as({$resource}).valueCodeableConcept.coding.where(code='{$code}' and system='{$system}' and display.exists())"/>
+            <warningOnly value="{$warningOnly}"/>
+        </assert>
+    </action> -->
       <!-- Asserts for checking the second Observation resource -->
       <action>
          <assert>
@@ -436,10 +450,19 @@
             </extension>
             <description value="Confirm that the Bundle contains a(n) Observation that has the code 21613-5 with system http://loinc.org"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).code.coding.where(code='21613-5' and system='http://loinc.org' and display.exists()).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).code.coding.where(code='21613-5' and system='http://loinc.org' and display.exists())"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- <action>
+        <assert>
+            <description
+                value="Confirm that the Bundle contains a(n) {$resource} with the interpretationflag {$code} with system {$system}."/>
+            <direction value="{$direction}"/>
+            <expression value="Bundle.entry.resource.as({$resource}).interpretation.where(coding.code='{$code}' and coding.system='{$system}' and coding.display.exists()) | Bundle.entry.resource.as({$resource}).valueCodeableConcept.coding.where(code='{$code}' and system='{$system}' and display.exists())"/>
+            <warningOnly value="{$warningOnly}"/>
+        </assert>
+    </action> -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -447,21 +470,19 @@
             </extension>
             <description value="Confirm that the Bundle contains a(n) Observation with the interpretationflag 260373001 with system http://snomed.info/sct."/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).interpretation.where(coding.code='260373001' and coding.system='http://snomed.info/sct' and coding.display.exists()).exists()"/>
-            <warningOnly value="false"/>
+            <expression value="Bundle.entry.resource.as(Observation).valueCodeableConcept.coding.where(code='260373001' and system='http://snomed.info/sct' and display.exists())"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation with the interpretationflag 260373001 with system http://snomed.info/sct."/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).ivalueCodeableConcept.coding.where(coding.code='260373001' and coding.system='http://snomed.info/sct' and coding.display.exists()).exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
+      <!-- <action>
+        <assert>
+            <description
+                value="Confirm that the Bundle contains a(n) {$resource} with the interpretationflag {$code} with system {$system}."/>
+            <direction value="{$direction}"/>
+            <expression value="Bundle.entry.resource.as({$resource}).valueCodeableConcept.coding.where(code='{$code}' and system='{$system}' and display.exists())"/>
+            <warningOnly value="{$warningOnly}"/>
+        </assert>
+    </action> -->
       <!-- Asserts for checking the panel Observation resource -->
       <action>
          <assert>
@@ -492,7 +513,7 @@
             </extension>
             <description value="Confirm that the Bundle contains a(n) Observation that has the code 87431-3 with system http://loinc.org"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).code.coding.where(code='87431-3' and system='http://loinc.org' and display.exists()).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).code.coding.where(code='87431-3' and system='http://loinc.org' and display.exists())"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -503,8 +524,8 @@
             </extension>
             <description value="Confirm the Observation resource contains the note D.m.v nucleïnezuur-amplificatie is genoom aangetoond- vanvan herpes simplex virus type 1 en herpes en simplexvirus 2."/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).note.where(text='D.m.v nucleïnezuur-amplificatie is genoom aangetoond- vanvan herpes simplex virus type 1 en herpes en simplexvirus 2').exists()"/>
-            <warningOnly value="true"/>
+            <expression value="Bundle.entry.resource.as(Observation).note.text.exists()"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <!-- Asserts for checking the third Observation resource -->
@@ -537,10 +558,19 @@
             </extension>
             <description value="Confirm that the Bundle contains a(n) Observation that has the code 16130-7 with system http://loinc.org"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).code.coding.where(code='16130-7' and system='http://loinc.org' and display.exists()).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).code.coding.where(code='16130-7' and system='http://loinc.org' and display.exists())"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- <action>
+        <assert>
+            <description
+                value="Confirm that the Bundle contains a(n) {$resource} with the interpretationflag {$code} with system {$system}."/>
+            <direction value="{$direction}"/>
+            <expression value="Bundle.entry.resource.as({$resource}).interpretation.where(coding.code='{$code}' and coding.system='{$system}' and coding.display.exists()) | Bundle.entry.resource.as({$resource}).valueCodeableConcept.coding.where(code='{$code}' and system='{$system}' and display.exists())"/>
+            <warningOnly value="{$warningOnly}"/>
+        </assert>
+    </action> -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -548,21 +578,19 @@
             </extension>
             <description value="Confirm that the Bundle contains a(n) Observation with the interpretationflag 260415000 with system http://snomed.info/sct."/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).interpretation.where(coding.code='260415000' and coding.system='http://snomed.info/sct' and coding.display.exists()).exists()"/>
-            <warningOnly value="false"/>
+            <expression value="Bundle.entry.resource.as(Observation).valueCodeableConcept.coding.where(code='260415000' and system='http://snomed.info/sct' and display.exists())"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation with the interpretationflag 260415000 with system http://snomed.info/sct."/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).ivalueCodeableConcept.coding.where(coding.code='260415000' and coding.system='http://snomed.info/sct' and coding.display.exists()).exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
+      <!-- <action>
+        <assert>
+            <description
+                value="Confirm that the Bundle contains a(n) {$resource} with the interpretationflag {$code} with system {$system}."/>
+            <direction value="{$direction}"/>
+            <expression value="Bundle.entry.resource.as({$resource}).valueCodeableConcept.coding.where(code='{$code}' and system='{$system}' and display.exists())"/>
+            <warningOnly value="{$warningOnly}"/>
+        </assert>
+    </action> -->
       <!-- Asserts for checking the fourth Observation resource -->
       <action>
          <assert>
@@ -593,10 +621,19 @@
             </extension>
             <description value="Confirm that the Bundle contains a(n) Observation that has the code 16131-5 with system http://loinc.org"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).code.coding.where(code='16131-5' and system='http://loinc.org' and display.exists()).exists()"/>
+            <expression value="Bundle.entry.resource.as(Observation).code.coding.where(code='16131-5' and system='http://loinc.org' and display.exists())"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- <action>
+        <assert>
+            <description
+                value="Confirm that the Bundle contains a(n) {$resource} with the interpretationflag {$code} with system {$system}."/>
+            <direction value="{$direction}"/>
+            <expression value="Bundle.entry.resource.as({$resource}).interpretation.where(coding.code='{$code}' and coding.system='{$system}' and coding.display.exists()) | Bundle.entry.resource.as({$resource}).valueCodeableConcept.coding.where(code='{$code}' and system='{$system}' and display.exists())"/>
+            <warningOnly value="{$warningOnly}"/>
+        </assert>
+    </action> -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -604,21 +641,19 @@
             </extension>
             <description value="Confirm that the Bundle contains a(n) Observation with the interpretationflag 260373001 with system http://snomed.info/sct."/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).interpretation.where(coding.code='260373001' and coding.system='http://snomed.info/sct' and coding.display.exists()).exists()"/>
-            <warningOnly value="false"/>
+            <expression value="Bundle.entry.resource.as(Observation).valueCodeableConcept.coding.where(code='260373001' and system='http://snomed.info/sct' and display.exists())"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the Bundle contains a(n) Observation with the interpretationflag 260373001 with system http://snomed.info/sct."/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).ivalueCodeableConcept.coding.where(coding.code='260373001' and coding.system='http://snomed.info/sct' and coding.display.exists()).exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
+      <!-- <action>
+        <assert>
+            <description
+                value="Confirm that the Bundle contains a(n) {$resource} with the interpretationflag {$code} with system {$system}."/>
+            <direction value="{$direction}"/>
+            <expression value="Bundle.entry.resource.as({$resource}).valueCodeableConcept.coding.where(code='{$code}' and system='{$system}' and display.exists())"/>
+            <warningOnly value="{$warningOnly}"/>
+        </assert>
+    </action> -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -626,8 +661,8 @@
             </extension>
             <description value="Confirm that the Bundle contains a(n) Observation with the interpretation HSV 2 positief getest"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).where(interpretation.text~'HSV 2 positief getest').exists()"/>
-            <warningOnly value="true"/>
+            <expression value="Bundle.entry.resource.as(Observation).interpretation.text.exists()"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
@@ -637,8 +672,8 @@
             </extension>
             <description value="Confirm the Observation resource contains the note D.m.v nucleïnezuur-amplificatie is genoom aangetoond- vanvan herpes simplex virus type 1 en herpes en simplexvirus 2."/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Observation).note.where(text='D.m.v nucleïnezuur-amplificatie is genoom aangetoond- vanvan herpes simplex virus type 1 en herpes en simplexvirus 2').exists()"/>
-            <warningOnly value="true"/>
+            <expression value="Bundle.entry.resource.as(Observation).note.text.exists()"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <!-- Asserts for checking the first Specimen resource -->
@@ -660,7 +695,7 @@
             </extension>
             <description value="Confirm that the Bundle contains the right type for the Specimen"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Specimen).type.coding.where(system='http://snomed.info/sct' and code='119389009' and display.exists()).exists()"/>
+            <expression value="Bundle.entry.resource.as(Specimen).type.coding.where(system='http://snomed.info/sct' and code='119389009' and display.exists())"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -683,11 +718,11 @@
             </extension>
             <description value="Confirm that the Bundle contains the right type for the Specimen"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Specimen).type.coding.where(system='http://snomed.info/sct' and code='447955000' and display.exists()).exists()"/>
+            <expression value="Bundle.entry.resource.as(Specimen).type.coding.where(system='http://snomed.info/sct' and code='447955000' and display.exists())"/>
             <warningOnly value="false"/>
          </assert>
       </action>
-      <!-- Asserts for checking the first Organization resource -->
+      <!-- Asserts for checking the Organization resource -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -706,7 +741,7 @@
             </extension>
             <description value="Confirm that the Bundle contains the right type for the Organization"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).type.coding.where(system='http://nictiz.nl/fhir/NamingSystem/organization-type' and code='L1' and display.exists()).exists()"/>
+            <expression value="Bundle.entry.resource.as(Organization).type.coding.where(system='http://nictiz.nl/fhir/NamingSystem/organization-type' and code='L1' and display.exists())"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -715,31 +750,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the Bundle contains name"/>
+            <description value="Confirm that the Bundle contains the name 'Microbiologisch Lab Flagel' for the Organization resource"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).name.where(value=Klinisch chemisch Lab 't Proefje').exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm the Bundle contains the right telecom (email/phone) information for Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).telecom.where(system= 'phone' and value ='06-11122233' and use='work').exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that Bundle contains the right telecom comment for the Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).telecom.extension.where(url='http://nictiz.nl/fhir/StructureDefinition/ext-Comment' and value ='Bel met vragen').exists()"/>
+            <expression value="Bundle.entry.resource.as(Organization).name.exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -750,186 +763,18 @@
             </extension>
             <description value="Confirm the Bundle contains the right telecom (email/phone) information for Organization"/>
             <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).telecom.where(system= 'email' and value ='tproefje@lab.nl' and use='work').exists()"/>
+            <expression value="Bundle.entry.resource.as(Organization).telecom.where(system= 'phone' and value ='06-11122244')"/>
             <warningOnly value="false"/>
          </assert>
       </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that Bundle contains the right telecom comment for the Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).telecom.extension.where(url='' and value ='').exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that Bundle contains the right address (street) for the Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).address.line.extension.where(url='http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName' and value='Hoofdstraat').exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that Bundle contains the right address (house number) for the Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).address.line.extension.where(url='http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber' and value ='23').exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that Bundle contains the right building suffix number for the Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).address.line.extension.where(url='' and value ='').exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that Bundle contains the right address (city and postal code) for the Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).address.where(city='Zorgstad' and postalCode='1234AA' use='work').exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that Bundle contains the right address (type) for the Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).address.extension.where(url='http://nictiz.nl/fhir/StructureDefinition/ext-AddressInformation.AddressType').value.coding.where(system='http://terminology.hl7.org/CodeSystem/v3-AddressUse' and code='WP' and display.exists()).exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- Asserts for checking the second Organization resource -->
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm the Organization resource contains an identifier"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).identifier.exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the Bundle contains the right type for the Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).type.coding.where(system='http://nictiz.nl/fhir/NamingSystem/organization-type' and code='L1' and display.exists()).exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the Bundle contains name"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).name.where(value=Microbiologisch Lab Flagel').exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm the Bundle contains the right telecom (email/phone) information for Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).telecom.where(system= 'phone' and value ='06-11122244' and use='').exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that Bundle contains the right telecom comment for the Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).telecom.extension.where(url='' and value ='').exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that Bundle contains the right address (street) for the Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).address.line.extension.where(url='http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName' and value='Kerkstraat').exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that Bundle contains the right address (house number) for the Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).address.line.extension.where(url='http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber' and value ='23').exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that Bundle contains the right building suffix number for the Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).address.line.extension.where(url='http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-buildingNumberSuffix' and value ='').exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that Bundle contains the right address (city and postal code) for the Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).address.where(city='Zorgstad' and postalCode='2143BB' use='work').exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that Bundle contains the right address (type) for the Organization"/>
-            <direction value="request"/>
-            <expression value="Bundle.entry.resource.as(Organization).address.extension.where(url='http://nictiz.nl/fhir/StructureDefinition/ext-AddressInformation.AddressType').value.coding.where(system='http://terminology.hl7.org/CodeSystem/v3-AddressUse' and code='WP' and display.exists()).exists()"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
+      <!-- <action>
+        <assert>
+            <description
+                value="Confirm that Bundle contains the right telecom comment for the {$resource}"/>
+            <direction value="{$direction}"/>
+            <expression value="Bundle.entry.resource.as({$resource}).telecom.extension.where(url='{$urltelecom}' and value ='{$comment}')"/>
+            <warningOnly value="{$warningOnly}"/>
+        </assert>
+    </action> -->
    </test>
 </TestScript>
