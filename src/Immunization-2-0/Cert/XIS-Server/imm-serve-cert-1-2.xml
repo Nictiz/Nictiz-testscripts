@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="server">
+    <id value="imm-serve-cert-1-2"/>
+    <version value="r4-1.0.0"/>
+    <name value="Immunization - XIS Server - Scenario 1.2 - Serve Immunization resources of 'Antoon van de XXX_Bergge'"/>
+    <description value="Scenario 1.2 - Serve Immunization resources of 'Antoon van de XXX_Bergge'"/>
+    <nts:authToken patientResourceId="nl-core-Patient--AntoonvandeXXX-Bergge"/>
+
+    <test>
+        <name value="Scenario 1.2 - Serve Immunization resources"/>
+        <description value="Serve Immunization resource including the patient, performer and location"/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common" resource="Immunization" params="?_include=Immunization:patient&#38;_include=Immunization:performer&#38;_include=Immunization:location" responseId="immunization-search-response"/>
+        <nts:include value="assert.response.numResources" scope="common" resource="Immunization" count="1" nts:in-targets="#default"/>
+        <nts:include value="assert.response.numResources" scope="common" resource="Medication" count="1" nts:in-targets="#default"/>
+        <nts:include value="assert.response.numResources" scope="common" resource="Patient" count="1" nts:in-targets="#default"/>
+        <nts:include value="assert.response.numResources" scope="common" resource="PractitionerRole" count="1" nts:in-targets="#default"/>
+        <nts:include value="assert.response.numResources" scope="common" resource="Location" count="1" nts:in-targets="#default"/>
+        
+        <!-- Immunization  -->
+        <nts:include value="assert.numIdentifier" direction="response" resource="Immunization" count="1" nts:in-targets="#default"/>
+        <nts:include value="assert.numMedicationReference" direction="response" resource="Immunization" count="1" nts:in-targets="#default"/>
+
+        <!-- Patient -->
+        <!--<nts:include value="assert.birthdate" direction="response" resource="Patient" date="2004-11-12"/>-->
+        
+        <nts:contentAsserts href="resources/nl-core-Patient--XXX-Boekwijt.xml" nts:in-targets="CheckContent"/>
+        
+        <!-- Immunization  -->
+        <nts:contentAsserts href="resources/06d8ad1e-6b71-11ec-0000-020000000000.xml" description="contains .vaccineCode.coding.code = '2925508'" discriminator="vaccineCode.where(coding.where(code = '2925508'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd--21684011138832447-2925508.xml" description="contains .code.coding.code = '2925508'" discriminator="code.where(coding.where(code = '2925508'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-HPrv-Org--Org-2165281100733-10000006.xml" description="contains .identifier.value = '10000006'" discriminator="identifier.where(value = '10000006'))" nts:in-targets="CheckContent"/>
+
+    </test>
+
+    <!-- Test Medication resource 1 -->
+    <test nts:in-targets="GetMedication">
+        <nts:include value="variable.immunization.medication.url" name="pharmaceuticalProduct-url-1" sequenceNumber="0" sourceId="immunization-search-response"/>
+        <name value="Scenario 1.2 - Read Medication resource 1"/>
+        <description value="Serve PharmaceuticalProduct via an HTTP get."/>
+        <nts:include value="medmij/test.xis.successfulRead" resource="Medication" url="${pharmaceuticalProduct-url-1}" scope="common"/>
+    </test>
+</TestScript>
