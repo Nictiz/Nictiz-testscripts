@@ -53,7 +53,21 @@
       <defaultValue value="${UUID}"/>
       <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
    </variable>
-   <test>
+   <variable>
+      <name value="pharmaceuticalProduct-url-1"/>
+      <!-- Pick the absolute url as is or create an absolute url when a relative url is given by combining the base url given in the Bundle self link with the relative reference.-->
+      <description value="This variable needs to be filled with the following params. The name (the variable name), sequenceNumber (the index), sourceId (the id of the resource) and as resource Immunization should be filled in"/>
+      <expression value="iif(Bundle.entry.where(resource.is(Immunization)).resource[0].extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-imm-Vaccination.PharmaceuticalProduct').value.reference.startsWith('Medication/'),             Bundle.link.where(relation='self').url.replaceMatches('Immunization[/?].*$','') + Bundle.entry.where(resource.is(Immunization)).resource[0].extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-imm-Vaccination.PharmaceuticalProduct').value.reference,             Bundle.entry.where(resource.is(Immunization)).resource[0].extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-imm-Vaccination.PharmaceuticalProduct').value.reference)"/>
+      <sourceId value="fixture-immunization-search-response"/>
+   </variable>
+   <variable>
+      <name value="pharmaceuticalProduct-url-2"/>
+      <!-- Pick the absolute url as is or create an absolute url when a relative url is given by combining the base url given in the Bundle self link with the relative reference.-->
+      <description value="This variable needs to be filled with the following params. The name (the variable name), sequenceNumber (the index), sourceId (the id of the resource) and as resource Immunization should be filled in"/>
+      <expression value="iif(Bundle.entry.where(resource.is(Immunization)).resource[1].extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-imm-Vaccination.PharmaceuticalProduct').value.reference.startsWith('Medication/'),             Bundle.link.where(relation='self').url.replaceMatches('Immunization[/?].*$','') + Bundle.entry.where(resource.is(Immunization)).resource[1].extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-imm-Vaccination.PharmaceuticalProduct').value.reference,             Bundle.entry.where(resource.is(Immunization)).resource[1].extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-imm-Vaccination.PharmaceuticalProduct').value.reference)"/>
+      <sourceId value="fixture-immunization-search-response"/>
+   </variable>
+   <test id="immunization-search-response">
       <name value="Test scenario 1.2 - Serve vaccinations"/>
       <description value="Serve Immunization resource including the patient, performer and location"/>
       <action>
@@ -81,7 +95,7 @@
                <field value="X-Correlation-ID"/>
                <value value="${X-Correlation-ID}"/>
             </requestHeader>
-            <responseId value="immunization-search-response"/>
+            <responseId value="fixture-immunization-search-response"/>
          </operation>
       </action>
       <action>
@@ -297,17 +311,7 @@
             <warningOnly value="false"/>
          </assert>
       </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <description value="Confirm that the response Bundle contains 2 Medication resource(s). "/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Medication)).count() = 2"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
+      <!--<nts:include value="assert.response.numResources" scope="common" resource="Medication" count="2" nts:in-targets="#default"/>-->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -391,9 +395,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Test if the pharmaceutical extension 'http://nictiz.nl/fhir/StructureDefinition/ext-Vaccination.PharmaceuticalProduct' occurs 2 times."/>
+            <description value="Test if the pharmaceutical extension 'http://nictiz.nl/fhir/StructureDefinition/ext-imm-Vaccination.PharmaceuticalProduct' occurs 2 times."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.resource.as(Immunization).extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-Vaccination.PharmaceuticalProduct').count() = 2"/>
+            <expression value="Bundle.entry.resource.as(Immunization).extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-imm-Vaccination.PharmaceuticalProduct').count() = 2"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -418,5 +422,203 @@
       <!--<nts:contentAsserts href="resources/nl-core-HPrv-\-2165281100733-10000003.xml" description=".name = 'GGD test 03 zuid'" discriminator="name = 'GGD test 03 zuid'" nts:in-targets="CheckContent"/>-->
       <!-- performer -->
       <!--<nts:contentAsserts href="resources/nl-core-HPrf-PracRol-\-PrcRol-21684011138832461-75131313.xml" description="contains .identifier.value = '10000002'" discriminator="identifier.where(value = '10000002')" nts:in-targets="CheckContent"/>-->
+   </test>
+   <test id="serveMedication0"><!-- This variable needs to be filled with the following params. The name (name of the variable), sequenceNumber (the index), sourceId (id of the resource) and as resource Immunization should be filled in. -->
+      <name value="Scenario 1.2 - Read Medication resource 1"/>
+      <description value="Serve PharmaceuticalProduct via an HTTP get."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="read"/>
+            </type>
+            <resource value="Medication"/>
+            <description value="Test XIS server to serve Medication resource."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+            <url value="${pharmaceuticalProduct-url-1}"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Coding elements contain both a .system and a .code."/>
+            <direction value="response"/>
+            <expression value="Medication.descendants().where($this.is(Coding)).all(system.exists() and code.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the OID of the zib valueset is not used for the system of a coding element."/>
+            <direction value="response"/>
+            <expression value="Medication.descendants().where($this.is(coding)).system.startsWith('urn:oid:2.16.840.1.113883.2.4.3.11.60.40.2').not()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
+            <direction value="response"/>
+            <expression value="Medication.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3#Use_of_the_reference_datatype."/>
+            <direction value="response"/>
+            <expression value="Medication.descendants().where($this.is(Reference)).all(display.exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/iso21090-nullFlavor').exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Identifiers have both a .system and a .value. In rare cases where a general category of identifiers can be used, .type can replace .system. Edge cases for both .system and .type to be unknown are not applicable to Nictiz. For more information, see https://www.hl7.org/fhir/stu3/datatypes.html#Identifier."/>
+            <direction value="response"/>
+            <expression value="Medication.descendants().where($this.is(Identifier)).all((system.exists() or type.exists()) and value.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!--<nts:contentAsserts href="resources/nl-core-PhPrd-\-2168401113883696-28531000087107.xml" description="contains .code.coding.code = '28531000087107'" discriminator="code.where(coding.where(code = '28531000087107'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd-\-21684011138832447-2978636.xml" description="contains .vaccineCode.coding.code = '2978636'" discriminator="vaccineCode.where(coding.where(code = '2978636'))" nts:in-targets="CheckContent"/>-->
+   </test>
+   <test id="serveMedication1"><!-- This variable needs to be filled with the following params. The name (name of the variable), sequenceNumber (the index), sourceId (id of the resource) and as resource Immunization should be filled in. -->
+      <name value="Scenario 1.2 - Read Medication resource 2"/>
+      <description value="Serve PharmaceuticalProduct via an HTTP get."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="read"/>
+            </type>
+            <resource value="Medication"/>
+            <description value="Test XIS server to serve Medication resource."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+            <url value="${pharmaceuticalProduct-url-2}"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Coding elements contain both a .system and a .code."/>
+            <direction value="response"/>
+            <expression value="Medication.descendants().where($this.is(Coding)).all(system.exists() and code.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the OID of the zib valueset is not used for the system of a coding element."/>
+            <direction value="response"/>
+            <expression value="Medication.descendants().where($this.is(coding)).system.startsWith('urn:oid:2.16.840.1.113883.2.4.3.11.60.40.2').not()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
+            <direction value="response"/>
+            <expression value="Medication.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3#Use_of_the_reference_datatype."/>
+            <direction value="response"/>
+            <expression value="Medication.descendants().where($this.is(Reference)).all(display.exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/iso21090-nullFlavor').exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Identifiers have both a .system and a .value. In rare cases where a general category of identifiers can be used, .type can replace .system. Edge cases for both .system and .type to be unknown are not applicable to Nictiz. For more information, see https://www.hl7.org/fhir/stu3/datatypes.html#Identifier."/>
+            <direction value="response"/>
+            <expression value="Medication.descendants().where($this.is(Identifier)).all((system.exists() or type.exists()) and value.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!--<nts:contentAsserts href="resources/nl-core-PhPrd-\-2168401113883696-28531000087107.xml" description="contains .code.coding.code = '28531000087107'" discriminator="code.where(coding.where(code = '28531000087107'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd-\-21684011138832447-2978636.xml" description="contains .vaccineCode.coding.code = '2978636'" discriminator="vaccineCode.where(coding.where(code = '2978636'))" nts:in-targets="CheckContent"/>-->
    </test>
 </TestScript>
