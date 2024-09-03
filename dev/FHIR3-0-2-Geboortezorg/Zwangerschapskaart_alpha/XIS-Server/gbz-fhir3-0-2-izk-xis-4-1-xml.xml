@@ -40,13 +40,6 @@
          <code value="FHIR-Server"/>
       </profile>
    </destination>
-   <fixture id="episodeofcare-fixture">
-      <autocreate value="false"/>
-      <autodelete value="false"/>
-      <resource>
-         <reference value="../_reference/Verloskunde-Casus1/medmij-gbz-bc-MaternalRecord-ca7cf58a-200b-417c-acb5-8aa6a6e692d5.xml"/>
-      </resource>
-   </fixture>
    <profile id="Bundle-profile">
       <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
    </profile>
@@ -57,11 +50,18 @@
    </variable>
    <variable>
       <name value="episode-id"/>
-      <defaultValue value="ca7cf58a-200b-417c-acb5-8aa6a6e692d5"/>
+      <description value="This variable needs to be filled with the following params. The name (the variable name), sourceId (id of the resource) and as resource EpisodeOfCare should be filled in"/>
+      <expression value="Bundle.entry.where(resource.is(EpisodeOfCare)).resource.where(type.coding.code='364320009').id"/>
+      <sourceId value="fixture-episode"/>
    </variable>
    <variable>
       <name value="T"/>
       <defaultValue value="${CURRENTDATE}"/>
+   </variable>
+   <variable>
+      <name value="X-Correlation-ID"/>
+      <defaultValue value="${UUID}"/>
+      <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
    </variable>
    <test id="1-ServeWoman">
       <name value="1-ServeWoman"/>
@@ -69,16 +69,26 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Patient"/>
             <description value="Test XIS server to serve Patient resources."/>
             <accept value="xml"/>
+            <destination value="1"/>
             <encodeRequestUrl value="true"/>
+            <origin value="1"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -269,19 +279,6 @@
             <direction value="response"/>
             <expression value="Bundle.link.url.contains('http://fhir.nl/fhir/NamingSystem/bsn') = false"/>
             <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
-               <valueBoolean value="false"/>
-            </extension>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
-               <extension url="ruleId">
-                  <valueId value="assert-response-queryParamsInSelfLink"/>
-               </extension>
-            </extension>
-            <warningOnly value="true"/>
          </assert>
       </action>
       <action>
@@ -302,16 +299,26 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Coverage"/>
             <description value="Test XIS server to serve Coverage resources."/>
             <accept value="xml"/>
+            <destination value="1"/>
             <encodeRequestUrl value="true"/>
+            <origin value="1"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -504,8 +511,6 @@
             <warningOnly value="false"/>
          </assert>
       </action>
-      <!-- TODO: uitzoeken waarom deze foutmelding geeft -->
-      <!--      <nts:include value="assert.response.queryParamsInSelfLink" scope="common"/>-->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -524,16 +529,26 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="FamilyMemberHistory"/>
             <description value="Test XIS server to serve FamilyMemberHistory resources."/>
             <accept value="xml"/>
+            <destination value="1"/>
             <encodeRequestUrl value="true"/>
+            <origin value="1"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -726,8 +741,6 @@
             <warningOnly value="false"/>
          </assert>
       </action>
-      <!-- TODO: uitzoeken waarom deze foutmelding geeft -->
-      <!--      <nts:include value="assert.response.queryParamsInSelfLink" scope="common"/>-->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -746,17 +759,27 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="DeviceUseStatement"/>
             <description value="Test XIS server to serve DeviceUseStatement resources."/>
             <accept value="xml"/>
+            <destination value="1"/>
             <encodeRequestUrl value="true"/>
+            <origin value="1"/>
             <params value="?_include=DeviceUseStatement:device"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -980,18 +1003,29 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="EpisodeOfCare"/>
             <description value="Test XIS server to serve EpisodeOfCare resources."/>
             <accept value="xml"/>
+            <destination value="1"/>
             <encodeRequestUrl value="true"/>
+            <origin value="1"/>
             <params value="?type=http://snomed.info/sct|364320009&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
             </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+            <responseId value="fixture-episode"/>
          </operation>
       </action>
       <action>
@@ -1236,17 +1270,27 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Condition"/>
             <description value="Test XIS server to serve Condition resources."/>
             <accept value="xml"/>
+            <destination value="1"/>
             <encodeRequestUrl value="true"/>
+            <origin value="1"/>
             <params value="?context=EpisodeOfCare/${episode-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -1542,17 +1586,27 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Encounter"/>
             <description value="Test XIS server to serve Encounter resources."/>
             <accept value="xml"/>
+            <destination value="1"/>
             <encodeRequestUrl value="true"/>
+            <origin value="1"/>
             <params value="?episodeofcare=${episode-id}&amp;_include=Encounter:practitioner"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -1798,9 +1852,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Encounter resource(s) that contains type.coding.code = 816968003. (ContactSoort)"/>
+            <description value="Confirm that the returned searchset Bundle contains 1 Encounter resource(s) that contains type.coding.code = 236973005. (ContactSoort)"/>
             <direction value="response"/>
-            <expression value="Bundle.entry.select(resource as Encounter).where(type.coding.code.where($this='816968003').exists()).count() = 1"/>
+            <expression value="Bundle.entry.select(resource as Encounter).where(type.coding.code.where($this='236973005').exists()).count() = 1"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -1811,17 +1865,27 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Observation"/>
             <description value="Test XIS server to serve Observation resources."/>
             <accept value="xml"/>
+            <destination value="1"/>
             <encodeRequestUrl value="true"/>
+            <origin value="1"/>
             <params value="?context=EpisodeOfCare/${episode-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -2298,17 +2362,27 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Observation"/>
             <description value="Test XIS server to serve Observation resources."/>
             <accept value="xml"/>
+            <destination value="1"/>
             <encodeRequestUrl value="true"/>
+            <origin value="1"/>
             <params value="?context:Encounter.episodeofcare=EpisodeOfCare/${episode-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -2617,17 +2691,27 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="Procedure"/>
             <description value="Test XIS server to serve Procedure resources."/>
             <accept value="xml"/>
+            <destination value="1"/>
             <encodeRequestUrl value="true"/>
+            <origin value="1"/>
             <params value="?context=EpisodeOfCare/${episode-id}&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
       </action>
@@ -2933,17 +3017,27 @@
       <action>
          <operation>
             <type>
-               <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
                <code value="search"/>
             </type>
             <resource value="CareTeam"/>
             <description value="Test XIS server to serve CareTeam resources."/>
             <accept value="xml"/>
+            <destination value="1"/>
             <encodeRequestUrl value="true"/>
+            <origin value="1"/>
             <params value="?context=EpisodeOfCare/${episode-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
       </action>
