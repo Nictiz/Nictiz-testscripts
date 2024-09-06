@@ -8,25 +8,17 @@
    <name value="Nictiz Geboortezorg - Server - Scenario 4.2 - Serve Integrale Zwangerschapskaart resources of twin pregnancy of Fiona Swart"/>
    <description value="Scenario 4.2: Serve Integrale Zwangerschapskaart resources of twin pregnancy of Fiona Swart"/>
    <nts:authToken patientResourceId="FIONAXXX-Swart"/>
-   <nts:fixture id="episodeofcare-fixture"
-                href="Verloskunde-Casus2/bc-MaternalRecord-1759bed5-85b4-4d37-86d6-d40e671e3f16.xml"/>
-   <variable>
-      <name value="episode-id"/>
-      <expression value="EpisodeOfCare.id"/>
-      <sourceId value="episodeofcare-fixture"/>
-   </variable>
-   <variable>
-      <name value="T"/>
-      <defaultValue value="${CURRENTDATE}"/>
-   </variable>
+<!--   <variable><name value="episode-id"/><defaultValue value="1759bed5-85b4-4d37-86d6-d40e671e3f16"/></variable>-->
+   <nts:include value="gbz-variable-episode-id" name="episode-id" status="active" sourceId="fixture-episode"/>
+   <variable><name value="T"/><defaultValue value="${CURRENTDATE}"/></variable>
+   
    <!-- Patient - Zwangere vrouw -->
    <test>
       <name value="1-ServeWoman"/>
       <description value="Query Patient resource for HCIM Patient"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Patient"/>
-         <nts:with-parameter name="params" value="?_include=Patient:link"/>
-      </nts:include>
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
+         <nts:with-parameter name="resource" value="Patient"/>         
+      </nts:include>   
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="Patient"/>
          <nts:with-parameter name="count" value="1"/>
@@ -38,9 +30,9 @@
    <test>
       <name value="2-ServePayer"/>
       <description value="Query Coverage resource for HCIM Payer"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="Coverage"/>
-      </nts:include>
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
+         <nts:with-parameter name="resource" value="Coverage"/>         
+      </nts:include>  
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="Coverage"/>
          <nts:with-parameter name="count" value="0"/>
@@ -51,9 +43,9 @@
    <test>
       <name value="3-ServeFamilyMemberHistory"/>
       <description value="Query FamilyMemberHistory resource for FamilyMemberHistory"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="FamilyMemberHistory"/>
-      </nts:include>
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
+         <nts:with-parameter name="resource" value="FamilyMemberHistory"/>         
+      </nts:include>    
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="FamilyMemberHistory"/>
          <nts:with-parameter name="count" value="0"/>
@@ -64,8 +56,8 @@
    <test>
       <name value="4-ServeDeviceUseStatement"/>
       <description value="Query DeviceUseStatement resource for HCIM BladderFunction-UrineCatheter"/>
-      <nts:include value="gbz-operation-search-xis">
-         <nts:with-parameter name="resource" value="DeviceUseStatement"/>
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
+         <nts:with-parameter name="resource" value="DeviceUseStatement"/>         
          <nts:with-parameter name="params" value="?_include=DeviceUseStatement:device"/>
       </nts:include>
       <nts:include value="assert.response.numResources" scope="common">
@@ -78,23 +70,14 @@
    <test>
       <name value="5-ServeMaternalRecord"/>
       <description value="Test Server query operation for MaternalRecord (EpisodeOfCare) including managing organization (Organization) and care manager (Practitioner)"/>
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="EpisodeOfCare"/>
-         <nts:with-parameter name="params"
-                             value="?type=http://snomed.info/sct|364320009&amp;status=active&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
-      </nts:include>
-      <nts:include value="assert.response.numResources"
-                   scope="common"
-                   resource="EpisodeOfCare"
-                   count="1"/>
-      <nts:include value="assert.response.numResources"
-                   scope="common"
-                   resource="Organization"
-                   count="1"/>
-      <nts:include value="assert.response.numResources"
-                   scope="common"
-                   resource="Practitioner"
-                   count="1"/>
+         <nts:with-parameter name="params" value="?type=http://snomed.info/sct|364320009&amp;status=active&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
+         <nts:with-parameter name="responseId" value="fixture-episode"/>
+      </nts:include>    
+      <nts:include value="assert.response.numResources" scope="common" resource="EpisodeOfCare" count="1"/>
+      <nts:include value="assert.response.numResources" scope="common" resource="Organization" count="1"/>
+      <nts:include value="assert.response.numResources" scope="common" resource="Practitioner" count="1"/>
       <nts:contentAsserts href="bc-MaternalRecord-1759bed5-85b4-4d37-86d6-d40e671e3f16.xml"
                           nts:in-targets="CheckContent"/>
    </test>
@@ -102,14 +85,12 @@
    <test>
       <name value="6-ServeConditions"/>
       <description value="Test Server query operation for Conditions (including Pregnancy)"/>
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Condition"/>
          <nts:with-parameter name="params" value="?context=EpisodeOfCare/${episode-id}"/>
       </nts:include>
-      <nts:include value="assert.response.numResources"
-                   scope="common"
-                   resource="Condition"
-                   count="4"/>
+       <nts:include value="assert.response.numResources" scope="common" resource="Condition" count="4"/>
+      <!-- Zwangerschap -->
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(Zwangerschap)"/>
          <nts:with-parameter name="resource" value="Condition"/>
@@ -159,19 +140,13 @@
    <test>
       <name value="7-ServeEncounters"/>
       <description value="Test Server query operation for Encounters"/>
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Encounter"/>
-         <nts:with-parameter name="params"
-                             value="?episodeofcare=${episode-id}&amp;_include=Encounter:practitioner"/>
-      </nts:include>
-      <nts:include value="assert.response.numResources"
-                   scope="common"
-                   resource="Encounter"
-                   count="3"/>
-      <nts:include value="assert.response.numResources"
-                   scope="common"
-                   resource="Practitioner"
-                   count="1"/>
+         <nts:with-parameter name="params" value="?episodeofcare=${episode-id}&amp;_include=Encounter:practitioner"/>
+      </nts:include> 
+      <nts:include value="assert.response.numResources" scope="common" resource="Encounter" count="3"/>
+      <nts:include value="assert.response.numResources" scope="common" resource="Practitioner" count="1"/>
+      <!-- Prenatale controle -->
       <nts:include value="assert.response.numResourcesWithCode" scope="common">
          <nts:with-parameter name="additionalDescription" value="(ContactSoort)"/>
          <nts:with-parameter name="codedElement" value="type"/>
@@ -196,10 +171,11 @@
    <test>
       <name value="8a-ServeObservations"/>
       <description value="Test Server query operation for Observations"/>
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Observation"/>
          <nts:with-parameter name="params" value="?context=EpisodeOfCare/${episode-id}"/>
-      </nts:include>
+      </nts:include>  
+      <!-- pregnancy duration -->
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(pregnancy duration)"/>
          <nts:with-parameter name="resource" value="Observation"/>
@@ -429,12 +405,12 @@
    <!-- Observations - Observaties gekoppeld aan prenatale controle -->
    <test>
       <name value="8b-ServeObservations"/>
-      <description value="Test Server query operation for Observations"/>
-      <nts:include value="gbz-operation-search-xis">
+      <description value="Test Server query operation for Observations"/>  
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params"
-                             value="?context:Encounter.episodeofcare=EpisodeOfCare/${episode-id}"/>
-      </nts:include>
+         <nts:with-parameter name="params" value="?context:Encounter.episodeofcare=EpisodeOfCare/${episode-id}"/>
+      </nts:include>    
+      <!-- alcoholgebruik -->
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(alcohol use)"/>
          <nts:with-parameter name="resource" value="Observation"/>
@@ -493,23 +469,14 @@
    <test>
       <name value="9-ServeProcedures"/>
       <description value="Test Server query operation for (Obstetric) Procedures"/>
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Procedure"/>
-         <nts:with-parameter name="params"
-                             value="?context=EpisodeOfCare/${episode-id}&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
-      </nts:include>
-      <nts:include value="assert.response.numResources"
-                   scope="common"
-                   resource="Procedure"
-                   count="11"/>
-      <nts:include value="assert.response.numResources"
-                   scope="common"
-                   resource="Organization"
-                   count="1"/>
-      <nts:include value="assert.response.numResources"
-                   scope="common"
-                   resource="ProcedureRequest"
-                   count="0"/>
+         <nts:with-parameter name="params" value="?context=EpisodeOfCare/${episode-id}&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
+      </nts:include>    
+      <nts:include value="assert.response.numResources" scope="common" resource="Procedure" count="11"/>
+      <nts:include value="assert.response.numResources" scope="common" resource="Organization" count="1"/>
+      <nts:include value="assert.response.numResources" scope="common" resource="ProcedureRequest" count="0"/>
+      <!-- Verrichting (Bevalling) -->
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="(Bevalling)"/>
          <nts:with-parameter name="resource" value="Procedure"/>
@@ -594,11 +561,11 @@
    <!-- Zorgteam -->
    <test>
       <name value="10-ServeCareTeam"/>
-      <description value="Test Server query operation for CareTeam"/>
-      <nts:include value="gbz-operation-search-xis">
+      <description value="Test Server query operation for CareTeam"/>  
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="CareTeam"/>
          <nts:with-parameter name="params" value="?context=EpisodeOfCare/${episode-id}"/>
-      </nts:include>
+      </nts:include>    
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="CareTeam"/>
          <nts:with-parameter name="count" value="0"/>

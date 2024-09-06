@@ -6,7 +6,9 @@
         The following parameters need to be present:
         * tool.reponame - The name of the repository
         * tool.name     - Basically the relevant folder name within the repository
-        * tool.version  - The version of the tool (as understood by git, so any tag, release, branch or commit will do)
+        * tool.version  - The version of the tool (as understood by git, so any tag, release, branch or commit will
+                          do). Scripts that include this file can override this property by setting a property called
+                          [including project name].tool.version.
         * tool.antfile  - The complete path to the antfile to call
     -->
     <property name="tool.localdir" value=""/>
@@ -17,8 +19,21 @@
     <!-- Tell the main build script where to find common asserts and place the build scripts -->
     <property name="lib.dir" location="${basedir}/lib"/>
 
+    <!-- Some magic to overide the tool.version property with the value set by [including project name].tool.version -->
+    <macrodef name="overrideprop">
+        <attribute name="name"/>
+        <attribute name="from"/>
+        <attribute name="else"/>
+        <sequential>
+            <condition property="@{name}" value="${@{from}}" else="${@{else}}">
+                <isset property="@{from}"/>
+            </condition>
+        </sequential>
+    </macrodef>
+    <overrideprop name="tool.version.actual" from="${ant.project.name}.tool.version" else="tool.version"/>
+    
     <!-- Construct the path to the test scripts, either the locally defined dir or a new dir under "lib" -->
-    <property name="testscripttools.repo.dir" location="${lib.dir}/${tool.reponame}/${tool.name}/${tool.version}"/>
+    <property name="testscripttools.repo.dir" location="${lib.dir}/${tool.reponame}/${tool.name}/${tool.version.actual}"/>
     <condition property="testscripttools.dir" value="${tool.localdir.abs}" else="${testscripttools.repo.dir}">
         <length string="${tool.localdir}" trim="true" when="greater" length="0"/>
     </condition>
@@ -46,7 +61,7 @@
             <mkdir dir="${testscripttools.dir}/"/>
             <local name="zip.name"/>
             <property name="zip.name" value="${testscripttools.dir}/package.zip"/>
-            <get src="https://github.com/Nictiz/${tool.reponame}/archive/${tool.version}.zip"
+            <get src="https://github.com/Nictiz/${tool.reponame}/archive/${tool.version.actual}.zip"
                 dest="${zip.name}"/>
             <unzip src="${zip.name}" dest="${testscripttools.dir}" failOnEmptyArchive="true">
                 <patternset>
