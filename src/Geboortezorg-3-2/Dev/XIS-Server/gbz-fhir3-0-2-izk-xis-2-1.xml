@@ -6,9 +6,9 @@
    <name value="Nictiz Geboortezorg - Server - Scenario 2.1 - Serve Integrale Zwangerschapskaart resources of current pregnancy of Kim Zhanganak"/>
    <description value="Scenario 2.1: Serve Integrale Zwangerschapskaart resources of current pregnancy of Kim Zhanganak"/>
    <nts:authToken patientResourceId="KIMXXX-Zhanganak"/>
-<!--   <variable><name value="episode-id"/><defaultValue value="0d479b8b-2064-12ec-1751-020000000000"/></variable>-->
-<!--   <variable><name value="episode-id"/><expression value="Bundle.entry.where(resource.is(EpisodeOfCare)).resource.where(type.coding.code='364320009' and status='active').id"/><sourceId value="fixture-episode"/></variable>-->
    <nts:include value="gbz-variable-episode-id-with-status" name="episode-id" status="active" sourceId="fixture-5-ServeMaternalRecord"/>
+<!--   <nts:include value="gbz-variable-patient-reference" name="patient-reference" sourceId="fixture-5-ServeMaternalRecord"/>-->
+<!--   <nts:include value="gbz-variable-child-reference" name="child-reference" sourceId="fixture-9-ServeProcedures"/>-->
    <variable><name value="T"/><defaultValue value="${CURRENTDATE}"/></variable>
    
    <!-- Patient - Zwangere vrouw -->
@@ -157,14 +157,15 @@
          <nts:with-parameter name="element" value="class"></nts:with-parameter>
          <nts:with-parameter name="count" value="2"></nts:with-parameter>
          <nts:with-parameter name="code" value="IMP"></nts:with-parameter>
-         <!-- TODO: uitzoeken of nog discriminator op subject nodig is en hoe deze gemaakt kan worden o.b.v. onbekende id's moeder en kind patient -->
-<!--         <nts:contentAsserts href="Kraam-Casus1/medmij-gbz-bc-Encounter-0d47afdc-2982-11ec-1751-020000000000.xml" nts:in-targets="CheckContent">
-            <nts:discriminator>class.where(code = 'IMP')</nts:discriminator>
-         </nts:contentAsserts>
-         <nts:contentAsserts href="Kraam-Casus1/medmij-gbz-bc-Encounter-1s47afdc-2982-11ec-1751-020000000000.xml" nts:in-targets="CheckContent">
-            <nts:discriminator>class.where(code = 'IMP')</nts:discriminator>
-         </nts:contentAsserts>   -->
       </nts:include>
+      <nts:contentAsserts href="Kraam-Casus1/medmij-gbz-bc-Encounter-0d47afdc-2982-11ec-1751-020000000000.xml" 
+         selector="iif(Bundle.entry.resource.ofType(Encounter).where(class.where(code='IMP'))[0].subject.reference != Bundle.entry.resource.ofType(Encounter).where(type.where(coding.where(code='236973005'))).subject.reference, Bundle.entry.resource.ofType(Encounter).where(class.where(code='IMP'))[0], Bundle.entry.resource.ofType(Encounter).where(class.where(code='IMP'))[1])"
+         nts:in-targets="CheckContent">
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Kraam-Casus1/medmij-gbz-bc-Encounter-1s47afdc-2982-11ec-1751-020000000000.xml" 
+         selector="iif(Bundle.entry.resource.ofType(Encounter).where(class.where(code='IMP'))[0].subject.reference = Bundle.entry.resource.ofType(Encounter).where(type.where(coding.where(code='236973005'))).subject.reference, Bundle.entry.resource.ofType(Encounter).where(class.where(code='IMP'))[0], Bundle.entry.resource.ofType(Encounter).where(class.where(code='IMP'))[1])"
+         nts:in-targets="CheckContent">
+      </nts:contentAsserts>   
    </test>  
       
    <!-- Observations - Observaties gekoppeld aan episode -->  
@@ -607,6 +608,7 @@
       <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Procedure"/>
          <nts:with-parameter name="params" value="?context=EpisodeOfCare/${episode-id}&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
+<!--         <nts:with-parameter name="responseId" value="fixture-9-ServeProcedures"/>-->
       </nts:include>  
       <nts:include value="assert.response.numResources" scope="common" resource="Procedure" count="3"/>
       <nts:include value="assert.response.numResources" scope="common" resource="Organization" count="0"/>
