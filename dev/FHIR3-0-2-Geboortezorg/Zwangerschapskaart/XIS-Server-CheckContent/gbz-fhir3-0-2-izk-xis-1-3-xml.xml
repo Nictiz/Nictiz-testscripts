@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
-   <id value="gbz-fhir3-0-2-ikz-xis-1-2-json"/>
+   <id value="gbz-fhir3-0-2-ikz-xis-1-3-CheckContent-xml"/>
    <meta>
       <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
    </meta>
@@ -12,9 +12,9 @@
          <valueString value="../_reference/rules/assert_response_queryParamsInSelfLink.groovy"/>
       </extension>
    </extension>
-   <url value="http://nictiz.nl/fhir/TestScript/gbz-fhir3-0-2-ikz-xis-1-2-json"/>
+   <url value="http://nictiz.nl/fhir/TestScript/gbz-fhir3-0-2-ikz-xis-1-3-CheckContent-xml"/>
    <version value="stu3-3.0-patchlevel 2024-03"/>
-   <name value="Nictiz Geboortezorg - Server - Scenario 1.2 - Serve Integrale Zwangerschapskaart resources of first pregnancy of Hanna Kooij - JSON Format"/>
+   <name value="Nictiz Geboortezorg - Server - Scenario 1.3 - Serve Integrale Zwangerschapskaart resources of all pregnancies of Hanna Kooij - target CheckContent - XML Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -25,7 +25,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 1.2: Serve Integrale Zwangerschapskaart resources of first pregnancy of Hanna Kooij"/>
+   <description value="Scenario 1.3: Serve Integrale Zwangerschapskaart resources of all pregnancies of Hanna Kooij"/>
    <origin>
       <index value="1"/>
       <profile>
@@ -49,7 +49,11 @@
       <description value="OAuth Token for current patient"/>
    </variable>
    <variable>
-      <name value="dossier-id"/>
+      <name value="dossier1-id"/>
+      <defaultValue value="0d479b8b-2063-11ec-1751-020000000000"/>
+   </variable>
+   <variable>
+      <name value="dossier2-id"/>
       <defaultValue value="d735bfeb-2062-11ec-2089-020000000000"/>
    </variable>
    <variable>
@@ -67,7 +71,7 @@
             </type>
             <resource value="Patient"/>
             <description value="Test XIS server to serve Patient resources."/>
-            <accept value="json"/>
+            <accept value="xml"/>
             <encodeRequestUrl value="true"/>
             <requestHeader>
                <field value="Authorization"/>
@@ -287,6 +291,9 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!--
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-nl-core-patient-HANNAHXXX-KOOIJ.xml"
+         nts:in-targets="CheckContent"/>-->
    </test>
    <test id="2-ServeMaternalRecord">
       <name value="2-ServeMaternalRecord"/>
@@ -299,9 +306,9 @@
             </type>
             <resource value="EpisodeOfCare"/>
             <description value="Test XIS server to serve EpisodeOfCare resources."/>
-            <accept value="json"/>
+            <accept value="xml"/>
             <encodeRequestUrl value="true"/>
-            <params value="?type=http://snomed.info/sct|364320009&amp;status=finished&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
+            <params value="?type=http://snomed.info/sct|364320009&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -527,9 +534,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the response Bundle contains 1 EpisodeOfCare resource(s). "/>
+            <description value="Confirm that the response Bundle contains 2 EpisodeOfCare resource(s). "/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(EpisodeOfCare)).count() = 1"/>
+            <expression value="Bundle.entry.where(resource.is(EpisodeOfCare)).count() = 2"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -555,6 +562,14 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!--      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-bc-MaternalRecord-0d479b8b-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>status='active'</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-MaternalRecord-d735bfeb-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>status='finished')</nts:discriminator>
+      </nts:contentAsserts>-->
    </test>
    <test id="3-ServeConditions">
       <name value="3-ServeConditions"/>
@@ -567,9 +582,9 @@
             </type>
             <resource value="Condition"/>
             <description value="Test XIS server to serve Condition resources."/>
-            <accept value="json"/>
+            <accept value="xml"/>
             <encodeRequestUrl value="true"/>
-            <params value="?context=EpisodeOfCare/${dossier-id}"/>
+            <params value="?context=EpisodeOfCare/${dossier1-id},EpisodeOfCare/${dossier2-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -795,23 +810,37 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the response Bundle contains 3 Condition resource(s). "/>
+            <description value="Confirm that the response Bundle contains 5 Condition resource(s). "/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Condition)).count() = 3"/>
+            <expression value="Bundle.entry.where(resource.is(Condition)).count() = 5"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- Zwangerschap -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Condition resource(s) with code http://snomed.info/sct | 118185001. (Zwangerschap)"/>
+            <description value="Confirm that the returned searchset Bundle contains 2 Condition resource(s) with code http://snomed.info/sct | 118185001. (Zwangerschap)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Condition)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '118185001').count()=1).exists()"/>
+            <expression value="Bundle.where(entry.where(resource.is(Condition)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '118185001').count()=2).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- Zwakke foetale beweging -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Condition resource(s) with code http://snomed.info/sct | 276372004. (Zwakke foetale beweging)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Condition)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '276372004').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Niet vorderende uitdrijving -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -823,6 +852,7 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- Foetale nood -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -834,6 +864,28 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!--      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-zib-Pregnancy118185001-0d47afc5-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='118185001'))</nts:discriminator>
+         <nts:discriminator>clinicalStatus='inactive')</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-zib-Pregnancy118185001-d735d436-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='118185001'))</nts:discriminator>
+         <nts:discriminator>clinicalStatus='active')</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-bc-DisorderOfPregnancy276372004-0d47b511-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='276372004'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-DisorderOfLaborAndDelivery249166003-d835d977-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='249166003'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-DisorderOfLaborAndDelivery288274003-d735d977-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='288274003'))</nts:discriminator>
+      </nts:contentAsserts>-->
    </test>
    <test id="4-ServePrenatalVisits">
       <name value="4-ServePrenatalVisits"/>
@@ -846,9 +898,9 @@
             </type>
             <resource value="Encounter"/>
             <description value="Test XIS server to serve Encounter resources."/>
-            <accept value="json"/>
+            <accept value="xml"/>
             <encodeRequestUrl value="true"/>
-            <params value="?episodeofcare=${dossier-id}&amp;_include=Encounter:practitioner"/>
+            <params value="?episodeofcare=${dossier1-id},${dossier2-id}&amp;_include=Encounter:practitioner"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -1074,9 +1126,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the response Bundle contains 1 Encounter resource(s). "/>
+            <description value="Confirm that the response Bundle contains 3 Encounter resource(s). "/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Encounter)).count() = 1"/>
+            <expression value="Bundle.entry.where(resource.is(Encounter)).count() = 3"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -1085,12 +1137,30 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Encounter resource(s) that contains type.coding.code = 11429006. (ContactSoort)"/>
+            <description value="Confirm that the response Bundle contains 1 Practitioner resource(s). "/>
             <direction value="response"/>
-            <expression value="Bundle.entry.select(resource as Encounter).where(type.coding.code.where($this='11429006').exists()).count() = 1"/>
+            <expression value="Bundle.entry.where(resource.is(Practitioner)).count() = 1"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 3 Encounter resource(s) that contains type.coding.code = 11429006. (ContactSoort)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.select(resource as Encounter).where(type.coding.code.where($this='11429006').exists()).count() = 3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- TODO add discriminator -->
+      <!--      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-bc-Encounter-0d47afdc-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent"/>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-bc-Encounter-0d47afea-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent"/>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-Encounter-0d47afdc-2063-11ec-1749-020000000000.xml"
+         nts:in-targets="CheckContent"/>-->
    </test>
    <test id="5a-ServeObservations">
       <name value="5a-ServeObservations"/>
@@ -1103,9 +1173,9 @@
             </type>
             <resource value="Observation"/>
             <description value="Test XIS server to serve Observation resources."/>
-            <accept value="json"/>
+            <accept value="xml"/>
             <encodeRequestUrl value="true"/>
-            <params value="?context=EpisodeOfCare/${dossier-id}"/>
+            <params value="?context=EpisodeOfCare/${dossier1-id},EpisodeOfCare/${dossier2-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -1326,72 +1396,103 @@
             <warningOnly value="true"/>
          </assert>
       </action>
+      <!-- pregnancy duration -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 11977-6. (parity)"/>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 57036006. (pregnancy duration)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '11977-6').count()=1).exists()"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '57036006').count()=2).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- parity -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 11996-6. (gravidity)"/>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://loinc.org | 11977-6. (parity)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '11996-6').count()=1).exists()"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '11977-6').count()=2).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- gravidity -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 161714006. (term date)"/>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://loinc.org | 11996-6. (gravidity)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '161714006').count()=1).exists()"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '11996-6').count()=2).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- term date -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 21840007. (date last menstruation)"/>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 161714006. (term date)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '21840007').count()=1).exists()"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '161714006').count()=2).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- date last menstruation -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 147781000146105. (def term date)"/>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 21840007. (date last menstruation)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '147781000146105').count()=1).exists()"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '21840007').count()=2).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- def term date -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 57036006. (pregnancy duration)"/>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 147781000146105. (def term date)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '57036006').count()=1).exists()"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '147781000146105').count()=2).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- number of living offspring -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 143881000146107. (number of living offspring)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '143881000146107').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- folium accid intake -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 792807003. (folium accid intake)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '792807003').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- onset first stage of labor -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -1403,6 +1504,7 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- type first stage of labor -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -1414,6 +1516,7 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- parturition type -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -1425,6 +1528,7 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- number of offspring -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -1436,6 +1540,7 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- place of birth -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -1447,6 +1552,43 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- Lab rhesus D -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 1305-2. (Rhesus D)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '1305-2').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Lab rhesus C -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 1159-3. (Rhesus C)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '1159-3').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Bloedgroep -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 883-9. (Bloedgroep)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '883-9').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Apgar Score 1-minuut -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -1458,6 +1600,7 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- Apgar Score 5-minuten -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -1469,6 +1612,7 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- Apgar Score 10-minuten -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -1480,6 +1624,7 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- Geboortegewicht -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -1491,6 +1636,7 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- Lichaamslengte bij geboorte -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -1502,6 +1648,7 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- Hoofdomtrek -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -1513,6 +1660,103 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!--      <!-\- TODO add discriminator for first 6 obs -\->
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-bc-PregnancyObservation161714006-0d47afc9-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='161714006'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-PregnancyObservation161714006-0d47afc9-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='161714006'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-bc-PregnancyObservation147781000146105-0d47afce-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='147781000146105'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-PregnancyObservation147781000146105-0d47afce-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='147781000146105'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-bc-PregnancyObservation143881000146107-0d47afd2-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='143881000146107'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-bc-MaternalObservation792807003-0d47afdb-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='792807003'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-zib-LaboratoryTestResult-Observation1305-2-0d47a3b4-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='1305-2'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-zib-LaboratoryTestResult-Observation1159-3-0d47a576-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='1159-3'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-zib-LaboratoryTestResult-Observation883-9-0d47a1f2-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='883-9'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-zib-Pregnancy-Parity364325004-d735d437-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='11977-6'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-zib-Pregnancy-Gravidity161732006-d735d438-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='11996-6'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-zib-Pregnancy-DateLastMenstruation21840007-1da0e1e1-8fdf-11ec-2025-030000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='21840007'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/edmij-gbz-bc-Pregnancy-PregnancyDuration57036006-a4809bb6-2291-11ec-8669-030000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='57036006'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-DeliveryObservation160621000146107-d735d446-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='160621000146107'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-DeliveryObservation160611000146102-d735d44b-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='160611000146102'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-BirthObservation364336006-d735d96f-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='364336006'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-DeliveryObservation118861000146102-d735d972-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='118861000146102'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-BirthObservation169812000-d735d974-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='169812000'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-zib-ApgarScore9272-6-d735d98e-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='9272-6'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-9274-2-d735d990-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='9274-2'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-9271-8-d735d992-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='9271-8'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-ChildObservation8339-4-d735d986-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='8339-4'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-zib-BodyHeight89269-5-d735d988-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='89269-5'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-zib-HeadCircumference169876006-d735d98a-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='169876006'))</nts:discriminator>
+      </nts:contentAsserts>-->
    </test>
    <test id="5b-ServeObservations">
       <name value="5b-ServeObservations"/>
@@ -1525,9 +1769,9 @@
             </type>
             <resource value="Observation"/>
             <description value="Test XIS server to serve Observation resources."/>
-            <accept value="json"/>
+            <accept value="xml"/>
             <encodeRequestUrl value="true"/>
-            <params value="?context:Encounter.episodeofcare=EpisodeOfCare/${dossier-id}"/>
+            <params value="?context:Encounter.episodeofcare=EpisodeOfCare/${dossier1-id},EpisodeOfCare/${dossier2-id}"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -1748,28 +1992,139 @@
             <warningOnly value="true"/>
          </assert>
       </action>
+      <!-- pregnancy duration -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 29463-7. (body weight)"/>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 57036006. (pregnancy duration)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '29463-7').count()=1).exists()"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '57036006').count()=2).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- fetal movement -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 85354-9. (blood pressure)"/>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364618000. (fetal movement)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '85354-9').count()=1).exists()"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364618000').count()=1).exists()"/>
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- body weight -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 3 Observation resource(s) with code http://loinc.org | 29463-7. (body weight)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '29463-7').count()=3).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- blood pressure -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 3 Observation resource(s) with code http://loinc.org | 85354-9. (blood pressure)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '85354-9').count()=3).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- alcohol use -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 228273003. (alcohol use)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '228273003').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- drug use -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 228366006. (drug use)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '228366006').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- tobacco use -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 365980008. (tobacco use)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '365980008').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!--      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-bc-Pregnancy-PregnancyDuration57036006-a4907bc6-2293-11ec-8779-030000000000.xml"
+         selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='57036006')))[0].effective.toDateTime() &lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='57036006')))[1].effective.toDateTime(), Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='57036006')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='57036006')))[1])"
+         nts:in-targets="CheckContent">
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-bc-Pregnancy-PregnancyDuration57036006-a4907bc6-2291-11ec-8779-030000000000.xml"
+         selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='57036006')))[0].effective.toDateTime() &gt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='57036006')))[1].effective.toDateTime(), Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='57036006')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='57036006')))[1])"
+         nts:in-targets="CheckContent">
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-bc-PregnancyObservation364618000-0d47aff1-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='364618000'))</nts:discriminator>
+      </nts:contentAsserts>
+      <!-\- TODO add discriminators -\->
+<!-\-      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-zib-BodyWeight29463-7-0d47b535-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='29463-7'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-zib-BodyWeight29463-7-0d47b53b-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='29463-7'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-zib-BodyWeight29463-7-0d47b535-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='29463-7'))</nts:discriminator>
+      </nts:contentAsserts>-\->
+<!-\-      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-zib-BloodPressure85354-9-0d47b531-2063-11ec-1751-020000000000.xml"
+         selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='85354-9')))[0].effective.toDateTime() &lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='85354-9')))[1].effective.toDateTime(), Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='85354-9')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='85354-9')))[1])"
+         nts:in-targets="CheckContent">
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-zib-BloodPressure85354-9-0d47b537-2063-11ec-1751-020000000000.xml"
+         selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='85354-9')))[0].effective.toDateTime() &gt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='85354-9')))[1].effective.toDateTime(), Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='85354-9')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='85354-9')))[1])"
+         nts:in-targets="CheckContent">
+      </nts:contentAsserts>-\->
+<!-\-      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-zib-BloodPressure85354-9-d735d995-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='85354-9'))</nts:discriminator>
+      </nts:contentAsserts>-\->
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-zib-AlcoholUse228273003-0d47afe5-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='228273003'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-zib-DrugUse228366006-0d47afe7-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='228366006'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-zib-TobaccoUse365980008-0d47afe9-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='365980008'))</nts:discriminator>
+      </nts:contentAsserts>-->
    </test>
    <test id="6-ServeProcedures">
       <name value="6-ServeProcedures"/>
@@ -1782,9 +2137,9 @@
             </type>
             <resource value="Procedure"/>
             <description value="Test XIS server to serve Procedure resources."/>
-            <accept value="json"/>
+            <accept value="xml"/>
             <encodeRequestUrl value="true"/>
-            <params value="?context=EpisodeOfCare/${dossier-id}&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
+            <params value="?context=EpisodeOfCare/${dossier1-id},EpisodeOfCare/${dossier2-id}&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -2010,9 +2365,9 @@
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
                <valueBoolean value="false"/>
             </extension>
-            <description value="Confirm that the response Bundle contains 3 Procedure resource(s). "/>
+            <description value="Confirm that the response Bundle contains 6 Procedure resource(s). "/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Procedure)).count() &gt;= 3"/>
+            <expression value="Bundle.entry.where(resource.is(Procedure)).count() &gt;= 6"/>
             <warningOnly value="false"/>
          </assert>
       </action>
@@ -2038,6 +2393,7 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- Delivery -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -2049,6 +2405,16 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!--   todo: voor nu nemen we gegevens kind niet mee, wellicht in aparte test ivm afwijkend subject -->
+      <!-- Birth -->
+      <!--      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Birth)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="3950001"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>-->
+      <!-- Episiotomie -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -2060,6 +2426,7 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- Vaginaal toucher -->
       <action>
          <assert>
             <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
@@ -2071,5 +2438,65 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- Foetale hartslag monitoring -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 281568006. (Foetale hartslag monitoring)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Procedure)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '281568006').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Echo -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 241491007. (Echo)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Procedure)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '241491007').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Educatiemateriaal -->
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 445283009. (Educatiemateriaal)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Procedure)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '445283009').count()=1).exists()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!--      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-bc-ObstetricProcedure281568006-0d47b51d-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='281568006'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-bc-ObstetricProcedure241491007-0d47b516-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='241491007'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart1/medmij-gbz-bc-ObstetricProcedure445283009-0d47b519-2063-11ec-1751-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='445283009'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-DeliveryProcedure236973005-d735d441-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='236973005'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-ObstetricProcedure114961000146100-d735d451-2062-11ec-2089-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='114961000146100'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Vrouw1-Kaart2/medmij-gbz-bc-ObstetricProcedure51597003-da260877-4e9b-11ec-4587-020000000000.xml"
+         nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='51597003'))</nts:discriminator>
+      </nts:contentAsserts>-->
    </test>
 </TestScript>
