@@ -3,16 +3,16 @@
     
     <xsl:output indent="yes"/>
     
-    <xsl:param name="nhgFixture" select="document('../../../../../HL7-mappings/ada_2_fhir-r4/lab/3.0.0/sturen_laboratoriumresultaten/fhir_instance/lr-slr-TEST-KC-NHG-Nierfunctie-Scenario1-1.xml')"/>
+    <xsl:param name="nhgFixture" select="document('../../../../../HL7-mappings/ada_2_fhir-r4/lab/3.0.0/sturen_laboratoriumresultaten/fhir_instance/lr-slr-TEST-l2z-7Meesturen-met-ander-bericht-MO-3AKCNHGLosresultaat.xml')"/>
     <xsl:param name="nhgId" select="'mv-mp-vo-tst-4-2-a-nierfunctie-NHG-v30'"/>
     
-    <xsl:param name="loincFixture" select="document('../../../../../HL7-mappings/ada_2_fhir-r4/lab/3.0.0/sturen_laboratoriumresultaten/fhir_instance/lr-slr-TEST-KC-LOINC-Nierfunctie-Scenario3-3.xml')"/>
+    <xsl:param name="loincFixture" select="document('../../../../../HL7-mappings/ada_2_fhir-r4/lab/3.0.0/sturen_laboratoriumresultaten/fhir_instance/lr-slr-TEST-l2z-7Meesturen-met-ander-bericht-MO-3AKCLOINCLosresultaat.xml')"/>
     <xsl:param name="loincId" select="'mv-mp-vo-tst-4-2-b-nierfunctie-loinc-zonder-panel-v30'"/>
     
-    <xsl:param name="nhgFixtureCert" select="document('../../../../../HL7-mappings/ada_2_fhir-r4/lab/3.0.0/sturen_laboratoriumresultaten/fhir_instance/lr-slr-KWAL-KC-NHG-Nierfunctie-Scenario1-1.xml')"/>
+    <xsl:param name="nhgFixtureCert" select="document('../../../../../HL7-mappings/ada_2_fhir-r4/lab/3.0.0/sturen_laboratoriumresultaten/fhir_instance/lr-slr-KWAL-l2z-3Meesturen-met-ander-bericht-MO-4KCNHG.xml')"/>
     <xsl:param name="nhgIdCert" select="'mv-mp-vo-kwal-script4a-v30'"/>
     
-    <xsl:param name="loincFixtureCert" select="document('../../../../../HL7-mappings/ada_2_fhir-r4/lab/3.0.0/sturen_laboratoriumresultaten/fhir_instance/lr-slr-KWAL-KC-LOINC-Nierfunctie-Scenario3-3.xml')"/>
+    <xsl:param name="loincFixtureCert" select="document('../../../../../HL7-mappings/ada_2_fhir-r4/lab/3.0.0/sturen_laboratoriumresultaten/fhir_instance/lr-slr-KWAL-l2z-3Meesturen-met-ander-bericht-MO-4KCNHG.xml')"/>
     <xsl:param name="loincIdCert" select="'mv-mp-vo-kwal-script4b-v30'"/>
     
     <xsl:template match="f:Bundle">
