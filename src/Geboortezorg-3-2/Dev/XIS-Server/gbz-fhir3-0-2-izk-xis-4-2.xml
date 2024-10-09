@@ -1,37 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
-<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="server">
+<TestScript xmlns="http://hl7.org/fhir"
+            xmlns:nts="http://nictiz.nl/xsl/testscript"
+            nts:scenario="server">
    <id value="gbz-fhir3-0-2-ikz-xis-4-2"/>
    <version value="stu3-3.0"/>
    <name value="Nictiz Geboortezorg - Server - Scenario 4.2 - Serve Integrale Zwangerschapskaart resources of twin pregnancy of Fiona Swart"/>
    <description value="Scenario 4.2: Serve Integrale Zwangerschapskaart resources of twin pregnancy of Fiona Swart"/>
    <nts:authToken patientResourceId="FIONAXXX-Swart"/>
-   <nts:fixture id="episodeofcare-fixture" href="Verloskunde-Casus2/bc-MaternalRecord-1759bed5-85b4-4d37-86d6-d40e671e3f16.xml"/>
-   <variable><name value="episode-id"/><expression value="EpisodeOfCare.id"/><sourceId value="episodeofcare-fixture"/></variable>
+   <nts:include value="gbz-variable-episode-id" name="episode-id" status="active" sourceId="fixture-5-ServeMaternalRecord"/>
    <variable><name value="T"/><defaultValue value="${CURRENTDATE}"/></variable>
    
    <!-- Patient - Zwangere vrouw -->
    <test id="1-ServeWoman">
       <name value="1-ServeWoman"/>
       <description value="Query Patient resource for HCIM Patient"/>
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Patient"/>         
-         <nts:with-parameter name="params" value="?_include=Patient:link"/>
-      </nts:include>
+      </nts:include>   
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="Patient"/>
          <nts:with-parameter name="count" value="1"/>
          <nts:with-parameter name="atLeast"/>
       </nts:include>
+      <nts:contentAsserts href="Verloskunde-Casus2/nl-core-patient-FIONAXXX-SWART.xml" nts:in-targets="CheckContent"/>
    </test>
    
    <!-- Coverage - Verzekeraar -->
    <test id="2-ServePayer">
       <name value="2-ServePayer"/>
       <description value="Query Coverage resource for HCIM Payer"/>
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Coverage"/>         
-      </nts:include>
+      </nts:include>  
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="Coverage"/>
          <nts:with-parameter name="count" value="0"/>
@@ -43,21 +44,21 @@
    <test id="3-ServeFamilyMemberHistory">
       <name value="3-ServeFamilyMemberHistory"/>
       <description value="Query FamilyMemberHistory resource for FamilyMemberHistory"/>
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="FamilyMemberHistory"/>         
-      </nts:include>
+      </nts:include>    
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="FamilyMemberHistory"/>
          <nts:with-parameter name="count" value="0"/>
          <nts:with-parameter name="atLeast"/>
       </nts:include>
    </test>
-     
+   
    <!-- DeviceUseStatement - Urinekatheter -->
    <test id="4-ServeDeviceUseStatement">
       <name value="4-ServeDeviceUseStatement"/>
       <description value="Query DeviceUseStatement resource for HCIM BladderFunction-UrineCatheter"/>
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="DeviceUseStatement"/>         
          <nts:with-parameter name="params" value="?_include=DeviceUseStatement:device"/>
       </nts:include>
@@ -72,437 +73,551 @@
    <test id="5-ServeMaternalRecord">
       <name value="5-ServeMaternalRecord"/>
       <description value="Test Server query operation for MaternalRecord (EpisodeOfCare) including managing organization (Organization) and care manager (Practitioner)"/>
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="EpisodeOfCare"/>
          <nts:with-parameter name="params" value="?type=http://snomed.info/sct|364320009&amp;status=active&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
-      </nts:include>
+         <nts:with-parameter name="responseId" value="fixture-5-ServeMaternalRecord"/>
+      </nts:include>    
       <nts:include value="assert.response.numResources" scope="common" resource="EpisodeOfCare" count="1"/>
       <nts:include value="assert.response.numResources" scope="common" resource="Organization" count="1"/>
       <nts:include value="assert.response.numResources" scope="common" resource="Practitioner" count="1"/>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-MaternalRecord-1759bed5-85b4-4d37-86d6-d40e671e3f16.xml"
+                          nts:in-targets="CheckContent"/>
    </test>
-     
+   
    <!-- Conditions - Problemen gerelateerd aan zorgepisode incl. zwangerschap -->
    <test id="6-ServeConditions">
       <name value="6-ServeConditions"/>
       <description value="Test Server query operation for Conditions (including Pregnancy)"/>
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Condition"/>
          <nts:with-parameter name="params" value="?context=EpisodeOfCare/${episode-id}"/>
       </nts:include>
-      <nts:include value="assert.response.numResources" scope="common" resource="Condition" count="4"/>
+       <nts:include value="assert.response.numResources" scope="common" resource="Condition" count="4"/>
       <!-- Zwangerschap -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Zwangerschap)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Condition"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="118185001"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(Zwangerschap)"/>
+         <nts:with-parameter name="resource" value="Condition"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="118185001"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- Meerlingzwangerschap -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(meerlingzwangerschap)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Condition"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="16356006"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(meerlingzwangerschap)"/>
+         <nts:with-parameter name="resource" value="Condition"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="16356006"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- Groeiachterstand -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(groeiachterstand)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Condition"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="22033007"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(groeiachterstand)"/>
+         <nts:with-parameter name="resource" value="Condition"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="22033007"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- Liggingsafwijking foetus -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(liggingsafwijking foetus)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Condition"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="15028002"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(liggingsafwijking foetus)"/>
+         <nts:with-parameter name="resource" value="Condition"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="15028002"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
+      <nts:contentAsserts href="Verloskunde-Casus2/zib-Pregnancy-118185001-2f50e789-ae3f-4d77-a456-bc5d85981901.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code=118185001))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-DisorderOfPregnancy-16356006-48197570-6cef-4bee-b235-2d3c43f8de3a.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code=16356006))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-DisorderOfPregnancy-22033007-caa42ccc-9a8b-4b70-9747-04187b561b5e.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code=22033007))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-DisorderOfLaborAndDelivery-15028002-42711c27-1b8a-44bb-8aaa-054f744a8b92.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code=15028002))</nts:discriminator>
+      </nts:contentAsserts>
    </test>
    
    <!-- Encounters -->
    <test id="7-ServeEncounters">
       <name value="7-ServeEncounters"/>
       <description value="Test Server query operation for Encounters"/>
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Encounter"/>
          <nts:with-parameter name="params" value="?episodeofcare=${episode-id}&amp;_include=Encounter:practitioner"/>
-      </nts:include>
+      </nts:include> 
       <nts:include value="assert.response.numResources" scope="common" resource="Encounter" count="3"/>
       <nts:include value="assert.response.numResources" scope="common" resource="Practitioner" count="1"/>
       <!-- Prenatale controle -->
       <nts:include value="assert.response.numResourcesWithCode" scope="common">
-         <nts:with-parameter name="additionalDescription" value="(ContactSoort)"></nts:with-parameter>
-         <nts:with-parameter name="codedElement" value="type"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Encounter"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="11429006"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(ContactSoort)"/>
+         <nts:with-parameter name="codedElement" value="type"/>
+         <nts:with-parameter name="resource" value="Encounter"/>
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="code" value="11429006"/>
       </nts:include>
-      <!-- Partusassistentie -->
       <nts:include value="assert.response.numResourcesWithCode" scope="common">
-         <nts:with-parameter name="additionalDescription" value="(ContactSoort)"></nts:with-parameter>
-         <nts:with-parameter name="codedElement" value="type"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Encounter"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="236973005"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(ContactSoort)"/>
+         <nts:with-parameter name="codedElement" value="type"/>
+         <nts:with-parameter name="resource" value="Encounter"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="236973005"/>
       </nts:include>
-   </test>  
-      
-   <!-- Observations - Observaties gekoppeld aan episode -->  
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-Encounter-4ce993b0-a1ab-48dc-86db-683b7254c264.xml"
+         selector="iif(Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start, Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0], Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1])"
+         nts:in-targets="CheckContent"/>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-Encounter-66ecfb1a-b4f3-48f2-92ec-1af86c03a15a.xml"
+         selector="iif(Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start, Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0], Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1])"
+         nts:in-targets="CheckContent"/>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-ChildBirthAssistance.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>type.where(coding.code=236973005)</nts:discriminator>
+      </nts:contentAsserts>
+   </test>
+   
+   <!-- Observations - Observaties gekoppeld aan episode -->
    <test id="8a-ServeObservations">
       <name value="8a-ServeObservations"/>
       <description value="Test Server query operation for Observations"/>
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Observation"/>
          <nts:with-parameter name="params" value="?context=EpisodeOfCare/${episode-id}"/>
-      </nts:include>
+        <!-- <nts:with-parameter name="responseId" value="fixture-8a-ServeObservations"/>-->
+      </nts:include>  
       <!-- pregnancy duration -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(pregnancy duration)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="57036006"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(pregnancy duration)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="57036006"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- parity -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(parity)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="11977-6"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(parity)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="11977-6"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
-      <!-- gravidity -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(gravidity)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="11996-6"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(gravidity)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="11996-6"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
-      <!-- datum laatste menstruatie -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(datum laatste menstruatie)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="21840007"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(datum laatste menstruatie)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="21840007"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- geschatte a terme datum -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(geschatte a terme datum)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="161714006"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(geschatte a terme datum)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="161714006"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- definitieve a terme datum -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(definitieve a terme datum)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="147781000146105"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(definitieve a terme datum)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="147781000146105"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- foliumzuur intake -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(foliumzuur intake)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="792807003"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(foliumzuur intake)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="792807003"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- tweelingzwangerschap -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(tweelingzwangerschap)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="65147003"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(tweelingzwangerschap)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="65147003"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- aantal levende nakomelingen -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(aantal levende nakomelingen)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="143881000146107"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(aantal levende nakomelingen)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="143881000146107"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- geboorteplaats -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(geboorteplaats)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="169812000"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(geboorteplaats)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="code" value="169812000"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- type partus -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(type partus)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="364336006"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(type partus)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="code" value="364336006"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- bloeddruk -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(bloeddruk)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="85354-9"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(bloeddruk)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="85354-9"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
-      <!-- geboortegewicht -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(geboortegewicht)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="8339-4"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(geboortegewicht)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="code" value="8339-4"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
-      <!-- lichaamslengte -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(lichaamslengte)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="8302-2"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(lichaamslengte)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="code" value="8302-2"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
-      <!-- apgar score 1 minuut -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(apgar score 1 minuut)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="9272-6"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(apgar score 1 minuut)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="code" value="9272-6"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
-      <!-- apgar score 5 minuten -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(apgar score 5 minuten)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="9274-2"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(apgar score 5 minuten)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="code" value="9274-2"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
-      <!-- apgar score 10 minuten -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(apgar score 10 minuten)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="9271-8"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(apgar score 10 minuten)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="code" value="9271-8"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
-      <!-- hoofdomtrek -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(hoofdomtrek)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="9843-4"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(hoofdomtrek)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="code" value="9843-4"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
-      <!-- rhesus c -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(rhesus c)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="1159-3"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(rhesus c)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="1159-3"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
-      <!-- rhesus d -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(rhesus d)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="1305-2"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(rhesus d)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="1305-2"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
-      <!-- bloedgroep -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(bloedgroep)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="883-9"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(bloedgroep)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="883-9"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
-      <!-- hb -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(hb)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="93846-4"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(hb)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="93846-4"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
-      <!-- toxoplasma -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(toxoplasma)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="8039-0"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(toxoplasma)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="8039-0"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-PregnancyObservation-161714006-258a1060-8ade-457b-9a5c-304fe4c8d57c.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code=161714006))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-PregnancyObservation-147781000146105-cb090016-bb87-4583-903c-ce6f6d30b201.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code=147781000146105))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-MaternalObservation-792807003-d6b49a8a-4578-4146-9956-649e475fa008.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code=792807003))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-PregnancyObservation-65147003-372a3051-6476-4de2-b0b7-d87b0d948ba1.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code=65147003))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-PregnancyObservation-143881000146107-3f20eecb-11ab-4caa-90e6-86c2e4cc5074.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code=143881000146107))</nts:discriminator>
+      </nts:contentAsserts>
+      <!-- expressies worden behoorlijk complex, nog checken of dit simpeler kan door gebruik van een variabele -->
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-BirthObservation-169812000-56b64181-5b3a-4e8c-bd2f-a5d4f949ad59.xml"
+                          selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[0].effective.toDateTime() &lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[1].effective.toDateTime(), iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='169812000')))[0].subject.reference = Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[0].subject.reference, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='169812000')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='169812000')))[1]),iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='169812000')))[0].subject.reference = Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[1].subject.reference, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='169812000')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='169812000')))[1]))"               
+                          nts:in-targets="CheckContent">
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-BirthObservation-169812000-b2500cb1-8ef6-4fef-8b76-4fe915b49a41.xml"
+                          selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[0].effective.toDateTime() &gt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[1].effective.toDateTime(), iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='169812000')))[0].subject.reference = Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[0].subject.reference, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='169812000')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='169812000')))[1]),iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='169812000')))[0].subject.reference = Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[1].subject.reference, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='169812000')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='169812000')))[1]))"               
+                          nts:in-targets="CheckContent">
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-BirthObservation-364336006-64c70147-a048-4e8b-8dcf-0b5b0a6a75a7.xml"
+                          selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[0].effective.toDateTime() &lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[1].effective.toDateTime(), iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364336006')))[0].subject.reference = Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[0].subject.reference, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364336006')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364336006')))[1]),iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364336006')))[0].subject.reference = Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[1].subject.reference, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364336006')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364336006')))[1]))"               
+                          nts:in-targets="CheckContent">
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-BirthObservation-364336006-f247a6c1-17a8-4aa1-8a36-6e12b114bc52.xml"
+                          selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[0].effective.toDateTime() &gt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[1].effective.toDateTime(), iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364336006')))[0].subject.reference = Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[0].subject.reference, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364336006')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364336006')))[1]),iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364336006')))[0].subject.reference = Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[1].subject.reference, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364336006')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364336006')))[1]))"               
+                          nts:in-targets="CheckContent">
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-ChildObservation-8339-4-445eb06d-f035-4650-8326-606c95fd2375.xml"
+                          selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[0].effective.toDateTime() &lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[1].effective.toDateTime(), Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[1])"
+                          nts:in-targets="CheckContent">
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-ChildObservation-8339-4-d4ad849d-12e9-4bb8-91ca-d9e0d91c325c.xml"
+                          selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[0].effective.toDateTime() &gt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[1].effective.toDateTime(), Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='8339-4')))[1])"
+                          nts:in-targets="CheckContent">
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/zib-LaboratoryTestResult-Observation-1159-3-06ed6450-c247-44c1-ab44-d20bc33bfa46.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='1159-3'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/zib-LaboratoryTestResult-Observation-1305-2-60664465-3eb6-4449-bb30-35737b1fa6c8.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='1305-2'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/zib-LaboratoryTestResult-Observation-883-9-aa1ade57-cb5a-4328-9422-10445058d9fa.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='883-9'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/zib-LaboratoryTestResult-Observation-93846-4-39248ef2-a7bd-47e0-8a73-3f5f7a3ddc70.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='93846-4'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/zib-LaboratoryTestResult-Observation-8039-0-bf5338b5-c66a-44c6-96fd-bcf846751fda.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code='8039-0'))</nts:discriminator>
+      </nts:contentAsserts>
    </test>
    
-   <!-- Observations - Observaties gekoppeld aan prenatale controle -->  
+   <!-- Observations - Observaties gekoppeld aan prenatale controle -->
    <test id="8b-ServeObservations">
       <name value="8b-ServeObservations"/>
       <description value="Test Server query operation for Observations"/>  
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Observation"/>
          <nts:with-parameter name="params" value="?context:Encounter.episodeofcare=EpisodeOfCare/${episode-id}"/>
-      </nts:include>
+      </nts:include>    
       <!-- alcoholgebruik -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(alcohol use)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="228273003"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(alcohol use)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="228273003"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- tabakgebruik -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(tobacco use)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="365980008"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(tobacco use)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="365980008"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- drugsgebruik -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(drug use)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="228366006"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
-      </nts:include>      
-      <!-- pregnancy duration -->
-      <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(pregnancy duration)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="57036006"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(drug use)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="228366006"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- foetale beweging -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(foetale beweging)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="364618000"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(pregnancy duration)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="code" value="57036006"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- lichaamsgewicht -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(lichaamsgewicht)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="29463-7"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(foetale beweging)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="364618000"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- bloeddruk -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(bloeddruk)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="85354-9"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(lichaamsgewicht)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="29463-7"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
       </nts:include>
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(bloeddruk)"/>
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="code" value="85354-9"/>
+         <nts:with-parameter name="system" value="http://loinc.org"/>
+      </nts:include>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-PregnancyObservation-364618000-3c419ad5-32de-4a99-8f35-0fdd3003c62c.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code=364618000))</nts:discriminator>
+      </nts:contentAsserts>
    </test>
-
+   
    <!-- Alle verrichtingen -->
    <test id="9-ServeProcedures">
       <name value="9-ServeProcedures"/>
       <description value="Test Server query operation for (Obstetric) Procedures"/>
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Procedure"/>
          <nts:with-parameter name="params" value="?context=EpisodeOfCare/${episode-id}&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
-      </nts:include>
+      </nts:include>    
       <nts:include value="assert.response.numResources" scope="common" resource="Procedure" count="11"/>
       <nts:include value="assert.response.numResources" scope="common" resource="Organization" count="1"/>
       <nts:include value="assert.response.numResources" scope="common" resource="ProcedureRequest" count="0"/>
       <!-- Verrichting (Bevalling) -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Bevalling)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="236973005"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(Bevalling)"/>
+         <nts:with-parameter name="resource" value="Procedure"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="236973005"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- Verrichting (Geboorte) -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Geboorte)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="3950001"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(Geboorte)"/>
+         <nts:with-parameter name="resource" value="Procedure"/>
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="code" value="3950001"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- Verrichting (Bloedonderzoek) -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Bloedonderzoek)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="396550006"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(Bloedonderzoek)"/>
+         <nts:with-parameter name="resource" value="Procedure"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="396550006"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- Verrichting (Dieetmanagement) -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Dieetmanagement)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="410175003"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(Dieetmanagement)"/>
+         <nts:with-parameter name="resource" value="Procedure"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="410175003"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- Verrichting (Primaire sectio) -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Primaire sectio)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="80771000146107"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(Primaire sectio)"/>
+         <nts:with-parameter name="resource" value="Procedure"/>
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="code" value="80771000146107"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- Verrichting (Opname in ziekenhuis) -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Opname in ziekenhuis)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="32485007"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(Opname in ziekenhuis)"/>
+         <nts:with-parameter name="resource" value="Procedure"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="32485007"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- Verrichting (Inflatie van long) -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Inflatie van long)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="count" value="1"></nts:with-parameter>
-         <nts:with-parameter name="code" value="243140006"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(Inflatie van long)"/>
+         <nts:with-parameter name="resource" value="Procedure"/>
+         <nts:with-parameter name="count" value="1"/>
+         <nts:with-parameter name="code" value="243140006"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!-- Verrichting (Vitamine K toediening) -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="(Vitamine K toediening)"></nts:with-parameter>
-         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
-         <nts:with-parameter name="count" value="2"></nts:with-parameter>
-         <nts:with-parameter name="code" value="698350008:370131001=133933007"></nts:with-parameter>
-         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+         <nts:with-parameter name="additionalDescription" value="(Vitamine K toediening)"/>
+         <nts:with-parameter name="resource" value="Procedure"/>
+         <nts:with-parameter name="count" value="2"/>
+         <nts:with-parameter name="code" value="698350008:370131001=133933007"/>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-ObstetricProcedure-396550006-19a10c94-5c77-44a9-b923-d004abdc5fb2.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code=396550006))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-ObstetricProcedure-410175003-5a74dc3c-c886-49f5-8ff8-6838da6cf3cd.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code=410175003))</nts:discriminator>
+      </nts:contentAsserts>
+      <!-- onderstaande fixtures zijn op partOf reference na identiek, er moet nog een oplossing komen om onderscheid te kunnen maken welke bij welk kind hoort, voor de tests maakt het geen verschil doordat de waarden verder identiek zijn  -->
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-ObstetricProcedure-80771000146107-14397ff0-69d1-4025-a992-1f333b661d5e.xml"
+                          selector="Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0]"
+                          nts:in-targets="CheckContent">
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-ObstetricProcedure-80771000146107-a87cdbdf-787c-4efb-8350-a103cd0f1936.xml"
+         selector="Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1]"
+         nts:in-targets="CheckContent">
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-ObstetricProcedure-32485007-7ace58b1-90fb-458c-bb2c-f98865028804.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code=32485007))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-ObstetricProcedure-243140006-829cfc0e-085d-423e-91ab-4cc3b3be64c0.xml"
+                          nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code=243140006))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-ObstetricProcedure-698350008=370131001=133933007-00f2a94a-052d-47c9-83be-bc57e89bb2bf.xml"
+         selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='698350008:370131001=133933007')))[0].performedPeriod.start &lt; Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='698350008:370131001=133933007')))[1].performedPeriod.start, Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='698350008:370131001=133933007')))[0], Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='698350008:370131001=133933007')))[1])"
+         nts:in-targets="CheckContent"/>
+      <nts:contentAsserts href="Verloskunde-Casus2/bc-ObstetricProcedure-698350008=370131001=133933007-9ffbf7df-e7b9-43b1-b77b-ce3b4d2af671.xml"
+         selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='698350008:370131001=133933007')))[0].performedPeriod.start &gt; Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='698350008:370131001=133933007')))[1].performedPeriod.start, Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='698350008:370131001=133933007')))[0], Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='698350008:370131001=133933007')))[1])"
+         nts:in-targets="CheckContent"/>   
    </test>
    
    <!-- Zorgteam -->
    <test id="10-ServeCareTeam">
       <name value="10-ServeCareTeam"/>
       <description value="Test Server query operation for CareTeam"/>  
-      <nts:include value="gbz-operation-search-xis">
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="CareTeam"/>
          <nts:with-parameter name="params" value="?context=EpisodeOfCare/${episode-id}"/>
-      </nts:include>
+      </nts:include>    
       <nts:include value="assert.response.numResources" scope="common">
          <nts:with-parameter name="resource" value="CareTeam"/>
          <nts:with-parameter name="count" value="0"/>
       </nts:include>
    </test>
    
-   <!-- TODO: RelatedPerson, TreatmentDirective, zib Problem/Procedure (List?)-->
+   <!-- Consent -->
+   <test id="11-ServeConsent">
+      <name value="11-ServeConsent"/>
+      <description value="Test Server query operation for Consent"/>  
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
+         <nts:with-parameter name="resource" value="Consent"/>
+      </nts:include>    
+      <nts:include value="assert.response.numResources" scope="common">
+         <nts:with-parameter name="resource" value="Consent"/>
+         <nts:with-parameter name="count" value="0"/>
+      </nts:include>
+   </test>
+   
+   <!-- RelatedPerson -->
+   <test id="12-RelatedPerson">
+      <name value="12-RelatedPerson"/>
+      <description value="Test Server query operation for RelatedPerson"/>  
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
+         <nts:with-parameter name="resource" value="RelatedPerson"/>
+      </nts:include>    
+      <nts:include value="assert.response.numResources" scope="common">
+         <nts:with-parameter name="resource" value="RelatedPerson"/>
+         <nts:with-parameter name="count" value="0"/>
+      </nts:include>
+   </test>
    
 </TestScript>
