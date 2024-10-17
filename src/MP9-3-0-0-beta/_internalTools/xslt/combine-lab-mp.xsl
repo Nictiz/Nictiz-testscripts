@@ -3,11 +3,17 @@
     
     <xsl:output indent="yes"/>
     
-    <xsl:param name="nhgFixture" select="document('../../../../../HL7-mappings/ada_2_fhir-r4/lab/3.0.0/sturen_laboratoriumresultaten/fhir_instance/lr-slr-TEST-KC-NHG-Nierfunctie-Scenario1-1.xml')"/>
+    <xsl:param name="nhgFixture" select="document('../../../../../HL7-mappings/ada_2_fhir-r4/lab/3.0.0/sturen_laboratoriumresultaten/fhir_instance/lr-slr-TEST-l2z-7Meesturen-met-ander-bericht-MO-3AKCNHGLosresultaat.xml')"/>
     <xsl:param name="nhgId" select="'mv-mp-vo-tst-4-2-a-nierfunctie-NHG-v30'"/>
     
-    <xsl:param name="loincFixture" select="document('../../../../../HL7-mappings/ada_2_fhir-r4/lab/3.0.0/sturen_laboratoriumresultaten/fhir_instance/lr-slr-TEST-KC-LOINC-Nierfunctie-Scenario3-3.xml')"/>
+    <xsl:param name="loincFixture" select="document('../../../../../HL7-mappings/ada_2_fhir-r4/lab/3.0.0/sturen_laboratoriumresultaten/fhir_instance/lr-slr-TEST-l2z-7Meesturen-met-ander-bericht-MO-3AKCLOINCLosresultaat.xml')"/>
     <xsl:param name="loincId" select="'mv-mp-vo-tst-4-2-b-nierfunctie-loinc-zonder-panel-v30'"/>
+    
+    <xsl:param name="nhgFixtureCert" select="document('../../../../../HL7-mappings/ada_2_fhir-r4/lab/3.0.0/sturen_laboratoriumresultaten/fhir_instance/lr-slr-KWAL-l2z-3Meesturen-met-ander-bericht-MO-4KCNHG.xml')"/>
+    <xsl:param name="nhgIdCert" select="'mv-mp-vo-kwal-script4a-v30'"/>
+    
+    <xsl:param name="loincFixtureCert" select="document('../../../../../HL7-mappings/ada_2_fhir-r4/lab/3.0.0/sturen_laboratoriumresultaten/fhir_instance/lr-slr-KWAL-l2z-3Meesturen-met-ander-bericht-MO-4KCNHG.xml')"/>
+    <xsl:param name="loincIdCert" select="'mv-mp-vo-kwal-script4b-v30'"/>
     
     <xsl:template match="f:Bundle">
         <xsl:copy>
@@ -28,6 +34,18 @@
                         <xsl:with-param name="performerFullUrl" select="$loincFixture/f:Bundle/f:entry[f:resource/f:Organization/f:identifier[f:system/@value = 'http://fhir.nl/fhir/NamingSystem/ura']/f:value/@value = '00003333']/f:fullUrl/@value" tunnel="yes"/>
                     </xsl:apply-templates>
                 </xsl:when>
+                <xsl:when test="$bundleId = $loincIdCert">
+                    <xsl:apply-templates select="$loincFixtureCert/f:Bundle/f:entry[f:resource[f:Observation|f:Specimen]]" mode="editPatient">
+                        <xsl:with-param name="patientFullUrl" select="$patientFullUrl" tunnel="yes"/>
+                        <xsl:with-param name="performerFullUrl" select="$loincFixtureCert/f:Bundle/f:entry[f:resource/f:Organization/f:identifier[f:system/@value = 'http://fhir.nl/fhir/NamingSystem/ura']/f:value/@value = '00003333']/f:fullUrl/@value" tunnel="yes"/>
+                    </xsl:apply-templates>
+                </xsl:when>
+                <xsl:when test="$bundleId = $nhgIdCert">
+                    <xsl:apply-templates select="$nhgFixtureCert/f:Bundle/f:entry[f:resource[f:Observation|f:Specimen]]" mode="editPatient">
+                        <xsl:with-param name="patientFullUrl" select="$patientFullUrl" tunnel="yes"/>
+                        <xsl:with-param name="performerFullUrl" select="$nhgFixtureCert/f:Bundle/f:entry[f:resource/f:Organization/f:identifier[f:system/@value = 'http://fhir.nl/fhir/NamingSystem/ura']/f:value/@value = '00003333']/f:fullUrl/@value" tunnel="yes"/>
+                    </xsl:apply-templates>
+                </xsl:when>
                 <xsl:otherwise>
                     <xsl:message terminate="yes">Unexpected situation</xsl:message>
                 </xsl:otherwise>
@@ -40,6 +58,12 @@
                 </xsl:when>
                 <xsl:when test="$bundleId = $loincId">
                     <xsl:apply-templates select="$loincFixture/f:Bundle/f:entry[f:resource/f:Organization/f:identifier[f:system/@value = 'http://fhir.nl/fhir/NamingSystem/ura']/f:value/@value = '00003333']"/>
+                </xsl:when>
+                <xsl:when test="$bundleId = $nhgIdCert">
+                    <xsl:apply-templates select="$nhgFixtureCert/f:Bundle/f:entry[f:resource/f:Organization/f:identifier[f:system/@value = 'http://fhir.nl/fhir/NamingSystem/ura']/f:value/@value = '00003333']"/>
+                </xsl:when>
+                <xsl:when test="$bundleId = $loincIdCert">
+                    <xsl:apply-templates select="$loincFixtureCert/f:Bundle/f:entry[f:resource/f:Organization/f:identifier[f:system/@value = 'http://fhir.nl/fhir/NamingSystem/ura']/f:value/@value = '00003333']"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:message terminate="yes">Unexpected situation</xsl:message>

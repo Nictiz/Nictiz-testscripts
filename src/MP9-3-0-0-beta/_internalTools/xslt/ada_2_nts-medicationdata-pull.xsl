@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <xsl:import href="https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/ada_2_fhir-r4/fhir/2_fhir_fixtures.xsl"/>
+    <xsl:import href="../../../../../HL7-mappings/ada_2_fhir-r4/fhir/2_fhir_fixtures.xsl"/>
     <xsl:import href="ada_2_nts.xsl"/>
 
     <xsl:output indent="yes" omit-xml-declaration="yes"/>
@@ -449,6 +449,9 @@
             <xsl:choose>
                 <xsl:when test="starts-with($fixSlashes, 'file:/')">
                     <xsl:value-of select="$fixSlashes"/>
+                </xsl:when>
+                <xsl:when test="not(starts-with($fixSlashes, 'file:/')) and starts-with($fixSlashes, '/')">
+                    <xsl:value-of select="concat('file://', $fixSlashes)"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:value-of select="concat('file:/', $fixSlashes)"/>
