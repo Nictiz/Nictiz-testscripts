@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="server">
+    <id value="imm-serve-test-1-1"/>
+    <version value="R4-4.0.1"/>
+    <name value="Immunization - XIS Server - Test scenario 1.1 - Serve Immunization resources of XXX_Biezen"/>
+    <description value="Scenario 1.1 - Serve Immunization resources of van XXX_Biezen"/>
+    <nts:authToken patientResourceId="nl-core-Patient--XXX-Biezen"/>
+
+    <test id="immunization-search-response">
+        <name value="Test scenario 1.1 - Serve vaccinations"/>
+        <description value="Serve Immunization resource including the patient, performer and location"/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common" resource="Immunization" params="?_include=Immunization:patient&#38;_include=Immunization:performer&#38;_include=Immunization:location" responseId="fixture-immunization-search-response"/>
+        <nts:include value="assert.response.numResources" scope="common" resource="Immunization" count="4" nts:in-targets="#default"/>
+        <nts:include value="assert.response.numResources" scope="common" resource="Patient" count="1" nts:in-targets="#default"/>
+        <nts:include value="assert.response.numResources" scope="common" resource="Organization" count="4" nts:in-targets="#default"/>
+        <nts:include value="assert.response.numResources" scope="common" resource="Location" count="0" nts:in-targets="#default"/>
+
+        <!-- Immunization -->
+        <nts:include value="assert.numIdentifier" direction="response" resource="Immunization" count="4" nts:in-targets="#default"/>
+        <nts:include value="assert.numMedicationReference" direction="response" resource="Immunization" count="4" nts:in-targets="#default"/>
+        
+        <!-- Patient -->
+        <!--<nts:include value="assert.birthdate" direction="response" resource="Patient" date="2000-03-09"/>-->
+        
+        <nts:contentAsserts href="resources/nl-core-Patient--XXX-Biezen.xml" nts:in-targets="CheckContent"/>
+        
+        <!-- Immunization 1 -->
+        <nts:contentAsserts href="resources/6a7b78de-6b07-11ec-0000-020000000000.xml" description="contains .vaccineCode.coding.code = '836398006'" discriminator="vaccineCode.where(coding.where(code = '836398006'))" nts:in-targets="CheckContent"/>
+        <!--<nts:contentAsserts href="resources/nl-core-HPrf-PracRol-\-PrcRol-2165281100731-03898989.xml" description="contains .identifier.value = '20000004'" discriminator="identifier.where(value = '20000004')" nts:in-targets="CheckContent"/>-->
+        
+        <!-- Immunization 2 -->
+        <nts:contentAsserts href="resources/1d8ff616-6af9-11ec-0000-020000000000.xml" description="contains .vaccineCode.text = 'HEPATITIS-A-VACCIN'" discriminator="vaccineCode.where(text = 'HEPATITIS-A-VACCIN')" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-HPrv-Org--Org-2165281100733-10000002.xml" description="contains .identifier.value = '10000002'" discriminator="identifier.where(value = '10000002')" nts:in-targets="CheckContent"/>
+        
+        <!-- Immunization 3 -->
+        <nts:contentAsserts href="resources/2faed7c0-6b01-11ec-0000-020000000000.xml" description="contains .vaccineCode.coding.code = '206784'" discriminator="vaccineCode.where(coding.where(code = '206784'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-HPrv-Org--Org-2165281100733-20000002.xml" description="contains .identifier.value = '20000002'" discriminator="identifier.where(value = '20000002')" nts:in-targets="CheckContent"/>
+        
+        <!-- Immunization 4 -->
+        <nts:contentAsserts href="resources/706325a8-6aba-11ec-0000-020000000000.xml" description="contains .vaccineCode.coding.code = '2924536'" discriminator="vaccineCode.where(coding.where(code = '2924536'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-HPrv-Org--Org-2165281100733-20000001.xml" description="contains .identifier.value = '20000001'" discriminator="identifier.where(value = '20000001')" nts:in-targets="CheckContent"/>
+    </test>
+    
+    <!-- Test Medication resource 1 -->
+    <test>
+        <nts:include value="variable.immunization.medication.url" name="pharmaceuticalProduct-url-1" sequenceNumber="0" sourceId="fixture-immunization-search-response"/>
+        <name value="Scenario 1.1 - Read Medication resource 1"/>
+        <description value="Serve PharmaceuticalProduct via an HTTP get."/>
+        <nts:include value="medmij/test.xis.successfulRead" resource="Medication" url="${pharmaceuticalProduct-url-1}" scope="common"/>
+        
+        <!--<nts:contentAsserts href="resources/nl-core-PhPrd-\-2168401113883696-836398006.xml" description="contains .code.coding.code = '836398006'" discriminator="code.where(coding.where(code = '836398006'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd-\-UNK-HEPATITIS-A-VACCIN.xml" description="contains .code.text = 'HEPATITIS-A-VACCIN'" discriminator="code.where(text = 'HEPATITIS-A-VACCIN')" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd-\-21684011138832447-2924528.xml" description="contains .code.coding.code = '206784'" discriminator="code.where(coding.where(code = '206784'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd-\-21684011138832447-2924536.xml" description="contains .code.coding.code = '2924536'" discriminator="code.where(coding.where(code = '2924536'))" nts:in-targets="CheckContent"/>-->
+    </test>
+    
+    <!-- Test Medication resource 2 -->
+    <test>
+        <nts:include value="variable.immunization.medication.url" name="pharmaceuticalProduct-url-2" sequenceNumber="1" sourceId="fixture-immunization-search-response"/>
+        <name value="Scenario 1.1 - Read Medication resource 2"/>
+        <description value="Serve PharmaceuticalProduct via an HTTP get."/>
+        <nts:include value="medmij/test.xis.successfulRead" resource="Medication" url="${pharmaceuticalProduct-url-2}" scope="common"/>
+        
+        <!--<nts:contentAsserts href="resources/nl-core-PhPrd-\-2168401113883696-836398006.xml" description="contains .code.coding.code = '836398006'" discriminator="code.where(coding.where(code = '836398006'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd-\-UNK-HEPATITIS-A-VACCIN.xml" description="contains .code.text = 'HEPATITIS-A-VACCIN'" discriminator="code.where(text = 'HEPATITIS-A-VACCIN')" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd-\-21684011138832447-2924528.xml" description="contains .code.coding.code = '206784'" discriminator="code.where(coding.where(code = '206784'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd-\-21684011138832447-2924536.xml" description="contains .code.coding.code = '2924536'" discriminator="code.where(coding.where(code = '2924536'))" nts:in-targets="CheckContent"/>-->
+    </test>
+    
+    <!-- Test Medication resource 3 -->
+    <test>
+        <nts:include value="variable.immunization.medication.url" name="pharmaceuticalProduct-url-3" sequenceNumber="2" sourceId="fixture-immunization-search-response"/>
+        <name value="Scenario 1.1 - Read Medication resource 3"/>
+        <description value="Serve PharmaceuticalProduct via an HTTP get."/>
+        <nts:include value="medmij/test.xis.successfulRead" resource="Medication" url="${pharmaceuticalProduct-url-3}" scope="common"/>
+        
+        <!--<nts:contentAsserts href="resources/nl-core-PhPrd-\-2168401113883696-836398006.xml" description="contains .code.coding.code = '836398006'" discriminator="code.where(coding.where(code = '836398006'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd-\-UNK-HEPATITIS-A-VACCIN.xml" description="contains .code.text = 'HEPATITIS-A-VACCIN'" discriminator="code.where(text = 'HEPATITIS-A-VACCIN')" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd-\-21684011138832447-2924528.xml" description="contains .code.coding.code = '206784'" discriminator="code.where(coding.where(code = '206784'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd-\-21684011138832447-2924536.xml" description="contains .code.coding.code = '2924536'" discriminator="code.where(coding.where(code = '2924536'))" nts:in-targets="CheckContent"/>-->
+    </test>
+    
+    <!-- Test Medication resource 4 -->
+    <test>
+        <nts:include value="variable.immunization.medication.url" name="pharmaceuticalProduct-url-4" sequenceNumber="3" sourceId="fixture-immunization-search-response"/>
+        <name value="Scenario 1.1 - Read Medication resource 4"/>
+        <description value="Serve PharmaceuticalProduct via an HTTP get."/>
+        <nts:include value="medmij/test.xis.successfulRead" resource="Medication" url="${pharmaceuticalProduct-url-4}" scope="common"/>
+        
+        <!--<nts:contentAsserts href="resources/nl-core-PhPrd-\-2168401113883696-836398006.xml" description="contains .code.coding.code = '836398006'" discriminator="code.where(coding.where(code = '836398006'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd-\-UNK-HEPATITIS-A-VACCIN.xml" description="contains .code.text = 'HEPATITIS-A-VACCIN'" discriminator="code.where(text = 'HEPATITIS-A-VACCIN')" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd-\-21684011138832447-2924528.xml" description="contains .code.coding.code = '206784'" discriminator="code.where(coding.where(code = '206784'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="resources/nl-core-PhPrd-\-21684011138832447-2924536.xml" description="contains .code.coding.code = '2924536'" discriminator="code.where(coding.where(code = '2924536'))" nts:in-targets="CheckContent"/>-->
+    </test>
+</TestScript>
