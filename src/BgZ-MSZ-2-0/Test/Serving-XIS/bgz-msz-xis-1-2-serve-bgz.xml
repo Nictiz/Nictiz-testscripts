@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
+    nts:scenario="server">
+    <id value="bgz-msz-xis-1-2-serve-bgz"/>
+    <version value="stu3-3.0"/>
+    <name value="BgZ MSZ - Serving XIS - Scenario 1.2 - Serve BgZ resources of H W Wensveen-Elik"/>
+    <description value="Scenario 1.2 - Serve BgZ resources of H W Wensveen-Elik"/>
+    <nts:authToken patientResourceId="HANNELORE-H-W--HANNIE-WENSVEEN-ELIK"/>
+
+    <test id="01-serve-Patient">
+        <name value="Scenario 1.2 - Patient"/>
+        <description value="Serve Patient resource including the patient's general practitioner for HCIM Patient"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Patient"
+            params="?identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;_include=Patient:general-practitioner"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Patient" count="1" nts:in-targets="#default"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Practitioner" count="1" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/HANNELORE-H-W--HANNIE-WENSVEEN-ELIK.xml" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/nl-core-practitioner-bgz-msz-2-16-528-1-1007-3-1-10000010.xml" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="02-serve-Payer">
+        <name value="Scenario 1.2 - Payer"/>
+        <description value="Serve Coverage resource(s) including the insurer for HCIM Payer"/>
+        <nts:include value="test.server.successfulSearch" scope="common" 
+            resource="Coverage"
+            params="?beneficiary.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;_include=Coverage:payor:Patient&amp;_include=Coverage:payor:Organization"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common" 
+            resource="Coverage" count="1" nts:in-targets="#default"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Organization" count="1" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-Payer-bgz-msz-patD-payer1-1.xml" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/nl-core-organization-bgz-msz-2-16-840-1-113883-2-4-6-4-1903.xml" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="03a-serve-TreatmentDirective">
+        <name value="Scenario 1.2 - TreatmentDirective"/>
+        <description value="Serve Consent resource(s) for HCIM TreatmentDirective"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Consent"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;category=http://snomed.info/sct|11291000146105"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common" 
+            resource="Consent" count="1" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-TreatmentDirective-bgz-msz-patD-treatmentdir1.xml" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="03b-serve-AdvanceDirective">
+        <name value="Scenario 1.2 - AdvanceDirective"/>
+        <description value="Serve Consent resource(s) for HCIM AdvanceDirective"/>
+        <nts:include value="test.server.successfulSearch" scope="common" 
+            resource="Consent"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;category=http://snomed.info/sct|11341000146107"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common" 
+            resource="Consent" count="1" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-AdvanceDirective-bgz-msz-patD-advdir1.xml" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="04-serve-ContactPerson">
+        <name value="Scenario 1.2 - ContactPerson"/>
+        <description value="Serve Patient resource (which contains the patient's first contact person) for HCIM ContactPerson"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Patient"
+            params="?identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Patient" count="1"/>
+    </test>
+
+    <test id="05-serve-FunctionalOrMentalStatus">
+        <name value="Scenario 1.2 - FunctionalOrMentalStatus"/>
+        <description value="Serve Observation resource(s) for HCIM FunctionalOrMentalStatus"/>
+        <nts:include value="test.server.successfulSearch" scope="common" 
+            resource="Observation"
+            params="/$lastn?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;category=http://snomed.info/sct|118228005,http://snomed.info/sct|384821006"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common" 
+            resource="Observation" count="2" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-FunctionalOrMentalStatus-bgz-msz-patD-funcment1.xml" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-FunctionalOrMentalStatus-bgz-msz-patD-funcment2.xml" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="06-serve-Problem">
+        <name value="Scenario 1.2 - Problem"/>
+        <description value="Serve Condition resource(s) for HCIM Problem"/>
+        <nts:include value="test.server.successfulSearch" scope="common" 
+            resource="Condition"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Condition" count="4" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-Problem-bgz-msz-bgz-msz-patD-problem1.xml"
+            description="contains .code.coding.code = '86299006'" discriminator="code.where(coding.where(code = '86299006'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-Problem-bgz-msz-bgz-msz-patD-problem2.xml"
+            description="contains .code.coding.code = '161940008'" discriminator="code.where(coding.where(code = '161940008'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-Problem-bgz-msz-bgz-msz-patD-problem3.xml"
+            description="contains .code.coding.code = '91434003'" discriminator="code.where(coding.where(code = '91434003'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-Problem-bgz-msz-bgz-msz-patD-problem4.xml"
+            description="contains .code.coding.code = '309464009'" discriminator="code.where(coding.where(code = '309464009'))" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="07a-serve-LivingSituation">
+        <name value="Scenario 1.2 - LivingSituation"/>
+        <description value="Serve Observation resource(s) for last known HCIM LivingSituation"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Observation"
+            params="/$lastn?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;code=http://snomed.info/sct|365508006"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-LivingSituation-bgz-msz-patD-living1.xml" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="07b-serve-DrugUse">
+        <name value="Scenario 1.2 - DrugUse"/>
+        <description value="Serve Observation resource(s) for HCIM DrugUse"/>
+        <nts:include value="test.server.successfulSearch" scope="common" 
+            resource="Observation"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;code=http://snomed.info/sct|228366006"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="2" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-DrugUse-bgz-msz-patD-druguse1.xml" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-DrugUse-bgz-msz-patD-druguse2.xml" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="07c-serve-AlcoholUse">
+        <name value="Scenario 1.2 - AlcoholUse"/>
+        <description value="Serve Observation resource(s) for HCIM AlcoholUse"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Observation"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;code=http://snomed.info/sct|228273003"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-AlcoholUse-bgz-msz-patD-alcohol1.xml" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="07d-serve-TobaccoUse">
+        <name value="Scenario 1.2 - TobaccoUse"/>
+        <description value="Serve Observation resource(s) for HCIM TobaccoUse"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Observation" 
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;code=http://snomed.info/sct|365980008"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-TobaccoUse-bgz-msz-patD-tobacco1.xml" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="07e-serve-NutritionAdvice">
+        <name value="Scenario 1.2 - NutritionAdvice"/>
+        <description value="Serve NutritionOrder resource(s) for HCIM NutritionAdvice"/>
+        <nts:include value="test.server.successfulSearch" scope="common" 
+            resource="NutritionOrder"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="NutritionOrder" count="2" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-NutritionAdvice-bgz-msz-patD-nutrition1.xml" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-NutritionAdvice-bgz-msz-patD-nutrition2.xml" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="08-serve-Alert">
+        <name value="Scenario 1.2 - Alert"/>
+        <description value="Serve Flag resource(s) for HCIM Alert"/>
+        <nts:include value="test.server.successfulSearch" scope="common" 
+            resource="Flag"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Flag" count="2" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-Alert-bgz-msz-patD-alert1.xml" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-Alert-bgz-msz-patD-alert2.xml" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="09-serve-AllergyIntolerance">
+        <name value="Scenario 1.2 - AllergyIntolerance"/>
+        <description value="Serve AllergyIntolerance resource(s) for HCIM AllergyIntolerance"/>
+        <nts:include value="test.server.successfulSearch" scope="common" 
+            resource="AllergyIntolerance"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="AllergyIntolerance" count="2" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-AllergyIntolerance-bgz-msz-patD-allergy1.xml"
+            nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-AllergyIntolerance-bgz-msz-patD-allergy2.xml"
+            nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="11-serve-MedicalDevice">
+        <name value="Scenario 1.2 - MedicalDevice"/>
+        <description value="Serve DeviceUseStatement resource(s) including the device for HCIM MedicalDevice"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="DeviceUseStatement"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;_include=DeviceUseStatement:device"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="DeviceUseStatement" count="3" nts:in-targets="#default"/>
+        <nts:include value="assert.response.numResources" scope="common" 
+            resource="Device" count="3" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-MedicalDevice-bgz-msz-bgz-msz-patD-medDevice1.xml" 
+            nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-MedicalDevice-bgz-msz-bgz-msz-patD-medDevice2.xml" 
+            nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-MedicalDevice-bgz-msz-bgz-msz-patD-medDevice3.xml" 
+            nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-MedicalDeviceProduct-bgz-msz-bgz-msz-patD-medDevice1.xml" 
+            nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-MedicalDeviceProduct-bgz-msz-bgz-msz-patD-medDevice2.xml" 
+            nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-MedicalDeviceProduct-bgz-msz-bgz-msz-patD-medDevice3.xml" 
+            nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="12-serve-Vaccination">
+        <name value="Scenario 1.2 - Vaccination"/>
+        <description value="Serve Immunization resource(s) for HCIM Vaccination"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Immunization"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;status=completed"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Immunization" count="2" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-Vaccination-bgz-msz-patD-vaccin1.xml" 
+            nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-Vaccination-bgz-msz-patD-vaccin2.xml" 
+            nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="13a-serve-BloodPressure-all">
+        <name value="Scenario 1.2 - BloodPressure (all)"/>
+        <description value="Serve Observation resource(s) for HCIM BloodPressure"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Observation"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;code=http://loinc.org|85354-9"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-BloodPressure-bgz-msz-patD-bloodpressure1.xml" 
+            description="contains a component with code = '8480-6' and valueQuantity.value = '170'" discriminator="component.where(code.coding.where(code = '8480-6') and value.ofType(Quantity).value = 170)" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="13b-serve-BloodPressure-last">
+        <name value="Scenario 1.2 - BloodPressure (last)"/>
+        <description value="Serve Observation resource(s) for last known HCIM BloodPressure"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Observation"
+            params="/$lastn?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;code=http://loinc.org|85354-9"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+        
+        <action>
+            <assert>
+                <description value="Confirm that the Observation returned is the latest following the test data"/>
+                <direction value="response"/>
+                <expression value="Bundle.entry.resource.ofType(Observation).where(component.where(code.coding.where(code = '8480-6') and value.ofType(Quantity).value = 170)).exists()"/>
+            </assert>
+        </action>
+    </test>
+
+    <test id="13c-serve-BodyWeight">
+        <name value="Scenario 1.2 - BodyWeight"/>
+        <description value="Serve Observation resource(s) for last known HCIM BodyWeight"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Observation"
+            params="/$lastn?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;code=http://loinc.org|29463-7"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-BodyWeight-bgz-msz-patD-bodyweight1.xml" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="13d-serve-BodyHeight">
+        <name value="Scenario 1.2 - BodyHeight"/>
+        <description value="Serve Observation resource(s) for last known HCIM BodyHeight"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Observation"
+            params="/$lastn?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;code=http://loinc.org|8302-2,http://loinc.org|8306-3,http://loinc.org|8308-9"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-BodyHeight-bgz-msz-patD-bodyheight1.xml" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="14a-serve-LaboratoryTestResult-all">
+        <name value="Scenario 1.2 - LaboratoryTestResult (all)"/>
+        <description value="Serve Observation resource(s) including specimen and related observations for HCIM LaboratoryTestResult"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Observation"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;category=http://snomed.info/sct|275711006,http://snomed.info/sct|252275004,category=http://snomed.info/sct|68793005,category=http://snomed.info/sct|395124008,category=http://snomed.info/sct|314076009,category=http://snomed.info/sct|19851009,category=http://snomed.info/sct|405825005&amp;_include=Observation:related-target&amp;_include=Observation:specimen"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="4" nts:in-targets="#default"/>
+        <!--<nts:include value="assert.response.numResources" scope="common"
+            resource="Specimen" count="2" nts:in-targets="#default"/>-->
+        
+        <nts:contentAsserts href="patD/zib-LaboratoryTestResult-Observation-bgz-msz-patD-labresult1-1.xml" 
+            description="contains .code.coding.code = '59260-0'" discriminator="code.where(coding.where(code = '59260-0'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-LaboratoryTestResult-Observation-bgz-msz-patD-labresult1-2.xml" 
+            description="contains .code.coding.code = '4544-3'" discriminator="code.where(coding.where(code = '4544-3'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-LaboratoryTestResult-Observation-bgz-msz-patD-labresult1-3.xml" 
+            description="contains .code.coding.code = '733-3'" discriminator="code.where(coding.where(code = '777-3'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-LaboratoryTestResult-Observation-bgz-msz-patD-labresult2-1.xml" 
+            description="contains .code.coding.code = '100913-3'" discriminator="code.where(coding.where(code = '100913-3'))" nts:in-targets="CheckContent"/>
+        <!--<nts:contentAsserts href="patD/zib-LaboratoryTestResult-Specimen-bgz-msz-patD-labresult1-1.xml" description="contains .type.coding.code = '67922002'" discriminator="type.where(coding.where(code = '67922002'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-LaboratoryTestResult-Specimen-bgz-msz-patD-labresult2-1.xml" description="contains .type.coding.code = '122592007'" discriminator="type.where(coding.where(code = '122592007'))" nts:in-targets="CheckContent"/>-->
+    </test>
+
+    <test id="14b-serve-LaboratoryTestResult-last">
+        <name value="Scenario 1.1 - LaboratoryTestResult (last)"/>
+        <description value="Serve Observation resource(s) including specimen and related observations for last known chemistry related HCIM LaboratoryTestResult"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Observation"
+            params="/$lastn?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;category=http://snomed.info/sct|275711006&amp;_include=Observation:related-target&amp;_include=Observation:specimen"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1" nts:in-targets="#default"/>
+        <!--<nts:include value="assert.response.numResources" scope="common"
+            resource="Specimen" count="1" nts:in-targets="#default"/>-->
+    </test>
+
+    <test id="15-serve-Procedure">
+        <name value="Scenario 1.2 - Procedure"/>
+        <description value="Serve Procedure resource(s) for HCIM Procedure"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Procedure"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515"
+            useToken="true"/>
+        <!--Functionally there are just two Procedure resources for M van 't Hoen (instead of four), as patD-procedure3 and patD-procedure4 take place in the future, but there exist some references to the latter two in other HCIMs where only a reference to a Procedure is possible in FHIR.-->
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Procedure" count="5" nts:in-targets="#default" />
+        
+        <nts:contentAsserts href="patD/zib-Procedure-bgz-msz-bgz-msz-patD-procedure1.xml" 
+            description="contains .code.coding.code = '174814003'" discriminator="code.where(coding.where(code = '174814003'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-Procedure-bgz-msz-bgz-msz-patD-procedure2.xml" 
+            description="contains .code.coding.code = '16310003'" discriminator="code.where(coding.where(code = '16310003'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-Procedure-bgz-msz-bgz-msz-patD-procedure3.xml" 
+            description="contains .code.coding.code = '787162002'" discriminator="code.where(coding.where(code = '787162002'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-Procedure-bgz-msz-bgz-msz-patD-procedure4.xml" 
+            description="contains .code.coding.code = '36576007'" discriminator="code.where(coding.where(code = '36576007'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-Procedure-bgz-msz-bgz-msz-patD-procedure5.xml" 
+            description="contains .code.coding.code = '257838009'" discriminator="code.where(coding.where(code = '257838009'))" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="16a-serve-Contact-all">
+        <name value="Scenario 1.2 - Contact (all)"/>
+        <description value="Serve Encounter resource(s) for HCIM Contact"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Encounter"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Encounter" count="6" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-Encounter-bgz-msz-patD-encounter1.xml" 
+            description="contains .class.code = 'IMP' and .hospitalization.admitSource exists" discriminator="class.code = 'IMP' and hospitalization.admitSource.exists()" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-Encounter-bgz-msz-patD-encounter2.xml" 
+            description="contains .class.code = 'OTH'" discriminator="class.code = 'OTH'" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-Encounter-bgz-msz-patD-encounter3.xml" 
+            description="contains .class.code = 'IMP'" discriminator="class.code = 'IMP'" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-Encounter-bgz-msz-patD-encounter4.xml" 
+            description="contains .class.code = 'IMP'" discriminator="class.code = 'IMP'" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-Encounter-bgz-msz-patD-encounter5.xml" 
+            description="contains .class.code = 'EMER'" discriminator="class.code = 'EMER'" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-Encounter-bgz-msz-patD-encounter6.xml" 
+            description="contains .class.code = 'IMP'" discriminator="class.code = 'IMP'" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="16b-serve-Contact-hospital-admission">
+        <name value="Scenario 1.1 - Contact (hospital admission)"/>
+        <description value="Serve Encounter resource(s) for hospital admission related HCIM Contact"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Encounter"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;class=http://hl7.org/fhir/v3/ActCode|IMP,http://hl7.org/fhir/v3/ActCode|ACUTE,http://hl7.org/fhir/v3/ActCode|NONAC"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Encounter" count="4"/>
+    </test>
+
+    <test id="17a-serve-PlannedCareActivity-ProcedureRequest">
+        <name value="Scenario 1.2 - PlannedCareActivity-ProcedureRequest"/>
+        <description value="Serve ProcedureRequest resource(s) for active HCIM PlannedCareActivity-ProcedureRequest"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="ProcedureRequest" 
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;status=active"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="ProcedureRequest" count="5" nts:in-targets="#default"/>
+        
+        <nts:contentAsserts href="patD/zib-ProcedureRequest-bgz-msz-bgz-msz-patD-procedure1.xml" 
+            description="contains .code.coding.code = '174814003'" discriminator="code.where(coding.where(code = '174814003'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-ProcedureRequest-bgz-msz-bgz-msz-patD-procedure2.xml" 
+            description="contains .code.coding.code = '16310003'" discriminator="code.where(coding.where(code = '16310003'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-ProcedureRequest-bgz-msz-bgz-msz-patD-procedure3.xml" 
+            description="contains .code.coding.code = '787162002'" discriminator="code.where(coding.where(code = '787162002'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-ProcedureRequest-bgz-msz-bgz-msz-patD-procedure4.xml" 
+            description="contains .code.coding.code = '36576007'" discriminator="code.where(coding.where(code = '36576007'))" nts:in-targets="CheckContent"/>
+        <nts:contentAsserts href="patD/zib-ProcedureRequest-bgz-msz-bgz-msz-patD-procedure5.xml" 
+            description="contains .code.coding.code = '257838009'" discriminator="code.where(coding.where(code = '257838009'))" nts:in-targets="CheckContent"/>
+    </test>
+
+    <test id="17b-serve-PlannedCareActivity-ImmunizationRecommendation">
+        <name value="Scenario 1.2 - PlannedCareActivity-ImmunizationRecommendation"/>
+        <description value="Serve ImmunizationRecommendation resource(s) for HCIM PlannedCareActivity-ImmunizationRecommendation"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="ImmunizationRecommendation"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="ImmunizationRecommendation" count="0"/>
+    </test>
+
+    <test id="17c-serve-PlannedCareActivity-DeviceRequest">
+        <name value="Scenario 1.2 - PlannedCareActivity-DeviceRequest"/>
+        <description value="Serve DeviceRequest resource(s) for HCIM PlannedCareActivity-DeviceRequest"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="DeviceRequest"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;status=active&amp;_include=DeviceRequest:device"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="DeviceRequest" count="0"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Device" count="0" />
+    </test>
+
+    <test id="17d-serve-PlannedCareActivity-Appointment">
+        <name value="Scenario 1.2 - PlannedCareActivity-Appointment"/>
+        <description value="Serve Appointment resource(s) for HCIM PlannedCareActivity-Appointment"/>
+        <nts:include value="test.server.successfulSearch" scope="common"
+            resource="Appointment"
+            params="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999901515&amp;status=booked,pending,proposed"
+            useToken="true"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Appointment" count="0"/>
+    </test>
+</TestScript>
