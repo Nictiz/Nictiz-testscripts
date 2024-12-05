@@ -1,6 +1,6 @@
 @echo OFF
 
-@echo | call BgZ-MSZ-1-0-complete.bat
+@echo | call BgZ-MSZ-1-complete.bat
 @echo | call eOverdracht-4-0-complete.bat
 @echo | call FHIR4-0-1-complete.bat
 @echo | call Geboortezorg-3-2-complete.bat
