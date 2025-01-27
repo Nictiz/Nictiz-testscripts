@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir=".." default="build">
+    <target name="build">
+        <sequential>
+            <move todir="${output.dir}">
+                <fileset dir="${output.dir}" excludes="_*/**"/>
+                <chainedmapper>
+                    <!-- I can't figure out how to rewrite the dir name, so we have to use the file name.
+                         Strategy is to first replace all dir separators by a neutral char (@), then to replace the last
+                         of them back to a dir separator, and then replace the remaining neutral chars to dashes -->
+                    <filtermapper>
+                        <replacestring from="\" to="@"/>
+                    </filtermapper>
+                    <filtermapper>
+                        <replacestring from="/" to="@"/>
+                    </filtermapper>
+                    <mapper type="regexp" from="(.*)@(.*\.xml)" to="\1\\\2"/>
+                    <filtermapper>
+                        <replacestring from="@" to="-"/>
+                    </filtermapper>
+                </chainedmapper>
+            </move>
+            
+            <!-- Now rewrite all references. No intelligence here, we just assume the flattened structure. -->
+            <replaceregexp match="reference\s+value=['&quot;](.*)/_reference/(fixtures/.*)['&quot;]" replace="reference value=&quot;../reference/\2&quot;">
+                <fileset dir="${output.dir}" excludes="_*/**"/>
+            </replaceregexp>
+        </sequential>
+    </target>
+</project>
