@@ -1178,11 +1178,11 @@ assert task != null : "Couldn't extract Task resource from response."
 // anymore that it still complies to the Task.
 if (isJson) {
     task.status = param.newStatus
-    if ("text" in task) {
-        task.remove("text")
+    if (task.hasText()) {
+      task.text.div = null
     }
 
-    output[param.fixtureId] = JsonOutput.toJson(task)
+    output[param.fixtureId] = parser.encodeResourceToString(task)
 } else {
     task.status.@value = param.newStatus
     if (task.text != null) {
