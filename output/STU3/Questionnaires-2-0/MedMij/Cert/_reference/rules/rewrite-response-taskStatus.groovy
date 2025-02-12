@@ -1182,7 +1182,7 @@ if (isJson) {
         task.remove("text")
     }
 
-    output[param.fixtureId] = JsonOutput.toJson(task)
+    output[param.fixtureId] = parser.encodeResourceToString(task)
 } else {
     task.status.@value = param.newStatus
     if (task.text != null) {

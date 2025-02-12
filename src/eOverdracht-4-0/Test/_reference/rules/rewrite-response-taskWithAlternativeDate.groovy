@@ -1186,7 +1186,7 @@ if (isJson) {
     }
     task.output.add(alternativeDate)
 
-    output[param.fixtureId] = JsonOutput.toJson(task)
+    output[param.fixtureId] = parser.encodeResourceToString(task)
 } else {
     task.status.@value = "on-hold"
     if (task.text != null) {
