@@ -1167,8 +1167,8 @@ assert task != null : "Couldn't extract Task resource from response."
 // anymore that it still complies to the Task.
 if (isJson) {
     task.status = "on-hold"
-    if ("text" in task) {
-        task.remove("text")
+    if (task.hasText()) {
+      task.text.div = null
     }
     def alternativeDate = [
         type: [
