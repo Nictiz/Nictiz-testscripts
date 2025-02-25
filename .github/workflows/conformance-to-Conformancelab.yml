@@ -1,0 +1,30 @@
+name: Conformance to Conformancelab
+
+on: pull_request
+
+jobs:
+  conformance:
+    name: Validate changed TestScript resources against the Conformancelab profile
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get the changed TestScripts
+        id: get-changed-testscripts
+        run: |
+          files=$(git diff --name-only --diff-filter=ACM --ignore-space-at-eol origin/${{ github.base_ref }} -- 'output/*.xml' ':(exclude)*/_reference/*.xml')
+          echo "files=${files//$'\n'/ }" >> $GITHUB_OUTPUT
+
+      - name: Show me what you have
+        run: echo ${{ steps.get-changed-testscripts.outputs.files }}
+        
+      - name: Validate
+        uses: pieter-edelman-nictiz/hl7-validator-action@master
+        with:
+          version: "5.0"
+          validator-version: "6.5.11"
+          source: ${{ steps.get-changed-testscripts.outputs.files }}
