@@ -24,6 +24,8 @@
         <xsl:for-each select="$adaTransaction">
             <!-- find corresponding FHIR fixture based on adaId / filename -->
             <xsl:variable name="adaTransId" select="nf:removeSpecialCharacters(@id)"/>
+            <!-- extract concise filename so the end user can distinguish between different scripts  -->
+            <xsl:variable name="fileName" select="replace($adaTransId,'.+(tst|kwal)-(.+)-v30', '$2')"/>
             <xsl:variable name="fhirFixture" select="document(concat($mappingsUrl4FhirFixtures, '/', $adaTransId, '.xml'))"/>
             <xsl:variable name="fixturePatient" select="$fhirFixture//f:Patient[1]"/>
             
@@ -164,7 +166,7 @@
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                                 <id value="{$idString}"/>
                                 <version value="r4-mp9-3.0.0-beta"/>
-                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long}"/>
+                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} - {$fileName}"/>
                                 <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} for {$fixturePatient/f:name/f:text/@value}."/>
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.{'{$_FORMAT}'}"/>
                                 <nts:includeDateT value="yes"/>
@@ -206,7 +208,7 @@
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                                 <id value="{$idString}"/>
                                 <version value="r4-mp9-3.0.0-beta"/>
-                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long}"/>
+                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} - {$fileName}"/>
                                 <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} for {$fixturePatient/f:name/f:text/@value}."/>
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml" nts:in-targets="Nictiz-intern"/>
                                 <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
