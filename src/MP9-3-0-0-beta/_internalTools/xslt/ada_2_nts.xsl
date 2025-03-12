@@ -87,6 +87,22 @@
                     </xsl:otherwise>
                 </xsl:choose>
             </xsl:variable>
+            
+            <!-- BEGIN NICTIZ-28297 -->
+            <xsl:variable name="description" as="xs:string?">
+                <xsl:choose>
+                    <xsl:when test="string-length(./@title) gt 0 and string-length(./@desc) gt 0">
+                        <xsl:value-of select="string-join(./@title | ./@desc, ' - ')"/>
+                    </xsl:when>
+                    <xsl:when test="string-length(./@title) gt 0">
+                        <xsl:value-of select="./@title"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:value-of select="./@desc"/>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:variable>
+            <!-- END NICTIZ-28297 -->
 
             <xsl:choose>
                 <!-- pull beschikbaarstellen_medicatiegegevens -->
@@ -165,13 +181,13 @@
                                 <id value="{$idString}"/>
                                 <version value="r4-mp9-3.0.0-beta"/>
                                 <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long}"/>
-                                <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} for {$fixturePatient/f:name/f:text/@value}."/>
+                                <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} for {$fixturePatient/f:name/f:text/@value}. - {$description}"/>
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.{'{$_FORMAT}'}"/>
                                 <nts:includeDateT value="yes"/>
                                 <!--<xsl:apply-templates select="$deleteStuff/f:variable" mode="Nictiz-intern"/>-->
                                 <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}">
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
-                                    <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
+                                    <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle - {$description}"/>
                                     <action>
                                         <operation>
                                             <type>
