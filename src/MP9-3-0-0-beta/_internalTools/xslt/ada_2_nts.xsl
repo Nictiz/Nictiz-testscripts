@@ -176,6 +176,7 @@
                     <xsl:variable name="idString" select="replace(concat('mp9-', $testScriptString/@short, '-', normalize-space(lower-case($transactionType)), '-', $scenarioset, '-', $scenario), '(.*?)-?(-$)', '$1')"/>
                     <xsl:choose>
                         <!-- Receive -->
+                        <!-- NICTIZ-28297 description aangepast door "- {$description}" aan te vullen -->
                         <xsl:when test="$ntsScenario = 'server'">
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                                 <id value="{$idString}"/>
