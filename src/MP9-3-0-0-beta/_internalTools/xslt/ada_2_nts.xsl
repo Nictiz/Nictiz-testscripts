@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <!--Import mp specific constants (and package for underlying imports)-->
-    <xsl:import href="../../../../../HL7-mappings/ada_2_fhir-r4/mp/9.3.0/payload/mp9_latest_package.xsl"/>
+    <xsl:import href="../../../../../YATC-internal/ada-2-fhir-r4/env/mp/9.3.0/payload/mp9_latest_package.xsl"/>
     <xsl:output method="xml" indent="yes" omit-xml-declaration="yes"/>
 
     <xsl:strip-space elements="*"/>
@@ -89,6 +89,21 @@
                     </xsl:otherwise>
                 </xsl:choose>
             </xsl:variable>
+
+
+        <xsl:variable name="description" as="xs:string?">
+            <xsl:choose>
+                <xsl:when test="string-length(./@title) gt 0 and string-length(./@desc) gt 0">
+                    <xsl:value-of select="string-join(./@title | ./@desc, ' - ')"/>
+                </xsl:when>
+                <xsl:when test="string-length(./@title) gt 0">
+                    <xsl:value-of select="./@title"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:value-of select="./@desc"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
 
             <xsl:choose>
                 <!-- pull beschikbaarstellen_medicatiegegevens -->
