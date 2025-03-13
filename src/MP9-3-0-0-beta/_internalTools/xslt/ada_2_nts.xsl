@@ -219,6 +219,7 @@
                         </xsl:when>
                         <xsl:otherwise>
                             <!-- assume Send -->
+                            <!-- NICTIZ-28297 description aangepast door "- {$description}" aan te vullen -->
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                                 <id value="{$idString}"/>
                                 <version value="r4-mp9-3.0.0-beta"/>
