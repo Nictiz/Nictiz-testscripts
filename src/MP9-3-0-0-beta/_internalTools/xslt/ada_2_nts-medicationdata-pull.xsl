@@ -143,10 +143,40 @@
         </xsl:variable>
 
         <xsl:variable name="theParamParts">
-            <xsl:value-of select="concat('category=http://snomed.info/sct|', $matchCategoryCode, '&amp;_include=', $matchResource, ':medication')"/>
+            <xsl:value-of select="concat('category=http://snomed.info/sct|', $matchCategoryCode, '&amp;_include=', $matchResource, ':medication','&amp;_include=', $matchResource, ':subject')"/>
         </xsl:variable>
-        <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts)"/>
-        <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts)"/>
+        <xsl:variable name="practitionerParamParts" select="'&amp;_include:iterate=PractitionerRole:organization&amp;_include:iterate=PractitionerRole:practitioner&amp;_include:iterate=PractitionerRole:location'"/>
+        <xsl:variable name="theAdditionalParamParts">
+            <!-- MP-1555: added additional includes-->
+            <xsl:choose>
+                <!-- MA -->
+                <xsl:when test="$buildingBlockShort = 'MA'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':reason', '&amp;_include=', $matchResource, ':next-practitioner', '&amp;_include=', $matchResource, ':requester', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- MGB -->
+                <xsl:when test="$buildingBlockShort = 'MGB'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':author', '&amp;_include=', $matchResource, ':prescriber', '&amp;_include=', $matchResource, ':source', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- MTD -->
+                <xsl:when test="$buildingBlockShort = 'MTD'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':performer', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- MVE -->
+                <xsl:when test="$buildingBlockShort = 'MVE'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':performer', '&amp;_include=', $matchResource, ':destination', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- TA -->
+                <xsl:when test="$buildingBlockShort = 'TA'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':performer', $practitionerParamParts)"/>   
+                </xsl:when>
+                <!-- VV -->
+                <xsl:when test="$buildingBlockShort = 'VV'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':requester', '&amp;_include=', $matchResource, ':dispense-location', $practitionerParamParts)"/>   
+                </xsl:when>
+            </xsl:choose>
+        </xsl:variable>
+        <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts, $theAdditionalParamParts)"/>
+        <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts, $theAdditionalParamParts)"/>
 
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
         <xsl:variable name="returnMedicationCount" select="count($adaInstance/bouwstenen/farmaceutisch_product)"/>
@@ -330,8 +360,39 @@
             </xsl:variable>
             <xsl:value-of select="concat('category=http://snomed.info/sct|', $matchCategoryCode, replace($additionalScenarioParams, '&amp;', '&amp;'), '&amp;_include=', $matchResource, ':medication')"/>
         </xsl:variable>
-        <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts)"/>
-        <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts)"/>
+        
+        <xsl:variable name="practitionerParamParts" select="'&amp;_include:iterate=PractitionerRole:organization&amp;_include:iterate=PractitionerRole:practitioner&amp;_include:iterate=PractitionerRole:location'"/>    
+         <xsl:variable name="theAdditionalParamParts">
+            <!-- MP-1555: added additional includes-->
+            <xsl:choose>
+                <!-- MA -->
+                <xsl:when test="$buildingBlockShort = 'MA'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':reason', '&amp;_include=', $matchResource, ':next-practitioner', '&amp;_include=', $matchResource, ':requester', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- MGB -->
+                <xsl:when test="$buildingBlockShort = 'MGB'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':author', '&amp;_include=', $matchResource, ':prescriber', '&amp;_include=', $matchResource, ':source', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- MTD -->
+                <xsl:when test="$buildingBlockShort = 'MTD'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':performer', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- MVE -->
+                <xsl:when test="$buildingBlockShort = 'MVE'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':performer', '&amp;_include=', $matchResource, ':destination', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- TA -->
+                <xsl:when test="$buildingBlockShort = 'TA'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':performer', $practitionerParamParts)"/>   
+                </xsl:when>
+                <!-- VV -->
+                <xsl:when test="$buildingBlockShort = 'VV'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':requester', '&amp;_include=', $matchResource, ':dispense-location', $practitionerParamParts)"/>   
+                </xsl:when>
+            </xsl:choose>
+        </xsl:variable>
+        <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts, $theAdditionalParamParts)"/>
+        <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts , $theAdditionalParamParts)"/>
 
         <xsl:variable name="description" as="xs:string?" select="$adaInstance/@desc"/>
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
