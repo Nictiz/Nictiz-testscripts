@@ -323,7 +323,7 @@
                                                         </xsl:call-template>
                                                         <xsl:variable name="apos">'</xsl:variable>
                                                         <nts:contentAsserts href="{concat('fixtures/', $fixtureId, '.xml')}" description="{concat('contains a resource with identifier = ',.)}" 
-                                                            discriminator="{concat('Bundle.entry.resource.where(identifier.value =', $apos, xs:string(.), $apos)}"
+                                                            discriminator="{concat('identifier.value =', $apos, xs:string(.), $apos)}"
                                                                 nts:in-targets="CheckContent"/>
                                                 </xsl:for-each>
                                             </xsl:if>
