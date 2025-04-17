@@ -157,6 +157,11 @@
         </xsl:variable>
         <xsl:variable name="matchCategoryCode" select="nf:matchCategoryCode($buildingBlockShort)"/>
         <xsl:variable name="matchResource" select="nf:matchResource($buildingBlockShort)"/>
+        <xsl:call-template name="util:logMessage">
+            <xsl:with-param name="level" select="$logINFO"/>
+            <xsl:with-param name="msg"> <xsl:value-of select="$newFilename"/> has matchCategoryCode <xsl:value-of select="$matchCategoryCode"/> and mResource<xsl:value-of select="$matchResource"/> 
+                and the buildingBlockshort: <xsl:value-of select="$buildingBlockShort"/> and long: <xsl:value-of select="$buildingBlockLong"/> </xsl:with-param>
+        </xsl:call-template>
         
         <xsl:variable name="patient" select="$adaInstance[1]/patient[1]"/>
         <xsl:variable name="patientBsn" select="$patient/identificatienummer/@value"/>
@@ -672,7 +677,7 @@
             <xsl:when test="contains($buildingBlockShort, 'MGB')">
                 <xsl:value-of select="$mgbCode"/>
             </xsl:when>
-            <xsl:when test="$buildingBlockShort = 'WDS'">
+            <xsl:when test="contains($buildingBlockShort, 'WDS')">
                 <xsl:value-of select="$wdsCode"/>
             </xsl:when>
         </xsl:choose>
