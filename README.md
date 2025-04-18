@@ -50,7 +50,7 @@ The normal way to perform the NTS transformation is by using one of two ANT scri
   * adding narratives to the fixtures
   * converting relevant fixtures from XML to JSON
   * adding Conformancelab folder property files
-* `build-multiple.xml` does the same, but for multiple directories (it is more efficient than running `build-single.xml` multiple times because it batches several steps).
+* `build-multiple.xml` does the same, but for multiple directories (it is more efficient than running `build-single.xml` multiple times because it batches several steps). This can only be used for NTS directories with the same FHIR version!
 
 If needed, an ANT build script exists for each of the distinct build steps, What each script does is determined by the properties defined (see below) in a `build.properties` file:
 
