@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <xsl:import href="../../../../../HL7-mappings/ada_2_fhir-r4/fhir/2_fhir_fixtures.xsl"/>
+    <xsl:import href="../../../../../YATC-internal/ada-2-fhir-r4/env/fhir/2_fhir_fixtures.xsl"/>
     <xsl:import href="ada_2_nts.xsl"/>
 
     <xsl:output indent="yes" omit-xml-declaration="yes"/>
@@ -10,6 +10,8 @@
     <xsl:param name="transactionType"/>
     <xsl:param name="inputDir"/>
     <xsl:param name="outputDir"/>
+    <xsl:param name="refDir"/>
+    <xsl:variable name="refDirNormalized" select="nf:normalize-path($refDir)"/>
     <xsl:param name="testGoal" as="xs:string?">
         <xsl:choose>
             <xsl:when test="contains(upper-case($outputDir), 'CERT')">Cert</xsl:when>
@@ -20,16 +22,24 @@
     <xsl:variable name="transactionTypeNormalized" select="normalize-space(lower-case($transactionType))"/>
     <xsl:variable name="inputDirNormalized" select="nf:normalize-path($inputDir)"/>
     <xsl:variable name="outputDirNormalized" select="nf:normalize-path($outputDir)"/>
-
     <xd:doc>
         <xd:desc>Start template. Handles some ada transactions, converts them to nts. Very specific for each transaction.</xd:desc>
     </xd:doc>
     <xsl:template match="/">
+        
+        <xsl:call-template name="util:logMessage">
+            <xsl:with-param name="level" select="$logINFO"/>
+            <xsl:with-param name="msg">refDirNormalized <xsl:value-of select="$refDirNormalized"/></xsl:with-param>
+        </xsl:call-template>
+        <xsl:call-template name="util:logMessage">
+            <xsl:with-param name="level" select="$logINFO"/>
+            <xsl:with-param name="msg">refDir <xsl:value-of select="$refDir"/></xsl:with-param>
+        </xsl:call-template>
+
         <xsl:call-template name="util:logMessage">
             <xsl:with-param name="level" select="$logINFO"/>
             <xsl:with-param name="msg">transactionTypeNormalized: <xsl:value-of select="$transactionTypeNormalized"/> - inputDir: <xsl:value-of select="$inputDirNormalized"/> - outputDir: <xsl:value-of select="$outputDirNormalized"/></xsl:with-param>
         </xsl:call-template>
-
         <!-- ada files have been prepocessed per building block and scenarioset -->
         <xsl:variable name="fileNamePart" as="xs:string">
             <xsl:choose>
@@ -40,15 +50,18 @@
         <xsl:for-each select="collection(concat($inputDirNormalized, '?select=mg-mp-mg-', $fileNamePart, '-*.xml'))">
             <xsl:call-template name="util:logMessage">
                 <xsl:with-param name="level" select="$logINFO"/>
-                <xsl:with-param name="msg">handling <xsl:value-of select="./adaxml/data/beschikbaarstellen_medicatiegegevens/@id"/></xsl:with-param>
+                <xsl:with-param name="msg">1. handling <xsl:value-of select="./adaxml/data/beschikbaarstellen_medicatiegegevens/@id"/></xsl:with-param>
             </xsl:call-template>
             <xsl:variable name="scenarioset" select="xs:integer(replace(./adaxml/data/beschikbaarstellen_medicatiegegevens/scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$1'))"/>
 
             <xsl:variable name="buildingBlockShort" select="substring-before(substring-after(./adaxml/data/beschikbaarstellen_medicatiegegevens/@id, concat('mg-mp-mg-', $fileNamePart, '-')), '-')[1]" as="xs:string*"/>
             <xsl:call-template name="util:logMessage">
                 <xsl:with-param name="level" select="$logINFO"/>
-                <xsl:with-param name="msg">buildingBlockShort:  <xsl:value-of select="$buildingBlockShort"/></xsl:with-param>
+                <xsl:with-param name="msg">2. buildingBlockShort:  <xsl:value-of select="$buildingBlockShort"/> and scenarioset: <xsl:value-of select="$scenarioset"/> 
+                    and identifier: <xsl:value-of select="./adaxml/data/beschikbaarstellen_medicatiegegevens/medicamenteuze_behandeling/*/identificatie/@value"/>
+                </xsl:with-param>
             </xsl:call-template>
+            
             <xsl:choose>
                 <!-- Special handling for scenarioset 0 -->
                 <xsl:when test="$scenarioset = 0">
@@ -72,12 +85,18 @@
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:for-each>
+        
         <!-- consolidation -->
         <xsl:for-each select="collection(concat($inputDirNormalized, '?select=mg-mp-mg-CONS-*.xml'))">
-            <xsl:variable name="scenarioset" select="xs:integer(replace(./adaxml/data/beschikbaarstellen_medicatiegegevens/scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$1'))"/>
+            <xsl:call-template name="util:logMessage">
+                <xsl:with-param name="level" select="$logINFO"/>
+                <xsl:with-param name="msg">handling <xsl:value-of select="./adaxml/data/beschikbaarstellen_medicatiegegevens/@id"/></xsl:with-param>
+            </xsl:call-template>
+            <!--<xsl:variable name="scenarioset" select="xs:integer(replace(./adaxml/data/beschikbaarstellen_medicatiegegevens/scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$1'))"/>-->
+            <xsl:variable name="scenarioset" select="./adaxml/data/beschikbaarstellen_medicatiegegevens/scenario-nr/@value"/>
             <xsl:choose>
                 <!-- Do nothing for scenarioset 0, handled by manually maintaining nts due to complexities in generating this -->
-                <xsl:when test="$scenarioset = 0"/>
+                <xsl:when test="$scenarioset = '0'"/>
                 <xsl:otherwise>
                     <xsl:variable name="buildingBlockShort" select="substring-before(substring-after(./adaxml/data/beschikbaarstellen_medicatiegegevens/@id, 'mg-mp-mg-'), '-Scenarioset')"/>
                     <xsl:call-template name="createNts">
@@ -88,6 +107,24 @@
             </xsl:choose>
         </xsl:for-each>
     </xsl:template>
+
+
+    <xd:doc>
+        <xd:desc>Finds the fixtures to base the content assert on</xd:desc>
+        <xd:param name="identifier">the identifier of the resource</xd:param>
+    </xd:doc>
+    <xsl:template name="findContentAssertFixture">
+        <xsl:param name="identifier"/>
+        <xsl:for-each select="collection(concat($refDirNormalized, '?select=mp-*-*.xml'))">
+            <xsl:variable name="logicalId" select="./*/f:id/@value"/>
+            <xsl:variable name="resIdentifier" select="./*/f:identifier/f:value/@value"/>
+            <xsl:choose>
+                <xsl:when test="$resIdentifier = $identifier">
+                    <xsl:value-of select="$logicalId"/>
+                </xsl:when>
+            </xsl:choose>
+        </xsl:for-each>
+    </xsl:template>        
 
     <xd:doc>
         <xd:desc>Creates NTS</xd:desc>
@@ -120,6 +157,11 @@
         </xsl:variable>
         <xsl:variable name="matchCategoryCode" select="nf:matchCategoryCode($buildingBlockShort)"/>
         <xsl:variable name="matchResource" select="nf:matchResource($buildingBlockShort)"/>
+        <xsl:call-template name="util:logMessage">
+            <xsl:with-param name="level" select="$logINFO"/>
+            <xsl:with-param name="msg"> <xsl:value-of select="$newFilename"/> has matchCategoryCode <xsl:value-of select="$matchCategoryCode"/> and mResource<xsl:value-of select="$matchResource"/> 
+                and the buildingBlockshort: <xsl:value-of select="$buildingBlockShort"/> and long: <xsl:value-of select="$buildingBlockLong"/> </xsl:with-param>
+        </xsl:call-template>
         
         <xsl:variable name="patient" select="$adaInstance[1]/patient[1]"/>
         <xsl:variable name="patientBsn" select="$patient/identificatienummer/@value"/>
@@ -139,10 +181,40 @@
         </xsl:variable>
 
         <xsl:variable name="theParamParts">
-            <xsl:value-of select="concat('category=http://snomed.info/sct|', $matchCategoryCode, '&amp;_include=', $matchResource, ':medication')"/>
+            <xsl:value-of select="concat('category=http://snomed.info/sct|', $matchCategoryCode, '&amp;_include=', $matchResource, ':medication','&amp;_include=', $matchResource, ':subject')"/>
         </xsl:variable>
-        <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts)"/>
-        <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts)"/>
+        <xsl:variable name="practitionerParamParts" select="'&amp;_include:iterate=PractitionerRole:organization&amp;_include:iterate=PractitionerRole:practitioner&amp;_include:iterate=PractitionerRole:location'"/>
+        <xsl:variable name="theAdditionalParamParts">
+            <!-- MP-1555: added additional includes-->
+            <xsl:choose>
+                <!-- MA -->
+                <xsl:when test="$buildingBlockShort = 'MA'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':reason', '&amp;_include=', $matchResource, ':next-practitioner', '&amp;_include=', $matchResource, ':requester', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- MGB -->
+                <xsl:when test="$buildingBlockShort = 'MGB'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':author', '&amp;_include=', $matchResource, ':prescriber', '&amp;_include=', $matchResource, ':source', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- MTD -->
+                <xsl:when test="$buildingBlockShort = 'MTD'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':performer', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- MVE -->
+                <xsl:when test="$buildingBlockShort = 'MVE'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':performer', '&amp;_include=', $matchResource, ':destination', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- TA -->
+                <xsl:when test="$buildingBlockShort = 'TA'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':performer', $practitionerParamParts)"/>   
+                </xsl:when>
+                <!-- VV -->
+                <xsl:when test="$buildingBlockShort = 'VV'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':requester', '&amp;_include=', $matchResource, ':dispense-location', $practitionerParamParts)"/>   
+                </xsl:when>
+            </xsl:choose>
+        </xsl:variable>
+        <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts, $theAdditionalParamParts)"/>
+        <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts, $theAdditionalParamParts)"/>
 
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
         <xsl:variable name="returnMedicationCount" select="count($adaInstance/bouwstenen/farmaceutisch_product)"/>
@@ -217,7 +289,7 @@
                                             </nts:include>
                                         </xsl:when>
                                         <xsl:when test="$transactionTypeNormalized = 'serve'">
-                                            <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
+                                            <nts:include value="test.server.search" scope="common">
                                                 <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
@@ -237,6 +309,33 @@
                                                 <nts:with-parameter name="count" value="{$returnEntryCount}"/>
                                                 <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
                                             </nts:include>
+                                            
+                                            <!-- adding content assertions -->
+                                            
+                                            <!-- adding content assertions for medicatiebouwstenen --> 
+                                            <!-- TODO: add content assertions for bouwstenen like medicatie and zorgverlener and patient --> 
+                                            <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
+
+                                            <xsl:if test="$identifiers">
+                                                <xsl:for-each select="$identifiers">
+                                                        <xsl:variable name="fixtureId">
+                                                            <xsl:call-template name="findContentAssertFixture">
+                                                                <xsl:with-param name="identifier" select="."/>
+                                                            </xsl:call-template>
+                                                        </xsl:variable>
+                                                        <xsl:call-template name="util:logMessage">
+                                                            <xsl:with-param name="level" select="$logINFO"/>
+                                                            <xsl:with-param name="msg"> The resource with this identifier <xsl:value-of select="."/> will be asserted based on fixtureId: <xsl:value-of select="$fixtureId"/></xsl:with-param>
+                                                        </xsl:call-template>
+                                                        <xsl:variable name="apos">'</xsl:variable>
+                                                        <nts:contentAsserts href="{concat('fixtures/', $fixtureId, '.xml')}" description="{concat('contains a resource with identifier = ',.)}" 
+                                                            discriminator="{concat('identifier.value =', $apos, xs:string(.), $apos)}"
+                                                                nts:in-targets="CheckContent"/>
+                                                </xsl:for-each>
+                                            </xsl:if>
+                                        
+                                            
+                         
                                         </xsl:when>
                                     </xsl:choose>
                                 </test>
@@ -326,8 +425,39 @@
             </xsl:variable>
             <xsl:value-of select="concat('category=http://snomed.info/sct|', $matchCategoryCode, replace($additionalScenarioParams, '&amp;', '&amp;'), '&amp;_include=', $matchResource, ':medication')"/>
         </xsl:variable>
-        <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts)"/>
-        <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts)"/>
+        
+        <xsl:variable name="practitionerParamParts" select="'&amp;_include:iterate=PractitionerRole:organization&amp;_include:iterate=PractitionerRole:practitioner&amp;_include:iterate=PractitionerRole:location'"/>    
+         <xsl:variable name="theAdditionalParamParts">
+            <!-- MP-1555: added additional includes-->
+            <xsl:choose>
+                <!-- MA -->
+                <xsl:when test="$buildingBlockShort = 'MA'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':reason', '&amp;_include=', $matchResource, ':next-practitioner', '&amp;_include=', $matchResource, ':requester', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- MGB -->
+                <xsl:when test="$buildingBlockShort = 'MGB'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':author', '&amp;_include=', $matchResource, ':prescriber', '&amp;_include=', $matchResource, ':source', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- MTD -->
+                <xsl:when test="$buildingBlockShort = 'MTD'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':performer', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- MVE -->
+                <xsl:when test="$buildingBlockShort = 'MVE'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':performer', '&amp;_include=', $matchResource, ':destination', $practitionerParamParts)"/>
+                </xsl:when>
+                <!-- TA -->
+                <xsl:when test="$buildingBlockShort = 'TA'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':performer', $practitionerParamParts)"/>   
+                </xsl:when>
+                <!-- VV -->
+                <xsl:when test="$buildingBlockShort = 'VV'">
+                    <xsl:value-of select="concat('&amp;_include=', $matchResource, ':requester', '&amp;_include=', $matchResource, ':dispense-location', $practitionerParamParts)"/>   
+                </xsl:when>
+            </xsl:choose>
+        </xsl:variable>
+        <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts, $theAdditionalParamParts)"/>
+        <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts , $theAdditionalParamParts)"/>
 
         <xsl:variable name="description" as="xs:string?" select="$adaInstance/@desc"/>
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
@@ -402,7 +532,7 @@
                             </nts:include>
                         </xsl:when>
                         <xsl:when test="$transactionTypeNormalized = 'serve'">
-                            <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
+                            <nts:include value="test.server.search" scope="common">
                                 <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
@@ -423,6 +553,29 @@
                                 <nts:with-parameter name="count" value="{$returnEntryCount}"/>
                                 <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
                             </nts:include>
+                            
+                            <!-- adding content assertions -->
+                            <!-- TODO: add content assertions for medicatiebouwstenen from filter queries scenario 0--> 
+                            <!-- TODO: add content assertions for bouwstenen like medicatie and zorgverlener and patient --> 
+             <!--               <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
+                            
+                            <xsl:if test="$identifiers">
+                                <xsl:for-each select="$identifiers">
+                                    <xsl:variable name="fixtureId">
+                                        <xsl:call-template name="findContentAssertFixture">
+                                            <xsl:with-param name="identifier" select="."/>
+                                        </xsl:call-template>
+                                    </xsl:variable>
+                                    <xsl:call-template name="util:logMessage">
+                                        <xsl:with-param name="level" select="$logINFO"/>
+                                        <xsl:with-param name="msg"> The resource with this identifier <xsl:value-of select="."/> will be asserted based on fixtureId: <xsl:value-of select="$fixtureId"/></xsl:with-param>
+                                    </xsl:call-template>
+                                    <xsl:variable name="apos">'</xsl:variable>
+                                    <nts:contentAsserts href="{concat('fixtures/', $fixtureId, '.xml')}" description="{concat('contains a resource with identifier = ',.)}" 
+                                        discriminator="{concat('Bundle.entry.resource.where(identifier.value =', $apos, xs:string(.), $apos)}"
+                                        nts:in-targets="CheckContent"/>
+                                </xsl:for-each>
+                            </xsl:if>-->
                         </xsl:when>
                         <xsl:otherwise>
                             <xsl:call-template name="util:logMessage">
@@ -486,7 +639,7 @@
             <xsl:when test="$buildingBlockShort = 'VV'">DispenseRequest</xsl:when>
             <xsl:when test="$buildingBlockShort = 'MTD'">MedicationAdministration</xsl:when>
             <xsl:when test="$buildingBlockShort = 'MVE'">MedicationDispense</xsl:when>
-            <xsl:when test="$buildingBlockShort = 'WDS'">VariableDosingRegimen</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'WDS')">VariableDosingRegimen</xsl:when>
             <xsl:otherwise>
                 <xsl:call-template name="util:logMessage">
                     <xsl:with-param name="level" select="$logFATAL"/>
@@ -524,7 +677,7 @@
             <xsl:when test="contains($buildingBlockShort, 'MGB')">
                 <xsl:value-of select="$mgbCode"/>
             </xsl:when>
-            <xsl:when test="$buildingBlockShort = 'WDS'">
+            <xsl:when test="contains($buildingBlockShort, 'WDS')">
                 <xsl:value-of select="$wdsCode"/>
             </xsl:when>
         </xsl:choose>
