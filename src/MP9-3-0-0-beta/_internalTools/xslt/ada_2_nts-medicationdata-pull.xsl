@@ -289,7 +289,7 @@
                                             </nts:include>
                                         </xsl:when>
                                         <xsl:when test="$transactionTypeNormalized = 'serve'">
-                                            <nts:include value="test.server.search" scope="common">
+                                            <nts:include value="test.server.search" scope="common" nts:in-targets="#default CheckContent">
                                                 <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
@@ -532,7 +532,7 @@
                             </nts:include>
                         </xsl:when>
                         <xsl:when test="$transactionTypeNormalized = 'serve'">
-                            <nts:include value="test.server.search" scope="common">
+                            <nts:include value="test.server.search" scope="common" nts:in-targets="#default CheckContent">
                                 <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
@@ -695,7 +695,7 @@
             <xsl:when test="contains($buildingBlockShort, 'TA') or $buildingBlockShort = 'MVE'">
                 <xsl:value-of select="'MedicationDispense'"/>
             </xsl:when>
-            <xsl:when test="contains($buildingBlockShort, 'MA') or $buildingBlockShort = ('VV', 'WDS')">
+            <xsl:when test="contains($buildingBlockShort, 'MA') or contains($buildingBlockShort, 'WDS')  or $buildingBlockShort = ('VV')">
                 <xsl:value-of select="'MedicationRequest'"/>
             </xsl:when>
             <xsl:when test="contains($buildingBlockShort, 'MGB')">
