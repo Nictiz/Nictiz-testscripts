@@ -104,6 +104,171 @@
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
+            
+            
+           <xsl:variable name="direction">
+                <xsl:choose>
+                    <xsl:when test="normalize-space(upper-case($transactionType)) = ('RETRIEVE', 'SEND')">request</xsl:when>
+                    <xsl:when test="normalize-space(upper-case($transactionType)) = ('SERVE', 'RECEIVE')">response</xsl:when>
+                </xsl:choose>
+            </xsl:variable>
+            
+    <!-- In Send scripts, the request is being validated. In Receive scripts, the response is being validated (mainly because the FHIR spec is not really clear about what servers can or cannot edit before storing a resource). In both these cases, we add an assert to check for each resource that we expect. Next to that, this script is prepared to also add a variable for each resource, so that we can use this variable in the future to add content asserts for each resource -->
+            <xsl:variable name="identifyResources" as="element()*">
+                <!-- We use fhir as source instead of ada to be able to make the mapping between fhir and fhirpath easier (mainly the handling of PharmaceuticalProduct to FHIR Medication requires this)
+                    At the moment, the generated fixture is used. Perhaps it would be better to use ada as input and call ada2fhir dynamically.  -->
+                <xsl:variable name="medicationGroup" select="$fhirFixture/f:Bundle/f:entry/f:resource/f:Medication"/>
+                <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
+                    <xsl:choose>
+                        <!-- only check the primary resources and Medication, it is not obliged to send along the secondary resources -->
+                        <xsl:when test="current-grouping-key() = ('MedicationAdministration','MedicationDispense','MedicationRequest','MedicationStatement')">
+                            <xsl:variable name="resourceType" select="current-grouping-key()"/>
+                            <!-- We  do not include mpBouwsteenBaseContext because the category code is included in all search queries. This might change though -->
+                            <xsl:variable name="mpBouwsteenBaseContext" select="concat('Bundle.entry.select(resource as ', $resourceType, ')')"/>
+                            
+                            <xsl:for-each-group select="current-group()" group-by="f:category/f:coding/f:code/@value">
+                                <xsl:variable name="categoryCode" select="current-grouping-key()"/>
+                                <xsl:variable name="allMPBouwstenenOfSameKind" select="current-group()"/>
+                                
+                                <xsl:for-each select="$allMPBouwstenenOfSameKind">
+                                    <xsl:variable name="currentMPBouwsteen" select="."/>
+                                    <xsl:variable name="medicationReference" select="$currentMPBouwsteen/f:medicationReference/f:reference/@value"/>
+                                    <xsl:variable name="resolvedMedication" select="$fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]/f:resource/f:Medication"/>
+                                    <xsl:variable name="medication-code" select="distinct-values($resolvedMedication/f:code/f:coding/f:code/@value)"/>
+                                    <xsl:variable name="ingredient-code" select="distinct-values($resolvedMedication/f:ingredient/f:itemCodeableConcept/f:coding/f:code/@value)"/>
+                                    
+                                    <!-- TODO: Add exception for 90million -->
+                                    <xsl:variable name="mpBouwstenenSameProduct" as="element()*">
+                                        <xsl:choose>
+                                            <xsl:when test="count($medication-code) = 0">
+                                                <xsl:sequence select="$allMPBouwstenenOfSameKind"/>
+                                            </xsl:when>
+                                            <xsl:when test="count($medication-code) = 1 and $medication-code = 'OTH'">
+                                                <xsl:for-each select="$allMPBouwstenenOfSameKind">
+                                                    <xsl:variable name="medicationReference" select="f:medicationReference/f:reference/@value"/>
+                                                    <xsl:if test="$fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]/f:resource/f:Medication[f:code/f:coding/f:code/@value = $medication-code and f:ingredient/f:itemCodeableConcept/f:coding/f:code/@value = $ingredient-code]">
+                                                        <xsl:sequence select="."/>
+                                                    </xsl:if>
+                                                </xsl:for-each>
+                                            </xsl:when>
+                                            <xsl:otherwise>
+                                                <xsl:for-each select="$allMPBouwstenenOfSameKind">
+                                                    <xsl:variable name="medicationReference" select="f:medicationReference/f:reference/@value"/>
+                                                    <xsl:if test="$fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]/f:resource/f:Medication/f:code[every $code in $medication-code satisfies f:coding/f:code/@value = $code]">
+                                                        <xsl:sequence select="."/>
+                                                    </xsl:if>
+                                                </xsl:for-each>
+                                            </xsl:otherwise>
+                                        </xsl:choose>
+                                    </xsl:variable>
+                                    
+                                    <xsl:variable name="expression">
+                                        <xsl:value-of select="$mpBouwsteenBaseContext"/>
+                                        <!-- We always add medication (and ingredients if medication is OTH)-->
+                                        <xsl:value-of select="'.where(medication.resolve()'"/>
+                                        <xsl:choose>
+                                            <xsl:when test="count($medication-code) = 1 and $medication-code = 'OTH'">
+                                                <xsl:value-of select="'.where(code.where(coding.where(code = ''OTH'')) and '"/>
+                                                <xsl:for-each select="$ingredient-code">
+                                                    <xsl:value-of select="concat('ingredient.item.where(coding.where(code = ''', ., '''))')"/>
+                                                    <xsl:if test="not(position() = last())">
+                                                        <xsl:value-of select="' and '"/>
+                                                    </xsl:if>
+                                                </xsl:for-each>
+                                            </xsl:when>
+                                            <xsl:otherwise>
+                                                <xsl:value-of select="'.code.where('"/>
+                                                <xsl:for-each select="$medication-code">
+                                                    <xsl:value-of select="concat('coding.where(code = ''', ., ''')')"/>
+                                                    <xsl:if test="not(position() = last())">
+                                                        <xsl:value-of select="' and '"/>
+                                                    </xsl:if>
+                                                </xsl:for-each>
+                                                <xsl:value-of select="')'"/>
+                                            </xsl:otherwise>
+                                        </xsl:choose>
+                                        <xsl:value-of select="')'"/>
+                                        <!-- Add building block specific stuff -->
+                                        <xsl:call-template name="append-2-context">
+                                            <xsl:with-param name="categoryCode" select="$categoryCode"/>
+                                            <xsl:with-param name="currentMPBouwsteen" select="$currentMPBouwsteen"/>
+                                            <xsl:with-param name="mpBouwstenenSameProduct" select="$mpBouwstenenSameProduct"/>
+                                        </xsl:call-template>
+                                        <xsl:value-of select="'.count() = 1'"/>
+                                    </xsl:variable>
+                                    
+                                    <action xmlns="http://hl7.org/fhir">
+                                        <assert>
+                                            <!--<description value="{$description}"/>-->
+                                            <expression value="{$expression}"/>
+                                            <sourceId value="transaction-{$direction}"/>
+                                            <warningOnly value="false"/>
+                                        </assert>
+                                    </action>
+                                </xsl:for-each>
+                            </xsl:for-each-group>
+                        </xsl:when>
+                        <xsl:when test="current-grouping-key() = 'Medication'">
+                            <xsl:for-each-group select="current-group()" group-by="concat((f:code/f:coding[f:userSelected/@value = 'true'],f:code/f:coding[1])[1]/f:code/@value, '|', (f:code/f:coding[f:userSelected/@value = 'true'],f:code/f:coding[1])[1]/f:system/@value)">
+                                <xsl:variable name="resourceCount" select="count(current-group())"/>
+                                
+                                <xsl:variable name="medicationCoding" select="(f:code/f:coding[f:userSelected/@value = 'true'],f:code/f:coding[1])[1]"/>
+                                <xsl:variable name="medicationCode" select="$medicationCoding/f:code/@value"/>
+                                <xsl:variable name="medicationSystem" select="$medicationCoding/f:system/@value"/>
+                                <xsl:variable name="medicationDisplay" select="$medicationCoding/f:display/@value"/>
+                                <!-- First we check if the userSelected (or if userSelected is absent just the first) coding is unique within the Medication group. If not, we are going to use the complete CodeableConcept to generate an expression -->
+                                <xsl:variable name="useUserSelected">
+                                    <xsl:variable name="medicationCoding" />
+                                    <xsl:choose>
+                                        <!-- Exception for OTH for now -->
+                                        <xsl:when test="count($medicationGroup/f:code/f:coding[f:code/@value = $medicationCode and f:system/@value = $medicationSystem]) gt 1 and not($medicationCode = 'OTH')">
+                                            <xsl:value-of select="false()"/>
+                                        </xsl:when>
+                                        <xsl:otherwise>
+                                            <xsl:value-of select="true()"/>
+                                        </xsl:otherwise>
+                                    </xsl:choose>
+                                </xsl:variable>
+                                
+                                <xsl:variable name="expression">
+                                    <xsl:value-of select="'Bundle.entry.select(resource as Medication).where(code'"/>
+                                    <xsl:choose>
+                                        <xsl:when test="$useUserSelected = true()">
+                                            <xsl:value-of select="concat('.coding.where(system = ''', $medicationSystem, ''' and code = ''', $medicationCode, ''')')"/>
+                                        </xsl:when>
+                                        <xsl:otherwise>
+                                            <xsl:value-of select="concat('.where(coding.count() = ', count(f:code/f:coding), ' and ')"/>
+                                            <xsl:for-each select="f:code/f:coding">
+                                                <xsl:value-of select="concat('coding.where(system = ''', f:system/@value, ''' and code = ''', f:code/@value, ''')')"/>
+                                                <xsl:if test="not(position() = last())">
+                                                    <xsl:value-of select="' and '"/>
+                                                </xsl:if>
+                                            </xsl:for-each>
+                                            <xsl:value-of select="')'"/>
+                                        </xsl:otherwise>
+                                    </xsl:choose>
+                                    <xsl:value-of select="concat(').count() = ', $resourceCount)"/>
+                                </xsl:variable>
+                                
+                                <action xmlns="http://hl7.org/fhir">
+                                    <assert>
+                                        <description value="Confirm that the {$direction} Bundle contains {$resourceCount} Medication resource that contains code '{$medicationCode}|{$medicationSystem}' ({$medicationDisplay})"/>
+                                        
+                                        <expression value="{$expression}"/>
+                                        <sourceId value="transaction-{$direction}"/>
+                                        <warningOnly value="false"/>
+                                    </assert>
+                                </action>
+                                <!--<variable>
+                                    <name value="{current-grouping-key()}-{position()}"/>
+                                    <expression value="Bundle.entry.select(resource as {current-grouping-key()}).where(medication.resolve().code.coding.where(system = '{$medicationSystem}' and code = '{$medicationCode}')).id"/>
+                                    <sourceId value="search-response"/>
+                                </variable>-->
+                            </xsl:for-each-group>
+                        </xsl:when>
+                    </xsl:choose>
+                </xsl:for-each-group>
+            </xsl:variable>
 
             <xsl:choose>
                 <!-- pull beschikbaarstellen_medicatiegegevens -->
@@ -174,7 +339,8 @@
                         </xsl:for-each-group>
                     </xsl:variable>
 
-                    <xsl:variable name="idString" select="replace(concat('mp9-', $testScriptString/@short, '-', normalize-space(lower-case($transactionType)), '-', $scenarioset, '-', $scenario), '(.*?)-?(-$)', '$1')"/>
+                    <xsl:variable name="idString" select="replace(concat('mp9-', $testScriptString/@short, '-', normalize-space(lower-case($transactionType)), '-', $scenarioset, '-', $scenario), '(.*?)-?(-$)', '$1')"></xsl:variable>
+                    <xsl:variable name="testId" select="concat('scenario', $scenarioset, '-', $scenario, '-', lower-case($transactionType), '-', $testScriptString/@short)"/>
                     <xsl:choose>
                         <!-- Receive -->
                         <xsl:when test="$ntsScenario = 'server'">
@@ -247,6 +413,15 @@
                                     <nts:include value="test.client.successfulTransaction" scope="common"/>
                                     <xsl:copy-of select="$includeNumResources"/>
                                 </test>
+
+                                <!-- contentAsserts -->
+                                <xsl:if test="count($identifyResources) gt 0">
+                                    <test id="{$testId}-identification">
+                                        <name value="Resource identification"/>
+                                        <description value="Checks if all resources specified by the scenario can be identified unambiguously."/>
+                                        <xsl:copy-of select="$identifyResources"/>
+                                    </test>
+                                </xsl:if>
                                 <!--<teardown nts:in-targets="#default">
                                     <!-\- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
                                     <!-\- but not Patient, since we want to do a purge after -\->
@@ -319,5 +494,191 @@
         <xsl:param name="in" as="xs:string?"/>
         <xsl:sequence select="concat(upper-case(substring($in, 1, 1)), substring($in, 2))"/>
     </xsl:function>
+ <xsl:template name="append-2-context">
+        <xsl:param name="categoryCode"/>
+        <xsl:param name="currentMPBouwsteen"/>
+        <xsl:param name="mpBouwstenenSameProduct"/>
+        
+        <xsl:choose>
+            <xsl:when test="$categoryCode = $maCodeMP920">
+                <xsl:variable name="stopTypeCode" select="$currentMPBouwsteen/f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value"/>
+                <xsl:variable name="reasonCode" select="$currentMPBouwsteen/f:reasonCode/f:coding/f:code/@value"/>
+                <xsl:variable name="timingExact" select="$currentMPBouwsteen/f:dosageInstruction/f:timing/f:repeat/f:extension[@url = 'http://hl7.org/fhir/StructureDefinition/timing-exact']/f:valueBoolean/@value"/>
+                
+                <xsl:choose>
+                    <!-- is er één bouwsteen ? dan hoeven we niets toe te voegen-->
+                    <xsl:when test="count($mpBouwstenenSameProduct) = 1"/>
+                    <!-- aanwezigheid stoptype uniek? -->
+                    <xsl:when test="$stopTypeCode and count($mpBouwstenenSameProduct[f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value = $stopTypeCode]) = 1">
+                        <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').value.coding.code = ''', $stopTypeCode, ''')')"/>
+                    </xsl:when>
+                    <!-- afwezigheid stoptype uniek? -->
+                    <xsl:when test="not($stopTypeCode) and count($mpBouwstenenSameProduct[not(f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value)]) = 1">
+                        <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').exists().not())')"/>
+                    </xsl:when>
+                    <!-- aanwezigheid reden... uniek? -->
+                    <xsl:when test="$reasonCode and count($mpBouwstenenSameProduct[f:reasonCode/f:coding/f:code/@value = $reasonCode]) = 1">
+                        <xsl:value-of select="concat('.where(reasonCode.coding.code = ''', $reasonCode, ''')')"/>
+                    </xsl:when>
+                    <!-- afwezigheid reden... uniek? -->
+                    <xsl:when test="not($reasonCode) and count($mpBouwstenenSameProduct[not(f:reasonCode/f:coding/f:code/@value)]) = 1">
+                        <xsl:value-of select="'.where(reasonCode.exists().not())'"/>
+                    </xsl:when>
+                    <!-- MA-3: hoeveelheid dosageInstruction-elementen (komt in de basis overeen met hoeveelheid 'dosering'-elementen in ADA) uniek? -->
+                    <xsl:when test="count($mpBouwstenenSameProduct[count(f:dosageInstruction) = count(current()/f:dosageInstruction)]) = 1">
+                        <xsl:value-of select="concat('.where(dosageInstruction.count() = ', count(f:dosageInstruction), ')')"/>
+                    </xsl:when>
+                    <!-- MA-6: is_flexibel (exacte timing) uniek?-->
+                    <xsl:when test="count($mpBouwstenenSameProduct[f:dosageInstruction/f:timing/f:repeat/f:extension[@url = 'http://hl7.org/fhir/StructureDefinition/timing-exact']/f:valueBoolean/@value = $timingExact]) = 1">
+                        <xsl:value-of select="concat('.where(dosageInstruction.timing.repeat.extension.where(url = ''http://hl7.org/fhir/StructureDefinition/timing-exact'').value = ', $timingExact, ')')"/>
+                    </xsl:when>
+                    <!-- aanwezigheid stoptype en reden... uniek? -->
+                    <xsl:when test="$stopTypeCode and $reasonCode and count($mpBouwstenenSameProduct[f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value  = $stopTypeCode and f:reasonCode/f:coding/f:code/@value = $reasonCode]) = 1">
+                        <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').value.coding.code = ''', $stopTypeCode, ''')')"/>
+                        <xsl:value-of select="concat('.where(reasonCode.coding.code = ''', $reasonCode, ''')')"/>
+                    </xsl:when>
+                    <!-- afwezigheid stoptype en reden... uniek? -->
+                    <xsl:when test="not($stopTypeCode) and not($reasonCode) and count($mpBouwstenenSameProduct[not(f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value) and not(f:reasonCode/f:coding/f:code/@value)]) = 1">
+                        <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').exists().not()).where(reasonCode.exists().not())')"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:message>Count 1 not reached: <xsl:value-of select="count($mpBouwstenenSameProduct)"/> - <xsl:value-of select="string-join($mpBouwstenenSameProduct/(f:id/@value, ancestor::f:entry/f:fullUrl/@value)[1], ', ')"/></xsl:message>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:when>
+            <xsl:when test="$categoryCode = $mgbCode">
+                <xsl:variable name="stopTypeCode" select="$currentMPBouwsteen/f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value"/>
+                <xsl:variable name="asAgreedIndicator" select="$currentMPBouwsteen/f:extension[@url = $urlExtAsAgreedIndicator]/f:valueBoolean/@value"/>
+                <xsl:variable name="timingExact" select="$currentMPBouwsteen/f:dosage/f:timing/f:repeat/f:extension[@url = 'http://hl7.org/fhir/StructureDefinition/timing-exact']/f:valueBoolean/@value"/>
+                
+                <xsl:choose>
+                    <!-- is er één bouwsteen ? dan hoeven we niets toe te voegen-->
+                    <xsl:when test="count($mpBouwstenenSameProduct) = 1"/>
+                    <!-- aanwezigheid stoptype uniek? -->
+                    <xsl:when test="$stopTypeCode and count($mpBouwstenenSameProduct[f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value = $stopTypeCode]) = 1">
+                        <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').value.coding.code = ''', $stopTypeCode, ''')')"/>
+                    </xsl:when>
+                    <!-- afwezigheid stoptype uniek? -->
+                    <xsl:when test="not($stopTypeCode) and count($mpBouwstenenSameProduct[not(f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value)]) = 1">
+                        <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').exists().not())')"/>
+                    </xsl:when>
+                    <xsl:when test="$asAgreedIndicator and count($mpBouwstenenSameProduct[f:extension[@url = $urlExtAsAgreedIndicator]/f:valueBoolean/@value = $asAgreedIndicator]) = 1">
+                        <xsl:value-of select="concat('.where(extension.where(url = ''', $urlExtAsAgreedIndicator, ''').value = ', $asAgreedIndicator, ')')"/>
+                    </xsl:when>
+                    <xsl:when test="not($asAgreedIndicator) and count($mpBouwstenenSameProduct[not(f:extension[@url = $urlExtAsAgreedIndicator]/f:valueBoolean/@value)]) = 1">
+                        <xsl:value-of select="concat('.where(extension.where(url = ''', $urlExtAsAgreedIndicator, ''').exists().not())')"/>
+                    </xsl:when>
+                    <!-- MGB-6: is_flexibel (exacte timing) uniek?-->
+                    <xsl:when test="$timingExact and count($mpBouwstenenSameProduct[f:dosage/f:timing/f:repeat/f:extension[@url = 'http://hl7.org/fhir/StructureDefinition/timing-exact']/f:valueBoolean/@value = $timingExact]) = 1">
+                        <xsl:value-of select="concat('.where(dosageInstruction.timing.repeat.extension.where(url = ''http://hl7.org/fhir/StructureDefinition/timing-exact'').value = ', $timingExact, ')')"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:message>Count 1 not reached: <xsl:value-of select="count($mpBouwstenenSameProduct)"/> - <xsl:value-of select="string-join($mpBouwstenenSameProduct/(f:id/@value, ancestor::f:entry/f:fullUrl/@value)[1], ', ')"/></xsl:message>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:when>
+            <xsl:when test="$categoryCode = $mtdCode">
+                <xsl:variable name="reasonCode" select="$currentMPBouwsteen/f:extension[@url = $urlExtMedicationAdministration2ReasonForDeviation]/f:valueCodeableConcept/f:coding/f:code/@value"/>
+                <xsl:variable name="asAgreedIndicator" select="$currentMPBouwsteen/f:extension[@url = $urlExtAsAgreedIndicator]/f:valueBoolean/@value"/>
+                
+                <xsl:choose>
+                    <!-- is er één bouwsteen ? dan hoeven we niets toe te voegen-->
+                    <xsl:when test="count($mpBouwstenenSameProduct) = 1"/>
+                    <!-- aanwezigheid reden... uniek? -->
+                    <xsl:when test="$reasonCode and count($mpBouwstenenSameProduct[f:extension[@url = $urlExtMedicationAdministration2ReasonForDeviation]/f:valueCodeableConcept/f:coding/f:code/@value = $reasonCode]) = 1">
+                        <xsl:value-of select="concat('.where(extension.where(url = ''', $urlExtMedicationAdministration2ReasonForDeviation, ''').value.coding.code = ''', $reasonCode, ''')')"/>
+                    </xsl:when>
+                    <!-- afwezigheid reden... uniek? -->
+                    <xsl:when test="not($reasonCode) and count($mpBouwstenenSameProduct[not(f:extension[@url = $urlExtMedicationAdministration2ReasonForDeviation]/f:valueCodeableConcept/f:coding/f:code/@value)]) = 1">
+                        <xsl:value-of select="concat('.where(extension.where(url = ''', $urlExtMedicationAdministration2ReasonForDeviation, ''').exists().not())')"/>
+                    </xsl:when>
+                    <xsl:when test="$asAgreedIndicator and count($mpBouwstenenSameProduct[f:extension[@url = $urlExtAsAgreedIndicator]/f:valueBoolean/@value = $asAgreedIndicator]) = 1">
+                        <xsl:value-of select="concat('.where(extension.where(url = ''', $urlExtAsAgreedIndicator, ''').value = ', $asAgreedIndicator, ')')"/>
+                    </xsl:when>
+                    <xsl:when test="not($asAgreedIndicator) and count($mpBouwstenenSameProduct[not(f:extension[@url = $urlExtAsAgreedIndicator]/f:valueBoolean/@value)]) = 1">
+                        <xsl:value-of select="concat('.where(extension.where(url = ''', $urlExtAsAgreedIndicator, ''').exists().not())')"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:message>Count 1 not reached: <xsl:value-of select="count($mpBouwstenenSameProduct)"/> - <xsl:value-of select="string-join($mpBouwstenenSameProduct/(f:id/@value, ancestor::f:entry/f:fullUrl/@value)[1], ', ')"/></xsl:message>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:when>
+            <xsl:when test="$categoryCode = $mveCode">
+                <xsl:variable name="quantityValue" select="$currentMPBouwsteen/f:quantity/f:value/@value"/>
+                
+                <xsl:choose>
+                    <!-- is er één bouwsteen ? dan hoeven we niets toe te voegen-->
+                    <xsl:when test="count($mpBouwstenenSameProduct) = 1"/>
+                    <!-- quantity is uniek -->
+                    <xsl:when test="$quantityValue and count($mpBouwstenenSameProduct[f:quantity/f:value/@value = $quantityValue]) = 1">
+                        <xsl:value-of select="concat('.where(quantity.value = ', $quantityValue, ')')"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:message>Count 1 not reached: <xsl:value-of select="count($mpBouwstenenSameProduct)"/> - <xsl:value-of select="string-join($mpBouwstenenSameProduct/(f:id/@value, ancestor::f:entry/f:fullUrl/@value)[1], ', ')"/></xsl:message>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:when>
+            <xsl:when test="$categoryCode = $taCode">
+                <xsl:variable name="stopTypeCode" select="$currentMPBouwsteen/f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value"/>
+                <xsl:variable name="reasonCode" select="$currentMPBouwsteen/f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation']/f:valueCodeableConcept/f:coding/f:code/@value"/>
+                
+                <xsl:choose>
+                    <!-- is er één bouwsteen ? dan hoeven we niets toe te voegen-->
+                    <xsl:when test="count($mpBouwstenenSameProduct) = 1"/>
+                    <!-- aanwezigheid stoptype uniek? -->
+                    <xsl:when test="$stopTypeCode and count($mpBouwstenenSameProduct[f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value = $stopTypeCode]) = 1">
+                        <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').value.coding.code = ''', $stopTypeCode, ''')')"/>
+                    </xsl:when>
+                    <!-- afwezigheid stoptype uniek? -->
+                    <xsl:when test="not($stopTypeCode) and count($mpBouwstenenSameProduct[not(f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value)]) = 1">
+                        <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').exists().not())')"/>
+                    </xsl:when>
+                    <!-- aanwezigheid reden... uniek? -->
+                    <xsl:when test="$reasonCode and count($mpBouwstenenSameProduct[f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation']/f:valueCodeableConcept/f:coding/f:code/@value = $reasonCode]) = 1">
+                        <xsl:value-of select="concat('.where(extension.where(url = ''', 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation', ''').value.coding.code = ''', $reasonCode, ''')')"/>
+                    </xsl:when>
+                    <!-- afwezigheid reden... uniek? -->
+                    <xsl:when test="not($reasonCode) and count($mpBouwstenenSameProduct[not(f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation']/f:valueCodeableConcept/f:coding/f:code/@value)]) = 1">
+                        <xsl:value-of select="concat('.where(extension.where(url = ''', 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation', ''').exists().not())')"/>
+                    </xsl:when>
+                    
+                    <!-- dosageInstruction.timing.repeat.frequency/.when? -->
+                    <!-- aanwezigheid stoptype en reden... uniek? -->
+                    <xsl:when test="$stopTypeCode and $reasonCode and count($mpBouwstenenSameProduct[f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value  = $stopTypeCode and f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation']/f:valueCodeableConcept/f:coding/f:code/@value = $reasonCode]) = 1">
+                        <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').value.coding.code = ''', $stopTypeCode, ''')')"/>
+                        <xsl:value-of select="concat('.where(extension.where(url = ''', 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation', ''').value.coding.code = ''', $reasonCode, ''')')"/>
+                    </xsl:when>
+                    <!-- afwezigheid stoptype en reden... uniek? -->
+                    <xsl:when test="not($stopTypeCode) and not($reasonCode) and count($mpBouwstenenSameProduct[not(f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value) and not(f:extension[@url = 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation']/f:valueCodeableConcept/f:coding/f:code/@value)]) = 1">
+                        <xsl:value-of select="concat('.where(modifierExtension.where(url = ''', $urlExtStoptype, ''').exists().not()).where(extension.where(url = ''', 'http://nictiz.nl/fhir/StructureDefinition/ext-AdministrationAgreement.ReasonModificationOrDiscontinuation', ''').exists().not())')"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:message>Count 1 not reached: <xsl:value-of select="count($mpBouwstenenSameProduct)"/> - <xsl:value-of select="string-join($mpBouwstenenSameProduct/(f:id/@value, ancestor::f:entry/f:fullUrl/@value)[1], ', ')"/></xsl:message>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:when>
+            <xsl:when test="$categoryCode = $vvCode">
+                <xsl:choose>
+                    <!-- is er één bouwsteen ? dan hoeven we niets toe te voegen-->
+                    <xsl:when test="count($mpBouwstenenSameProduct) = 1"/>
+                    <xsl:otherwise>
+                        <xsl:message>Count 1 not reached: <xsl:value-of select="count($mpBouwstenenSameProduct)"/> - <xsl:value-of select="string-join($mpBouwstenenSameProduct/(f:id/@value, ancestor::f:entry/f:fullUrl/@value)[1], ', ')"/></xsl:message>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:when>
+            <xsl:when test="$categoryCode = $wdsCode">
+                <xsl:choose>
+                    <!-- is er één bouwsteen ? dan hoeven we niets toe te voegen-->
+                    <xsl:when test="count($mpBouwstenenSameProduct) = 1"/>
+                    <xsl:otherwise>
+                        <xsl:message>Count 1 not reached: <xsl:value-of select="count($mpBouwstenenSameProduct)"/> - <xsl:value-of select="string-join($mpBouwstenenSameProduct/(f:id/@value, ancestor::f:entry/f:fullUrl/@value)[1], ', ')"/></xsl:message>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:message>Building block not supported (yet)</xsl:message>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
 
 </xsl:stylesheet>

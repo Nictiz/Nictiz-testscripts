@@ -1,0 +1,65 @@
+<TestScript xmlns="http://hl7.org/fhir"
+            xmlns:nts="http://nictiz.nl/xsl/testscript"
+            nts:scenario="client">
+   <id value="mp9-prescrproc-send-6-17"/>
+   <version value="r4-mp9-3.0.0-beta"/>
+   <name value="MP9 - Client - Scenario 6.17 - Send PrescrProcessing - 6-17-redundante-frequentie"/>
+   <description value="Scenario 6.17 - Send PrescrProcessing for G. XXX_Hemsbergen."/>
+   <nts:fixture id="av-mp-va-tst-6-17-redundante-frequentie-v30"
+                href="fixtures/av-mp-va-tst-6-17-redundante-frequentie-v30.xml"
+                nts:in-targets="Nictiz-intern"/>
+   <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
+   <test id="scenario6-17-send-prescrproc">
+      <name value="Scenario 6.17"/>
+      <description value="Send PrescrProcessing in a transaction Bundle"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="transaction"/>
+            </type>
+            <description value="Test client to POST a Bundle of type transaction."/>
+            <destination value="1"/>
+            <origin value="1"/>
+            <responseId value="transaction-response-fixture"/>
+            <sourceId value="av-mp-va-tst-6-17-redundante-frequentie-v30"
+                      nts:in-targets="Nictiz-intern"/>
+         </operation>
+      </action>
+      <nts:include value="test.client.successfulTransaction" scope="common"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="MedicationDispense"
+                   count="2"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="Medication"
+                   count="1"/>
+   </test>
+   <test id="scenario6-17-send-prescrproc-identification">
+      <name value="Resource identification"/>
+      <description value="Checks if all resources specified by the scenario can be identified unambiguously."/>
+      <action>
+         <assert>
+            <expression value="Bundle.entry.select(resource as MedicationDispense).where(medication.resolve().code.where(coding.where(code = '2033682') and coding.where(code = '8311') and coding.where(code = '23817'))).count() = 1"/>
+            <sourceId value="transaction-request"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <expression value="Bundle.entry.select(resource as MedicationDispense).where(medication.resolve().code.where(coding.where(code = '2033682') and coding.where(code = '8311') and coding.where(code = '23817'))).count() = 1"/>
+            <sourceId value="transaction-request"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the request Bundle contains 1 Medication resource that contains code '2033682|urn:oid:2.16.840.1.113883.2.4.4.7' (PREDNISON AURO TABLET 5MG)"/>
+            <expression value="Bundle.entry.select(resource as Medication).where(code.coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.4.7' and code = '2033682')).count() = 1"/>
+            <sourceId value="transaction-request"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
