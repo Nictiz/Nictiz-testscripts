@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="Receiving-XIS-scenario1.11b-handoff-NoDocument"/>
+   <meta>
+      <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
+   </meta>
+   <url value="http://nictiz.nl/fhir/TestScript/Receiving-XIS-scenario1.11b-handoff-NoDocument"/>
+   <version value="stu3-4.0-patchlevel 2024-10"/>
+   <name value="Receiving-XIS-scenario1.11b-handoff - target NoDocument"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Scenario 1.11b for eOverdracht receiving systems. This test asumes that the transfer starts directly in the handoff phase ('overdrachtfase') and that there is no negotiation phase."/>
+   <origin>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
+         <code value="FHIR-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <fixture id="initial-task-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
+      <resource>
+         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-test-1_11b-IN-PROGRESS.xml"/>
+      </resource>
+   </fixture>
+   <variable>
+      <name value="task-id"/>
+      <expression value="Task.id"/>
+      <sourceId value="initial-task-fixture"/>
+   </variable>
+   <variable>
+      <name value="notificationEndpoint"/>
+      <hint value="The notification endpoint that the sending XIS can use to notify the receiving XIS, _without_ the trailing slash."/>
+   </variable>
+   <variable>
+      <name value="authorization-token-id"/>
+      <hint value="The payload of the authorization header that Touchstone should use when sending the notification to the notification endpoint."/>
+   </variable>
+   <variable>
+      <name value="in-progress-task-response-composition-11171000146100-id"/>
+      <expression value="Task.input.where(type.coding.system = 'http://snomed.info/sct' and type.coding.code = '11171000146100').value.reference.replace('Composition/', '')"/>
+      <sourceId value="in-progress-task-response"/>
+   </variable>
+   <setup>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="updateCreate"/>
+            </type>
+            <resource value="Task"/>
+            <description value="At the sending XIS, the Task resulting from the negotiation phase is updated with a reference to the nursing handoff Composition on Task.input."/>
+            <accept value="xml"/>
+            <contentType value="xml"/>
+            <destination value="1"/>
+            <params value="/${task-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 90d9027e-8535-439d-a14b-ee4a1309bf56"/>
+            </requestHeader>
+            <responseId value="setup-task-response"/>
+            <sourceId value="initial-task-fixture"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </setup>
+   <test>
+      <name value="Await nursing handoff addition notification"/>
+      <description value="The sending XIS sends a notification to the receiving XIS because the Task has been updated with a reference to the nursing handoff Composition."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="create"/>
+            </type>
+            <resource value="Resource"/>
+            <label value="Notify receiving XIS"/>
+            <description value="The sending XIS sends a notification to the specified endpoint of the receiving XIS."/>
+            <encodeRequestUrl value="true"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${authorization-token-id}"/>
+            </requestHeader>
+            <url value="${notificationEndpoint}/${task-id}"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="Check that the response code is 202 Accepted."/>
+            <description value="It is advised that the receiving XIS responds to the notification with '202 Accepted'."/>
+            <responseCode value="202"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Read Task with nursing handoff"/>
+      <description value="The receiving XIS should perform a read on the Task after receiving a notification that the Task has been updated."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="read"/>
+            </type>
+            <resource value="Task"/>
+            <label value="Get Task resource for eOverdracht"/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${task-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 90d9027e-8535-439d-a14b-ee4a1309bf56"/>
+            </requestHeader>
+            <responseId value="in-progress-task-response"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="Sanity check to see if the result is a Task."/>
+            <resource value="Task"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="Sanity check to see if the Task has status=in-progress."/>
+            <expression value="Task.status = 'in-progress'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Read nursing handoff"/>
+      <description value="After reading the Task, the receiving XIS should detect that a reference to the nursing handoff Composition has been added and subsequently perform a read to retrieve this Composition."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="read"/>
+            </type>
+            <resource value="Composition"/>
+            <description value="Test client to read Composition resource."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${in-progress-task-response-composition-11171000146100-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 90d9027e-8535-439d-a14b-ee4a1309bf56"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Make sure that the test server (WildFHIR) returns the requested Composition resource."/>
+            <direction value="response"/>
+            <resource value="Composition"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>

@@ -1,0 +1,642 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="Sending-XIS-scenario1.6-negotiation-Nictiz-only"/>
+   <meta>
+      <profile value="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript"/>
+   </meta>
+   <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-rule">
+      <extension url="ruleId">
+         <valueId value="modifyTask"/>
+      </extension>
+      <extension url="path">
+         <valueString value="../_reference/rules/rewrite-response-taskStatus.groovy"/>
+      </extension>
+   </extension>
+   <url value="http://nictiz.nl/fhir/TestScript/Sending-XIS-scenario1.6-negotiation-Nictiz-only-xml"/>
+   <version value="stu3-4.0-patchlevel 2024-10"/>
+   <name value="Sending-XIS-scenario1.6-negotiation - target Nictiz-only"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Scenario 1.6, test 1/2 for eOverdracht sending systems. This test focuses on the negotiation phase ('aanmeldfase') where a receiving xis agrees to transfer the patient at the proposed date and time. After completion of this test, the test for the transfer phase ('overdrachtfase') can be run."/>
+   <origin>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
+         <code value="FHIR-Client"/>
+      </profile>
+   </origin>
+   <origin>
+      <index value="2"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
+         <code value="FHIR-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <destination>
+      <index value="2"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <fixture id="initial-task-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
+      <resource>
+         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-test-1_6-REQUESTED.xml"/>
+      </resource>
+   </fixture>
+   <profile id="eOverdracht-Task">
+      <reference value="http://nictiz.nl/fhir/StructureDefinition/eOverdracht-Task"/>
+   </profile>
+   <profile id="Bundle-profile">
+      <reference value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
+   </profile>
+   <variable>
+      <name value="patient-token-id"/>
+      <defaultValue value="Bearer 80dd21a2-4a38-4de1-a4cb-e4def6007301"/>
+      <description value="OAuth Token for current patient"/>
+   </variable>
+   <variable>
+      <name value="task-id"/>
+      <expression value="Task.id"/>
+      <sourceId value="initial-task-fixture"/>
+   </variable>
+   <variable>
+      <name value="requested-task-response-composition-721915006-id"/>
+      <expression value="Task.input.where(type.where(coding.where(system = 'http://snomed.info/sct' and code = '721915006'))).value.reference.replace('Composition/', '')"/>
+      <sourceId value="requested-task-response"/>
+   </variable>
+   <setup>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="updateCreate"/>
+            </type>
+            <resource value="Task"/>
+            <description value="At the sending XIS, a new Task is created in status 'requested'."/>
+            <accept value="xml"/>
+            <contentType value="xml"/>
+            <destination value="1"/>
+            <params value="/${task-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+            <responseId value="setup-task-response"/>
+            <sourceId value="initial-task-fixture"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </setup>
+   <test>
+      <name value="Serve 'requested' Task"/>
+      <description value="The sending XIS should serve the Task specified in the notification."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="read"/>
+            </type>
+            <resource value="Task"/>
+            <description value="Test server to serve Task resource."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="${task-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+            <responseId value="requested-task-response"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="Make sure that a Task is returned."/>
+            <resource value="Task"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="Validate the returned Task to the eOverdracht Task profile"/>
+            <validateProfileId value="eOverdracht-Task"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="Make sure that the Task has status=requested."/>
+            <expression value="Task.status = 'requested'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="modifyTask"/>
+               </extension>
+               <extension url="param">
+                  <extension url="name">
+                     <valueString value="newStatus"/>
+                  </extension>
+                  <extension url="value">
+                     <valueString value="accepted"/>
+                  </extension>
+               </extension>
+               <extension url="param">
+                  <extension url="name">
+                     <valueString value="fixtureId"/>
+                  </extension>
+                  <extension url="value">
+                     <valueString value="accepted-task-fixture"/>
+                  </extension>
+               </extension>
+               <extension url="output">
+                  <extension url="name">
+                     <valueString value="accepted-task-fixture"/>
+                  </extension>
+                  <extension url="type">
+                     <valueString value="document"/>
+                  </extension>
+                  <extension url="contentType">
+                     <valueString value="xml"/>
+                  </extension>
+               </extension>
+            </extension>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="modifyTask"/>
+               </extension>
+               <extension url="param">
+                  <extension url="name">
+                     <valueString value="newStatus"/>
+                  </extension>
+                  <extension url="value">
+                     <valueString value="in-progress"/>
+                  </extension>
+               </extension>
+               <extension url="param">
+                  <extension url="name">
+                     <valueString value="fixtureId"/>
+                  </extension>
+                  <extension url="value">
+                     <valueString value="in-progress-task-fixture"/>
+                  </extension>
+               </extension>
+               <extension url="output">
+                  <extension url="name">
+                     <valueString value="in-progress-task-fixture"/>
+                  </extension>
+                  <extension url="type">
+                     <valueString value="document"/>
+                  </extension>
+                  <extension url="contentType">
+                     <valueString value="xml"/>
+                  </extension>
+               </extension>
+            </extension>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Serve advance notice"/>
+      <description value="After reading the Task, the receiving XIS performs a read operation on the advance notice Composition that is referenced on Task.input."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="read"/>
+            </type>
+            <resource value="Composition"/>
+            <description value="Test server to serve Composition resource."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${requested-task-response-composition-721915006-id}/$document"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Coding elements contain both a .system and a .code."/>
+            <direction value="response"/>
+            <expression value="Composition.descendants().where($this.is(Coding)).all(system.exists() and code.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the OID of the zib valueset is not used for the system of a coding element."/>
+            <direction value="response"/>
+            <expression value="Composition.descendants().where($this.is(coding)).where(system.startsWith('urn:oid:2.16.840.1.113883.2.4.3.11.60.40.2')).exists().not()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
+            <direction value="response"/>
+            <expression value="Composition.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3#Use_of_the_reference_datatype."/>
+            <direction value="response"/>
+            <expression value="Composition.descendants().where($this.is(Reference)).all(display.exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/iso21090-nullFlavor').exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Identifiers have both a .system and a .value. In rare cases where a general category of identifiers can be used, .type can replace .system. Edge cases for both .system and .type to be unknown are not applicable to Nictiz. For more information, see https://www.hl7.org/fhir/stu3/datatypes.html#Identifier."/>
+            <direction value="response"/>
+            <expression value="Composition.descendants().where($this.is(Identifier)).all((system.exists() or type.exists()) and value.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned resource type is Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle type is document."/>
+            <direction value="response"/>
+            <expression value="Bundle.type"/>
+            <operator value="equals"/>
+            <value value="document"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources contain an Resource.id except when temporary ids are used in the Bundle. The only time that a resource does not have an id is when it is being submitted to the server using a create operation: https://www.hl7.org/fhir/STU3/resource-definitions.html#Resource.id "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.all( $this.fullUrl.matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or $this.fullUrl.matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') or $this.resource.id.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all returned resources except OperationOutcome and Binary contain a meta.profile tag."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where(is(OperationOutcome).not()).where(is(Binary).not()).where(meta.profile.empty()).empty()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl does not disagree with the id in the resource, see http://hl7.org/fhir/stu3/bundle-definitions.html#Bundle.entry.fullUrl"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(fullUrl.exists() and resource.id.exists()).all($this.fullUrl.endsWith($this.resource.id))"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the fullUrl is an absolute URL, an uuid or an oid."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.fullUrl.all( startsWith('http://') or startsWith('https://') or matches('^urn:oid:[0-2](\\.(0|[1-9]\\d*))*$') or matches('^urn:uuid:[A-Fa-f\\d]{8}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{4}-[A-Fa-f\\d]{12}$') )"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
+            <direction value="response"/>
+            <validateProfileId value="Bundle-profile"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Coding elements contain both a .system and a .code."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Coding)).all(system.exists() and code.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the OID of the zib valueset is not used for the system of a coding element."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(coding)).where(system.startsWith('urn:oid:2.16.840.1.113883.2.4.3.11.60.40.2')).exists().not()"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3#Use_of_the_reference_datatype."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Reference)).all(display.exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/iso21090-nullFlavor').exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that all Identifiers have both a .system and a .value. In rare cases where a general category of identifiers can be used, .type can replace .system. Edge cases for both .system and .type to be unknown are not applicable to Nictiz. For more information, see https://www.hl7.org/fhir/stu3/datatypes.html#Identifier."/>
+            <direction value="response"/>
+            <expression value="Bundle.descendants().where($this.is(Identifier)).all((system.exists() or type.exists()) and value.exists())"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Handle Task update to 'accepted'"/>
+      <description value="The sending XIS should handle an update of the Task with the status 'accepted' which the receiving uses to signal that it is able to transfer the patient at the requested date and time."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="update"/>
+            </type>
+            <resource value="Task"/>
+            <description value="Test sending XIS to handle an update to the eOverdracht Task"/>
+            <accept value="xml"/>
+            <contentType value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${task-id}"/>
+            <requestHeader><!-- 0..* Each operation can have one or more header elements -->
+               <field value="Authorization"/>
+               <!-- 1..1 HTTP header field name: OAuth access token -->
+               <value value="${patient-token-id}"/>
+               <!-- 1..1 HTTP headerfield value: UUID4 -->
+            </requestHeader>
+            <sourceId value="accepted-task-fixture"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that the Task conforms to the eOverdracht Task profile"/>
+            <direction value="response"/>
+            <validateProfileId value="eOverdracht-Task"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <description value="Confirm that Task.status has been changed to 'accepted'"/>
+            <direction value="response"/>
+            <expression value="Task.status = 'accepted'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the update is succesful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Set Task to 'in-progress'"/>
+      <description value="The sending XIS now sets the status of the Task to 'in-progress' to signal the receiving XIS that it agrees to transfer the patient at the specified date and time."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="updateCreate"/>
+            </type>
+            <resource value="Task"/>
+            <description value="Set the eOverdracht Task resource to 'in-progress'"/>
+            <accept value="xml"/>
+            <contentType value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <params value="/${task-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+            <sourceId value="in-progress-task-fixture"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Serve 'in-progress' Task"/>
+      <description value="The sending XIS should serve the Task with status 'in-progress'."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="read"/>
+            </type>
+            <resource value="Task"/>
+            <description value="Test server to serve Task resource."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="${task-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="true"/>
+            </extension>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="Make sure that a Task is returned."/>
+            <resource value="Task"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="Validate the returned Task to the eOverdracht Task profile"/>
+            <validateProfileId value="eOverdracht-Task"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-stopTestOnFail">
+               <valueBoolean value="false"/>
+            </extension>
+            <label value="Make sure that the Task has status=in-progress."/>
+            <expression value="Task.status = 'in-progress'"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
