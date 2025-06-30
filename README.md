@@ -40,7 +40,7 @@ So for each combination of standard, goal and/or usecase, there is an 'NTS unit 
 
 * As stated above, they may not begin with and underscore. Apart from that, there are no strict naming limitations.
 * Folders may be nested up to three levels deep.
-* One of folder names in the subfolder hierarcy must correspond with a "role" that the user (the system under test) plays in the exchange. Default roles are "XIS-Server" and "PHR-Client" (MedMij) and "Sending-System", "Receiving-System", "Serving-System" and "Retrieving-System", but others may be used if it makes more sense for the information standard (see the `roles` property below).
+* One of folder names in the subfolder hierarchy must correspond with a "role" that the user (the system under test) plays in the exchange. Default roles are "XIS-Server" and "PHR-Client" (MedMij) and "Sending-System", "Receiving-System", "Serving-System" and "Retrieving-System", but others may be used if it makes more sense for the information standard (see the `roles` property below).
 
 ## Build scripts
 
@@ -79,12 +79,14 @@ Parameters to specify additional information:
 * `informationStandard` (required) - The human readable name of the information standard this set of TestScripts is about, normally including the major version number. This is what's shown in the ConformanceLab interface. Required.
 * `usecase` (required) - The usecase, in the broadest sense of the word, these TestScripts apply to -- for example MedMij, eOverdracht MeO, etc. For MedMij, this must be the string "MedMij".
 * [`goal`] (required if it cannot be inferred from the folder name) - The goal of this set of scripts, either "Test" or "Cert". By convention, these terms are also used for the name of the NTS folder, and in this case the `goal` parameter is inferred from the folder name.
-* [`version.addition`] (optional) - A string that will be added verbatim to the value in the `TestScript.version` from the input file. The default is defined in the folder 'buildscripts/version.addition.properties'.
+* [`version.addition`] (optional) - A string that will be added verbatim to the value in the `TestScript.version` from the input file. The default is defined in the folder `buildscripts/version.addition.properties`.
 * [`packages`] (optional) - Comma separated list with the canonicals of the FHIR packages that should be used when the test engine performs profile validation.
 * `package.[canonical].version` (required for each package) - For each package listed using the `packages` property, the version of the package used. This is normally set in the common file `Configuration/package.version.properties`.
 * `target.description.[additional target]` (required for each additional target) - For each defined additional target, a human readable description of the target.
 * [`targets.adminOnly`] (optional) - Comma separated list of additional targets (see above) that in the test platform should be marked "admin only", i.e. not for end users.
-* [`roles`] (optional) - The folder roles are organized by the role that the user (system under test) plays in the exchange. This setting is used to indicate which roles are recognized. The default is "XIS-Server" and "PHR-Client" (MedMij) and "Sending-System", "Receiving-System", "Serving-System" and "Retrieving-System".
+* [`roles`] (normally not needed) - The folder roles are organized by the role that the user (system under test) plays in the exchange. This setting is used to indicate which roles are recognized. It is required information, but a number of default roles is defined in `Configuration.roles.properties`.
+* [`role.description.[role]`] (normally not needed) - A description of the role. See the remark above.
+* [`server`] (normally not needed) - The name of the server that the test set should use on the Conformancelab platform. A number of default servers per use case and role are defined in `Configuration/servers.properties`.
 
 ### Overriding tool versions
 * `*.tool.version` - Override the tool version for one of the specific steps in the build process (the tool version is the full name of a git branch or tag). The wildcard aligns with the ANT project names of the build files in the `src` folder, so:
