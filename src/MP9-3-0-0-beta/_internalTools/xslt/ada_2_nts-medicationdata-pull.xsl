@@ -557,7 +557,7 @@
                             <!-- adding content assertions -->
                             <!-- TODO: add content assertions for medicatiebouwstenen from filter queries scenario 0--> 
                             <!-- TODO: add content assertions for bouwstenen like medicatie and zorgverlener and patient --> 
-             <!--               <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
+                           <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
                             
                             <xsl:if test="$identifiers">
                                 <xsl:for-each select="$identifiers">
@@ -575,7 +575,7 @@
                                         discriminator="{concat('Bundle.entry.resource.where(identifier.value =', $apos, xs:string(.), $apos)}"
                                         nts:in-targets="CheckContent"/>
                                 </xsl:for-each>
-                            </xsl:if>-->
+                            </xsl:if>
                         </xsl:when>
                         <xsl:otherwise>
                             <xsl:call-template name="util:logMessage">
