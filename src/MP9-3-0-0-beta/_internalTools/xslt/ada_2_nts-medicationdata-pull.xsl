@@ -315,10 +315,10 @@
                                             <!-- adding content assertions -->
                                             
                                             <!-- adding content assertions for medicatiebouwstenen --> 
-                                            <!-- TODO: add content assertions for bouwstenen like medicatie and zorgverlener and patient --> 
-                                            <!-- removed content asserts as the discriminator doesn't work in productionlike settings because suppliers will have different identifiers.
+                                            <!-- TODO: add content assertions for bouwstenen like medicatie and zorgverlener and patient 
+                                             removed content asserts as the discriminator doesn't work in productionlike settings because suppliers will have different identifiers.
                                                 the discriminator should be based on the "identifyResources" variable but this is currently only implemented in
-                                                send scripts (ada_2_nts.xsl from https://github.com/Nictiz/Nictiz-testscripts/blob/identificationAsserts/src/MP9-3-0-0-beta/Test/_internalTools/xslt/ada_2_nts.xsl)
+                                                send scripts (ada_2_nts.xsl from https://github.com/Nictiz/Nictiz-testscripts/blob/identificationAsserts/src/MP9-3-0-0-beta/Test/_internalTools/xslt/ada_2_nts.xsl)--> 
                                                 
                                             <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
 
@@ -338,11 +338,7 @@
                                                             discriminator="{concat('identifier.value =', $apos, xs:string(.), $apos)}"
                                                                 nts:in-targets="CheckContent"/>
                                                 </xsl:for-each>
-                                            </xsl:if>
-                                            -->
-                                        
-                                            
-                         
+                                            </xsl:if>                         
                                         </xsl:when>
                                     </xsl:choose>
                                 </test>
