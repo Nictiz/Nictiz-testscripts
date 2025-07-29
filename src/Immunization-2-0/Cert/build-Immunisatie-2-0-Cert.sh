@@ -1,1 +1,2 @@
-ant -f "`dirname $0`/../../build-single.xml" -propertyfile "`dirname $0`/build.properties" $*
+#!/bin/bash
+ant -f ../../build-single.xml -propertyfile build.properties $*
