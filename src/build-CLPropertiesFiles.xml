@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir=".." name="buildCLPropertiesFiles" default="build">
+    <property name="tool.reponame" value="Nictiz-tooling-testscripts"/>
+    <property name="tool.name"     value="ConformanceLabPropertiesFiles"/>
+    <property name="tool.version"  value="3.0.0"/>
+    <property name="tool.antfile"  value="ant/build.xml"/>
+    
+    <!-- Create Conformancelab properties files. -->
+
+    <!-- Read the default roles that we recognize -->
+    <property file="Configuration/roles.properties"/>
+    
+    <!-- Read the default package versions -->
+    <property file="Configuration/package.version.properties"/>
+
+    <!-- Read the default servers versions -->
+    <property file="Configuration/servers.properties"/>
+
+    <!-- The ConformanceLab "goal" (Cert/Test) is extracted from the name of the dir containing the scripts. -->
+    <target name="extract-goal" unless="goal">
+        <basename property="goal" file="${output.dir}"/>    
+    </target>
+
+    <target name="check-goal" depends="extract-goal">
+        <sequential>
+            <condition property="goal.ok">
+                <or>
+                    <equals arg1="${goal}" arg2="Test"/>
+                    <equals arg1="${goal}" arg2="Cert"/>
+                </or>
+            </condition>
+        </sequential>
+        <fail unless="goal.ok" message="By convention, the goal of these TestScripts -- either Cert or Test -- is encoded in the folder name, but here it is set to '${goal}'. Please set the goal explicitly using the 'goal' parameter in build.properties"/>
+    </target>
+
+    <include file="bootstrap-from-github.xml"/>
+    <target name="build" depends="check-goal">
+        <antcall target="bootstrapFromGithub.build">
+            <!-- The output.dir from build.properties is where property files should be generated -->
+            <param name="testset.dir" value="${output.dir}"/>
+        </antcall>
+    </target>
+</project>
