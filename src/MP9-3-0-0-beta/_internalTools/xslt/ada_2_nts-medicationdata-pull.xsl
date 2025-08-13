@@ -645,10 +645,10 @@
             <xsl:when test="contains($buildingBlockShort, 'MA')">MedicationAgreement</xsl:when>
             <xsl:when test="contains($buildingBlockShort, 'MGB')">MedicationUse</xsl:when>
             <xsl:when test="contains($buildingBlockShort, 'TA')">AdministrationAgreement</xsl:when>
-            <xsl:when test="$buildingBlockShort = 'VV'">DispenseRequest</xsl:when>
-            <xsl:when test="$buildingBlockShort = 'MTD'">MedicationAdministration</xsl:when>
-            <xsl:when test="$buildingBlockShort = 'MVE'">MedicationDispense</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MTD')">MedicationAdministration</xsl:when>
             <xsl:when test="contains($buildingBlockShort, 'WDS')">VariableDosingRegimen</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'VV')">DispenseRequest</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MVE')">MedicationDispense</xsl:when>
             <xsl:otherwise>
                 <xsl:call-template name="util:logMessage">
                     <xsl:with-param name="level" select="$logFATAL"/>
