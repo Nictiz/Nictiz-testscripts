@@ -407,6 +407,7 @@ and the buildingBlockshort: <xsl:value-of select="$buildingBlockShort"/> and lon
 <!-- We should change this to something simpler. Building block and transaction type are already in folder names. Leaving it as is for refactoring purposes -->
 <xsl:variable name="newFilename" select="concat($buildingBlockShort, '-Scenario', $theScenarioForTestscript, '.xml')"/>
 
+<<<<<<< HEAD
 <xsl:call-template name="util:logMessage">
 <xsl:with-param name="level" select="$logINFO"/>
 <xsl:with-param name="msg">Processing <xsl:value-of select="$newFilename"/></xsl:with-param>
@@ -660,6 +661,25 @@ and the buildingBlockshort: <xsl:value-of select="$buildingBlockShort"/> and lon
 </xsl:call-template>
 </xsl:otherwise>
 </xsl:choose>
+=======
+        <xsl:choose>
+            <!-- consolidation buildingBlockShort is a string like "CONS-MA" -->
+            <xsl:when test="contains($buildingBlockShort, 'MA')">MedicationAgreement</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MGB')">MedicationUse</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'TA')">AdministrationAgreement</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MTD')">MedicationAdministration</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'WDS')">VariableDosingRegimen</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'VV')">DispenseRequest</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MVE')">MedicationDispense</xsl:when>
+            <xsl:otherwise>
+                <xsl:call-template name="util:logMessage">
+                    <xsl:with-param name="level" select="$logFATAL"/>
+                    <xsl:with-param name="msg">Could not determine building block: <xsl:value-of select="$buildingBlockShort"/></xsl:with-param>
+                    <xsl:with-param name="terminate" select="true()"/>
+                </xsl:call-template>
+            </xsl:otherwise>
+        </xsl:choose>
+>>>>>>> origin/MP9-3.0.0-rc.1
 
 </xsl:function>
 
