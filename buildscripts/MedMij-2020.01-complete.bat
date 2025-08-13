@@ -1,7 +1,6 @@
 @setlocal enabledelayedexpansion
 @echo off
 
-call ant -f ..\src\build-multiple.xml -propertyfile MedMij-2020.01.properties 
-rem call ant -f ..\src\build-centralizeLoadResources.xml -propertyfile MedMij-2020.01.properties
+call ant -f ..\src\build-multiple.xml -Dinput.dirs="src/AllergyIntolerance-3-0/Test, src/AllergyIntolerance-3-0/Cert, src/BgZ-3-0/Test, src/BgZ-3-0/Cert, src/eAppointment-2-0/Test, src/eAppointment-2-0/Cert, src/GenPractData-2-0/Test, src/GenPractData-2-0/Cert, src/GGZ-2-0/Test, src/GGZ-2-0/Cert, src/Images-2-0/Test, src/Images-2-0/Cert, src/GGZ-2-0/Test, src/GGZ-2-0/Cert, src/LaboratoryResults-2-0/Test, src/LaboratoryResults-2-0/Cert, src/PDFA-3-0/Test, src/PDFA-3-0/Cert, src/Questionnaires-2-0/Test, src/Questionnaires-2-0/Cert, src/SelfMeasurements-2-0/Test, src/SelfMeasurements-2-0/Cert"
 
 pause
