@@ -289,7 +289,9 @@
                                             </nts:include>
                                         </xsl:when>
                                         <xsl:when test="$transactionTypeNormalized = 'serve'">
-                                            <nts:include value="test.server.search" scope="common">
+                                            <!--NICTIZ-29763 removed CheckContent from target so no content asserts scripts will be generated
+                                                <nts:include value="test.server.search" scope="common" nts:in-targets="#default CheckContent">-->
+                                            <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
                                                 <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
@@ -314,6 +316,10 @@
                                             
                                             <!-- adding content assertions for medicatiebouwstenen --> 
                                             <!-- TODO: add content assertions for bouwstenen like medicatie and zorgverlener and patient --> 
+                                            <!-- removed content asserts as the discriminator doesn't work in productionlike settings because suppliers will have different identifiers.
+                                                the discriminator should be based on the "identifyResources" variable but this is currently only implemented in
+                                                send scripts (ada_2_nts.xsl from https://github.com/Nictiz/Nictiz-testscripts/blob/identificationAsserts/src/MP9-3-0-0-beta/Test/_internalTools/xslt/ada_2_nts.xsl)
+                                                
                                             <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
 
                                             <xsl:if test="$identifiers">
@@ -333,6 +339,7 @@
                                                                 nts:in-targets="CheckContent"/>
                                                 </xsl:for-each>
                                             </xsl:if>
+                                            -->
                                         
                                             
                          
@@ -532,7 +539,9 @@
                             </nts:include>
                         </xsl:when>
                         <xsl:when test="$transactionTypeNormalized = 'serve'">
-                            <nts:include value="test.server.search" scope="common">
+                            <!--NICTIZ-29763 removed CheckContent from target so no content asserts scripts will be generated
+                                <nts:include value="test.server.search" scope="common" nts:in-targets="#default CheckContent">-->
+                            <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
                                 <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
@@ -695,7 +704,7 @@
             <xsl:when test="contains($buildingBlockShort, 'TA') or $buildingBlockShort = 'MVE'">
                 <xsl:value-of select="'MedicationDispense'"/>
             </xsl:when>
-            <xsl:when test="contains($buildingBlockShort, 'MA') or $buildingBlockShort = ('VV', 'WDS')">
+            <xsl:when test="contains($buildingBlockShort, 'MA') or contains($buildingBlockShort, 'WDS')  or $buildingBlockShort = ('VV')">
                 <xsl:value-of select="'MedicationRequest'"/>
             </xsl:when>
             <xsl:when test="contains($buildingBlockShort, 'MGB')">

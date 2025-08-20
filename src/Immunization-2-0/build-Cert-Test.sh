@@ -1,1 +1,2 @@
-ant -f "`dirname $0`/../build-multiple.xml" -propertyfile "`dirname $0`/build.properties" $*
+#!/bin/bash
+ant -f ../build-multiple.xml -Dinput.dirs="src/Immunization-2-0/Test, src/Immunization-2-0/Cert" $*
