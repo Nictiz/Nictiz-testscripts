@@ -249,6 +249,13 @@
             <xsl:with-param name="level" select="$logINFO"/>
             <xsl:with-param name="msg">outputting <xsl:value-of select="$newFilename"/></xsl:with-param>
         </xsl:call-template>
+
+        <xsl:variable name="tsVersion" select="'r4-mp9-3.0.0-rc1'"/>
+        <xsl:variable name="tsId" select="concat('mp9-',$buildingBlockLong,'-',$transactionTypeNormalized,'-',if (string-length(string($scenarioset)) = 1) then '0' else '',$scenarioset,'-',$scenario,if(contains($buildingBlockShort,'CONS')) then '-Consolidation' else '')">
+        </xsl:variable>
+        <xsl:variable name="tsTitle" select="concat('Scenario ',$scenarioset,'.',$scenario,if(contains($buildingBlockShort,'CONS')) then ' - Consolidation' else '')"/>
+        <xsl:variable name="tsName" select="$tsTitle"/>
+
         <xsl:choose>
             <xsl:when test="$transactionTypeNormalized = ('retrieve', 'serve')">
                 <xsl:choose>
@@ -257,9 +264,10 @@
                     <xsl:when test="($transactionTypeNormalized = 'retrieve' and $buildingBlockShort != 'CONS') or ($transactionTypeNormalized = 'serve' and not(contains($buildingBlockShort, 'CONS')))">
                         <xsl:result-document href="{concat($outputDirNormalized, nf:system-dir($transactionTypeNormalized), '/', $buildingBlockLong, '/', $newFilename)}">
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
-                                <id value="mp9-{if(contains($buildingBlockShort,'CONS')) then 'Consolidation-' else ''}{$buildingBlockLong}-{$transactionTypeNormalized}-{$scenarioset}-{$scenario}"/>
-                                <version value="r4-mp9-3.0.0-beta"/>
-                                <name value="Medication Process 9 3.0.0-beta  - {if(contains($buildingBlockShort,'CONS')) then 'Consolidation - ' else ''}{$buildingBlockLong} - {nf:first-cap($transactionTypeNormalized)} - Scenario {$scenarioset}.{$scenario}"/>
+                                <id value="{$tsId}"/>
+                                <version value="{$tsVersion}"/>
+                                <name value="{$tsName}"/>
+                                <title value="{$tsTitle}"/>
                                 <description value="Scenario {$scenarioset}.{$scenario} - {$description}"/>
                                 <!-- NICTIZ-34243 "nl-core-Patient-mp9-" niet verwijderen, wordt later gebruikt om Bearer token op te halen middels QualificationTokens.json -->
                                 <nts:authToken patientResourceId="nl-core-Patient-mp9-{$patientName}" nts:in-targets="MedMij"/>
