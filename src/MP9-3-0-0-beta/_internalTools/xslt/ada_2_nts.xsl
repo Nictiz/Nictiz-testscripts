@@ -351,7 +351,7 @@
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.{'{$_FORMAT}'}"/>
                                 <nts:includeDateT value="yes"/>
                                 <!--<xsl:apply-templates select="$deleteStuff/f:variable" mode="Nictiz-intern"/>-->
-                                <test id="{$testId}}">
+                                <test id="{$testId}">
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
                                     <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
                                     <action>
@@ -401,7 +401,7 @@
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml" nts:in-targets="Nictiz-intern"/>
                                 <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
                                 <!--<xsl:copy-of select="$deleteStuff/f:variable"/>-->
-                                <test id="{$testId}}">
+                                <test id="{$testId}">
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
                                     <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
                                     <action>
