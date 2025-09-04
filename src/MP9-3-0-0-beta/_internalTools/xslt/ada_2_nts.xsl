@@ -108,7 +108,7 @@
                         <xsl:when test="current-grouping-key() = ('MedicationAdministration','MedicationDispense','MedicationRequest','MedicationStatement')">
                             <xsl:variable name="resourceType" select="current-grouping-key()"/>
                             <!-- We  do not include mpBouwsteenBaseContext because the category code is included in all search queries. This might change though -->
-                            <xsl:variable name="mpBouwsteenBaseContext" select="concat('Bundle.entry.select(resource as ', $resourceType, ')')"/>
+                            <xsl:variable name="mpBouwsteenBaseContext" select="concat('Bundle.entry.where($this is ', $resourceType, ')')"/>
                             
                             <xsl:for-each-group select="current-group()" group-by="f:category/f:coding/f:code/@value">
                                 <xsl:variable name="categoryCode" select="current-grouping-key()"/>
