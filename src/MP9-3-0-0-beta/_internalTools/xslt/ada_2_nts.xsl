@@ -215,7 +215,7 @@
                                 </xsl:variable>
                                 
                                 <xsl:variable name="expression">
-                                    <xsl:value-of select="'Bundle.entry.select(resource as Medication).where(code'"/>
+                                    <xsl:value-of select="'Bundle.entry.where($this is Medication).where(code'"/>
                                     <xsl:choose>
                                         <xsl:when test="$useUserSelected = true()">
                                             <xsl:value-of select="concat('.coding.where(system = ''', $medicationSystem, ''' and code = ''', $medicationCode, ''')')"/>
