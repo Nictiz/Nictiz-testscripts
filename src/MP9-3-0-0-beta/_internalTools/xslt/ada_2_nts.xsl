@@ -215,10 +215,10 @@
                                 </xsl:variable>
                                 
                                 <xsl:variable name="expression">
-                                    <xsl:value-of select="'Bundle.entry.where($this is Medication).where(code'"/>
+                                    <xsl:value-of select="'Bundle.entry.resource.where($this is Medication).where(code'"/>
                                     <xsl:choose>
                                         <xsl:when test="$useUserSelected = true()">
-                                            <xsl:value-of select="concat('.coding.where(system = ''', $medicationSystem, ''' and code = ''', $medicationCode, ''')')"/>
+                                            <xsl:value-of select="concat('.coding.exists(system = ''', $medicationSystem, ''' and code = ''', $medicationCode, ''')')"/>
                                         </xsl:when>
                                         <xsl:otherwise>
                                             <xsl:value-of select="concat('.where(coding.count() = ', count(f:code/f:coding), ' and ')"/>
