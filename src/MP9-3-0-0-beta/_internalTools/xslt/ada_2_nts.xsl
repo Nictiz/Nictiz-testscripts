@@ -108,7 +108,7 @@
                         <xsl:when test="current-grouping-key() = ('MedicationAdministration','MedicationDispense','MedicationRequest','MedicationStatement')">
                             <xsl:variable name="resourceType" select="current-grouping-key()"/>
                             <!-- We  do not include mpBouwsteenBaseContext because the category code is included in all search queries. This might change though -->
-                            <xsl:variable name="mpBouwsteenBaseContext" select="concat('Bundle.entry.where($this is ', $resourceType, ')')"/>
+                            <xsl:variable name="mpBouwsteenBaseContext" select="concat('Bundle.entry.resource.where($this is ', $resourceType, ')')"/>
                             
                             <xsl:for-each-group select="current-group()" group-by="f:category/f:coding/f:code/@value">
                                 <xsl:variable name="categoryCode" select="current-grouping-key()"/>
@@ -152,9 +152,9 @@
                                         <xsl:value-of select="'.where(medication.resolve()'"/>
                                         <xsl:choose>
                                             <xsl:when test="count($medication-code) = 1 and $medication-code = 'OTH'">
-                                                <xsl:value-of select="'.where(code.where(coding.where(code = ''OTH'')) and '"/>
+                                                <xsl:value-of select="'.where(code.where(coding.exists(code = ''OTH'')) and '"/>
                                                 <xsl:for-each select="$ingredient-code">
-                                                    <xsl:value-of select="concat('ingredient.item.where(coding.where(code = ''', ., '''))')"/>
+                                                    <xsl:value-of select="concat('ingredient.item.where(coding.exists(code = ''', ., '''))')"/>
                                                     <xsl:if test="not(position() = last())">
                                                         <xsl:value-of select="' and '"/>
                                                     </xsl:if>
@@ -163,7 +163,7 @@
                                             <xsl:otherwise>
                                                 <xsl:value-of select="'.code.where('"/>
                                                 <xsl:for-each select="$medication-code">
-                                                    <xsl:value-of select="concat('coding.where(code = ''', ., ''')')"/>
+                                                    <xsl:value-of select="concat('coding.exists(code = ''', ., ''')')"/>
                                                     <xsl:if test="not(position() = last())">
                                                         <xsl:value-of select="' and '"/>
                                                     </xsl:if>
@@ -223,7 +223,7 @@
                                         <xsl:otherwise>
                                             <xsl:value-of select="concat('.where(coding.count() = ', count(f:code/f:coding), ' and ')"/>
                                             <xsl:for-each select="f:code/f:coding">
-                                                <xsl:value-of select="concat('coding.where(system = ''', f:system/@value, ''' and code = ''', f:code/@value, ''')')"/>
+                                                <xsl:value-of select="concat('coding.exists(system = ''', f:system/@value, ''' and code = ''', f:code/@value, ''')')"/>
                                                 <xsl:if test="not(position() = last())">
                                                     <xsl:value-of select="' and '"/>
                                                 </xsl:if>
