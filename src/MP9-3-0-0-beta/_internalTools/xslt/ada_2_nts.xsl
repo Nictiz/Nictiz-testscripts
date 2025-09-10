@@ -178,7 +178,7 @@
                                             <xsl:with-param name="currentMPBouwsteen" select="$currentMPBouwsteen"/>
                                             <xsl:with-param name="mpBouwstenenSameProduct" select="$mpBouwstenenSameProduct"/>
                                         </xsl:call-template>
-                                        <xsl:value-of select="'.count() = 1'"/>
+                                        <xsl:value-of select="concat('.count() = ', count($mpBouwstenenSameProduct))"/>
                                     </xsl:variable>
                                     
                                     <action xmlns="http://hl7.org/fhir">
