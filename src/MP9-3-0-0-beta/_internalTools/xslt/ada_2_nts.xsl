@@ -632,9 +632,9 @@
                             <xsl:value-of select="' or '"/>
                         </xsl:if>
                     </xsl:for-each>
-                    <xsl:value-of select="''')'"/>  <!-- sluit de ( ... ) -->
-                    <xsl:value-of select="')'"/>     <!-- sluit .where(...) -->
-                </xsl:if>
+                    <xsl:text>)</xsl:text>   <!-- sluit de ( ... ) -->
+                    <xsl:text>)</xsl:text>   <!-- sluit .where(...) -->
+                </xsl:if>                
             </xsl:when>
             <xsl:when test="$categoryCode = $taCode">
                 <xsl:variable name="stopTypeCode" select="$currentMPBouwsteen/f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value"/>
