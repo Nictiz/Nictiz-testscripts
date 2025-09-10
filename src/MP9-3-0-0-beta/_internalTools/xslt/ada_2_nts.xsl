@@ -610,19 +610,31 @@
                 </xsl:choose>
             </xsl:when>
             <xsl:when test="$categoryCode = $mveCode">
-                <xsl:variable name="quantityValue" select="$currentMPBouwsteen/f:quantity/f:value/@value"/>
+                <!-- Verzamel alle distinct quantity.values van dit product -->
+                <xsl:variable name="quantities-raw"
+                    select="distinct-values($mpBouwstenenSameProduct/f:quantity/f:value/@value)"/>
                 
-                <xsl:choose>
-                    <!-- is er één bouwsteen ? dan hoeven we niets toe te voegen-->
-                    <xsl:when test="count($mpBouwstenenSameProduct) = 1"/>
-                    <!-- quantity is uniek -->
-                    <xsl:when test="$quantityValue and count($mpBouwstenenSameProduct[f:quantity/f:value/@value = $quantityValue]) = 1">
-                        <xsl:value-of select="concat('.where(quantity.value = ', $quantityValue, ')')"/>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:message>Count 1 not reached: <xsl:value-of select="count($mpBouwstenenSameProduct)"/> - <xsl:value-of select="string-join($mpBouwstenenSameProduct/(f:id/@value, ancestor::f:entry/f:fullUrl/@value)[1], ', ')"/></xsl:message>
-                    </xsl:otherwise>
-                </xsl:choose>
+                <!-- Normaliseer naar FHIRPath-compatibele decimalen (puntnotatie, geen trailing nullen) -->
+                <xsl:variable name="quantities"
+                              as="xs:string*"
+                    select="
+                        for $q in $quantities-raw
+                        return format-number(xs:decimal($q), '0.################')
+                    "/>
+                
+                <!-- Als er tenminste één quantity is, voeg OR-predicate toe: (.where(quantity.value = q1 or q2 ...)) -->
+                <xsl:if test="exists($quantities)">
+                    <xsl:value-of select="'.where('"/>
+                    <xsl:value-of select="'('"/>
+                    <xsl:for-each select="$quantities">
+                        <xsl:value-of select="concat('quantity.value = ', .)"/>
+                        <xsl:if test="position() ne last()">
+                            <xsl:value-of select="' or '"/>
+                        </xsl:if>
+                    </xsl:for-each>
+                    <xsl:value-of select="''')'"/>  <!-- sluit de ( ... ) -->
+                    <xsl:value-of select="')'"/>     <!-- sluit .where(...) -->
+                </xsl:if>
             </xsl:when>
             <xsl:when test="$categoryCode = $taCode">
                 <xsl:variable name="stopTypeCode" select="$currentMPBouwsteen/f:modifierExtension[@url = $urlExtStoptype]/f:valueCodeableConcept/f:coding/f:code/@value"/>
