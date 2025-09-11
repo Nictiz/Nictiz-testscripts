@@ -152,21 +152,15 @@
                                         <xsl:value-of select="'.where(medication.resolve()'"/>
                                         <xsl:choose>
                                             <xsl:when test="count($medication-code) = 1 and $medication-code = 'OTH'">
-                                                <xsl:value-of select="'.where(code.where(coding.exists(code = ''OTH'')) and '"/>
+                                                <xsl:value-of select="'.where(code.where(coding.exists(code = ''OTH'')) '"/>
                                                 <xsl:for-each select="$ingredient-code">
-                                                    <xsl:value-of select="concat('ingredient.item.where(coding.exists(code = ''', ., '''))')"/>
-                                                    <xsl:if test="not(position() = last())">
-                                                        <xsl:value-of select="' and '"/>
-                                                    </xsl:if>
+                                                    <xsl:value-of select="concat(' and ingredient.item.where(coding.exists(code = ''', ., '''))')"/>                                                   
                                                 </xsl:for-each>
                                             </xsl:when>
                                             <xsl:otherwise>
                                                 <xsl:value-of select="'.code.where('"/>
                                                 <xsl:for-each select="$medication-code">
-                                                    <xsl:value-of select="concat('coding.exists(code = ''', ., ''')')"/>
-                                                    <xsl:if test="not(position() = last())">
-                                                        <xsl:value-of select="' and '"/>
-                                                    </xsl:if>
+                                                    <xsl:value-of select="concat(' and coding.exists(code = ''', ., ''')')"/>
                                                 </xsl:for-each>
                                                 <xsl:value-of select="')'"/>
                                             </xsl:otherwise>
