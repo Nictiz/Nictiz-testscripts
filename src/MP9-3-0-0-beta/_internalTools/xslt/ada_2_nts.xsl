@@ -188,51 +188,69 @@
                                             </xsl:otherwise>
                                         </xsl:choose>
                                     </xsl:variable>
-
+                                    
+                                    <!-- Count how many MedicationRequests in this group point to an OTH Medication -->
+                                    <xsl:variable name="othCount"
+                                        select="
+                                            count(
+                                                $allMPBouwstenenOfSameKind[
+                                                    let $ref := f:medicationReference/f:reference/@value
+                                                    return boolean(
+                                                            $fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $ref]
+                                                            /f:resource/f:Medication
+                                                            /f:code/f:coding[
+                                                                f:system/@value = 'http://terminology.hl7.org/CodeSystem/v3-NullFlavor'
+                                                                and f:code/@value = 'OTH'
+                                                            ]
+                                                        )
+                                                ]
+                                            )
+                                        "/>
+                                    <xsl:variable name="isOTH" select="count($medication-code) = 1 and $medication-code = 'OTH'"/>
                                     <xsl:variable name="expression">
                                         <xsl:value-of select="$mpBouwsteenBaseContext"/>
-                                        <!-- We always add medication (and ingredients if medication is OTH)-->
                                         <xsl:text>.where(</xsl:text>
+                                        
                                         <xsl:choose>
-                                            <xsl:when
-                                                test="count($medication-code) = 1 and $medication-code = 'OTH'">
-                                                <xsl:text>(</xsl:text>                                                
-                                                <xsl:text>(medication.where($this is CodeableConcept).coding | medication.where($this is Reference).resolve().code.coding).exists(code = 'OTH')</xsl:text>
-                                                <xsl:for-each select="$ingredient-code">
-                                                  <xsl:text> and (medication.where($this is Reference).resolve().ingredient.item.coding).exists(code = '</xsl:text>
-                                                  <xsl:value-of select="."/>
-                                                  <xsl:text>')</xsl:text>
-                                                </xsl:for-each>
-                                                <xsl:text>)</xsl:text>
+                                            <!-- OTH branch: only check OTH code on medication, no ingredient predicates -->
+                                            <xsl:when test="$isOTH">
+                                                <xsl:text>((medication.where($this is CodeableConcept).coding | medication.where($this is Reference).resolve().code.coding).exists(system = 'http://terminology.hl7.org/CodeSystem/v3-NullFlavor' and code = 'OTH'))</xsl:text>
                                             </xsl:when>
-
+                                            
+                                            <!-- Non-OTH branch: your existing per-code checks -->
                                             <xsl:otherwise>
                                                 <xsl:text>(</xsl:text>
                                                 <xsl:for-each select="$medication-code">
-                                                  <!-- Same guard here -->
-                                                  <xsl:text>((medication.where($this is CodeableConcept).coding | medication.where($this is Reference).resolve().code.coding).exists(code = '</xsl:text>
-                                                  <xsl:value-of select="."/>
-                                                  <xsl:text>') )</xsl:text>
-                                                  <xsl:if test="position() != last()">
-                                                  <xsl:text> and </xsl:text>
-                                                  </xsl:if>
+                                                    <xsl:text>( (medication.where($this is CodeableConcept).coding | medication.where($this is Reference).resolve().code.coding).exists(code = '</xsl:text>
+                                                    <xsl:value-of select="."/>
+                                                    <xsl:text>') )</xsl:text>
+                                                    <xsl:if test="position() != last()">
+                                                        <xsl:text> and </xsl:text>
+                                                    </xsl:if>
                                                 </xsl:for-each>
                                                 <xsl:text>)</xsl:text>
                                             </xsl:otherwise>
                                         </xsl:choose>
-                                        <xsl:value-of select="')'"/>
-                                        <!-- Add building block specific stuff -->
-                                        <xsl:call-template name="append-2-context">
-                                            <xsl:with-param name="categoryCode"
-                                                select="$categoryCode"/>
-                                            <xsl:with-param name="currentMPBouwsteen"
-                                                select="$currentMPBouwsteen"/>
-                                            <xsl:with-param name="mpBouwstenenSameProduct"
-                                                select="$mpBouwstenenSameProduct"/>
-                                        </xsl:call-template>
-                                        <xsl:value-of
-                                            select="concat('.count() = ', count($mpBouwstenenSameProduct))"
-                                        />
+                                        
+                                        <xsl:text>)</xsl:text> <!-- close .where( … ) -->
+                                        
+                                        <!-- Only append disambiguators for non-OTH; for OTH we want the full group -->
+                                        <xsl:if test="not($isOTH)">
+                                            <xsl:call-template name="append-2-context">
+                                                <xsl:with-param name="categoryCode" select="$categoryCode"/>
+                                                <xsl:with-param name="currentMPBouwsteen" select="$currentMPBouwsteen"/>
+                                                <xsl:with-param name="mpBouwstenenSameProduct" select="$mpBouwstenenSameProduct"/>
+                                            </xsl:call-template>
+                                        </xsl:if>
+                                        
+                                        <!-- Compare against the right expected count -->
+                                        <xsl:value-of select="
+                                            concat('.count() = ',
+                                                if ($isOTH)
+                                                    then $othCount
+                                                else count($mpBouwstenenSameProduct)
+                                            )
+                                                        "/>
                                     </xsl:variable>
 
                                     <action xmlns="http://hl7.org/fhir">
