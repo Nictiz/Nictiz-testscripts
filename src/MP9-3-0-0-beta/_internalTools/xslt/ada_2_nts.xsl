@@ -149,26 +149,29 @@
                                     <xsl:variable name="expression">
                                         <xsl:value-of select="$mpBouwsteenBaseContext"/>
                                         <!-- We always add medication (and ingredients if medication is OTH)-->
-                                        <xsl:value-of select="'.where(medication.resolve()'"/>
+                                        <xsl:text >.where(</xsl:text>
                                         <xsl:choose>
                                             <xsl:when test="count($medication-code) = 1 and $medication-code = 'OTH'">
-                                                <xsl:value-of select="'.where(code.where(coding.exists(code = ''OTH'')) and '"/>
+                                                <xsl:text>(</xsl:text>
+                                                <xsl:text>(medication.as(CodeableConcept).coding | medication.resolve().code.coding).exists(code = 'OTH')</xsl:text>
                                                 <xsl:for-each select="$ingredient-code">
-                                                    <xsl:value-of select="concat('ingredient.item.where(coding.exists(code = ''', ., '''))')"/>
-                                                    <xsl:if test="not(position() = last())">
-                                                        <xsl:value-of select="' and '"/>
-                                                    </xsl:if>
+                                                    <xsl:text> and (medication.resolve().ingredient.item.coding).exists(code = '</xsl:text>
+                                                    <xsl:value-of select="."/>
+                                                    <xsl:text>')</xsl:text>
                                                 </xsl:for-each>
+                                                <xsl:text>)</xsl:text>
                                             </xsl:when>
                                             <xsl:otherwise>
-                                                <xsl:value-of select="'.code.where('"/>
+                                                <xsl:text>(</xsl:text>
                                                 <xsl:for-each select="$medication-code">
-                                                    <xsl:value-of select="concat('coding.exists(code = ''', ., ''')')"/>
-                                                    <xsl:if test="not(position() = last())">
-                                                        <xsl:value-of select="' and '"/>
+                                                    <xsl:text>( (medication.as(CodeableConcept).coding | medication.resolve().code.coding).exists(code = '</xsl:text>
+                                                    <xsl:value-of select="."/>
+                                                    <xsl:text>') )</xsl:text>
+                                                    <xsl:if test="position() != last()">
+                                                        <xsl:text> and </xsl:text>
                                                     </xsl:if>
                                                 </xsl:for-each>
-                                                <xsl:value-of select="')'"/>
+                                                <xsl:text>)</xsl:text>
                                             </xsl:otherwise>
                                         </xsl:choose>
                                         <xsl:value-of select="')'"/>
