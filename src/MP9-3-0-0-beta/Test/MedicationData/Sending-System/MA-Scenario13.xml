@@ -1,0 +1,58 @@
+<TestScript xmlns="http://hl7.org/fhir"
+            xmlns:nts="http://nictiz.nl/xsl/testscript"
+            nts:scenario="client">
+   <id value="mp9-meddata-send-13-x"/>
+   <version value="r4-mp9-3.0.0-beta"/>
+   <name value="MP9 - Client - Scenario 13.x - Send MedicationData - MA-Scenario13"/>
+   <description value="Scenario 13.x - Send MedicationData for H. XXX_Hoek."/>
+   <nts:fixture id="mgsets-mp-smg-tst-MA-Scenario13-v30"
+                href="fixtures/mgsets-mp-smg-tst-MA-Scenario13-v30.xml"
+                nts:in-targets="Nictiz-intern"/>
+   <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
+   <test id="scenario13-x-send-meddata">
+      <name value="Scenario 13.x"/>
+      <description value="Send MedicationData in a transaction Bundle"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="transaction"/>
+            </type>
+            <description value="Test client to POST a Bundle of type transaction."/>
+            <destination value="1"/>
+            <origin value="1"/>
+            <responseId value="transaction-response-fixture"/>
+            <sourceId value="mgsets-mp-smg-tst-MA-Scenario13-v30"
+                      nts:in-targets="Nictiz-intern"/>
+         </operation>
+      </action>
+      <nts:include value="test.client.successfulTransaction" scope="common"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="MedicationRequest"
+                   count="1"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="Medication"
+                   count="1"/>
+   </test>
+   <test id="scenario13-x-send-meddata-identification">
+      <name value="Resource identification"/>
+      <description value="Checks if all resources specified by the scenario can be identified unambiguously."/>
+      <action>
+         <assert>
+            <expression value="Bundle.entry.resource.where($this is MedicationRequest).where((( (medication.where($this is CodeableConcept).coding | medication.where($this is Reference).resolve().code.coding).exists(code = '7323') ) and ( (medication.where($this is CodeableConcept).coding | medication.where($this is Reference).resolve().code.coding).exists(code = '20303') ))).count() = 1"/>
+            <sourceId value="transaction-request"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the request Bundle contains 1 Medication resource that contains code '7323|urn:oid:2.16.840.1.113883.2.4.4.10' (ACENOCOUMAROL TABLET 1MG)"/>
+            <expression value="Bundle.entry.resource.where($this is Medication).where(code.coding.exists(system = 'urn:oid:2.16.840.1.113883.2.4.4.10' and code = '7323')).count() = 1"/>
+            <sourceId value="transaction-request"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
