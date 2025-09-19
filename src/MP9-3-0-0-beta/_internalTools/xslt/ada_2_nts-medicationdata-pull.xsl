@@ -139,7 +139,8 @@
         <xsl:variable name="adaInstance" select="adaxml/data/beschikbaarstellen_medicatiegegevens"/>
         
         <xsl:variable name="buildingBlockLong" select="nf:makeBuildingBlockLong($buildingBlockShort)"/>
-        
+        <xsl:variable name="step" select="nf:makeStep($buildingBlockShort)"/>
+
         <xsl:variable name="scenario">x</xsl:variable>
         <xsl:variable name="newFilename" select="concat($buildingBlockShort, '-Scenarioset', $scenarioset, '.xml')"/>
         <xsl:call-template name="util:logMessage">
@@ -255,7 +256,7 @@
                     <!--Only the individual Consolidation ada instances (i.e. CONS-MA, CONS-MGB and CONS-TA) need to be converted to a retrieve test script-->
                     <!--For Consolidation there is no serve use case-->
                     <xsl:when test="($transactionTypeNormalized = 'retrieve' and $buildingBlockShort != 'CONS') or ($transactionTypeNormalized = 'serve' and not(contains($buildingBlockShort, 'CONS')))">
-                        <xsl:result-document href="{concat($outputDirNormalized, nf:system-dir($transactionTypeNormalized), '/', $buildingBlockLong, '/', $newFilename)}">
+                        <xsl:result-document href="{concat($outputDirNormalized, $step, '/', $buildingBlockShort, '/', nf:system-dir($transactionTypeNormalized), '/', $newFilename)}">
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                                 <id value="mp9-{if(contains($buildingBlockShort,'CONS')) then 'Consolidation-' else ''}{$buildingBlockLong}-{$transactionTypeNormalized}-{$scenarioset}-{$scenario}"/>
                                 <version value="r4-mp9-3.0.0-beta"/>
@@ -672,6 +673,33 @@
             <xsl:when test="contains($buildingBlockShort, 'WDS')">VariableDosingRegimen</xsl:when>
             <xsl:when test="contains($buildingBlockShort, 'VV')">DispenseRequest</xsl:when>
             <xsl:when test="contains($buildingBlockShort, 'MVE')">MedicationDispense</xsl:when>
+            <xsl:otherwise>
+                <xsl:call-template name="util:logMessage">
+                    <xsl:with-param name="level" select="$logFATAL"/>
+                    <xsl:with-param name="msg">Could not determine building block: <xsl:value-of select="$buildingBlockShort"/></xsl:with-param>
+                    <xsl:with-param name="terminate" select="true()"/>
+                </xsl:call-template>
+            </xsl:otherwise>
+        </xsl:choose>
+        
+    </xsl:function>
+
+    <xd:doc>
+        <xd:desc>Make step (including number) string based on short building block string</xd:desc>
+        <xd:param name="buildingBlockShort">short building block string: MA/WDS/VV/TA/MVE/MGB/MTD</xd:param>
+    </xd:doc>
+    <xsl:function name="nf:makeStep" as="xs:string?">
+        <xsl:param name="buildingBlockShort" as="xs:string?"/>
+        
+        <xsl:choose>
+            <!-- consolidation buildingBlockShort is a string like "CONS-MA" -->
+            <xsl:when test="contains($buildingBlockShort, 'MA')">Step3</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MGB')">Step4</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'TA')">Step5</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MTD')">Step6</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'WDS')">Step3</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'VV')"> Step3</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MVE')">Step5</xsl:when>
             <xsl:otherwise>
                 <xsl:call-template name="util:logMessage">
                     <xsl:with-param name="level" select="$logFATAL"/>
