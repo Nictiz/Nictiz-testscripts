@@ -252,10 +252,15 @@
                                             )
                                                         "/>
                                     </xsl:variable>
-
+                                    
                                     <action xmlns="http://hl7.org/fhir">
                                         <assert>
                                             <!--<description value="{$description}"/>-->
+                                            <direction>
+                                                <xsl:attribute name="value">                                                   
+                                                            <xsl:value-of select="'request'"/>                                                       
+                                                </xsl:attribute>    
+                                            </direction>
                                             <expression value="{$expression}"/>
                                             <sourceId value="transaction-{$direction}"/>
                                             <warningOnly value="false"/>
@@ -321,6 +326,11 @@
                                     <assert>
                                         <description
                                             value="Confirm that the {$direction} Bundle contains {$resourceCount} Medication resource that contains code '{$medicationCode}|{$medicationSystem}' ({$medicationDisplay})"/>
+                                        <direction>
+                                            <xsl:attribute name="value">                                                   
+                                                <xsl:value-of select="'request'"/>                                                       
+                                            </xsl:attribute>    
+                                        </direction>
 
                                         <expression value="{$expression}"/>
                                         <sourceId value="transaction-{$direction}"/>
