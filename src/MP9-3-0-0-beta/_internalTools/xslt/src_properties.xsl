@@ -70,41 +70,10 @@
         <xsl:param name="relFolderPath" as="xs:string" required="yes"/>
         <xsl:param name="loadscriptFolder" as="xs:boolean" required="yes"/>
 
-        <xsl:variable name="overrules">
-            <overrules>
-                
-            </overrules>
-        </xsl:variable>
-
         <!-- Create an XML representation of the desired JSON structure, which can be written as JSON using xml-to-json. --> 
         <xsl:variable name="properties">
             <map xmlns="http://www.w3.org/2005/xpath-functions">
                 <xsl:if test="not($loadscriptFolder)">
-                    <!-- <xsl:variable name="roleList" select="for $role in tokenize($roles, ',') return fn:normalize-space($role)"/> -->
-                    <!--
-                        Get all the subfolders between the ouput root and the output file, and fish out the folder that
-                        specifies the role (which may have an additional target appended, so it's a match on the start of
-                        the folder name).
-                        First element is discarded because it is empty ($relFolderPath always starts with a '/')
-                    -->
-                    <!-- <xsl:variable name="roleFolder" as="map(*)">
-                        <xsl:map>
-                            <xsl:for-each select="tokenize($relFolderPath, '/')">
-                                <xsl:variable name="subfolder" select="."/>
-                                <xsl:for-each select="$roleList">
-                                    <xsl:variable name="role" select="iri-to-uri(.)"/>
-                                    <xsl:if test="starts-with($subfolder, $role)">
-                                        <xsl:map-entry key="'role'" select="$role"/>
-                                        <xsl:map-entry key="'target'" select="substring-after($subfolder, concat(., '-'))"/>
-                                        <xsl:map-entry key="'folder'" select="$subfolder"/>
-                                    </xsl:if>
-                                </xsl:for-each>
-                            </xsl:for-each>
-                        </xsl:map>
-                    </xsl:variable>
-                    <xsl:if test="not(map:contains($roleFolder, 'role'))">
-                        <xsl:message terminate="yes" select="concat('No folder dedicated to a role could be found in path ''', $relFolderPath, '''. Known role names are: ', string-join($roleList, ', '))"/>
-                    </xsl:if>-->
                     <xsl:variable name="subfolders" as="xs:string*">
                         <xsl:for-each select="tokenize($relFolderPath, '/')">
                             <xsl:if test="string-length(normalize-space(.)) &gt; 0">
