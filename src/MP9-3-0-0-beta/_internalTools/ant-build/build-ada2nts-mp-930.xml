@@ -46,6 +46,10 @@
             <!-- windows does not mind, but for the url we do need lowercase for mappings dir -->
             <param name="test.dir.lowercase" value="/test"/>
         </antcall>
+
+        <antcall target="properties">
+            <param name="testset.dir" value="${build.dir}/../Test"/>
+        </antcall>
     </target>
     
     <target name="convert_ada_2_nts_930_cert">
@@ -70,6 +74,10 @@
             <param name="test.dir" value="/Cert"/>
             <!-- windows does not mind, but for the url we do need lowercase for mappings dir -->
             <param name="test.dir.lowercase" value="/cert"/>
+        </antcall>
+
+        <antcall target="properties">
+            <param name="testset.dir" value="${build.dir}/../Cert"/>
         </antcall>
     </target>
     
@@ -384,7 +392,7 @@
             <param name="xsl.in" value="${xsl.input.usecase}"/>
             <param name="xsl.in.include" value="*mp-*-MGB-*.xml"/>
             <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
-            <param name="xsl.out" value="../${xsl.output.usecase}/Step-3/MGB/Sending-${role.code}${role.code.send}-MGB"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-4/MGB/Sending-${role.code}${role.code.send}-MGB"/>
             <param name="transaction.type" value="Send"/>
         </antcall>
         
@@ -394,7 +402,7 @@
             <param name="xsl.in" value="${xsl.input.usecase}"/>
             <param name="xsl.in.include" value="*mp-*-MGB-*.xml"/>
             <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
-            <param name="xsl.out" value="../${xsl.output.usecase}/Step-3/MGB/Receiving-${role.code}${role.code.receive}-MGB"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-4/MGB/Receiving-${role.code}${role.code.receive}-MGB"/>
             <param name="transaction.type" value="Receive"/>
         </antcall>
 
@@ -605,5 +613,25 @@
             <factory name="${xsl.saxon.class}"/>
             <classpath location="${xsl.saxon}"/>
         </xslt>
+    </target>
+    
+    <target name="properties">
+        <echo message="Generating ConformanceLab properties files"/>
+
+        <property name="testset.dir.abs" location="${testset.dir}"/>
+        <pathconvert property="testset.dir.url" targetos="unix">
+            <path location="${testset.dir.abs}"/>
+            <!-- Output needs 3 slashes, i.e. file:///. For win style paths that start with a drive letter, simply prepend
+             file:///. For unix style paths that start with a slash, only the part after the slash is taken. -->
+            <mapper type="regexp" from="\/?(.*)" to="file:///\1"/>
+        </pathconvert>
+
+        <property name="xsl.output.dummy" value="${build.dir}/xslt/dummy.xml"/>
+        <xslt force="true" style="${build.dir}/xslt/src_properties.xsl" in="${build.dir}/xslt/src_properties.xsl" out="${xsl.output.dummy}" useImplicitFileset="false">
+            <factory name="${xsl.saxon.class}"/>
+            <classpath location="${xsl.saxon}"/>
+            <param name="baseDirUrl" expression="${testset.dir.url}"/>
+        </xslt>
+        <delete file="${xsl.output.dummy}"/>
     </target>
 </project>
