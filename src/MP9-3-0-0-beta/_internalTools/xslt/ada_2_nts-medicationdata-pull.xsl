@@ -139,7 +139,7 @@
         <xsl:variable name="adaInstance" select="adaxml/data/beschikbaarstellen_medicatiegegevens"/>
         
         <xsl:variable name="buildingBlockLong" select="nf:makeBuildingBlockLong($buildingBlockShort)"/>
-        
+
         <xsl:variable name="scenario">x</xsl:variable>
         <xsl:variable name="newFilename" select="concat($buildingBlockShort, '-Scenarioset', $scenarioset, '.xml')"/>
         <xsl:call-template name="util:logMessage">
@@ -255,7 +255,7 @@
                     <!--Only the individual Consolidation ada instances (i.e. CONS-MA, CONS-MGB and CONS-TA) need to be converted to a retrieve test script-->
                     <!--For Consolidation there is no serve use case-->
                     <xsl:when test="($transactionTypeNormalized = 'retrieve' and $buildingBlockShort != 'CONS') or ($transactionTypeNormalized = 'serve' and not(contains($buildingBlockShort, 'CONS')))">
-                        <xsl:result-document href="{concat($outputDirNormalized, nf:system-dir($transactionTypeNormalized), '/', $buildingBlockLong, '/', $newFilename)}">
+                        <xsl:result-document href="{concat($outputDirNormalized, nf:makeCLCategoryFolder($buildingBlockShort), '/', nf:makeCLSubcategoryFolder($buildingBlockShort), '/', nf:makeCLRoleFolder($transactionTypeNormalized, $buildingBlockShort), '/', $newFilename)}">
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                                 <id value="mp9-{if(contains($buildingBlockShort,'CONS')) then 'Consolidation-' else ''}{$buildingBlockLong}-{$transactionTypeNormalized}-{$scenarioset}-{$scenario}"/>
                                 <version value="r4-mp9-3.0.0-beta"/>
@@ -482,8 +482,8 @@
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
-        
-        <xsl:result-document href="{concat($outputDirNormalized, nf:system-dir($transactionTypeNormalized), '/', $buildingBlockLong, '/', $newFilename)}">
+
+        <xsl:result-document href="{concat($outputDirNormalized, nf:makeCLCategoryFolder($buildingBlockShort), '/', nf:makeCLSubcategoryFolder($buildingBlockShort), '/', nf:makeCLRoleFolder($transactionTypeNormalized, $buildingBlockShort), '/', $newFilename)}">
             <xsl:variable name="ntsScenario" as="xs:string?">
                 <xsl:choose>
                     <xsl:when test="$transactionTypeNormalized = ('retrieve')">client</xsl:when>
@@ -604,18 +604,19 @@
     </xsl:template>
     
     <xd:doc>
-        <xd:desc>Change the folder names to contain "-System" </xd:desc>
+        <xd:desc>Change the folder names to contain "-System" and include the role code </xd:desc>
         <xd:param name="transactionType">The transactionType to be transformed </xd:param>
-        <xd:param name="transactionTypeNormalized">The normalized transactionType to be transformed </xd:param>
+        <xd:param name="buildingBlockShort"></xd:param>
     </xd:doc>
-    <xsl:function name="nf:system-dir" as="xs:string">
+    <xsl:function name="nf:makeCLRoleFolder" as="xs:string">
         <xsl:param name="transactionType" as="xs:string?"/>
+        <xsl:param name="buildingBlockShort" as="xs:string?"/>
         <xsl:variable name="transactionTypeNormalized" select="normalize-space(lower-case($transactionType))"/>
         <xsl:choose>
-            <xsl:when test="$transactionTypeNormalized = 'retrieve'">Retrieving-System</xsl:when>
-            <xsl:when test="$transactionTypeNormalized = 'serve'">Serving-System</xsl:when>
-            <xsl:when test="$transactionTypeNormalized = 'receive'">Receiving-System</xsl:when>
-            <xsl:when test="$transactionTypeNormalized = 'send'">Sending-System</xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'retrieve'"><xsl:value-of select="concat('Retrieving-MGR-',$buildingBlockShort)"/></xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'serve'"><xsl:value-of select="concat('Serving-MGB-',$buildingBlockShort)"/></xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'receive'"><xsl:value-of select="concat('Receiving-MGO-',$buildingBlockShort)"/></xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'send'"><xsl:value-of select="concat('Sending-MGS-',$buildingBlockShort)"/></xsl:when>
             <!-- fallback: Keep current behaviour -->
             <xsl:otherwise>
                 <xsl:value-of select="nf:first-cap($transactionType)"/>
@@ -672,6 +673,61 @@
             <xsl:when test="contains($buildingBlockShort, 'WDS')">VariableDosingRegimen</xsl:when>
             <xsl:when test="contains($buildingBlockShort, 'VV')">DispenseRequest</xsl:when>
             <xsl:when test="contains($buildingBlockShort, 'MVE')">MedicationDispense</xsl:when>
+            <xsl:otherwise>
+                <xsl:call-template name="util:logMessage">
+                    <xsl:with-param name="level" select="$logFATAL"/>
+                    <xsl:with-param name="msg">Could not determine building block: <xsl:value-of select="$buildingBlockShort"/></xsl:with-param>
+                    <xsl:with-param name="terminate" select="true()"/>
+                </xsl:call-template>
+            </xsl:otherwise>
+        </xsl:choose>
+        
+    </xsl:function>
+
+    <xd:doc>
+        <xd:desc>Make Conformancelab category folder name string based on short building block string</xd:desc>
+        <xd:param name="buildingBlockShort">short building block string: MA/WDS/VV/TA/MVE/MGB/MTD</xd:param>
+    </xd:doc>
+    <xsl:function name="nf:makeCLCategoryFolder" as="xs:string?">
+        <xsl:param name="buildingBlockShort" as="xs:string?"/>
+        
+        <xsl:choose>
+            <!-- consolidation buildingBlockShort is a string like "CONS-MA" -->
+            <xsl:when test="contains($buildingBlockShort, 'CONS')">Cons</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MA')">Step-3</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MGB')">Step-4</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'TA')">Step-5</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MTD')">Step-6</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'WDS')">Step-3</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'VV')">Step-3</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MVE')">Step-5</xsl:when>
+            <xsl:otherwise>
+                <xsl:call-template name="util:logMessage">
+                    <xsl:with-param name="level" select="$logFATAL"/>
+                    <xsl:with-param name="msg">Could not determine building block: <xsl:value-of select="$buildingBlockShort"/></xsl:with-param>
+                    <xsl:with-param name="terminate" select="true()"/>
+                </xsl:call-template>
+            </xsl:otherwise>
+        </xsl:choose>
+        
+    </xsl:function>
+
+    <xd:doc>
+        <xd:desc>Make Conformancelab subcategory folder name string based on short building block string</xd:desc>
+        <xd:param name="buildingBlockShort">short building block string: MA/WDS/VV/TA/MVE/MGB/MTD</xd:param>
+    </xd:doc>
+    <xsl:function name="nf:makeCLSubcategoryFolder" as="xs:string?">
+        <xsl:param name="buildingBlockShort" as="xs:string?"/>
+        
+        <xsl:choose>
+            <!-- consolidation buildingBlockShort is a string like "CONS-MA" -->
+            <xsl:when test="contains($buildingBlockShort, 'MA')">MA</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MGB')">MGB</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'TA')">TA</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MTD')">MTD</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'WDS')">WDS</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'VV')">VV</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MVE')">MVE</xsl:when>
             <xsl:otherwise>
                 <xsl:call-template name="util:logMessage">
                     <xsl:with-param name="level" select="$logFATAL"/>
