@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="playground-validation"/>
+   <url value="http://nictiz.nl/fhir/TestScript/playground-validation"/>
+   <version value="stu3-3.0-patchlevel 2025.31"/>
+   <name value="BgZ - XIS Server - Test - Scenario 1.14.2.2.2 - Serve BgZ BodyWeight resources of XXX_Rijn - XML Format"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Scenario 1.14.2.2.2 - Serve BgZ BodyWeight resources of XXX_Rijn"/>
+   <origin>
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
+         <valueBoolean value="false"/>
+      </extension>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
+         <code value="FHIR-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
+         <valueBoolean value="true"/>
+      </extension>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <profile id="Bundle-profile"
+            value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
+   <profile id="BodyWeight-profile" value="http://nictiz.nl/fhir/StructureDefinition/zib-BodyWeight"/>
+   <profile id="BodyHeight-profile" value="http://nictiz.nl/fhir/StructureDefinition/zib-BodyHeight"/>
+   <variable>
+      <name value="patient-token-id"/>
+      <defaultValue value="Bearer 7ce7c666-6f96-40a7-a8fa-922056cb18b4"/>
+      <description value="OAuth Token for current patient"/>
+   </variable>
+   <test>
+      <name value="Scenario 1.14.2.2.2 - BodyWeight"/>
+      <description value="Serve Observation resource(s) for zib BodyWeight"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?code=http://loinc.org|29463-7"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned resource type is Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned Bundle type is searchset."/>
+            <direction value="response"/>
+            <expression value="Bundle.type"/>
+            <operator value="equals"/>
+            <stopTestOnFail value="false"/>
+            <value value="searchset"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned Bundle conforms to the base FHIR specification and the resources to the stated profiles in the meta.profile tag."/>
+            <direction value="response"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="Bundle-profile"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned Observations conform to the zib BodyWeight profile."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation))"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="BodyWeight-profile"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned Observations conform to the zib BodyHeight profile."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation))"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="BodyHeight-profile"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
