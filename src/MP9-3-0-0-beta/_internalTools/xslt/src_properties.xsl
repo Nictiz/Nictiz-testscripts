@@ -164,7 +164,7 @@
                 </xsl:if>
             </map>
         </xsl:variable>
-        <xsl:result-document href="{concat($baseDirUrl, '/', $relFolderPath, '/src-properties.json')}" method="text" indent="no">
+        <xsl:result-document href="{concat($baseDirUrl, '/', $relFolderPath, '/properties.json')}" method="text" indent="no">
             <xsl:value-of select="xml-to-json($properties, map {'indent': true()})"/>
         </xsl:result-document>
     </xsl:template>
