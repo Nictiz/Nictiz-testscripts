@@ -188,6 +188,7 @@
                 <id value="mp9-{$buildingBlockLong}-{$transactionTypeNormalized}-{$scenarioset}-{$scenario}"/>
                 <version value="r4-mp9-2.0.0"/>
                 <name value="Medication Process 9 2.0.0  - {$buildingBlockLong} - {nf:first-cap($transactionTypeNormalized)} - Scenario {$scenarioset}.{$scenario}"/>
+                <title value="Medication Process 9 2.0.0  - {$buildingBlockLong} - {nf:first-cap($transactionTypeNormalized)} - Scenario {$scenarioset}.{$scenario}"/>
                 <description value="Scenario {$scenarioset}.{$scenario} - {$description}"/>
                 <nts:authToken patientResourceId="nl-core-Patient-mp9-{$patientName}" nts:in-targets="MedMij"/>
                 <nts:includeDateT value="no"/>
