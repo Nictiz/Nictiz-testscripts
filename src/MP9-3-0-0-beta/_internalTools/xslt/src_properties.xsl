@@ -99,24 +99,15 @@
                         </xsl:variable>
                         <string key="name">
                              <xsl:value-of select="$clRole"/>
+                            <xsl:message select="$clRole"/>
                         </string>
-                        <!-- <xsl:if test="contains($roleDescriptions, concat($roleFolder('role'), '='))"> -->
-                            <!--
-                                The $targetRoles string is formatted as a single string with role=description
-                                pairs, separated by comma's. The descriptions are literaly what's in the ant properties
-                                file, no escaping, and so it might contain comma's and we can't just split on comma's.
-                                So the surest way to fish out the description is to use a regex where we search for
-                                'our role=' up until the start of the next pair (or the end of the string). The
-                                start of the next pair always begins by a comma, followed by a set of non-whitespace
-                                characters, followed by an = sign, so that's our clue.
-                                -->
-                            <!-- <xsl:variable name="pattern" select="concat('.*', $roleFolder('role'), '=(.*?)($|,\S+=.*)')"/>
-                            <xsl:variable name="description" select="replace($roleDescriptions, $pattern, '$1')"/> -->
+                        <xsl:variable name="clRoleDescConfig" select="document('role-description-config.xml')"/>
+                        <xsl:variable name="clRoleDesc" select="$clRoleDescConfig//role[name/text() = $clRole]/description/text()"/>
+                        <xsl:if test="not(empty($clRoleDesc))">
                             <string key="description">
-                                <!-- <xsl:value-of select="$description"/> -->
-                                <xsl:value-of select="'test'"/>
+                                <xsl:value-of select="$clRoleDesc"/>
                             </string>
-                        <!-- </xsl:if> -->
+                        </xsl:if>
                     </map>
 
                     <xsl:if test="$subfolders[1]">
