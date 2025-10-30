@@ -2,11 +2,11 @@
 <xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xsl:import href="../../../../../YATC-internal/ada-2-fhir-r4/env/fhir/2_fhir_fixtures.xsl"/>
     <xsl:import href="ada_2_nts.xsl"/>
-
+    
     <xsl:output indent="yes" omit-xml-declaration="yes"/>
-
+    
     <xsl:strip-space elements="*"/>
-
+    
     <xsl:param name="transactionType"/>
     <xsl:param name="inputDir"/>
     <xsl:param name="outputDir"/>
@@ -18,10 +18,11 @@
             <xsl:otherwise>Test</xsl:otherwise>
         </xsl:choose>
     </xsl:param>
-
+    
     <xsl:variable name="transactionTypeNormalized" select="normalize-space(lower-case($transactionType))"/>
     <xsl:variable name="inputDirNormalized" select="nf:normalize-path($inputDir)"/>
     <xsl:variable name="outputDirNormalized" select="nf:normalize-path($outputDir)"/>
+    
     <xd:doc>
         <xd:desc>Start template. Handles some ada transactions, converts them to nts. Very specific for each transaction.</xd:desc>
     </xd:doc>
@@ -35,7 +36,7 @@
             <xsl:with-param name="level" select="$logINFO"/>
             <xsl:with-param name="msg">refDir <xsl:value-of select="$refDir"/></xsl:with-param>
         </xsl:call-template>
-
+        
         <xsl:call-template name="util:logMessage">
             <xsl:with-param name="level" select="$logINFO"/>
             <xsl:with-param name="msg">transactionTypeNormalized: <xsl:value-of select="$transactionTypeNormalized"/> - inputDir: <xsl:value-of select="$inputDirNormalized"/> - outputDir: <xsl:value-of select="$outputDirNormalized"/></xsl:with-param>
@@ -53,7 +54,7 @@
                 <xsl:with-param name="msg">1. handling <xsl:value-of select="./adaxml/data/beschikbaarstellen_medicatiegegevens/@id"/></xsl:with-param>
             </xsl:call-template>
             <xsl:variable name="scenarioset" select="xs:integer(replace(./adaxml/data/beschikbaarstellen_medicatiegegevens/scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$1'))"/>
-
+            
             <xsl:variable name="buildingBlockShort" select="substring-before(substring-after(./adaxml/data/beschikbaarstellen_medicatiegegevens/@id, concat('mg-mp-mg-', $fileNamePart, '-')), '-')[1]" as="xs:string*"/>
             <xsl:call-template name="util:logMessage">
                 <xsl:with-param name="level" select="$logINFO"/>
@@ -76,7 +77,7 @@
                             </xsl:call-template>
                         </xsl:otherwise>
                     </xsl:choose>                   
-                  </xsl:when>
+                </xsl:when>
                 <xsl:otherwise>
                     <xsl:call-template name="createNts">
                         <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
@@ -107,8 +108,8 @@
             </xsl:choose>
         </xsl:for-each>
     </xsl:template>
-
-
+    
+    
     <xd:doc>
         <xd:desc>Finds the fixtures to base the content assert on</xd:desc>
         <xd:param name="identifier">the identifier of the resource</xd:param>
@@ -125,7 +126,7 @@
             </xsl:choose>
         </xsl:for-each>
     </xsl:template>        
-
+    
     <xd:doc>
         <xd:desc>Creates NTS</xd:desc>
         <xd:param name="buildingBlockShort">The building block abbreviation, such as MA, MGB and the like</xd:param>
@@ -134,9 +135,9 @@
     <xsl:template name="createNts">
         <xsl:param name="buildingBlockShort"/>
         <xsl:param name="scenarioset"/>
-
+        
         <xsl:variable name="adaInstance" select="adaxml/data/beschikbaarstellen_medicatiegegevens"/>
-
+        
         <xsl:variable name="buildingBlockLong" select="nf:makeBuildingBlockLong($buildingBlockShort)"/>
         
         <xsl:variable name="scenario">x</xsl:variable>
@@ -145,7 +146,7 @@
             <xsl:with-param name="level" select="$logINFO"/>
             <xsl:with-param name="msg">processing <xsl:value-of select="$newFilename"/></xsl:with-param>
         </xsl:call-template>
-
+        
         <xsl:variable name="ntsScenario" as="xs:string?">
             <xsl:choose>
                 <xsl:when test="$transactionTypeNormalized = ('retrieve', 'send')">client</xsl:when>
@@ -179,7 +180,7 @@
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
-
+        
         <xsl:variable name="theParamParts">
             <xsl:value-of select="concat('category=http://snomed.info/sct|', $matchCategoryCode, '&amp;_include=', $matchResource, ':medication','&amp;_include=', $matchResource, ':subject')"/>
         </xsl:variable>
@@ -215,7 +216,7 @@
         </xsl:variable>
         <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts, $theAdditionalParamParts)"/>
         <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts, $theAdditionalParamParts)"/>
-
+        
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
         <xsl:variable name="returnMedicationCount" select="count($adaInstance/bouwstenen/farmaceutisch_product)"/>
         <xsl:variable name="returnEntryCount" select="$returnCount + $returnMedicationCount"/>
@@ -229,7 +230,7 @@
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
-
+        
         <xsl:variable name="description" as="xs:string?">
             <xsl:choose>
                 <xsl:when test="string-length($adaInstance/@title) gt 0 and string-length($adaInstance/@desc) gt 0">
@@ -243,7 +244,7 @@
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
-
+        
         <xsl:call-template name="util:logMessage">
             <xsl:with-param name="level" select="$logINFO"/>
             <xsl:with-param name="msg">outputting <xsl:value-of select="$newFilename"/></xsl:with-param>
@@ -254,15 +255,16 @@
                     <!--Only the individual Consolidation ada instances (i.e. CONS-MA, CONS-MGB and CONS-TA) need to be converted to a retrieve test script-->
                     <!--For Consolidation there is no serve use case-->
                     <xsl:when test="($transactionTypeNormalized = 'retrieve' and $buildingBlockShort != 'CONS') or ($transactionTypeNormalized = 'serve' and not(contains($buildingBlockShort, 'CONS')))">
-                        <xsl:result-document href="{concat($outputDirNormalized,nf:first-cap($transactionTypeNormalized),'/',$buildingBlockLong,'/',$newFilename)}">
+                        <xsl:result-document href="{concat($outputDirNormalized, nf:system-dir($transactionTypeNormalized), '/', $buildingBlockLong, '/', $newFilename)}">
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                                 <id value="mp9-{if(contains($buildingBlockShort,'CONS')) then 'Consolidation-' else ''}{$buildingBlockLong}-{$transactionTypeNormalized}-{$scenarioset}-{$scenario}"/>
                                 <version value="r4-mp9-3.0.0-beta"/>
                                 <name value="Medication Process 9 3.0.0-beta  - {if(contains($buildingBlockShort,'CONS')) then 'Consolidation - ' else ''}{$buildingBlockLong} - {nf:first-cap($transactionTypeNormalized)} - Scenario {$scenarioset}.{$scenario}"/>
                                 <description value="Scenario {$scenarioset}.{$scenario} - {$description}"/>
+                                <!-- NICTIZ-34243 "nl-core-Patient-mp9-" niet verwijderen, wordt later gebruikt om Bearer token op te halen middels QualificationTokens.json -->
                                 <nts:authToken patientResourceId="nl-core-Patient-mp9-{$patientName}" nts:in-targets="MedMij"/>
                                 <nts:includeDateT value="no"/>
-
+                                
                                 <test id="Scenario-{$scenarioset}-{$scenario}">
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
                                     <description value="{$description}"/>
@@ -290,7 +292,7 @@
                                         </xsl:when>
                                         <xsl:when test="$transactionTypeNormalized = 'serve'">
                                             <!--NICTIZ-29763 removed CheckContent from target so no content asserts scripts will be generated
-                                                <nts:include value="test.server.search" scope="common" nts:in-targets="#default CheckContent">-->
+                                                 <nts:include value="test.server.search" scope="common" nts:in-targets="#default CheckContent">-->
                                             <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
                                                 <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -317,32 +319,32 @@
                                             <!-- adding content assertions for medicatiebouwstenen --> 
                                             <!-- TODO: add content assertions for bouwstenen like medicatie and zorgverlener and patient --> 
                                             <!-- removed content asserts as the discriminator doesn't work in productionlike settings because suppliers will have different identifiers.
-                                                the discriminator should be based on the "identifyResources" variable but this is currently only implemented in
-                                                send scripts (ada_2_nts.xsl from https://github.com/Nictiz/Nictiz-testscripts/blob/identificationAsserts/src/MP9-3-0-0-beta/Test/_internalTools/xslt/ada_2_nts.xsl)
-                                                
-                                            <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
-
-                                            <xsl:if test="$identifiers">
-                                                <xsl:for-each select="$identifiers">
-                                                        <xsl:variable name="fixtureId">
-                                                            <xsl:call-template name="findContentAssertFixture">
-                                                                <xsl:with-param name="identifier" select="."/>
-                                                            </xsl:call-template>
-                                                        </xsl:variable>
-                                                        <xsl:call-template name="util:logMessage">
-                                                            <xsl:with-param name="level" select="$logINFO"/>
-                                                            <xsl:with-param name="msg"> The resource with this identifier <xsl:value-of select="."/> will be asserted based on fixtureId: <xsl:value-of select="$fixtureId"/></xsl:with-param>
-                                                        </xsl:call-template>
-                                                        <xsl:variable name="apos">'</xsl:variable>
-                                                        <nts:contentAsserts href="{concat('fixtures/', $fixtureId, '.xml')}" description="{concat('contains a resource with identifier = ',.)}" 
-                                                            discriminator="{concat('identifier.value =', $apos, xs:string(.), $apos)}"
-                                                                nts:in-targets="CheckContent"/>
-                                                </xsl:for-each>
-                                            </xsl:if>
+                                                 the discriminator should be based on the "identifyResources" variable but this is currently only implemented in
+                                                 send scripts (ada_2_nts.xsl from https://github.com/Nictiz/Nictiz-testscripts/blob/identificationAsserts/src/MP9-3-0-0-beta/Test/_internalTools/xslt/ada_2_nts.xsl)
+                                                 
+                                                 <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
+                                                 
+                                                 <xsl:if test="$identifiers">
+                                                 <xsl:for-each select="$identifiers">
+                                                 <xsl:variable name="fixtureId">
+                                                 <xsl:call-template name="findContentAssertFixture">
+                                                 <xsl:with-param name="identifier" select="."/>
+                                                 </xsl:call-template>
+                                                 </xsl:variable>
+                                                 <xsl:call-template name="util:logMessage">
+                                                 <xsl:with-param name="level" select="$logINFO"/>
+                                                 <xsl:with-param name="msg"> The resource with this identifier <xsl:value-of select="."/> will be asserted based on fixtureId: <xsl:value-of select="$fixtureId"/></xsl:with-param>
+                                                 </xsl:call-template>
+                                                 <xsl:variable name="apos">'</xsl:variable>
+                                                 <nts:contentAsserts href="{concat('fixtures/', $fixtureId, '.xml')}" description="{concat('contains a resource with identifier = ',.)}" 
+                                                 discriminator="{concat('identifier.value =', $apos, xs:string(.), $apos)}"
+                                                 nts:in-targets="CheckContent"/>
+                                                 </xsl:for-each>
+                                                 </xsl:if>
                                             -->
-                                        
                                             
-                         
+                                            
+                                            
                                         </xsl:when>
                                     </xsl:choose>
                                 </test>
@@ -367,7 +369,7 @@
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
-
+    
     <xd:doc>
         <xd:desc>Handle filter scenario</xd:desc>
         <xd:param name="buildingBlockShort"/>
@@ -406,7 +408,7 @@
         
         <!-- We should change this to something simpler. Building block and transaction type are already in folder names. Leaving it as is for refactoring purposes -->
         <xsl:variable name="newFilename" select="concat($buildingBlockShort, '-Scenario', $theScenarioForTestscript, '.xml')"/>
-
+        
         <xsl:call-template name="util:logMessage">
             <xsl:with-param name="level" select="$logINFO"/>
             <xsl:with-param name="msg">Processing <xsl:value-of select="$newFilename"/></xsl:with-param>
@@ -434,7 +436,7 @@
         </xsl:variable>
         
         <xsl:variable name="practitionerParamParts" select="'&amp;_include:iterate=PractitionerRole:organization&amp;_include:iterate=PractitionerRole:practitioner&amp;_include:iterate=PractitionerRole:location'"/>    
-         <xsl:variable name="theAdditionalParamParts">
+        <xsl:variable name="theAdditionalParamParts">
             <!-- MP-1555: added additional includes-->
             <xsl:choose>
                 <!-- MA -->
@@ -465,7 +467,7 @@
         </xsl:variable>
         <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts, $theAdditionalParamParts)"/>
         <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts , $theAdditionalParamParts)"/>
-
+        
         <xsl:variable name="description" as="xs:string?" select="$adaInstance/@desc"/>
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
         <!-- We add the medication products, since those are in an include in the query -->
@@ -480,9 +482,9 @@
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
-
-        <xsl:result-document href="{concat($outputDirNormalized,nf:first-cap($transactionType),'/',$buildingBlockLong,'/',$newFilename)}">
-              <xsl:variable name="ntsScenario" as="xs:string?">
+        
+        <xsl:result-document href="{concat($outputDirNormalized, nf:system-dir($transactionTypeNormalized), '/', $buildingBlockLong, '/', $newFilename)}">
+            <xsl:variable name="ntsScenario" as="xs:string?">
                 <xsl:choose>
                     <xsl:when test="$transactionTypeNormalized = ('retrieve')">client</xsl:when>
                     <xsl:when test="$transactionTypeNormalized = ('serve')">server</xsl:when>
@@ -501,22 +503,23 @@
                 <xsl:if test="$configCurrentScenario/include/*">
                     <xsl:apply-templates select="$configCurrentScenario/include/*" mode="copy"/>
                 </xsl:if>
-
+                
                 <id value="mp9-{lower-case($buildingBlockShort)}-{$transactionType}-{$theScenarioForTestscript}"/>
                 <version value="r4-mp9-3.0.0-beta"/>
                 <name value="Medication Process 9 3.0.0-beta  - {$buildingBlockLong} - {nf:first-cap($transactionType)} - Scenario {$theScenario}"/>
                 <description value="Scenario {$theScenario} - {$description}"/>
+                <!-- NICTIZ-34243 "nl-core-Patient-mp9-" niet verwijderen, wordt later gebruikt om Bearer token op te halen middels QualificationTokens.json -->
                 <nts:authToken patientResourceId="nl-core-Patient-mp9-{$patientName}" nts:in-targets="MedMij"/>
                 <xsl:if test="contains($additionalScenarioParams, '${DATE, T,')">
                     <nts:includeDateT value="yes"/>
                 </xsl:if>
-
+                
                 <test id="Scenario-{$theScenarioForTestscript}">
                     <name value="Scenario {$theScenario}"/>
                     <description value="{$description}"/>
                     <xsl:choose>
                         <xsl:when test="$transactionTypeNormalized = 'retrieve'">
-
+                            
                             <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
                                 <nts:with-parameter name="description" value="Test client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -527,7 +530,7 @@
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
                             </nts:include>
-
+                            
                             <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
                             <nts:include value="assert-returnCount" scope="project">
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -540,7 +543,7 @@
                         </xsl:when>
                         <xsl:when test="$transactionTypeNormalized = 'serve'">
                             <!--NICTIZ-29763 removed CheckContent from target so no content asserts scripts will be generated
-                                <nts:include value="test.server.search" scope="common" nts:in-targets="#default CheckContent">-->
+                                 <nts:include value="test.server.search" scope="common" nts:in-targets="#default CheckContent">-->
                             <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
                                 <nts:with-parameter name="description" value="Test server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -551,7 +554,7 @@
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
                             </nts:include>
-
+                            
                             <nts:include value="assert.response.successfulSearch" scope="common"/>
                             <nts:include value="assert-responseBundleContent-noMM"/>
                             <nts:include value="assert-returnCount" scope="project">
@@ -566,26 +569,26 @@
                             <!-- adding content assertions -->
                             <!-- TODO: add content assertions for medicatiebouwstenen from filter queries scenario 0--> 
                             <!-- TODO: add content assertions for bouwstenen like medicatie and zorgverlener and patient --> 
-             <!--               <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
-                            
-                            <xsl:if test="$identifiers">
-                                <xsl:for-each select="$identifiers">
-                                    <xsl:variable name="fixtureId">
-                                        <xsl:call-template name="findContentAssertFixture">
-                                            <xsl:with-param name="identifier" select="."/>
-                                        </xsl:call-template>
-                                    </xsl:variable>
-                                    <xsl:call-template name="util:logMessage">
-                                        <xsl:with-param name="level" select="$logINFO"/>
-                                        <xsl:with-param name="msg"> The resource with this identifier <xsl:value-of select="."/> will be asserted based on fixtureId: <xsl:value-of select="$fixtureId"/></xsl:with-param>
-                                    </xsl:call-template>
-                                    <xsl:variable name="apos">'</xsl:variable>
-                                    <nts:contentAsserts href="{concat('fixtures/', $fixtureId, '.xml')}" description="{concat('contains a resource with identifier = ',.)}" 
-                                        discriminator="{concat('Bundle.entry.resource.where(identifier.value =', $apos, xs:string(.), $apos)}"
-                                        nts:in-targets="CheckContent"/>
-                                </xsl:for-each>
-                            </xsl:if>-->
-                        </xsl:when>
+                            <!--               <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
+                                 
+                                 <xsl:if test="$identifiers">
+                                 <xsl:for-each select="$identifiers">
+                                 <xsl:variable name="fixtureId">
+                                 <xsl:call-template name="findContentAssertFixture">
+                                 <xsl:with-param name="identifier" select="."/>
+                                 </xsl:call-template>
+                                 </xsl:variable>
+                                 <xsl:call-template name="util:logMessage">
+                                 <xsl:with-param name="level" select="$logINFO"/>
+                                 <xsl:with-param name="msg"> The resource with this identifier <xsl:value-of select="."/> will be asserted based on fixtureId: <xsl:value-of select="$fixtureId"/></xsl:with-param>
+                                 </xsl:call-template>
+                                 <xsl:variable name="apos">'</xsl:variable>
+                                 <nts:contentAsserts href="{concat('fixtures/', $fixtureId, '.xml')}" description="{concat('contains a resource with identifier = ',.)}" 
+                                 discriminator="{concat('Bundle.entry.resource.where(identifier.value =', $apos, xs:string(.), $apos)}"
+                                 nts:in-targets="CheckContent"/>
+                                 </xsl:for-each>
+                                 </xsl:if>-->
+                         </xsl:when>
                         <xsl:otherwise>
                             <xsl:call-template name="util:logMessage">
                                 <xsl:with-param name="level" select="$logFATAL"/>
@@ -597,9 +600,29 @@
                 </test>
             </TestScript>
         </xsl:result-document>
-
+        
     </xsl:template>
-
+    
+    <xd:doc>
+        <xd:desc>Change the folder names to contain "-System" </xd:desc>
+        <xd:param name="transactionType">The transactionType to be transformed </xd:param>
+        <xd:param name="transactionTypeNormalized">The normalized transactionType to be transformed </xd:param>
+    </xd:doc>
+    <xsl:function name="nf:system-dir" as="xs:string">
+        <xsl:param name="transactionType" as="xs:string?"/>
+        <xsl:variable name="transactionTypeNormalized" select="normalize-space(lower-case($transactionType))"/>
+        <xsl:choose>
+            <xsl:when test="$transactionTypeNormalized = 'retrieve'">Retrieving-System</xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'serve'">Serving-System</xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'receive'">Receiving-System</xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'send'">Sending-System</xsl:when>
+            <!-- fallback: Keep current behaviour -->
+            <xsl:otherwise>
+                <xsl:value-of select="nf:first-cap($transactionType)"/>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:function>
+    
     <xd:doc>
         <xd:desc>Normalize a filepath</xd:desc>
         <xd:param name="in">The string to be handled</xd:param>
@@ -632,23 +655,23 @@
         </xsl:variable>
         <xsl:value-of select="$trailingSlash"/>
     </xsl:function>
-
+    
     <xd:doc>
         <xd:desc>Make long building block string based on short building block string</xd:desc>
         <xd:param name="buildingBlockShort">short building block string: MA/WDS/VV/TA/MVE/MGB/MTD</xd:param>
     </xd:doc>
     <xsl:function name="nf:makeBuildingBlockLong" as="xs:string?">
         <xsl:param name="buildingBlockShort" as="xs:string?"/>
-
+        
         <xsl:choose>
             <!-- consolidation buildingBlockShort is a string like "CONS-MA" -->
             <xsl:when test="contains($buildingBlockShort, 'MA')">MedicationAgreement</xsl:when>
             <xsl:when test="contains($buildingBlockShort, 'MGB')">MedicationUse</xsl:when>
             <xsl:when test="contains($buildingBlockShort, 'TA')">AdministrationAgreement</xsl:when>
-            <xsl:when test="$buildingBlockShort = 'VV'">DispenseRequest</xsl:when>
-            <xsl:when test="$buildingBlockShort = 'MTD'">MedicationAdministration</xsl:when>
-            <xsl:when test="$buildingBlockShort = 'MVE'">MedicationDispense</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MTD')">MedicationAdministration</xsl:when>
             <xsl:when test="contains($buildingBlockShort, 'WDS')">VariableDosingRegimen</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'VV')">DispenseRequest</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MVE')">MedicationDispense</xsl:when>
             <xsl:otherwise>
                 <xsl:call-template name="util:logMessage">
                     <xsl:with-param name="level" select="$logFATAL"/>
@@ -657,7 +680,7 @@
                 </xsl:call-template>
             </xsl:otherwise>
         </xsl:choose>
-
+        
     </xsl:function>
     
     <xd:doc>
@@ -692,7 +715,7 @@
         </xsl:choose>
         
     </xsl:function>
-
+    
     <xd:doc>
         <xd:desc>Match FHIR Resource based on short building block string</xd:desc>
         <xd:param name="buildingBlockShort">short building block string: MA/WDS/VV/TA/MVE/MGB/MTD</xd:param>
@@ -716,5 +739,5 @@
         </xsl:choose>
         
     </xsl:function>
-
+    
 </xsl:stylesheet>
