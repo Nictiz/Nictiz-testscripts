@@ -95,3 +95,6 @@ Parameters to specify additional information:
   * `addNarrativesForFolder.tool.version` overrides the version for the narrative generator (this should be the name of a release, not a branch or tag).
   * `convertFixtures.tool.version` overrides the version of the tool that converts fixture from XML to JSON.
   * `buildCLPropertiesFiles.tool.version` overrides the version of the tool that generates Conformancelab properties files.
+
+## Overriding Conformancelab properties
+Each NTS source directory may contain a json file called `src-properties.json`. This file can contain specific Conformancelab properties of which the default, generated, value should be overridden. For example, a property `subcategory` with a value of `foo bar` would override the default value, which would either be absent or generated from a subfolder name.
