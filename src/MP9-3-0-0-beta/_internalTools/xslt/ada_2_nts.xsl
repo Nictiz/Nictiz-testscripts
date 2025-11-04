@@ -226,14 +226,14 @@
         <xsl:variable name="theScenarioset">
             <xsl:choose>
                 <xsl:when test="string-length($theScenario) gt 0">
-                    <xsl:value-of select="replace($theScenario, '(\d+[a-z]?)\.?(\d*[a-z]?)\*?\s?.*', '$1')"/>
+                    <xsl:value-of select="replace($theScenario, '(\d+[a-zA-Z]?)\.?(\d*[a-zA-Z]?)\*?\s?.*', '$1')"/>
                 </xsl:when>
                 <xsl:when test="string-length(voorstel_gegevens/(voorstel | antwoord)/identificatie/@value) gt 0">
                     <xsl:value-of select="lower-case(nf:assure-logicalid-chars(voorstel_gegevens/(voorstel | antwoord)/identificatie/@value))"/>
                 </xsl:when>
             </xsl:choose>
         </xsl:variable>
-        <xsl:variable name="scenarioSub" select="replace($theScenario, '(\d+[a-z]?)\.?(\d*[a-z]?)\*?\s?.*', '$2')"/>
+        <xsl:variable name="scenarioSub" select="replace($theScenario, '(\d+[a-zA-Z]?)\.?(\d*[a-zA-Z]?)\*?\s?.*', '$2')"/>
         <xsl:variable name="scenario">
             <xsl:choose>
                 <xsl:when test="string-length($scenarioSub) gt 0">
