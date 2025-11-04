@@ -49,20 +49,17 @@
         </xsl:variable>
 
         <xsl:for-each select="collection(concat($inputDirNormalized, '?select=mg-mp-mg-', $fileNamePart, '-*.xml'))">
+            <xsl:variable name="adaTransId" select="./adaxml/data/beschikbaarstellen_medicatiegegevens/@id"/>
             <xsl:call-template name="util:logMessage">
                 <xsl:with-param name="level" select="$logINFO"/>
-                <xsl:with-param name="msg">1. handling <xsl:value-of select="./adaxml/data/beschikbaarstellen_medicatiegegevens/@id"/></xsl:with-param>
+                <xsl:with-param name="msg">1. handling <xsl:value-of select="$adaTransId"/></xsl:with-param>
             </xsl:call-template>
             
-            <!-- Variables that are used multiple times -->
             <xsl:variable name="scenarioString" as="element(scenarioString)">
                 <xsl:call-template name="getScenarioString"/>
             </xsl:variable>
-            <!--<xsl:variable name="testscriptstring">
-                <xsl:call-template name="getTestScriptString"/>
-            </xsl:variable>-->
             
-            <xsl:variable name="buildingBlockShort" select="substring-before(substring-after(./adaxml/data/beschikbaarstellen_medicatiegegevens/@id, concat('mg-mp-mg-', $fileNamePart, '-')), '-')[1]" as="xs:string*"/>
+            <xsl:variable name="buildingBlockShort" select="substring-before(substring-after($adaTransId, concat('mg-mp-mg-', $fileNamePart, '-')), '-')[1]" as="xs:string*"/>
             <xsl:call-template name="util:logMessage">
                 <xsl:with-param name="level" select="$logINFO"/>
                 <xsl:with-param name="msg">2. buildingBlockShort:  <xsl:value-of select="$buildingBlockShort"/> and scenarioset: <xsl:value-of select="$scenarioString/@scenarioset"/> 
@@ -72,6 +69,12 @@
 
             <!-- $scenarioset00 is only added for sorting purposes. If Conformancelab starts sorting on TestScript.id this can and should be removed -->
             <xsl:variable name="testScriptTitle" select="concat($scenarioString/@scenarioset00, '. ', $buildingBlockShort, ' - Scenario ', $scenarioString/@theScenarioX)"/>
+            
+            <xsl:variable name="testScriptString" as="element(testscriptstring)">
+                <testscriptstring short="meddata" long="MedicationData" full="Medication data" wiki="medicatiegegevens"/>
+            </xsl:variable>
+            
+            <xsl:variable name="idString" select="replace(concat('mp9-', $testScriptString/@short, '-', $buildingBlockShort, '-', normalize-space(lower-case($transactionType)), '-', $scenarioString/@theScenarioXHyphen), '(.*?)-?(-$)', '$1')"/>
             
             <xsl:choose>
                 <!-- Special handling for scenarioset 0 -->
@@ -85,6 +88,7 @@
                                 <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
                                 <xsl:with-param name="scenarioString" select="$scenarioString"/>
                                 <xsl:with-param name="testScriptTitle" select="$testScriptTitle"/>
+                                <xsl:with-param name="idString" select="$idString"/>
                             </xsl:call-template>
                         </xsl:otherwise>
                     </xsl:choose>                   
@@ -94,6 +98,7 @@
                         <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
                         <xsl:with-param name="scenarioString" select="$scenarioString"/>
                         <xsl:with-param name="testScriptTitle" select="$testScriptTitle"/>
+                        <xsl:with-param name="idString" select="$idString"/>
                     </xsl:call-template>
                 </xsl:otherwise>
             </xsl:choose>
@@ -148,7 +153,9 @@
     <xsl:template name="createNts">
         <xsl:param name="buildingBlockShort"/>
         <xsl:param name="scenarioString"/>
+        <xsl:param name="idString"/>
         <xsl:param name="testScriptTitle"/>
+        <xsl:param name="fileNamePart"/>
 
         <xsl:variable name="adaInstance" select="adaxml/data/beschikbaarstellen_medicatiegegevens"/>
         
@@ -244,6 +251,45 @@
             </xsl:choose>
         </xsl:variable>
         
+        <xsl:variable name="scriptNo" select="substring-before(substring-after($adaInstance/@id, concat($fileNamePart, '-', $buildingBlockShort, '-script')), '-')[1]" as="xs:string*"/>
+        <xsl:variable name="wikiUrl">
+            <xsl:text>https://informatiestandaarden.nictiz.nl/wiki/mp:V9.3.0_</xsl:text>
+            <xsl:choose>
+                <!--<xsl:when test="$testGoal = 'Test'"></xsl:when>-->
+                <xsl:when test="$testGoal = 'Cert'">
+                    <xsl:text>kwalificatie</xsl:text>
+                </xsl:when>
+                <xsl:otherwise>unknown</xsl:otherwise>
+            </xsl:choose>
+            <xsl:text>_medicatiegegevens_</xsl:text>
+            <xsl:choose>
+                <xsl:when test="normalize-space(upper-case($transactionType)) = 'RETRIEVE'">raadplegen</xsl:when>
+                <xsl:when test="normalize-space(upper-case($transactionType)) = 'SEND'">sturen</xsl:when>
+                <xsl:when test="normalize-space(upper-case($transactionType)) = 'SERVE'">beschikbaarstellen</xsl:when>
+                <xsl:when test="normalize-space(upper-case($transactionType)) = 'RECEIVE'">ontvangen</xsl:when>
+                <xsl:otherwise>unknown</xsl:otherwise>
+            </xsl:choose>
+            <xsl:text>_</xsl:text>
+            <xsl:value-of select="$buildingBlockShort"/>
+            <xsl:text>#</xsl:text>
+            <xsl:choose>
+                <!--<xsl:when test="$testGoal = 'Test'"></xsl:when>-->
+                <xsl:when test="$testGoal = 'Cert' and $scenarioString/@scenarioset = ('9','10')">
+                    <xsl:text>Herkwalificatie</xsl:text>
+                </xsl:when>
+                <xsl:when test="$testGoal = 'Cert'">
+                    <xsl:text>Kwalificatie</xsl:text>
+                </xsl:when>
+                <xsl:otherwise>unknown</xsl:otherwise>
+            </xsl:choose>
+            <xsl:text>_script_</xsl:text>
+            <xsl:value-of select="$scriptNo"/>
+            <xsl:if test="$scenarioString/@scenarioset = ('0','10')">
+                <xsl:text>:_filtercriteria</xsl:text>
+            </xsl:if>
+        </xsl:variable>
+        
+        <!-- <xsl:variable name="testScriptDescription" select="concat(nf:first-cap($transactionType), ' ', $testScriptString/@full, ' ', $buildingBlockShort, ' building blocks for patient ', $fixturePatient/f:name/f:text/@value,' as defined at ', $wikiUrl)"/>     -->
         <xsl:variable name="description" as="xs:string?">
             <xsl:choose>
                 <xsl:when test="string-length($adaInstance/@title) gt 0 and string-length($adaInstance/@desc) gt 0">
@@ -270,12 +316,12 @@
                     <xsl:when test="($transactionTypeNormalized = 'retrieve' and $buildingBlockShort != 'CONS') or ($transactionTypeNormalized = 'serve' and not(contains($buildingBlockShort, 'CONS')))">
                         <xsl:result-document href="{concat($outputDirNormalized, nf:makeCLCategoryFolder($buildingBlockShort), '/', nf:makeCLSubcategoryFolder($buildingBlockShort), '/', nf:makeCLRoleFolder($transactionTypeNormalized, $buildingBlockShort), '/', $newFilename)}">
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
-                                <id value="mp9-{$buildingBlockShort}-{$transactionTypeNormalized}-{$scenarioString/@scenarioset00}-{$scenarioString/@scenario}"/>
+                                <id value="{$idString}"/>
                                 <version value="r4-mp9-3.0.0-beta"/>
                                 <name value="{$testScriptTitle}"/>
                                 <title value="{$testScriptTitle}"/>
                                 
-                                <description value="Scenario {$scenarioString/@theScenarioX} - {$description}"/>
+                                <description value="Scenario {$scenarioString/@theScenarioX} - {$description} - {$wikiUrl}"/>
                                 <!-- NICTIZ-34243 "nl-core-Patient-mp9-" niet verwijderen, wordt later gebruikt om Bearer token op te halen middels QualificationTokens.json -->
                                 <nts:authToken patientResourceId="nl-core-Patient-mp9-{$patientName}" nts:in-targets="MedMij"/>
                                 <nts:includeDateT value="no"/>
@@ -394,6 +440,7 @@
         <xsl:param name="buildingBlockShort"/>
         <xsl:param name="scenarioString"/>
         <xsl:param name="testScriptTitle"/>
+        <xsl:param name="idString"/>
         
         <xsl:variable name="adaInstance" select="adaxml/data/beschikbaarstellen_medicatiegegevens"/>
         
@@ -516,7 +563,7 @@
                     <xsl:apply-templates select="$configCurrentScenario/include/*" mode="copy"/>
                 </xsl:if>
                 
-                <id value="mp9-{lower-case($buildingBlockShort)}-{$transactionType}-{$scenarioString/@scenarioset00}-{$scenarioString/@scenario}"/>
+                <id value="{$idString}"/>
                 <version value="r4-mp9-3.0.0-beta"/>
                 <name value="{$testScriptTitle}"/>
                 <title value="{$testScriptTitle}"/>
