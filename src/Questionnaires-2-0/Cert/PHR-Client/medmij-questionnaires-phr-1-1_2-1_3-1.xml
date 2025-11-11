@@ -50,6 +50,41 @@
         <description
             value="Test PHR client to send an update of the QuestionnaireProvisioningTask with status='accepted'. The body of the request should otherwise be the same as the original Task as received from the server."/>
         <nts:include value="phr-scenario3-acceptTaskUpdate"/>
+        <action>
+            <assert>
+                <description value="Confirm that the Task contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask'"/>
+                <direction value="request"/>
+                <expression value="Task.meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask').exists()"/>
+                <stopTestOnFail value="false"/>
+                <warningOnly value="false"/>
+            </assert>
+        </action>
+        <!-- The following elements are already checked by profile validation:
+             - .intent ='order'
+             - .code
+             - .owner
+             - .input with .type.text = 'Questionnaire' and a Reference
+        -->
+        <!-- If .requester exists, .requester.agent is required -->
+        <action>
+            <assert>
+                <description value="Confirm that the Task contains .requester"/>
+                <direction value="request"/>
+                <expression value="Task.requester.exists()"/>
+                <stopTestOnFail value="false"/>
+                <warningOnly value="false"/>
+            </assert>
+        </action>
+        <!-- .input with .type.text = 'Subject' is optional, so we want to check for that. input.valueReference is required -->
+        <action>
+            <assert>
+                <description value="Confirm that the Task contains .input with .type.text = 'Subject'"/>
+                <direction value="request"/>
+                <expression value="Task.input.where(type.text = 'Subject').exists()"/>
+                <stopTestOnFail value="false"/>
+                <warningOnly value="false"/>
+            </assert>
+        </action>
     </test>
     <test id="Scenario3.1-part2-SendQuestionnaireResponse">
         <name value="Scenario3.1 - Part 2 - Send QuestionnaireResponse"/>
