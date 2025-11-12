@@ -95,8 +95,7 @@
             </xsl:choose>
         </xsl:for-each>
     </xsl:template>
-    
-    <!-- ===== Content fixture lookup (unchanged behavior) ===== -->
+        
     <xsl:template name="findContentAssertFixture">
         <xsl:param name="identifier"/>
         <xsl:for-each select="collection(concat($refDirNormalized, '?select=mp-*-*.xml'))">
@@ -448,100 +447,52 @@
                                 <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
                             </nts:include>
                             
-                            <!-- ===== BEGIN: filter-aware, XPath 2.0–only FHIRPath asserts ===== -->
-                            <xsl:variable name="paramsString" select="$theScenarioParams"/>
-                            <xsl:variable name="hasPou" select="matches($paramsString, 'period-of-use=[a-z]{2}\$\{DATE,\s*T,\s*D,\s*[+-]?\d+\}')"/>
-                            
                             <!-- Select ADA primary building-block entries -->
-                            <xsl:variable name="adaBouwstenen" select="$adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)]"/>
+                            <xsl:variable name="adaBouwstenen"
+                                select="$adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)]"/>
                             
-                            <!-- Extract PoU operator and offset (if present); used only to compute filtered list from ADA macros) -->
-                            <xsl:variable name="pouOp" select="replace($paramsString, '.*period-of-use=([a-z]{2}).*', '$1')"/>
-                            <xsl:variable name="pouOffsetRaw" select="replace($paramsString, '.*period-of-use=[a-z]{2}\$\{DATE,\s*T,\s*D,\s*([+-]?\d+)\}.*', '$1')"/>
+                            <!-- Select ADA Medication entries -->
+                            <xsl:variable name="prkValues" as="xs:string*"
+                                select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product
+                                    [starts-with(@value, 'PRK_')]/@value"/>
+                            <xsl:variable name="prkValuesDistinct" as="xs:string*"
+                                select="distinct-values($prkValues)"/>
                             
-                            <!-- Compute filtered ADA set by comparing macro offsets (if ADA end uses same macro) -->
-                            <xsl:variable name="bouwstenenFiltered" as="element()*">
-                                <xsl:choose>
-                                    <xsl:when test="$hasPou">
-                                        <xsl:variable name="rhs" select="xs:integer($pouOffsetRaw)"/>
-                                        <xsl:for-each select="$adaBouwstenen">
-                                            <xsl:variable name="endVal"
-                                                select="(./gebruiksperiode/eind_datum/@value,
-                                                        ./gebruiksperiode/einddatum/@value,
-                                                        ./gebruiksperiode/@einddatum,
-                                                        ./periode/eind_datum/@value)[1]"/>
-                                            <xsl:variable name="endValNorm" select="normalize-space($endVal)"/>
-                                            <xsl:variable name="isMacro" select="starts-with($endValNorm, '${DATE')"/>
-                                            <xsl:variable name="lhsRaw" select="replace($endValNorm, '.*\$\{DATE,\s*T,\s*D,\s*([+-]?\d+)\}.*', '$1')"/>
-                                            <xsl:variable name="lhsOk" select="$isMacro and string(number($lhsRaw)) != 'NaN'"/>
-                                            <xsl:variable name="lhs" select="if ($lhsOk) then xs:integer($lhsRaw) else 0"/>
-                                            
-                                            <xsl:variable name="cmpTrue" as="xs:boolean">
-                                                <xsl:choose>
-                                                    <xsl:when test="$pouOp='lt'"><xsl:sequence select="$lhs lt $rhs"/></xsl:when>
-                                                    <xsl:when test="$pouOp='le'"><xsl:sequence select="$lhs le $rhs"/></xsl:when>
-                                                    <xsl:when test="$pouOp='gt'"><xsl:sequence select="$lhs gt $rhs"/></xsl:when>
-                                                    <xsl:when test="$pouOp='ge'"><xsl:sequence select="$lhs ge $rhs"/></xsl:when>
-                                                    <xsl:when test="$pouOp='eq'"><xsl:sequence select="$lhs eq $rhs"/></xsl:when>
-                                                    <xsl:when test="$pouOp='ne'"><xsl:sequence select="$lhs ne $rhs"/></xsl:when>
-                                                    <xsl:otherwise><xsl:sequence select="true()"/></xsl:otherwise>
-                                                </xsl:choose>
-                                            </xsl:variable>
-                                            
-                                            <xsl:if test="(not($isMacro)) or ($lhsOk and $cmpTrue)">
-                                                <xsl:sequence select="."/>
-                                            </xsl:if>
-                                        </xsl:for-each>
-                                    </xsl:when>
-                                    <xsl:otherwise>
-                                        <xsl:sequence select="$adaBouwstenen"/>
-                                    </xsl:otherwise>
-                                </xsl:choose>
-                            </xsl:variable>
+                            <!-- Aantal unieke PRK's -->
+                            <xsl:variable name="expectedPrkCount" select="count($prkValuesDistinct)"/>
+
                             
-                            <!-- Build filtered identifier set and expected count -->
-                            <xsl:variable name="idsFiltered" as="xs:string*" select="$bouwstenenFiltered/identificatie/@value"/>
-                            <xsl:variable name="expectedCountFiltered" select="count($idsFiltered)"/>
-                            
-                            <!-- Build allow-list from all possible identifiers (distinct) -->
-                            <xsl:variable name="idsAllowDistinct" as="xs:string*"
-                                select="distinct-values($adaInstance/medicamenteuze_behandeling/*/identificatie/@value)"/>
-                            
-                            <!-- Escape single quotes for FHIRPath literals: replace ' -> '' -->
-                            <xsl:variable name="idsFilteredEsc" as="xs:string*"
-                                select="for $s in $idsFiltered return replace($s, &quot;'&quot;, &quot;''&quot;)"/>
-                            <xsl:variable name="idsAllowEsc" as="xs:string*"
-                                select="for $s in $idsAllowDistinct return replace($s, &quot;'&quot;, &quot;''&quot;)"/>
-                            
-                            <!-- Build HAPI-friendly OR chains instead of set literals -->
-                            <xsl:variable name="filteredDisjFP" as="xs:string"
-                                select="string-join(for $s in $idsFilteredEsc return concat('v = ''', $s, ''''), ' or ')"/>
-                            <xsl:variable name="allowDisjFP" as="xs:string"
-                                select="string-join(for $s in $idsAllowEsc return concat('v = ''', $s, ''''), ' or ')"/>
-                            
-                            <!-- Count bounds (tolerate -1 if PoU present) -->
-                            <xsl:variable name="minCount" select="if ($hasPou) then max((0, $expectedCountFiltered - 1)) else $expectedCountFiltered"/>
-                            <xsl:variable name="maxCount" select="$expectedCountFiltered"/>                                                                                   
-                            
+                            <!-- Build filtered identifier sets and expected counts -->
+                            <xsl:variable name="identifiers" as="xs:string*" select="$adaBouwstenen/identificatie/@value"/>
+                            <xsl:variable name="expectedCount" select="count($identifiers)"/>
+                                                                                   
+                            <!-- Assert MedicationRequest count -->
                             <action xmlns="http://hl7.org/fhir">
                                 <assert>
-                                    <description value="{concat('Returned ', $matchResource, ' count is ', $expectedCountFiltered, if ($hasPou) then ' (period-of-use applied)' else '', '.')}"/>
+                                    <description value="{concat('Returned ', $matchResource, ' count is ', $expectedCount)}"/>
                                     <direction value="response"/>
-                                    <expression value="{concat('Bundle.entry.resource.where($this is ', $matchResource, ').count() = ', $expectedCountFiltered)}"/>
+                                    <expression value="{concat('Bundle.entry.resource.where($this is ', $matchResource, ').count() = ', $expectedCount)}"/>
                                     <stopTestOnFail value="false"/>
                                     <warningOnly value="false"/>
                                 </assert>
                             </action>
-
-                            <!-- ===== END: filter-aware asserts ===== -->
+                            
+                            <!-- Assert Medication count -->
+                            <action xmlns="http://hl7.org/fhir">
+                                <assert>
+                                    <description value="{concat('Returned Medication count is ', $expectedPrkCount)}"/>
+                                    <direction value="response"/>
+                                    <expression value="Bundle.entry.resource.where($this is Medication).count() = {$expectedPrkCount}"/>
+                                    <stopTestOnFail value="false"/>
+                                    <warningOnly value="false"/>
+                                </assert>
+                            </action>
                         </xsl:when>
                     </xsl:choose>
                 </test>
             </TestScript>
         </xsl:result-document>
     </xsl:template>
-    
-    <!-- ===== Helpers you already had (unchanged) ===== -->
     
     <xsl:function name="nf:system-dir" as="xs:string">
         <xsl:param name="transactionType" as="xs:string?"/>
