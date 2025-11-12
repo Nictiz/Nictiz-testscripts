@@ -303,15 +303,10 @@
                                                 <nts:with-parameter name="count" value="{$expectedCount}"/>
                                             </nts:include>
                                             <!-- Assert Medication count -->
-                                            <action xmlns="http://hl7.org/fhir">
-                                                <assert>
-                                                    <description value="{concat('Returned Medication count is ', $expectedPrkCount)}"/>
-                                                    <direction value="response"/>
-                                                    <expression value="Bundle.entry.resource.where($this is Medication).count() = {$expectedPrkCount}"/>
-                                                    <stopTestOnFail value="false"/>
-                                                    <warningOnly value="false"/>
-                                                </assert>
-                                            </action>
+                                            <nts:include value="assert-returnCount" scope="project">
+                                                <nts:with-parameter name="resource" value="Medication"/>
+                                                <nts:with-parameter name="count" value="{$expectedPrkCount}"/>
+                                            </nts:include> 
                                         </xsl:when>
                                         <xsl:when test="$transactionTypeNormalized = 'serve'">
                                             <!-- Select ADA primary building-block entries -->
@@ -350,17 +345,11 @@
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="count" value="{$expectedCount}"/>
                                             </nts:include>                                                                                     
-                                            
                                             <!-- Assert Medication count -->
-                                            <action xmlns="http://hl7.org/fhir">
-                                                <assert>
-                                                    <description value="{concat('Returned Medication count is ', $expectedPrkCount)}"/>
-                                                    <direction value="response"/>
-                                                    <expression value="Bundle.entry.resource.where($this is Medication).count() = {$expectedPrkCount}"/>
-                                                    <stopTestOnFail value="false"/>
-                                                    <warningOnly value="false"/>
-                                                </assert>
-                                            </action>
+                                            <nts:include value="assert-returnCount" scope="project">
+                                                <nts:with-parameter name="resource" value="Medication"/>
+                                                <nts:with-parameter name="count" value="{$expectedPrkCount}"/>
+                                            </nts:include> 
                                         </xsl:when>
                                     </xsl:choose>
                                 </test>
@@ -569,15 +558,10 @@
                                 <nts:with-parameter name="count" value="{$expectedCount}"/>
                             </nts:include>
                             <!-- Assert Medication count -->
-                            <action xmlns="http://hl7.org/fhir">
-                                <assert>
-                                    <description value="{concat('Returned Medication count is ', $expectedPrkCount)}"/>
-                                    <direction value="response"/>
-                                    <expression value="Bundle.entry.resource.where($this is Medication).count() = {$expectedPrkCount}"/>
-                                    <stopTestOnFail value="false"/>
-                                    <warningOnly value="false"/>
-                                </assert>
-                            </action>
+                            <nts:include value="assert-returnCount" scope="project">
+                                <nts:with-parameter name="resource" value="Medication"/>
+                                <nts:with-parameter name="count" value="{$expectedPrkCount}"/>
+                            </nts:include> 
                         </xsl:when>
                         <xsl:when test="$transactionTypeNormalized = 'serve'">
                             <!-- Select ADA primary building-block entries -->
@@ -618,17 +602,11 @@
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="count" value="{$expectedCount}"/>
                             </nts:include>                            
-                            
                             <!-- Assert Medication count -->
-                            <action xmlns="http://hl7.org/fhir">
-                                <assert>
-                                    <description value="{concat('Returned Medication count is ', $expectedPrkCount)}"/>
-                                    <direction value="response"/>
-                                    <expression value="Bundle.entry.resource.where($this is Medication).count() = {$expectedPrkCount}"/>
-                                    <stopTestOnFail value="false"/>
-                                    <warningOnly value="false"/>
-                                </assert>
-                            </action>
+                            <nts:include value="assert-returnCount" scope="project">
+                                <nts:with-parameter name="resource" value="Medication"/>
+                                <nts:with-parameter name="count" value="{$expectedPrkCount}"/>
+                            </nts:include> 
                         </xsl:when>
                         <xsl:otherwise>
                             <xsl:call-template name="util:logMessage">
