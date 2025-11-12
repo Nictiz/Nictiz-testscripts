@@ -513,61 +513,46 @@
                             <xsl:variable name="idsAllowEsc" as="xs:string*"
                                 select="for $s in $idsAllowDistinct return replace($s, &quot;'&quot;, &quot;''&quot;)"/>
                             
-                            <!-- Render as FHIRPath set literals: {'A', 'B', ...} -->
-                            <xsl:variable name="filteredSetFP" as="xs:string"
-                                select="concat('{', string-join(for $s in $idsFilteredEsc return concat(&quot;'&quot;, $s, &quot;'&quot;), ', '), '}')"/>
-                            <xsl:variable name="allowSetFP" as="xs:string"
-                                select="concat('{', string-join(for $s in $idsAllowEsc return concat(&quot;'&quot;, $s, &quot;'&quot;), ', '), '}')"/>
+                            <!-- Build HAPI-friendly OR chains instead of set literals -->
+                            <xsl:variable name="filteredDisjFP" as="xs:string"
+                                select="string-join(for $s in $idsFilteredEsc return concat('v = ''', $s, ''''), ' or ')"/>
+                            <xsl:variable name="allowDisjFP" as="xs:string"
+                                select="string-join(for $s in $idsAllowEsc return concat('v = ''', $s, ''''), ' or ')"/>
+
+                          
                             
                             <!-- Count bounds (tolerate -1 if PoU present) -->
                             <xsl:variable name="minCount" select="if ($hasPou) then max((0, $expectedCountFiltered - 1)) else $expectedCountFiltered"/>
-                            <xsl:variable name="maxCount" select="$expectedCountFiltered"/>
+                            <xsl:variable name="maxCount" select="$expectedCountFiltered"/>                                                                                   
                             
-                            <!-- 1) Every returned identifier must be from allow-list -->
                             <action xmlns="http://hl7.org/fhir">
                                 <assert>
-                                    <description value="All returned {$matchResource} identifiers are from the expected allow-list."/>
+                                    <description value="{concat('Returned ', $matchResource, ' count is ', $expectedCountFiltered, if ($hasPou) then ' (period-of-use applied)' else '', '.')}"/>
                                     <direction value="response"/>
-                                    <expression value="{concat('Bundle.entry.resource.where($this is ', $matchResource, ').identifier.value.all($this in ', $allowSetFP, ')')}"/>
+                                    <expression value="{concat('Bundle.entry.resource.where($this is ', $matchResource, ').count() = ', $expectedCountFiltered)}"/>
                                     <stopTestOnFail value="false"/>
                                     <warningOnly value="false"/>
                                 </assert>
                             </action>
                             
-                            <!-- 2) Lower bound (handles Monday boundary) -->
                             <action xmlns="http://hl7.org/fhir">
                                 <assert>
-                                    <description value="{concat('Returned ', $matchResource, ' count is at least ', $minCount, if ($hasPou) then ' (period-of-use applied)' else '', '.')}"/>
+                                    <description value="{concat(
+                                            'Expect exactly ', $expectedCountFiltered, ' ', $matchResource,
+                                            ' resource(s) after applying the period-of-use filter.'
+                                        )}"/>
                                     <direction value="response"/>
-                                    <expression value="{concat('Bundle.entry.resource.where($this is ', $matchResource, ').count() &gt;= ', $minCount)}"/>
+                                    <expression
+                                        value="{concat(
+                                            'Bundle.entry.resource.where($this is ', $matchResource,
+                                            ' and identifier.value.exists(v | ', $filteredDisjFP, '))',
+                                            '.count() = ', $expectedCountFiltered
+                                        )}"/>
                                     <stopTestOnFail value="false"/>
                                     <warningOnly value="false"/>
                                 </assert>
                             </action>
-                            
-                            <!-- 3) Upper bound -->
-                            <action xmlns="http://hl7.org/fhir">
-                                <assert>
-                                    <description value="{concat('Returned ', $matchResource, ' count is at most ', $maxCount, if ($hasPou) then ' (period-of-use applied)' else '', '.')}"/>
-                                    <direction value="response"/>
-                                    <expression value="{concat('Bundle.entry.resource.where($this is ', $matchResource, ').count() &lt;= ', $maxCount)}"/>
-                                    <stopTestOnFail value="false"/>
-                                    <warningOnly value="false"/>
-                                </assert>
-                            </action>
-                            
-                            <!-- (Optional) exact ID set match when no PoU filter -->
-                            <xsl:if test="not($hasPou)">
-                                <action xmlns="http://hl7.org/fhir">
-                                    <assert>
-                                        <description value="{concat('Exact identifier set match for ', $matchResource, ' (no period-of-use filter).')}"/>
-                                        <direction value="response"/>
-                                        <expression value="{concat('Bundle.entry.resource.where($this is ', $matchResource, ').identifier.value.where($this in ', $filteredSetFP, ').count() = ', $expectedCountFiltered)}"/>
-                                        <stopTestOnFail value="false"/>
-                                        <warningOnly value="false"/>
-                                    </assert>
-                                </action>
-                            </xsl:if>
+
                             <!-- ===== END: filter-aware asserts ===== -->
                         </xsl:when>
                     </xsl:choose>
