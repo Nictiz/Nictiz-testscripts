@@ -574,29 +574,46 @@
                                 <nts:with-parameter name="count" value="{$returnEntryCount}"/>
                                 <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
                             </nts:include>
+                            <!-- Select ADA primary building-block entries -->
+                            <xsl:variable name="adaBouwstenen"
+                                select="$adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)]"/>
                             
-                            <!-- adding content assertions -->
-                            <!-- TODO: add content assertions for medicatiebouwstenen from filter queries scenario 0--> 
-                            <!-- TODO: add content assertions for bouwstenen like medicatie and zorgverlener and patient --> 
-                            <!--               <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
-                                 
-                                 <xsl:if test="$identifiers">
-                                 <xsl:for-each select="$identifiers">
-                                 <xsl:variable name="fixtureId">
-                                 <xsl:call-template name="findContentAssertFixture">
-                                 <xsl:with-param name="identifier" select="."/>
-                                 </xsl:call-template>
-                                 </xsl:variable>
-                                 <xsl:call-template name="util:logMessage">
-                                 <xsl:with-param name="level" select="$logINFO"/>
-                                 <xsl:with-param name="msg"> The resource with this identifier <xsl:value-of select="."/> will be asserted based on fixtureId: <xsl:value-of select="$fixtureId"/></xsl:with-param>
-                                 </xsl:call-template>
-                                 <xsl:variable name="apos">'</xsl:variable>
-                                 <nts:contentAsserts href="{concat('fixtures/', $fixtureId, '.xml')}" description="{concat('contains a resource with identifier = ',.)}" 
-                                 discriminator="{concat('Bundle.entry.resource.where(identifier.value =', $apos, xs:string(.), $apos)}"
-                                 nts:in-targets="CheckContent"/>
-                                 </xsl:for-each>
-                                 </xsl:if>-->
+                            <!-- Select ADA Medication entries -->
+                            <xsl:variable name="prkValues" as="xs:string*"
+                                select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product
+                                    [starts-with(@value, 'PRK_')]/@value"/>
+                            <xsl:variable name="prkValuesDistinct" as="xs:string*"
+                                select="distinct-values($prkValues)"/>
+                            
+                            <!-- Aantal unieke PRK's -->
+                            <xsl:variable name="expectedPrkCount" select="count($prkValuesDistinct)"/>
+                            
+                            
+                            <!-- Build filtered identifier sets and expected counts -->
+                            <xsl:variable name="identifiers" as="xs:string*" select="$adaBouwstenen/identificatie/@value"/>
+                            <xsl:variable name="expectedCount" select="count($identifiers)"/>
+                            
+                            <!-- Assert MedicationRequest count -->
+                            <action xmlns="http://hl7.org/fhir">
+                                <assert>
+                                    <description value="{concat('Returned ', $matchResource, ' count is ', $expectedCount)}"/>
+                                    <direction value="response"/>
+                                    <expression value="{concat('Bundle.entry.resource.where($this is ', $matchResource, ').count() = ', $expectedCount)}"/>
+                                    <stopTestOnFail value="false"/>
+                                    <warningOnly value="false"/>
+                                </assert>
+                            </action>
+                            
+                            <!-- Assert Medication count -->
+                            <action xmlns="http://hl7.org/fhir">
+                                <assert>
+                                    <description value="{concat('Returned Medication count is ', $expectedPrkCount)}"/>
+                                    <direction value="response"/>
+                                    <expression value="Bundle.entry.resource.where($this is Medication).count() = {$expectedPrkCount}"/>
+                                    <stopTestOnFail value="false"/>
+                                    <warningOnly value="false"/>
+                                </assert>
+                            </action>
                          </xsl:when>
                         <xsl:otherwise>
                             <xsl:call-template name="util:logMessage">
