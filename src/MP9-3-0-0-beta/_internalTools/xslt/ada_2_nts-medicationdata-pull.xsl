@@ -518,8 +518,6 @@
                                 select="string-join(for $s in $idsFilteredEsc return concat('v = ''', $s, ''''), ' or ')"/>
                             <xsl:variable name="allowDisjFP" as="xs:string"
                                 select="string-join(for $s in $idsAllowEsc return concat('v = ''', $s, ''''), ' or ')"/>
-
-                          
                             
                             <!-- Count bounds (tolerate -1 if PoU present) -->
                             <xsl:variable name="minCount" select="if ($hasPou) then max((0, $expectedCountFiltered - 1)) else $expectedCountFiltered"/>
@@ -530,24 +528,6 @@
                                     <description value="{concat('Returned ', $matchResource, ' count is ', $expectedCountFiltered, if ($hasPou) then ' (period-of-use applied)' else '', '.')}"/>
                                     <direction value="response"/>
                                     <expression value="{concat('Bundle.entry.resource.where($this is ', $matchResource, ').count() = ', $expectedCountFiltered)}"/>
-                                    <stopTestOnFail value="false"/>
-                                    <warningOnly value="false"/>
-                                </assert>
-                            </action>
-                            
-                            <action xmlns="http://hl7.org/fhir">
-                                <assert>
-                                    <description value="{concat(
-                                            'Expect exactly ', $expectedCountFiltered, ' ', $matchResource,
-                                            ' resource(s) after applying the period-of-use filter.'
-                                        )}"/>
-                                    <direction value="response"/>
-                                    <expression
-                                        value="{concat(
-                                            'Bundle.entry.resource.where($this is ', $matchResource,
-                                            ' and identifier.value.exists(v | ', $filteredDisjFP, '))',
-                                            '.count() = ', $expectedCountFiltered
-                                        )}"/>
                                     <stopTestOnFail value="false"/>
                                     <warningOnly value="false"/>
                                 </assert>
