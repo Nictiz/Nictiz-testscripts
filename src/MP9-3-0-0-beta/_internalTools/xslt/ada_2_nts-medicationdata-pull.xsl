@@ -275,14 +275,13 @@
                                                 select="$adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)]"/>
                                             
                                             <!-- Select ADA Medication entries -->
-                                            <xsl:variable name="prkValues" as="xs:string*"
-                                                select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product
-                                                    [starts-with(@value, 'PRK_')]/@value"/>
-                                            <xsl:variable name="prkValuesDistinct" as="xs:string*"
-                                                select="distinct-values($prkValues)"/>
+                                            <xsl:variable name="medicationValues" as="xs:string*"
+                                                select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
+                                            <xsl:variable name="medicationValuesDistinct" as="xs:string*"
+                                                select="distinct-values($medicationValues)"/>
                                             
-                                            <!-- Aantal unieke PRK's -->
-                                            <xsl:variable name="expectedPrkCount" select="count($prkValuesDistinct)"/>
+                                            <!-- Aantal unieke medicamenten -->
+                                            <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
                                             
                                             <!-- Build filtered identifier sets and expected counts -->
                                             <xsl:variable name="identifiers" as="xs:string*" select="$adaBouwstenen/identificatie/@value"/>
@@ -305,7 +304,7 @@
                                             <!-- Assert Medication count -->
                                             <nts:include value="assert-returnCount" scope="project">
                                                 <nts:with-parameter name="resource" value="Medication"/>
-                                                <nts:with-parameter name="count" value="{$expectedPrkCount}"/>
+                                                <nts:with-parameter name="count" value="{$expectedMedCount}"/>
                                             </nts:include> 
                                         </xsl:when>
                                         <xsl:when test="$transactionTypeNormalized = 'serve'">
@@ -314,14 +313,13 @@
                                                 select="$adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)]"/>
                                             
                                             <!-- Select ADA Medication entries -->
-                                            <xsl:variable name="prkValues" as="xs:string*"
-                                                select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product
-                                                    [starts-with(@value, 'PRK_')]/@value"/>
-                                            <xsl:variable name="prkValuesDistinct" as="xs:string*"
-                                                select="distinct-values($prkValues)"/>
+                                            <xsl:variable name="medicationValues" as="xs:string*"
+                                                select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
+                                            <xsl:variable name="medicationValuesDistinct" as="xs:string*"
+                                                select="distinct-values($medicationValues)"/>
                                             
-                                            <!-- Aantal unieke PRK's -->
-                                            <xsl:variable name="expectedPrkCount" select="count($prkValuesDistinct)"/>
+                                            <!-- Aantal unieke medicamenten -->
+                                            <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
                                             
                                             
                                             <!-- Build filtered identifier sets and expected counts -->
@@ -348,7 +346,7 @@
                                             <!-- Assert Medication count -->
                                             <nts:include value="assert-returnCount" scope="project">
                                                 <nts:with-parameter name="resource" value="Medication"/>
-                                                <nts:with-parameter name="count" value="{$expectedPrkCount}"/>
+                                                <nts:with-parameter name="count" value="{$expectedMedCount}"/>
                                             </nts:include> 
                                         </xsl:when>
                                     </xsl:choose>
@@ -529,14 +527,13 @@
                                 select="$adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)]"/>
                             
                             <!-- Select ADA Medication entries -->
-                            <xsl:variable name="prkValues" as="xs:string*"
-                                select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product
-                                    [starts-with(@value, 'PRK_')]/@value"/>
-                            <xsl:variable name="prkValuesDistinct" as="xs:string*"
-                                select="distinct-values($prkValues)"/>
+                            <xsl:variable name="medicationValues" as="xs:string*"
+                                select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
+                            <xsl:variable name="medicationValuesDistinct" as="xs:string*"
+                                select="distinct-values($medicationValues)"/>
                             
-                            <!-- Aantal unieke PRK's -->
-                            <xsl:variable name="expectedPrkCount" select="count($prkValuesDistinct)"/>                            
+                            <!-- Aantal unieke medicamenten -->
+                            <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>                            
                             
                             <!-- Build filtered identifier sets and expected counts -->
                             <xsl:variable name="identifiers" as="xs:string*" select="$adaBouwstenen/identificatie/@value"/>
@@ -560,7 +557,7 @@
                             <!-- Assert Medication count -->
                             <nts:include value="assert-returnCount" scope="project">
                                 <nts:with-parameter name="resource" value="Medication"/>
-                                <nts:with-parameter name="count" value="{$expectedPrkCount}"/>
+                                <nts:with-parameter name="count" value="{$expectedMedCount}"/>
                             </nts:include> 
                         </xsl:when>
                         <xsl:when test="$transactionTypeNormalized = 'serve'">
@@ -569,14 +566,13 @@
                                 select="$adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)]"/>
                             
                             <!-- Select ADA Medication entries -->
-                            <xsl:variable name="prkValues" as="xs:string*"
-                                select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product
-                                    [starts-with(@value, 'PRK_')]/@value"/>
-                            <xsl:variable name="prkValuesDistinct" as="xs:string*"
-                                select="distinct-values($prkValues)"/>
+                            <xsl:variable name="medicationValues" as="xs:string*"
+                                select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
+                            <xsl:variable name="medicationValuesDistinct" as="xs:string*"
+                                select="distinct-values($medicationValues)"/>
                             
-                            <!-- Aantal unieke PRK's -->
-                            <xsl:variable name="expectedPrkCount" select="count($prkValuesDistinct)"/>
+                            <!-- Aantal unieke medicamenten -->
+                            <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
                             
                             
                             <!-- Build filtered identifier sets and expected counts -->
@@ -605,7 +601,7 @@
                             <!-- Assert Medication count -->
                             <nts:include value="assert-returnCount" scope="project">
                                 <nts:with-parameter name="resource" value="Medication"/>
-                                <nts:with-parameter name="count" value="{$expectedPrkCount}"/>
+                                <nts:with-parameter name="count" value="{$expectedMedCount}"/>
                             </nts:include> 
                         </xsl:when>
                         <xsl:otherwise>
