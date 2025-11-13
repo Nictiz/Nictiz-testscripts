@@ -512,7 +512,7 @@
                             <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
                             <nts:include value="assert-returnCount" scope="project">
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                <nts:with-parameter name="count" value="{$expectedCount}"/>
+                                <nts:with-parameter name="count" value="{$returnCount}"/>
                             </nts:include>
                             <!-- Assert Medication count -->
                             <nts:include value="assert-returnCount" scope="project">
@@ -538,7 +538,7 @@
                             <nts:include value="assert-responseBundleContent-noMM"/>
                             <nts:include value="assert-returnCount" scope="project">
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                <nts:with-parameter name="count" value="{$expectedCount}"/>
+                                <nts:with-parameter name="count" value="{$returnCount}"/>
                             </nts:include>                            
                             <!-- Assert Medication count -->
                             <nts:include value="assert-returnCount" scope="project">
