@@ -218,12 +218,16 @@
         <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts, $theAdditionalParamParts)"/>
         
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
-        <xsl:variable name="returnMedicationCount" select="count($adaInstance/bouwstenen/farmaceutisch_product)"/>
-        <xsl:variable name="returnEntryCount" select="$returnCount + $returnMedicationCount"/>
+        <!-- Select ADA Medication entries -->
+        <xsl:variable name="medicationValues" as="xs:string*"
+            select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
+        <xsl:variable name="medicationValuesDistinct" as="xs:string*" select="distinct-values($medicationValues)"/>  
+        <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
+        <xsl:variable name="returnEntryCount" select="$returnCount + $expectedMedCount"/>
         <xsl:variable name="returnEntryBreakdown">
             <xsl:choose>
                 <xsl:when test="$returnEntryCount gt 0">
-                    <xsl:value-of select="concat('(Consists of ', $returnCount, ' ', $matchResource, ' and ', $returnMedicationCount, ' Medication resources.)')"/>
+                    <xsl:value-of select="concat('(Consists of ', $returnCount, ' ', $matchResource, ' and ', $expectedMedCount, ' Medication resources.)')"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:text>(Consists of no resources.)</xsl:text>
@@ -269,23 +273,8 @@
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
                                     <description value="{$description}"/>
                                     <xsl:choose>
-                                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">
-                                            <!-- Select ADA primary building-block entries -->
-                                            <xsl:variable name="adaBouwstenen"
-                                                select="$adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)]"/>
-                                            
-                                            <!-- Select ADA Medication entries -->
-                                            <xsl:variable name="medicationValues" as="xs:string*"
-                                                select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
-                                            <xsl:variable name="medicationValuesDistinct" as="xs:string*"
-                                                select="distinct-values($medicationValues)"/>
-                                            
-                                            <!-- Aantal unieke medicamenten -->
-                                            <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
-                                            
-                                            <!-- Build filtered identifier sets and expected counts -->
-                                            <xsl:variable name="identifiers" as="xs:string*" select="$adaBouwstenen/identificatie/@value"/>
-                                            <xsl:variable name="expectedCount" select="count($identifiers)"/>
+                                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">     
+                                            <!-- Build filtered identifier sets and expected counts -->                                           
                                             <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
                                                 <nts:with-parameter name="description" value="Test client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -299,7 +288,7 @@
                                             <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
                                             <nts:include value="assert-returnCount" scope="project">
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                                <nts:with-parameter name="count" value="{$expectedCount}"/>
+                                                <nts:with-parameter name="count" value="{$returnCount}"/>
                                             </nts:include>
                                             <!-- Assert Medication count -->
                                             <nts:include value="assert-returnCount" scope="project">
@@ -307,24 +296,7 @@
                                                 <nts:with-parameter name="count" value="{$expectedMedCount}"/>
                                             </nts:include> 
                                         </xsl:when>
-                                        <xsl:when test="$transactionTypeNormalized = 'serve'">
-                                            <!-- Select ADA primary building-block entries -->
-                                            <xsl:variable name="adaBouwstenen"
-                                                select="$adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)]"/>
-                                            
-                                            <!-- Select ADA Medication entries -->
-                                            <xsl:variable name="medicationValues" as="xs:string*"
-                                                select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
-                                            <xsl:variable name="medicationValuesDistinct" as="xs:string*"
-                                                select="distinct-values($medicationValues)"/>
-                                            
-                                            <!-- Aantal unieke medicamenten -->
-                                            <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
-                                            
-                                            
-                                            <!-- Build filtered identifier sets and expected counts -->
-                                            <xsl:variable name="identifiers" as="xs:string*" select="$adaBouwstenen/identificatie/@value"/>
-                                            <xsl:variable name="expectedCount" select="count($identifiers)"/>
+                                        <xsl:when test="$transactionTypeNormalized = 'serve'">     
                                             <!--NICTIZ-29763 removed CheckContent from target so no content asserts scripts will be generated
                                                  <nts:include value="test.server.search" scope="common" nts:in-targets="#default CheckContent">-->
                                             <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
@@ -341,7 +313,7 @@
                                             <nts:include value="assert-responseBundleContent-noMM"/>
                                             <nts:include value="assert-returnCountAtLeast" scope="project">
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                                <nts:with-parameter name="count" value="{$expectedCount}"/>
+                                                <nts:with-parameter name="count" value="{$returnCount}"/>
                                             </nts:include>                                                                                     
                                             <!-- Assert Medication count -->
                                             <nts:include value="assert-returnCount" scope="project">
@@ -473,12 +445,16 @@
         
         <xsl:variable name="description" as="xs:string?" select="$adaInstance/@desc"/>
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
-        <!-- We add the medication products, since those are in an include in the query -->
-        <xsl:variable name="returnEntryCount" select="$returnCount + count($adaInstance/bouwstenen/farmaceutisch_product)"/>
+        <!-- Select ADA Medication entries -->
+        <xsl:variable name="medicationValues" as="xs:string*"
+            select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
+        <xsl:variable name="medicationValuesDistinct" as="xs:string*" select="distinct-values($medicationValues)"/>  
+        <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
+        <xsl:variable name="returnEntryCount" select="$returnCount + $expectedMedCount"/>
         <xsl:variable name="returnEntryBreakdown">
             <xsl:choose>
                 <xsl:when test="$returnEntryCount gt 0">
-                    <xsl:value-of select="concat('(Consists of ', $returnCount, ' ', $matchResource, ' and ', count($adaInstance/bouwstenen/farmaceutisch_product), ' Medication resources.)')"/>
+                    <xsl:value-of select="concat('(Consists of ', $returnCount, ' ', $matchResource, ' and ', $expectedMedCount, ' Medication resources.)')"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:text>(Consists of no resources.)</xsl:text>
@@ -521,23 +497,7 @@
                     <name value="Scenario {$theScenario}"/>
                     <description value="{$description}"/>
                     <xsl:choose>
-                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">
-                            <!-- Select ADA primary building-block entries -->
-                            <xsl:variable name="adaBouwstenen"
-                                select="$adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)]"/>
-                            
-                            <!-- Select ADA Medication entries -->
-                            <xsl:variable name="medicationValues" as="xs:string*"
-                                select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
-                            <xsl:variable name="medicationValuesDistinct" as="xs:string*"
-                                select="distinct-values($medicationValues)"/>
-                            
-                            <!-- Aantal unieke medicamenten -->
-                            <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>                            
-                            
-                            <!-- Build filtered identifier sets and expected counts -->
-                            <xsl:variable name="identifiers" as="xs:string*" select="$adaBouwstenen/identificatie/@value"/>
-                            <xsl:variable name="expectedCount" select="count($identifiers)"/>
+                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">                            
                             <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
                                 <nts:with-parameter name="description" value="Test client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -560,25 +520,7 @@
                                 <nts:with-parameter name="count" value="{$expectedMedCount}"/>
                             </nts:include> 
                         </xsl:when>
-                        <xsl:when test="$transactionTypeNormalized = 'serve'">
-                            <!-- Select ADA primary building-block entries -->
-                            <xsl:variable name="adaBouwstenen"
-                                select="$adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)]"/>
-                            
-                            <!-- Select ADA Medication entries -->
-                            <xsl:variable name="medicationValues" as="xs:string*"
-                                select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
-                            <xsl:variable name="medicationValuesDistinct" as="xs:string*"
-                                select="distinct-values($medicationValues)"/>
-                            
-                            <!-- Aantal unieke medicamenten -->
-                            <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
-                            
-                            
-                            <!-- Build filtered identifier sets and expected counts -->
-                            <xsl:variable name="identifiers" as="xs:string*" select="$adaBouwstenen/identificatie/@value"/>
-                            <xsl:variable name="expectedCount" select="count($identifiers)"/>
-                            
+                        <xsl:when test="$transactionTypeNormalized = 'serve'">                           
                             <!--NICTIZ-29763 removed CheckContent from target so no content asserts scripts will be generated
                                  <nts:include value="test.server.search" scope="common" nts:in-targets="#default CheckContent">-->
                             <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
