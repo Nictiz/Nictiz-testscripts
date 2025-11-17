@@ -218,12 +218,16 @@
         <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts, $theAdditionalParamParts)"/>
         
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
-        <xsl:variable name="returnMedicationCount" select="count($adaInstance/bouwstenen/farmaceutisch_product)"/>
-        <xsl:variable name="returnEntryCount" select="$returnCount + $returnMedicationCount"/>
+        <!-- Select ADA Medication entries -->
+        <xsl:variable name="medicationValues" as="xs:string*"
+            select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
+        <xsl:variable name="medicationValuesDistinct" as="xs:string*" select="distinct-values($medicationValues)"/>  
+        <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
+        <xsl:variable name="returnEntryCount" select="$returnCount + $expectedMedCount"/>
         <xsl:variable name="returnEntryBreakdown">
             <xsl:choose>
                 <xsl:when test="$returnEntryCount gt 0">
-                    <xsl:value-of select="concat('(Consists of ', $returnCount, ' ', $matchResource, ' and ', $returnMedicationCount, ' Medication resources.)')"/>
+                    <xsl:value-of select="concat('(Consists of ', $returnCount, ' ', $matchResource, ' and ', $expectedMedCount, ' Medication resources.)')"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:text>(Consists of no resources.)</xsl:text>
@@ -269,7 +273,8 @@
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
                                     <description value="{$description}"/>
                                     <xsl:choose>
-                                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">
+                                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">     
+                                            <!-- Build filtered identifier sets and expected counts -->                                           
                                             <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
                                                 <nts:with-parameter name="description" value="Test client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -285,12 +290,13 @@
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="count" value="{$returnCount}"/>
                                             </nts:include>
-                                            <nts:include value="assert-returnEntryCountAtLeast" scope="project">
-                                                <nts:with-parameter name="count" value="{$returnEntryCount}"/>
-                                                <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
-                                            </nts:include>
+                                            <!-- Assert Medication count -->
+                                            <nts:include value="assert-returnCount" scope="project">
+                                                <nts:with-parameter name="resource" value="Medication"/>
+                                                <nts:with-parameter name="count" value="{$expectedMedCount}"/>
+                                            </nts:include> 
                                         </xsl:when>
-                                        <xsl:when test="$transactionTypeNormalized = 'serve'">
+                                        <xsl:when test="$transactionTypeNormalized = 'serve'">     
                                             <!--NICTIZ-29763 removed CheckContent from target so no content asserts scripts will be generated
                                                  <nts:include value="test.server.search" scope="common" nts:in-targets="#default CheckContent">-->
                                             <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
@@ -308,43 +314,12 @@
                                             <nts:include value="assert-returnCountAtLeast" scope="project">
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="count" value="{$returnCount}"/>
-                                            </nts:include>
-                                            <nts:include value="assert-returnEntryCountAtLeast" scope="project">
-                                                <nts:with-parameter name="count" value="{$returnEntryCount}"/>
-                                                <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
-                                            </nts:include>
-                                            
-                                            <!-- adding content assertions -->
-                                            
-                                            <!-- adding content assertions for medicatiebouwstenen --> 
-                                            <!-- TODO: add content assertions for bouwstenen like medicatie and zorgverlener and patient --> 
-                                            <!-- removed content asserts as the discriminator doesn't work in productionlike settings because suppliers will have different identifiers.
-                                                 the discriminator should be based on the "identifyResources" variable but this is currently only implemented in
-                                                 send scripts (ada_2_nts.xsl from https://github.com/Nictiz/Nictiz-testscripts/blob/identificationAsserts/src/MP9-3-0-0-beta/Test/_internalTools/xslt/ada_2_nts.xsl)
-                                                 
-                                                 <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
-                                                 
-                                                 <xsl:if test="$identifiers">
-                                                 <xsl:for-each select="$identifiers">
-                                                 <xsl:variable name="fixtureId">
-                                                 <xsl:call-template name="findContentAssertFixture">
-                                                 <xsl:with-param name="identifier" select="."/>
-                                                 </xsl:call-template>
-                                                 </xsl:variable>
-                                                 <xsl:call-template name="util:logMessage">
-                                                 <xsl:with-param name="level" select="$logINFO"/>
-                                                 <xsl:with-param name="msg"> The resource with this identifier <xsl:value-of select="."/> will be asserted based on fixtureId: <xsl:value-of select="$fixtureId"/></xsl:with-param>
-                                                 </xsl:call-template>
-                                                 <xsl:variable name="apos">'</xsl:variable>
-                                                 <nts:contentAsserts href="{concat('fixtures/', $fixtureId, '.xml')}" description="{concat('contains a resource with identifier = ',.)}" 
-                                                 discriminator="{concat('identifier.value =', $apos, xs:string(.), $apos)}"
-                                                 nts:in-targets="CheckContent"/>
-                                                 </xsl:for-each>
-                                                 </xsl:if>
-                                            -->
-                                            
-                                            
-                                            
+                                            </nts:include>                                                                                     
+                                            <!-- Assert Medication count -->
+                                            <nts:include value="assert-returnCount" scope="project">
+                                                <nts:with-parameter name="resource" value="Medication"/>
+                                                <nts:with-parameter name="count" value="{$expectedMedCount}"/>
+                                            </nts:include> 
                                         </xsl:when>
                                     </xsl:choose>
                                 </test>
@@ -470,12 +445,16 @@
         
         <xsl:variable name="description" as="xs:string?" select="$adaInstance/@desc"/>
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
-        <!-- We add the medication products, since those are in an include in the query -->
-        <xsl:variable name="returnEntryCount" select="$returnCount + count($adaInstance/bouwstenen/farmaceutisch_product)"/>
+        <!-- Select ADA Medication entries -->
+        <xsl:variable name="medicationValues" as="xs:string*"
+            select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
+        <xsl:variable name="medicationValuesDistinct" as="xs:string*" select="distinct-values($medicationValues)"/>  
+        <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
+        <xsl:variable name="returnEntryCount" select="$returnCount + $expectedMedCount"/>
         <xsl:variable name="returnEntryBreakdown">
             <xsl:choose>
                 <xsl:when test="$returnEntryCount gt 0">
-                    <xsl:value-of select="concat('(Consists of ', $returnCount, ' ', $matchResource, ' and ', count($adaInstance/bouwstenen/farmaceutisch_product), ' Medication resources.)')"/>
+                    <xsl:value-of select="concat('(Consists of ', $returnCount, ' ', $matchResource, ' and ', $expectedMedCount, ' Medication resources.)')"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:text>(Consists of no resources.)</xsl:text>
@@ -518,8 +497,7 @@
                     <name value="Scenario {$theScenario}"/>
                     <description value="{$description}"/>
                     <xsl:choose>
-                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">
-                            
+                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">                            
                             <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
                                 <nts:with-parameter name="description" value="Test client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -536,12 +514,13 @@
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="count" value="{$returnCount}"/>
                             </nts:include>
-                            <nts:include value="assert-returnEntryCountAtLeast" scope="project">
-                                <nts:with-parameter name="count" value="{$returnEntryCount}"/>
-                                <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
-                            </nts:include>
+                            <!-- Assert Medication count -->
+                            <nts:include value="assert-returnCount" scope="project">
+                                <nts:with-parameter name="resource" value="Medication"/>
+                                <nts:with-parameter name="count" value="{$expectedMedCount}"/>
+                            </nts:include> 
                         </xsl:when>
-                        <xsl:when test="$transactionTypeNormalized = 'serve'">
+                        <xsl:when test="$transactionTypeNormalized = 'serve'">                           
                             <!--NICTIZ-29763 removed CheckContent from target so no content asserts scripts will be generated
                                  <nts:include value="test.server.search" scope="common" nts:in-targets="#default CheckContent">-->
                             <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
@@ -560,35 +539,13 @@
                             <nts:include value="assert-returnCount" scope="project">
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="count" value="{$returnCount}"/>
-                            </nts:include>
-                            <nts:include value="assert-returnEntryCountAtLeast" scope="project">
-                                <nts:with-parameter name="count" value="{$returnEntryCount}"/>
-                                <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
-                            </nts:include>
-                            
-                            <!-- adding content assertions -->
-                            <!-- TODO: add content assertions for medicatiebouwstenen from filter queries scenario 0--> 
-                            <!-- TODO: add content assertions for bouwstenen like medicatie and zorgverlener and patient --> 
-                            <!--               <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
-                                 
-                                 <xsl:if test="$identifiers">
-                                 <xsl:for-each select="$identifiers">
-                                 <xsl:variable name="fixtureId">
-                                 <xsl:call-template name="findContentAssertFixture">
-                                 <xsl:with-param name="identifier" select="."/>
-                                 </xsl:call-template>
-                                 </xsl:variable>
-                                 <xsl:call-template name="util:logMessage">
-                                 <xsl:with-param name="level" select="$logINFO"/>
-                                 <xsl:with-param name="msg"> The resource with this identifier <xsl:value-of select="."/> will be asserted based on fixtureId: <xsl:value-of select="$fixtureId"/></xsl:with-param>
-                                 </xsl:call-template>
-                                 <xsl:variable name="apos">'</xsl:variable>
-                                 <nts:contentAsserts href="{concat('fixtures/', $fixtureId, '.xml')}" description="{concat('contains a resource with identifier = ',.)}" 
-                                 discriminator="{concat('Bundle.entry.resource.where(identifier.value =', $apos, xs:string(.), $apos)}"
-                                 nts:in-targets="CheckContent"/>
-                                 </xsl:for-each>
-                                 </xsl:if>-->
-                         </xsl:when>
+                            </nts:include>                            
+                            <!-- Assert Medication count -->
+                            <nts:include value="assert-returnCount" scope="project">
+                                <nts:with-parameter name="resource" value="Medication"/>
+                                <nts:with-parameter name="count" value="{$expectedMedCount}"/>
+                            </nts:include> 
+                        </xsl:when>
                         <xsl:otherwise>
                             <xsl:call-template name="util:logMessage">
                                 <xsl:with-param name="level" select="$logFATAL"/>
