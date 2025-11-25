@@ -130,8 +130,8 @@
                     <xsl:if test="$subfolders[2]">
                         <xsl:variable name="clSubcategory">
                             <xsl:choose>
-                                <xsl:when test="contains($subfolders[2], 'MA-VV')">MedicatieAfspraak (MA) + VerstrekkingsVerzoek (VV)</xsl:when>
-                                <xsl:when test="contains($subfolders[2], 'TA-MVE')">ToedieningsAfspraak (TA) + MedicatieVerstrekking (MVE)</xsl:when>
+                                <xsl:when test="contains($subfolders[2], 'MA-VV')">Voorschrift</xsl:when>
+                                <xsl:when test="contains($subfolders[2], 'TA-MVE')">VoorschriftAfhandeling</xsl:when>
                                 <xsl:when test="contains($subfolders[2], 'AVMA')">Antwoord Voorstel MedicatieAfspraak (AVMA)</xsl:when>
                                 <xsl:when test="contains($subfolders[2], 'AVVV')">Antwoord Voorstel VerstrekkingsVerzoek (AVVV)</xsl:when>
                                 <xsl:when test="contains($subfolders[2], 'MA')">MedicatieAfspraak (MA)</xsl:when>
