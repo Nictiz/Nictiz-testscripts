@@ -140,7 +140,7 @@
                                 <xsl:when test="contains($subfolders[2], 'MVE')">MedicatieVerstrekking (MVE)</xsl:when>
                                 <xsl:when test="contains($subfolders[2], 'TA')">ToedieningsAfspraak (TA)</xsl:when>
                                 <xsl:when test="contains($subfolders[2], 'VMA')">Voorstel MedicatieAfspraak (VMA)</xsl:when>
-                                <xsl:when test="contains($subfolders[2], 'VVV')">Voorstel VerstrekkingsVerzoek(VVV)</xsl:when>
+                                <xsl:when test="contains($subfolders[2], 'VVV')">Voorstel VerstrekkingsVerzoek (VVV)</xsl:when>
                                 <xsl:when test="contains($subfolders[2], 'VV')">VerstrekkingsVerzoek (VV)</xsl:when>
                                 <xsl:when test="contains($subfolders[2], 'WDS')">Wisselend DoseerSchema (WDS)</xsl:when>
                                 <xsl:otherwise>
