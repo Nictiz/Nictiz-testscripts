@@ -13,10 +13,6 @@
         href="resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Vink-Intake-REQUESTED.xml"/>
     <nts:fixture id="task-update-fixture"
         href="resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Vink-Intake-ACCEPTED.xml"/>
-    <nts:fixture id="task-minimum-fixture-xml"
-        href="resources/minimum/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Vink-Intake-minimum.xml"/>
-    <nts:fixture id="task-minimum-fixture-json"
-        href="resources/minimum/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Vink-Intake-minimum.json"/>
     <nts:fixture id="questionnaire-fixture"
         href="resources/resources-questionnaires/medmij-questionnaires-vl-Questionnaire-INTAKE-NIEUWE-PATIENT.xml"/>
     <nts:fixture id="response-bundle-fixture"
@@ -51,39 +47,48 @@
         <description
             value="Test PHR client to send an update of the QuestionnaireProvisioningTask with status='accepted'. The body of the request should otherwise be the same as the original Task as received from the server."/>
         <nts:include value="phr-scenario3-acceptTaskUpdate"/>
+
+        <!-- Replacing the assertMinimumRequest Groovy script with asserts that check the same. -->
         <action>
             <assert>
-                <description value="Confirm that the Task contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask'"/>
+                <description value="Confirm that the Task contains .intent with value 'order'"/>
                 <direction value="request"/>
-                <expression value="Task.meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask').exists()"/>
-                <stopTestOnFail value="false"/>
-                <warningOnly value="false"/>
+                <expression value="Task.intent = 'order'"/>
             </assert>
         </action>
-        <!-- The following elements are already checked by profile validation:
-             - .intent ='order'
-             - .code
-             - .owner
-             - .input with .type.text = 'Questionnaire' and a Reference
-        -->
-        <!-- If .requester exists, .requester.agent is required -->
         <action>
             <assert>
-                <description value="Confirm that the Task contains .requester"/>
+                <description value="Confirm that the Task contains .code with .coding with .system = 'http://loinc.org' and .code = '74468-0'"/>
                 <direction value="request"/>
-                <expression value="Task.requester.exists()"/>
-                <stopTestOnFail value="false"/>
-                <warningOnly value="false"/>
+                <expression value="Task.code.coding.where(system = 'http://loinc.org' and code = '74468-0').exists()"/>
             </assert>
         </action>
-        <!-- .input with .type.text = 'Subject' is optional, so we want to check for that. input.valueReference is required -->
         <action>
             <assert>
-                <description value="Confirm that the Task contains .input with .type.text = 'Subject'"/>
+                <description value="Confirm that the Task contains .requester.agent with references to the Practitioner and PractitionerRole from the orginal Task"/>
                 <direction value="request"/>
-                <expression value="Task.input.where(type.text = 'Subject').exists()"/>
-                <stopTestOnFail value="false"/>
-                <warningOnly value="false"/>
+                <expression value="Task.requester.agent.where(reference = 'Practitioner/000001111FRANSLIJSTER' and extension('http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference').value.where($this is Reference).reference = 'PractitionerRole/medmij-questionnaires-nl-core-practitionerrole-01').exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Task contains .owner with a reference to the Patient from the orginal Task"/>
+                <direction value="request"/>
+                <expression value="Task.owner.reference = 'Patient/XXXVINK'"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Task contains .input with .type.text = 'Questionnaire' and a reference to the Questionnaire from the original Task"/>
+                <direction value="request"/>
+                <expression value="Task.input.where(type.text = 'Questionnaire' and value.where($this is Reference).reference ='Questionnaire/INTAKE-NIEUWE-PATIENT').exists()"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="Confirm that the Task contains .input with .type.text = 'Subject' and a reference to the Patient from the original Task"/>
+                <direction value="request"/>
+                <expression value="Task.input.where(type.text = 'Subject' and value.where($this is Reference).reference ='Patient/XXXVINK').exists()"/>
             </assert>
         </action>
     </test>

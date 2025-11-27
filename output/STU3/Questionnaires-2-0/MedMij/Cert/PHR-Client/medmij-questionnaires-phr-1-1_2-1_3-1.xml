@@ -50,20 +50,6 @@
          <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Vink-Intake-ACCEPTED.xml"/>
       </resource>
    </fixture>
-   <fixture id="task-minimum-fixture-xml">
-      <autocreate value="false"/>
-      <autodelete value="false"/>
-      <resource>
-         <reference value="../_reference/resources/minimum/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Vink-Intake-minimum.xml"/>
-      </resource>
-   </fixture>
-   <fixture id="task-minimum-fixture-json">
-      <autocreate value="false"/>
-      <autodelete value="false"/>
-      <resource>
-         <reference value="../_reference/resources/minimum/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Vink-Intake-minimum.json"/>
-      </resource>
-   </fixture>
    <fixture id="questionnaire-fixture">
       <autocreate value="false"/>
       <autodelete value="false"/>
@@ -336,6 +322,15 @@
       </action>
       <action>
          <assert>
+            <description value="Confirm that the Task instance declares its profile"/>
+            <direction value="request"/>
+            <expression value="Task.meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
             <description value="Confirm that the operation was successful"/>
             <operator value="in"/>
             <responseCode value="200,201"/>
@@ -361,40 +356,57 @@
             <warningOnly value="false"/>
          </assert>
       </action>
+      <!-- Replacing the assertMinimumRequest Groovy script with asserts that check the same. -->
       <action>
          <assert>
-            <description value="Confirm that the Task contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask'"/>
+            <description value="Confirm that the Task contains .intent with value 'order'"/>
             <direction value="request"/>
-            <expression value="Task.meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask').exists()"/>
-            <stopTestOnFail value="false"/>
+            <expression value="Task.intent = 'order'"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
       </action>
-      <!-- The following elements are already checked by profile validation:
-             - .intent ='order'
-             - .code
-             - .owner
-             - .input with .type.text = 'Questionnaire' and a Reference
-        -->
-      <!-- If .requester exists, .requester.agent is required -->
       <action>
          <assert>
-            <description value="Confirm that the Task contains .requester"/>
+            <description value="Confirm that the Task contains .code with .coding with .system = 'http://loinc.org' and .code = '74468-0'"/>
             <direction value="request"/>
-            <expression value="Task.requester.exists()"/>
-            <stopTestOnFail value="false"/>
+            <expression value="Task.code.coding.where(system = 'http://loinc.org' and code = '74468-0').exists()"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
       </action>
-      <!-- .input with .type.text = 'Subject' is optional, so we want to check for that. input.valueReference is required -->
       <action>
          <assert>
-            <description value="Confirm that the Task contains .input with .type.text = 'Subject'"/>
+            <description value="Confirm that the Task contains .requester.agent with references to the Practitioner and PractitionerRole from the orginal Task"/>
             <direction value="request"/>
-            <expression value="Task.input.where(type.text = 'Subject').exists()"/>
+            <expression value="Task.requester.agent.where(reference = 'Practitioner/000001111FRANSLIJSTER' and extension('http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference').value.where($this is Reference).reference = 'PractitionerRole/medmij-questionnaires-nl-core-practitionerrole-01').exists()"/>
             <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the Task contains .owner with a reference to the Patient from the orginal Task"/>
+            <direction value="request"/>
+            <expression value="Task.owner.reference = 'Patient/XXXVINK'"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the Task contains .input with .type.text = 'Questionnaire' and a reference to the Questionnaire from the original Task"/>
+            <direction value="request"/>
+            <expression value="Task.input.where(type.text = 'Questionnaire' and value.where($this is Reference).reference ='Questionnaire/INTAKE-NIEUWE-PATIENT').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the Task contains .input with .type.text = 'Subject' and a reference to the Patient from the original Task"/>
+            <direction value="request"/>
+            <expression value="Task.input.where(type.text = 'Subject' and value.where($this is Reference).reference ='Patient/XXXVINK').exists()"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
