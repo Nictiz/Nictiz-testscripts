@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="KWAL-lr-Scenario1a-Send"/>
+   <url value="http://nictiz.nl/fhir/TestScript/KWAL-lr-Scenario1a-Send"/>
+   <version value="R4-3.0-patchlevel 2025.47"/>
+   <name value="LaboratoryResults - Scenario 1a - Send lab results"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Scenario 1a - Send a NHG-coded panel of laboratory results to the receiving system."/>
+   <origin>
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
+         <valueBoolean value="false"/>
+      </extension>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
+         <code value="FHIR-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
+         <valueBoolean value="false"/>
+      </extension>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <fixture id="lr-fixture-1">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
+      <resource>
+         <reference value="../_reference/resources-to-sendreceive/lr-slr-KWAL-l2z-1Maximaal-bericht-1MMBLOINC.xml"/>
+      </resource>
+   </fixture>
+   <variable>
+      <name value="T"/>
+      <defaultValue value="${CURRENTDATE}"/>
+      <description value="Date that data and queries are expected to be relative to."/>
+   </variable>
+   <test id="lr-send-basic">
+      <name value="Send LaboratoryResults Bundle"/>
+      <description value="POST the LaboratoryResults FHIR Bundle to the receiver endpoint"/>
+      <!-- Step 1: Send the bundle -->
+      <action>
+         <operation>
+            <type>
+               <coding>
+                  <system value="http://hl7.org/fhir/testscript-operation-codes"/>
+                  <code value="create"/>
+               </coding>
+            </type>
+            <resource value="Bundle"/>
+            <description value="Send LaboratoryResults FHIR Bundle"/>
+            <accept value="application/fhir+xml"/>
+            <contentType value="application/fhir+xml"/>
+            <encodeRequestUrl value="true"/>
+            <sourceId value="lr-fixture-1"/>
+            <url value="Bundle"/>
+         </operation>
+      </action>
+      <!-- Step 2: Check that response is OK -->
+      <action>
+         <assert>
+            <description value="Response should be HTTP 201 Created or 200 OK"/>
+            <direction value="response"/>
+            <responseCode value="201"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Optional Step 3: Check that the Observation is included -->
+      <action>
+         <assert>
+            <description value="At least one Observation should be present in the bundle"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Observation).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Optional Step 4: Check that the Patient exists -->
+      <action>
+         <assert>
+            <description value="Patient resource should be present in the bundle"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Patient).exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Patient).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
