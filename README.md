@@ -87,7 +87,9 @@ Parameters to specify additional information:
 * [`targets.adminOnly`] (optional) - Comma separated list of additional targets (see above) that in the test platform should be marked "admin only", i.e. not for end users.
 
 ## Conformancelab properties
-Each output folder containing TestScripts, needs a `properties.json` file to be accessible in Conformancelab. In each input folder, a file called `src-properties.json` must therefore be present. This required file, which is copied to the output folder, should contain the following properties:
+Each output folder containing TestScripts and the folder containing a LoadResources-script, need a `properties.json` file to be accessible in Conformancelab. For the LoadResources folder, this file is generated from the build properties. 
+
+In each input folder containing NTS-files, a file called `src-properties.json` must be present. This required file, which is copied to the output folder, should contain the following properties:
 
 * `goal` (required) - Duplicates the property present in `build.properties`, `${goal}` should be used here to avoid entering the same property multiple times.
 * `fhirVersion` (required) - Duplicates the property present in `build.properties`, `${fhir.version}` should be used here to avoid entering the same property multiple times.
