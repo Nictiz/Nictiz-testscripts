@@ -80,7 +80,7 @@ Parameters influencing the build process:
 * `processfixtures.skip`
 
 Parameters to specify additional information:
-* [`version.addition`] (optional) - A string that will be added verbatim to the value in the `TestScript.version` from the input file. The default is defined in the folder `buildscripts/version.addition.properties`.
+* [`version.addition`] (optional) - A string that will be added verbatim to the value in the `TestScript.version` from the input file. The default is defined in the folder `Configuration/version.addition.properties`.
 * [`packages`] (optional) - Comma separated list with the canonicals of the FHIR packages that should be used when the test engine performs profile validation.
 * `package.[canonical]` (required for each package) - For each package listed using the `packages` property, the version of the package used. This is normally set in the common file `Configuration/package.version.properties`.
 * `target.description.[additional target]` (required for each additional target) - For each defined additional target, a human readable description of the target.
@@ -96,14 +96,14 @@ In each input folder containing NTS-files, a file called `src-properties.json` m
 * `informationStandard` (required) - Duplicates the property present in `build.properties`, `${informationStandard}` should be used here to avoid entering the same property multiple times.
 * `usecase` (required) - Duplicates the property present in `build.properties`, `${usecase}` should be used here to avoid entering the same property multiple times.
 * `role.name` (required) - The role that the user (system under test) plays in the exchange when using the TestScripts in this folder.
-* `role.description` (required) - A description of the role. See the remark above.
+* []`role.description`] (optional) - A description of the role.
 * [`category`] (optional) - Optional category of the set of TestScripts to be shown in the UI.
 * [`subcategory`] (optional) - Optional subcategory of the set of TestScripts to be shown in the UI.
 * [`adminOnly`] (optional) - If `true`, marks a folder that in the test platform should be marked "admin only", i.e. not for end users.
 * `serverAlias` (required) - Duplicates the property present in `build.properties`, `${serverAlias}` should be used here to avoid entering the same property multiple times.
 
-The following properties are added to `properties.json` during the build:
-* `fhirPackage` (including `.name` and `.version`) - Derived from the `packages` build property
+The following properties are automatically added to `properties.json` during the build:
+* [`fhirPackage`] (optional, including `.name` and `.version`) - Derived from the `packages` build property
 * [`variant`] (optional) - Added to the properties of a specific `target` that is defined in the `targets.additional` property. `target.description.[additional target]` is used as `variant.description`.
 * [`adminOnly`] (optional) - If absent of `false` in `src-properties.json`, this property with value `true` is added if the current target is present in the `targets.adminOnly` property.
 
