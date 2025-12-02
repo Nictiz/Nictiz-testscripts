@@ -96,7 +96,7 @@ In each input folder containing NTS-files, a file called `src-properties.json` m
 * `informationStandard` (required) - Duplicates the property present in `build.properties`, `${informationStandard}` should be used here to avoid entering the same property multiple times.
 * `usecase` (required) - Duplicates the property present in `build.properties`, `${usecase}` should be used here to avoid entering the same property multiple times.
 * `role.name` (required) - The role that the user (system under test) plays in the exchange when using the TestScripts in this folder.
-* []`role.description`] (optional) - A description of the role.
+* [`role.description`] (optional) - A description of the role.
 * [`category`] (optional) - Optional category of the set of TestScripts to be shown in the UI.
 * [`subcategory`] (optional) - Optional subcategory of the set of TestScripts to be shown in the UI.
 * [`adminOnly`] (optional) - If `true`, marks a folder that in the test platform should be marked "admin only", i.e. not for end users.
