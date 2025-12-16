@@ -1,2 +1,2 @@
 #!/bin/bash
-ant -f ../build-multiple.xml -Dinput.dirs="src/MP9-3-0-0-beta/Test, src/MP9-3-0-0-beta/Cert" $*
+ant -f ../build-multiple.xml -Dinput.dirs="src/MP9-3-0-0-beta/Test, src/MP9-3-0-0-beta/Cert" -Dbuild-CLPropertiesFiles.skip=true -DgenerateTestScriptsForProjects.tool.version=4.0.0 $*
