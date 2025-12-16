@@ -73,6 +73,18 @@
         <!-- Create an XML representation of the desired JSON structure, which can be written as JSON using xml-to-json. --> 
         <xsl:variable name="properties">
             <map xmlns="http://www.w3.org/2005/xpath-functions">
+                <string key="goal">
+                    <xsl:value-of select="'${goal}'"/>
+                </string>
+                <string key="fhirVersion">
+                    <xsl:value-of select="'${fhir.version}'"/>
+                </string>
+                <string key="informationStandard">
+                    <xsl:value-of select="'${informationStandard}'"/>
+                </string>
+                <string key="usecase">
+                    <xsl:value-of select="'${usecase}'"/>
+                </string>
                 <xsl:if test="not($loadscriptFolder)">
                     <xsl:variable name="subfolders" as="xs:string*">
                         <xsl:for-each select="tokenize($relFolderPath, '/')">
@@ -152,6 +164,10 @@
                             <xsl:value-of select="$clSubcategory"/>
                         </string>
                     </xsl:if>
+
+                    <string key="serverAlias">
+                        <xsl:value-of select="'${serverAlias}'"/>
+                    </string>
                 </xsl:if>
             </map>
         </xsl:variable>
