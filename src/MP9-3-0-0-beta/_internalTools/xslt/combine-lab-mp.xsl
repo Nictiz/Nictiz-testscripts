@@ -23,25 +23,25 @@
             <xsl:apply-templates select="f:entry[f:resource/f:MedicationRequest]"/>
             <xsl:choose>
                 <xsl:when test="$bundleId = $nhgId">
-                    <xsl:apply-templates select="$nhgFixture/f:Bundle/f:entry[f:resource[f:Observation|f:Specimen]]" mode="editPatient">
+                    <xsl:apply-templates select="$nhgFixture/f:Bundle/f:entry[f:resource[f:Observation|f:Specimen|f:Device]]" mode="editPatient">
                         <xsl:with-param name="patientFullUrl" select="$patientFullUrl" tunnel="yes"/>
                         <xsl:with-param name="performerFullUrl" select="$nhgFixture/f:Bundle/f:entry[f:resource/f:Organization/f:identifier[f:system/@value = 'http://fhir.nl/fhir/NamingSystem/ura']/f:value/@value = '00003333']/f:fullUrl/@value" tunnel="yes"/>
                     </xsl:apply-templates>
                 </xsl:when>
                 <xsl:when test="$bundleId = $loincId">
-                    <xsl:apply-templates select="$loincFixture/f:Bundle/f:entry[f:resource[f:Observation|f:Specimen]]" mode="editPatient">
+                    <xsl:apply-templates select="$loincFixture/f:Bundle/f:entry[f:resource[f:Observation|f:Specimen|f:Device]]" mode="editPatient">
                         <xsl:with-param name="patientFullUrl" select="$patientFullUrl" tunnel="yes"/>
                         <xsl:with-param name="performerFullUrl" select="$loincFixture/f:Bundle/f:entry[f:resource/f:Organization/f:identifier[f:system/@value = 'http://fhir.nl/fhir/NamingSystem/ura']/f:value/@value = '00003333']/f:fullUrl/@value" tunnel="yes"/>
                     </xsl:apply-templates>
                 </xsl:when>
                 <xsl:when test="$bundleId = $loincIdCert">
-                    <xsl:apply-templates select="$loincFixtureCert/f:Bundle/f:entry[f:resource[f:Observation|f:Specimen]]" mode="editPatient">
+                    <xsl:apply-templates select="$loincFixtureCert/f:Bundle/f:entry[f:resource[f:Observation|f:Specimen|f:Device]]" mode="editPatient">
                         <xsl:with-param name="patientFullUrl" select="$patientFullUrl" tunnel="yes"/>
                         <xsl:with-param name="performerFullUrl" select="$loincFixtureCert/f:Bundle/f:entry[f:resource/f:Organization/f:identifier[f:system/@value = 'http://fhir.nl/fhir/NamingSystem/ura']/f:value/@value = '00003333']/f:fullUrl/@value" tunnel="yes"/>
                     </xsl:apply-templates>
                 </xsl:when>
                 <xsl:when test="$bundleId = $nhgIdCert">
-                    <xsl:apply-templates select="$nhgFixtureCert/f:Bundle/f:entry[f:resource[f:Observation|f:Specimen]]" mode="editPatient">
+                    <xsl:apply-templates select="$nhgFixtureCert/f:Bundle/f:entry[f:resource[f:Observation|f:Specimen|f:Device]]" mode="editPatient">
                         <xsl:with-param name="patientFullUrl" select="$patientFullUrl" tunnel="yes"/>
                         <xsl:with-param name="performerFullUrl" select="$nhgFixtureCert/f:Bundle/f:entry[f:resource/f:Organization/f:identifier[f:system/@value = 'http://fhir.nl/fhir/NamingSystem/ura']/f:value/@value = '00003333']/f:fullUrl/@value" tunnel="yes"/>
                     </xsl:apply-templates>
@@ -87,6 +87,11 @@
     <xsl:template match="f:performer[f:type/@value = 'Organization']/f:reference/@value" mode="editPatient">
         <xsl:param name="performerFullUrl" tunnel="yes"/>
         <xsl:attribute name="value" select="$performerFullUrl"/>
+    </xsl:template>
+    
+    <xsl:template match="f:patient[f:type/@value = 'Patient']/f:reference/@value" mode="editPatient">
+        <xsl:param name="patientFullUrl" tunnel="yes"/>
+        <xsl:attribute name="value" select="$patientFullUrl"/>
     </xsl:template>
     
 </xsl:stylesheet>
