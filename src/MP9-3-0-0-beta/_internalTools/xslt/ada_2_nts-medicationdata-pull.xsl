@@ -218,12 +218,16 @@
         <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts, $theAdditionalParamParts)"/>
         
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
-        <xsl:variable name="returnMedicationCount" select="count($adaInstance/bouwstenen/farmaceutisch_product)"/>
-        <xsl:variable name="returnEntryCount" select="$returnCount + $returnMedicationCount"/>
+        <!-- Select ADA Medication entries -->
+        <xsl:variable name="medicationValues" as="xs:string*"
+            select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
+        <xsl:variable name="medicationValuesDistinct" as="xs:string*" select="distinct-values($medicationValues)"/>  
+        <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
+        <xsl:variable name="returnEntryCount" select="$returnCount + $expectedMedCount"/>
         <xsl:variable name="returnEntryBreakdown">
             <xsl:choose>
                 <xsl:when test="$returnEntryCount gt 0">
-                    <xsl:value-of select="concat('(Consists of ', $returnCount, ' ', $matchResource, ' and ', $returnMedicationCount, ' Medication resources.)')"/>
+                    <xsl:value-of select="concat('(Consists of ', $returnCount, ' ', $matchResource, ' and ', $expectedMedCount, ' Medication resources.)')"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:text>(Consists of no resources.)</xsl:text>
@@ -255,11 +259,12 @@
                     <!--Only the individual Consolidation ada instances (i.e. CONS-MA, CONS-MGB and CONS-TA) need to be converted to a retrieve test script-->
                     <!--For Consolidation there is no serve use case-->
                     <xsl:when test="($transactionTypeNormalized = 'retrieve' and $buildingBlockShort != 'CONS') or ($transactionTypeNormalized = 'serve' and not(contains($buildingBlockShort, 'CONS')))">
-                        <xsl:result-document href="{concat($outputDirNormalized, nf:system-dir($transactionTypeNormalized), '/', $buildingBlockLong, '/', $newFilename)}">
+                        <xsl:result-document href="{concat($outputDirNormalized, nf:makeCLCategoryFolder($buildingBlockShort), '/', nf:makeCLSubcategoryFolder($buildingBlockShort), '/', nf:makeCLRoleFolder($transactionTypeNormalized, $buildingBlockShort), '/', $newFilename)}">
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                                 <id value="mp9-{if(contains($buildingBlockShort,'CONS')) then 'Consolidation-' else ''}{$buildingBlockLong}-{$transactionTypeNormalized}-{$scenarioset}-{$scenario}"/>
                                 <version value="r4-mp9-3.0.0-beta"/>
                                 <name value="Medication Process 9 3.0.0-beta  - {if(contains($buildingBlockShort,'CONS')) then 'Consolidation - ' else ''}{$buildingBlockLong} - {nf:first-cap($transactionTypeNormalized)} - Scenario {$scenarioset}.{$scenario}"/>
+                                <title value="Medication Process 9 3.0.0-beta  - {if(contains($buildingBlockShort,'CONS')) then 'Consolidation - ' else ''}{$buildingBlockLong} - {nf:first-cap($transactionTypeNormalized)} - Scenario {$scenarioset}.{$scenario}"/>
                                 <description value="Scenario {$scenarioset}.{$scenario} - {$description}"/>
                                 <!-- NICTIZ-34243 "nl-core-Patient-mp9-" niet verwijderen, wordt later gebruikt om Bearer token op te halen middels QualificationTokens.json -->
                                 <nts:authToken patientResourceId="nl-core-Patient-mp9-{$patientName}" nts:in-targets="MedMij"/>
@@ -269,7 +274,8 @@
                                     <name value="Scenario {$scenarioset}.{$scenario}"/>
                                     <description value="{$description}"/>
                                     <xsl:choose>
-                                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">
+                                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">     
+                                            <!-- Build filtered identifier sets and expected counts -->                                           
                                             <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
                                                 <nts:with-parameter name="description" value="Test client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -285,12 +291,13 @@
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="count" value="{$returnCount}"/>
                                             </nts:include>
-                                            <nts:include value="assert-returnEntryCountAtLeast" scope="project">
-                                                <nts:with-parameter name="count" value="{$returnEntryCount}"/>
-                                                <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
-                                            </nts:include>
+                                            <!-- Assert Medication count -->
+                                            <nts:include value="assert-returnCount" scope="project">
+                                                <nts:with-parameter name="resource" value="Medication"/>
+                                                <nts:with-parameter name="count" value="{$expectedMedCount}"/>
+                                            </nts:include> 
                                         </xsl:when>
-                                        <xsl:when test="$transactionTypeNormalized = 'serve'">
+                                        <xsl:when test="$transactionTypeNormalized = 'serve'">     
                                             <!--NICTIZ-29763 removed CheckContent from target so no content asserts scripts will be generated
                                                  <nts:include value="test.server.search" scope="common" nts:in-targets="#default CheckContent">-->
                                             <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
@@ -308,43 +315,12 @@
                                             <nts:include value="assert-returnCountAtLeast" scope="project">
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="count" value="{$returnCount}"/>
-                                            </nts:include>
-                                            <nts:include value="assert-returnEntryCountAtLeast" scope="project">
-                                                <nts:with-parameter name="count" value="{$returnEntryCount}"/>
-                                                <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
-                                            </nts:include>
-                                            
-                                            <!-- adding content assertions -->
-                                            
-                                            <!-- adding content assertions for medicatiebouwstenen --> 
-                                            <!-- TODO: add content assertions for bouwstenen like medicatie and zorgverlener and patient --> 
-                                            <!-- removed content asserts as the discriminator doesn't work in productionlike settings because suppliers will have different identifiers.
-                                                 the discriminator should be based on the "identifyResources" variable but this is currently only implemented in
-                                                 send scripts (ada_2_nts.xsl from https://github.com/Nictiz/Nictiz-testscripts/blob/identificationAsserts/src/MP9-3-0-0-beta/Test/_internalTools/xslt/ada_2_nts.xsl)
-                                                 
-                                                 <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
-                                                 
-                                                 <xsl:if test="$identifiers">
-                                                 <xsl:for-each select="$identifiers">
-                                                 <xsl:variable name="fixtureId">
-                                                 <xsl:call-template name="findContentAssertFixture">
-                                                 <xsl:with-param name="identifier" select="."/>
-                                                 </xsl:call-template>
-                                                 </xsl:variable>
-                                                 <xsl:call-template name="util:logMessage">
-                                                 <xsl:with-param name="level" select="$logINFO"/>
-                                                 <xsl:with-param name="msg"> The resource with this identifier <xsl:value-of select="."/> will be asserted based on fixtureId: <xsl:value-of select="$fixtureId"/></xsl:with-param>
-                                                 </xsl:call-template>
-                                                 <xsl:variable name="apos">'</xsl:variable>
-                                                 <nts:contentAsserts href="{concat('fixtures/', $fixtureId, '.xml')}" description="{concat('contains a resource with identifier = ',.)}" 
-                                                 discriminator="{concat('identifier.value =', $apos, xs:string(.), $apos)}"
-                                                 nts:in-targets="CheckContent"/>
-                                                 </xsl:for-each>
-                                                 </xsl:if>
-                                            -->
-                                            
-                                            
-                                            
+                                            </nts:include>                                                                                     
+                                            <!-- Assert Medication count -->
+                                            <nts:include value="assert-returnCount" scope="project">
+                                                <nts:with-parameter name="resource" value="Medication"/>
+                                                <nts:with-parameter name="count" value="{$expectedMedCount}"/>
+                                            </nts:include> 
                                         </xsl:when>
                                     </xsl:choose>
                                 </test>
@@ -470,20 +446,24 @@
         
         <xsl:variable name="description" as="xs:string?" select="$adaInstance/@desc"/>
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
-        <!-- We add the medication products, since those are in an include in the query -->
-        <xsl:variable name="returnEntryCount" select="$returnCount + count($adaInstance/bouwstenen/farmaceutisch_product)"/>
+        <!-- Select ADA Medication entries -->
+        <xsl:variable name="medicationValues" as="xs:string*"
+            select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
+        <xsl:variable name="medicationValuesDistinct" as="xs:string*" select="distinct-values($medicationValues)"/>  
+        <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
+        <xsl:variable name="returnEntryCount" select="$returnCount + $expectedMedCount"/>
         <xsl:variable name="returnEntryBreakdown">
             <xsl:choose>
                 <xsl:when test="$returnEntryCount gt 0">
-                    <xsl:value-of select="concat('(Consists of ', $returnCount, ' ', $matchResource, ' and ', count($adaInstance/bouwstenen/farmaceutisch_product), ' Medication resources.)')"/>
+                    <xsl:value-of select="concat('(Consists of ', $returnCount, ' ', $matchResource, ' and ', $expectedMedCount, ' Medication resources.)')"/>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:text>(Consists of no resources.)</xsl:text>
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
-        
-        <xsl:result-document href="{concat($outputDirNormalized, nf:system-dir($transactionTypeNormalized), '/', $buildingBlockLong, '/', $newFilename)}">
+
+        <xsl:result-document href="{concat($outputDirNormalized, nf:makeCLCategoryFolder($buildingBlockShort), '/', nf:makeCLSubcategoryFolder($buildingBlockShort), '/', nf:makeCLRoleFolder($transactionTypeNormalized, $buildingBlockShort), '/', $newFilename)}">
             <xsl:variable name="ntsScenario" as="xs:string?">
                 <xsl:choose>
                     <xsl:when test="$transactionTypeNormalized = ('retrieve')">client</xsl:when>
@@ -507,6 +487,7 @@
                 <id value="mp9-{lower-case($buildingBlockShort)}-{$transactionType}-{$theScenarioForTestscript}"/>
                 <version value="r4-mp9-3.0.0-beta"/>
                 <name value="Medication Process 9 3.0.0-beta  - {$buildingBlockLong} - {nf:first-cap($transactionType)} - Scenario {$theScenario}"/>
+                <title value="Medication Process 9 3.0.0-beta  - {$buildingBlockLong} - {nf:first-cap($transactionType)} - Scenario {$theScenario}"/>
                 <description value="Scenario {$theScenario} - {$description}"/>
                 <!-- NICTIZ-34243 "nl-core-Patient-mp9-" niet verwijderen, wordt later gebruikt om Bearer token op te halen middels QualificationTokens.json -->
                 <nts:authToken patientResourceId="nl-core-Patient-mp9-{$patientName}" nts:in-targets="MedMij"/>
@@ -518,8 +499,7 @@
                     <name value="Scenario {$theScenario}"/>
                     <description value="{$description}"/>
                     <xsl:choose>
-                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">
-                            
+                        <xsl:when test="$transactionTypeNormalized = 'retrieve'">                            
                             <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
                                 <nts:with-parameter name="description" value="Test client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -536,12 +516,13 @@
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="count" value="{$returnCount}"/>
                             </nts:include>
-                            <nts:include value="assert-returnEntryCountAtLeast" scope="project">
-                                <nts:with-parameter name="count" value="{$returnEntryCount}"/>
-                                <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
-                            </nts:include>
+                            <!-- Assert Medication count -->
+                            <nts:include value="assert-returnCount" scope="project">
+                                <nts:with-parameter name="resource" value="Medication"/>
+                                <nts:with-parameter name="count" value="{$expectedMedCount}"/>
+                            </nts:include> 
                         </xsl:when>
-                        <xsl:when test="$transactionTypeNormalized = 'serve'">
+                        <xsl:when test="$transactionTypeNormalized = 'serve'">                           
                             <!--NICTIZ-29763 removed CheckContent from target so no content asserts scripts will be generated
                                  <nts:include value="test.server.search" scope="common" nts:in-targets="#default CheckContent">-->
                             <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
@@ -560,35 +541,13 @@
                             <nts:include value="assert-returnCount" scope="project">
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="count" value="{$returnCount}"/>
-                            </nts:include>
-                            <nts:include value="assert-returnEntryCountAtLeast" scope="project">
-                                <nts:with-parameter name="count" value="{$returnEntryCount}"/>
-                                <nts:with-parameter name="breakdown" value="{$returnEntryBreakdown}"/>
-                            </nts:include>
-                            
-                            <!-- adding content assertions -->
-                            <!-- TODO: add content assertions for medicatiebouwstenen from filter queries scenario 0--> 
-                            <!-- TODO: add content assertions for bouwstenen like medicatie and zorgverlener and patient --> 
-                            <!--               <xsl:variable name="identifiers" select="$adaInstance/medicamenteuze_behandeling/*/identificatie/@value"/>
-                                 
-                                 <xsl:if test="$identifiers">
-                                 <xsl:for-each select="$identifiers">
-                                 <xsl:variable name="fixtureId">
-                                 <xsl:call-template name="findContentAssertFixture">
-                                 <xsl:with-param name="identifier" select="."/>
-                                 </xsl:call-template>
-                                 </xsl:variable>
-                                 <xsl:call-template name="util:logMessage">
-                                 <xsl:with-param name="level" select="$logINFO"/>
-                                 <xsl:with-param name="msg"> The resource with this identifier <xsl:value-of select="."/> will be asserted based on fixtureId: <xsl:value-of select="$fixtureId"/></xsl:with-param>
-                                 </xsl:call-template>
-                                 <xsl:variable name="apos">'</xsl:variable>
-                                 <nts:contentAsserts href="{concat('fixtures/', $fixtureId, '.xml')}" description="{concat('contains a resource with identifier = ',.)}" 
-                                 discriminator="{concat('Bundle.entry.resource.where(identifier.value =', $apos, xs:string(.), $apos)}"
-                                 nts:in-targets="CheckContent"/>
-                                 </xsl:for-each>
-                                 </xsl:if>-->
-                         </xsl:when>
+                            </nts:include>                            
+                            <!-- Assert Medication count -->
+                            <nts:include value="assert-returnCount" scope="project">
+                                <nts:with-parameter name="resource" value="Medication"/>
+                                <nts:with-parameter name="count" value="{$expectedMedCount}"/>
+                            </nts:include> 
+                        </xsl:when>
                         <xsl:otherwise>
                             <xsl:call-template name="util:logMessage">
                                 <xsl:with-param name="level" select="$logFATAL"/>
@@ -604,18 +563,19 @@
     </xsl:template>
     
     <xd:doc>
-        <xd:desc>Change the folder names to contain "-System" </xd:desc>
+        <xd:desc>Change the folder names to contain "-System" and include the role code </xd:desc>
         <xd:param name="transactionType">The transactionType to be transformed </xd:param>
-        <xd:param name="transactionTypeNormalized">The normalized transactionType to be transformed </xd:param>
+        <xd:param name="buildingBlockShort"></xd:param>
     </xd:doc>
-    <xsl:function name="nf:system-dir" as="xs:string">
+    <xsl:function name="nf:makeCLRoleFolder" as="xs:string">
         <xsl:param name="transactionType" as="xs:string?"/>
+        <xsl:param name="buildingBlockShort" as="xs:string?"/>
         <xsl:variable name="transactionTypeNormalized" select="normalize-space(lower-case($transactionType))"/>
         <xsl:choose>
-            <xsl:when test="$transactionTypeNormalized = 'retrieve'">Retrieving-System</xsl:when>
-            <xsl:when test="$transactionTypeNormalized = 'serve'">Serving-System</xsl:when>
-            <xsl:when test="$transactionTypeNormalized = 'receive'">Receiving-System</xsl:when>
-            <xsl:when test="$transactionTypeNormalized = 'send'">Sending-System</xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'retrieve'"><xsl:value-of select="concat('Retrieving-MGR-',$buildingBlockShort)"/></xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'serve'"><xsl:value-of select="concat('Serving-MGB-',$buildingBlockShort)"/></xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'receive'"><xsl:value-of select="concat('Receiving-MGO-',$buildingBlockShort)"/></xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'send'"><xsl:value-of select="concat('Sending-MGS-',$buildingBlockShort)"/></xsl:when>
             <!-- fallback: Keep current behaviour -->
             <xsl:otherwise>
                 <xsl:value-of select="nf:first-cap($transactionType)"/>
@@ -672,6 +632,61 @@
             <xsl:when test="contains($buildingBlockShort, 'WDS')">VariableDosingRegimen</xsl:when>
             <xsl:when test="contains($buildingBlockShort, 'VV')">DispenseRequest</xsl:when>
             <xsl:when test="contains($buildingBlockShort, 'MVE')">MedicationDispense</xsl:when>
+            <xsl:otherwise>
+                <xsl:call-template name="util:logMessage">
+                    <xsl:with-param name="level" select="$logFATAL"/>
+                    <xsl:with-param name="msg">Could not determine building block: <xsl:value-of select="$buildingBlockShort"/></xsl:with-param>
+                    <xsl:with-param name="terminate" select="true()"/>
+                </xsl:call-template>
+            </xsl:otherwise>
+        </xsl:choose>
+        
+    </xsl:function>
+
+    <xd:doc>
+        <xd:desc>Make Conformancelab category folder name string based on short building block string</xd:desc>
+        <xd:param name="buildingBlockShort">short building block string: MA/WDS/VV/TA/MVE/MGB/MTD</xd:param>
+    </xd:doc>
+    <xsl:function name="nf:makeCLCategoryFolder" as="xs:string?">
+        <xsl:param name="buildingBlockShort" as="xs:string?"/>
+        
+        <xsl:choose>
+            <!-- consolidation buildingBlockShort is a string like "CONS-MA" -->
+            <xsl:when test="contains($buildingBlockShort, 'CONS')">Cons</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MA')">Step-3</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MGB')">Step-4</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'TA')">Step-5</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MTD')">Step-6</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'WDS')">Step-3</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'VV')">Step-3</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MVE')">Step-5</xsl:when>
+            <xsl:otherwise>
+                <xsl:call-template name="util:logMessage">
+                    <xsl:with-param name="level" select="$logFATAL"/>
+                    <xsl:with-param name="msg">Could not determine building block: <xsl:value-of select="$buildingBlockShort"/></xsl:with-param>
+                    <xsl:with-param name="terminate" select="true()"/>
+                </xsl:call-template>
+            </xsl:otherwise>
+        </xsl:choose>
+        
+    </xsl:function>
+
+    <xd:doc>
+        <xd:desc>Make Conformancelab subcategory folder name string based on short building block string</xd:desc>
+        <xd:param name="buildingBlockShort">short building block string: MA/WDS/VV/TA/MVE/MGB/MTD</xd:param>
+    </xd:doc>
+    <xsl:function name="nf:makeCLSubcategoryFolder" as="xs:string?">
+        <xsl:param name="buildingBlockShort" as="xs:string?"/>
+        
+        <xsl:choose>
+            <!-- consolidation buildingBlockShort is a string like "CONS-MA" -->
+            <xsl:when test="contains($buildingBlockShort, 'MA')">MA</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MGB')">MGB</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'TA')">TA</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MTD')">MTD</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'WDS')">WDS</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'VV')">VV</xsl:when>
+            <xsl:when test="contains($buildingBlockShort, 'MVE')">MVE</xsl:when>
             <xsl:otherwise>
                 <xsl:call-template name="util:logMessage">
                     <xsl:with-param name="level" select="$logFATAL"/>
