@@ -5,8 +5,8 @@
     <xsl:output method="xml" indent="yes" omit-xml-declaration="yes"/>
 
     <xsl:strip-space elements="*"/>
-
-<!--    <xsl:param name="mappingsUrl4FhirFixtures">https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/ada_2_fhir-r4/mp/9.3.0/touchstone/test/4touchstone_mp</xsl:param>-->
+    
+    <!--    <xsl:param name="mappingsUrl4FhirFixtures">https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/ada_2_fhir-r4/mp/9.3.0/touchstone/test/4touchstone_mp</xsl:param>-->
     <xsl:param name="mappingsUrl4FhirFixtures">../../../../../HL7-mappings/master/ada_2_fhir-r4/mp/9.3.0/touchstone/test/4touchstone_mp</xsl:param>
     
     <!-- Send/Receive/Retrieve/Serve, this param defaults to Send -->
@@ -18,37 +18,22 @@
         <xd:desc>Start template. Handles ada test instances, converts them to nts.</xd:desc>
     </xd:doc>
     <xsl:template match="/">
-
         <xsl:variable name="adaTransaction" select="adaxml/data/*" as="element()*"/>
-
+        
         <xsl:for-each select="$adaTransaction">
-            <!-- find corresponding FHIR fixture based on adaId / filename -->
+            <!-- find corresponding FHIR fixture based on adaId -->
             <xsl:variable name="adaTransId" select="nf:removeSpecialCharacters(@id)"/>
-            <!-- extract concise filename so the end user can distinguish between different scripts  -->
-            <xsl:variable name="fileName" select="replace($adaTransId,'.+(tst|kwal)-(.+)-v30', '$2')"/>
+            
+            <xsl:variable name="testGoal">
+                <xsl:choose>
+                    <xsl:when test="replace($adaTransId,'.+(tst|kwal)-(.+)-v30', '$1') = 'kwal'">Cert</xsl:when>
+                    <xsl:otherwise>Test</xsl:otherwise>
+                </xsl:choose>
+            </xsl:variable>
+            
             <xsl:variable name="fhirFixture" select="document(concat($mappingsUrl4FhirFixtures, '/', $adaTransId, '.xml'))"/>
             <xsl:variable name="fixturePatient" select="$fhirFixture//f:Patient[1]"/>
             
-            <xsl:variable name="scenarioset">
-                <xsl:choose>
-                    <xsl:when test="string-length(scenario-nr/@value) gt 0">
-                        <xsl:value-of select="replace(scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$1')"/>
-                    </xsl:when>
-                    <xsl:when test="string-length(voorstel_gegevens/(voorstel | antwoord)/identificatie/@value) gt 0">
-                        <xsl:value-of select="lower-case(nf:assure-logicalid-chars(voorstel_gegevens/(voorstel | antwoord)/identificatie/@value))"/>
-                    </xsl:when>
-                </xsl:choose>
-            </xsl:variable>
-            <xsl:variable name="scenarioSub" select="replace(scenario-nr/@value, '(\d+)\.?(\d*[a-z]?)\*?\s?.*', '$2')"/>
-            <xsl:variable name="scenario">
-                <xsl:choose>
-                    <xsl:when test="string-length($scenarioSub) gt 0">
-                        <xsl:value-of select="$scenarioSub"/>
-                    </xsl:when>
-                    <xsl:when test="string-length(scenario-nr/@value) gt 0">x</xsl:when>
-                </xsl:choose>
-            </xsl:variable>
-
             <xsl:variable name="ntsScenario" as="xs:string?">
                 <xsl:choose>
                     <xsl:when test="normalize-space(upper-case($transactionType)) = ('RETRIEVE', 'SEND')">client</xsl:when>
@@ -56,55 +41,60 @@
                     <xsl:otherwise>unknown</xsl:otherwise>
                 </xsl:choose>
             </xsl:variable>
-
-            <xsl:variable name="testScriptString" as="element()*">
+            
+            <xsl:variable name="testScriptString" as="element(testscriptstring)*">
+                <xsl:call-template name="getTestScriptString"/>
+            </xsl:variable>
+            <xsl:variable name="scenarioString" as="element(scenarioString)">
+                <xsl:call-template name="getScenarioString"/>
+            </xsl:variable>
+            
+            <xsl:variable name="idString" select="replace(concat('mp9-', $testScriptString/@short, '-', normalize-space(lower-case($transactionType)), '-', $scenarioString/@theScenarioXHyphen), '(.*?)-?(-$)', '$1')"/>
+            <xsl:variable name="testScriptTitle" select="concat($scenarioString/@scenarioset00, '. Scenario ', $scenarioString/@theScenarioX)"/>
+            
+            <xsl:variable name="fileNamePart" as="xs:string">
                 <xsl:choose>
-                    <xsl:when test="self::beschikbaarstellen_medicatiegegevens | self::sturen_medicatiegegevens">
-                        <testscriptstring short="meddata" long="MedicationData"/>
-                    </xsl:when>
-                    <xsl:when test="self::sturen_medicatievoorschrift">
-                        <testscriptstring short="prescr" long="MedicationPrescription"/>
-                    </xsl:when>
-                    <xsl:when test="self::sturen_afhandeling_medicatievoorschrift">
-                        <testscriptstring short="prescrproc" long="PrescrProcessing"/>
-                    </xsl:when>
-                    <xsl:when test="self::sturen_voorstel_medicatieafspraak">
-                        <testscriptstring short="propma" long="ProposalMA"/>
-                    </xsl:when>
-                    <xsl:when test="self::sturen_antwoord_voorstel_medicatieafspraak">
-                        <testscriptstring short="reppropma" long="ReplyProposalMA"/>
-                    </xsl:when>
-                    <xsl:when test="self::sturen_voorstel_verstrekkingsverzoek">
-                        <testscriptstring short="propvv" long="ProposalVV"/>
-                    </xsl:when>
-                    <xsl:when test="self::sturen_antwoord_voorstel_verstrekkingsverzoek">
-                        <testscriptstring short="reppropvv" long="ReplyProposalVV"/>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <testscriptstring short="notsupp" long="NotSupported"/>
-                        <xsl:call-template name="util:logMessage">
-                            <xsl:with-param name="level" select="$logWARN"/>
-                            <xsl:with-param name="msg">Ada transaction '<xsl:value-of select="local-name()"/>' with transaction type '<xsl:value-of select="$transactionType"/>' not properly supported yet.</xsl:with-param>
-                        </xsl:call-template>
-                    </xsl:otherwise>
+                    <xsl:when test="$testGoal = 'Cert'">kwal</xsl:when>
+                    <xsl:otherwise>tst</xsl:otherwise>
                 </xsl:choose>
             </xsl:variable>
-
-
-        <xsl:variable name="description" as="xs:string?">
-            <xsl:choose>
-                <xsl:when test="string-length(./@title) gt 0 and string-length(./@desc) gt 0">
-                    <xsl:value-of select="string-join(./@title | ./@desc, ' - ')"/>
-                </xsl:when>
-                <xsl:when test="string-length(./@title) gt 0">
-                    <xsl:value-of select="./@title"/>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:value-of select="./@desc"/>
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
-
+            <xsl:variable name="buildingBlockShort" select="substring-before(substring-after($adaTransId, concat($fileNamePart, '-')), '-')[1]" as="xs:string*"/>
+            <xsl:variable name="scriptNo" select="substring-before(substring-after($adaTransId, concat($fileNamePart, '-', $buildingBlockShort, '-script')), '-')[1]" as="xs:string*"/>
+            <xsl:variable name="wikiUrl">
+                <xsl:text>https://informatiestandaarden.nictiz.nl/wiki/mp:V9.3.0_</xsl:text>
+                <xsl:choose>
+                    <!--<xsl:when test="$testGoal = 'Test'"></xsl:when>-->
+                    <xsl:when test="$testGoal = 'Cert'">
+                        <xsl:text>kwalificatie</xsl:text>
+                    </xsl:when>
+                    <xsl:otherwise>unknown</xsl:otherwise>
+                </xsl:choose>
+                <xsl:text>_</xsl:text>
+                <xsl:value-of select="$testScriptString/@wiki"/>
+                <xsl:text>_</xsl:text>
+                <xsl:choose>
+                    <xsl:when test="normalize-space(upper-case($transactionType)) = 'RETRIEVE'">raadplegen</xsl:when>
+                    <xsl:when test="normalize-space(upper-case($transactionType)) = 'SEND'">sturen</xsl:when>
+                    <xsl:when test="normalize-space(upper-case($transactionType)) = 'SERVE'">beschikbaarstellen</xsl:when>
+                    <xsl:when test="normalize-space(upper-case($transactionType)) = 'RECEIVE'">ontvangen</xsl:when>
+                    <xsl:otherwise>unknown</xsl:otherwise>
+                </xsl:choose>
+                <xsl:text>_</xsl:text>
+                <xsl:value-of select="$buildingBlockShort"/>
+                <xsl:text>#</xsl:text>
+                <xsl:choose>
+                    <!--<xsl:when test="$testGoal = 'Test'"></xsl:when>-->
+                    <xsl:when test="$testGoal = 'Cert'">
+                        <xsl:text>Kwalificatie</xsl:text>
+                    </xsl:when>
+                    <xsl:otherwise>unknown</xsl:otherwise>
+                </xsl:choose>
+                <xsl:text>_script_</xsl:text>
+                <xsl:value-of select="$scriptNo"/>
+            </xsl:variable>
+            
+            <xsl:variable name="testScriptDescription" select="concat(nf:first-cap($transactionType), ' ', $testScriptString/@full, ' ', $buildingBlockShort, ' building blocks for patient ', $fixturePatient/f:name/f:text/@value,' as defined at ', $wikiUrl)"/>
+            
             <xsl:choose>
                 <!-- pull beschikbaarstellen_medicatiegegevens -->
                 <xsl:when test="self::beschikbaarstellen_medicatiegegevens and normalize-space(upper-case($transactionType)) = ('RETRIEVE', 'SERVE')">
@@ -173,23 +163,22 @@
                             </xsl:choose>
                         </xsl:for-each-group>
                     </xsl:variable>
-
-                    <xsl:variable name="idString" select="replace(concat('mp9-', $testScriptString/@short, '-', normalize-space(lower-case($transactionType)), '-', $scenarioset, '-', $scenario), '(.*?)-?(-$)', '$1')"/>
-                    <xsl:choose>
-                        <!-- Receive -->
-                        <xsl:when test="$ntsScenario = 'server'">
-                            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
-                                <id value="{$idString}"/>
-                                <version value="r4-mp9-3.0.0-beta"/>
-                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} - {$fileName}"/>
-                                <title value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} - {$fileName}"/>
-                                <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} for {$fixturePatient/f:name/f:text/@value}."/>
+                    
+                    <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                        <id value="{$idString}"/>
+                        <version value="r4-mp9-3.0.0-beta"/>
+                        <name value="{$testScriptTitle}"/>
+                        <title value="{$testScriptTitle}"/>
+                        <description value="{$testScriptDescription}"/>
+                        <xsl:choose>
+                            <!-- Receive -->
+                            <xsl:when test="$ntsScenario = 'server'">
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.{'{$_FORMAT}'}"/>
                                 <nts:includeDateT value="yes"/>
                                 <!--<xsl:apply-templates select="$deleteStuff/f:variable" mode="Nictiz-intern"/>-->
-                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}">
-                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
-                                    <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
+                                <test id="scenario{$scenarioString/@theScenarioXHyphen}-{lower-case($transactionType)}-{$testScriptString/@short}">
+                                    <name value="Scenario {$scenarioString/@theScenarioX}"/>
+                                    <description value="{nf:first-cap($transactionType)} {$testScriptString/@full} {$buildingBlockShort} resources in a transaction Bundle"/>
                                     <action>
                                         <operation>
                                             <type>
@@ -217,22 +206,15 @@
                                     <!-\- the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
                                     <xsl:copy-of select="$deleteStuff/f:action"/>
                                 </teardown>-->
-                            </TestScript>
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <!-- assume Send -->
-                            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
-                                <id value="{$idString}"/>
-                                <version value="r4-mp9-3.0.0-beta"/>
-                                <name value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} - {$fileName}"/>
-                                <title value="MP9 - {nf:first-cap($ntsScenario)} - Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} - {$fileName}"/>
-                                <description value="Scenario {$scenarioset}.{$scenario} - {nf:first-cap($transactionType)} {$testScriptString/@long} for {$fixturePatient/f:name/f:text/@value}."/>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <!-- assume Send -->
                                 <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml" nts:in-targets="Nictiz-intern"/>
                                 <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
                                 <!--<xsl:copy-of select="$deleteStuff/f:variable"/>-->
-                                <test id="scenario{$scenarioset}-{$scenario}-{lower-case($transactionType)}-{$testScriptString/@short}">
-                                    <name value="Scenario {$scenarioset}.{$scenario}"/>
-                                    <description value="{nf:first-cap($transactionType)} {$testScriptString/@long} in a transaction Bundle"/>
+                                <test id="scenario{$scenarioString/@theScenarioXHyphen}-{lower-case($transactionType)}-{$testScriptString/@short}">
+                                    <name value="Scenario {$scenarioString/@theScenarioX}"/>
+                                    <description value="{nf:first-cap($transactionType)} {$testScriptString/@full} {$buildingBlockShort} resources in a transaction Bundle"/>
                                     <action>
                                         <operation>
                                             <type>
@@ -254,7 +236,7 @@
                                     <!-\- but not Patient, since we want to do a purge after -\->
                                     <xsl:copy-of select="$deleteStuff/f:action[f:operation/f:resource[@value ne 'Patient']]"/>
                                     <!-\- we do a patient purge for extra certainty, we don't know if whoever sent this Bundle sent the exact same number of resources that we expect 
-                                         and this way we will at least get rid of patient related resources which pollute BSN-based query's -\->
+                                    and this way we will at least get rid of patient related resources which pollute BSN-based query's -\->
                                     <action>
                                         <operation>
                                             <!-\- Purge the created Patient and all its remaining associated resources that have been sent. -\->
@@ -275,10 +257,9 @@
                                     <xsl:copy-of select="$deleteStuff/f:action"/>
                                     <!-\- MP-746 no $purge needed for Nictiz internal scripts -\->
                                 </teardown>-->
-                            </TestScript>
-
-                        </xsl:otherwise>
-                    </xsl:choose>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </TestScript>
                 </xsl:when>
 
                 <xsl:otherwise>
@@ -321,5 +302,86 @@
         <xsl:param name="in" as="xs:string?"/>
         <xsl:sequence select="concat(upper-case(substring($in, 1, 1)), substring($in, 2))"/>
     </xsl:function>
-
+    
+    <xsl:template name="getScenarioString" as="element()*">
+        <xsl:variable name="theScenario" select="(.//scenario-nr/@value)[1]"/>
+        <xsl:variable name="theScenarioset">
+            <xsl:choose>
+                <xsl:when test="string-length($theScenario) gt 0">
+                    <xsl:value-of select="replace($theScenario, '(\d+[a-zA-Z]?)\.?(\d*[a-zA-Z]?)\*?\s?.*', '$1')"/>
+                </xsl:when>
+                <xsl:when test="string-length(voorstel_gegevens/(voorstel | antwoord)/identificatie/@value) gt 0">
+                    <xsl:value-of select="lower-case(nf:assure-logicalid-chars(voorstel_gegevens/(voorstel | antwoord)/identificatie/@value))"/>
+                </xsl:when>
+            </xsl:choose>
+        </xsl:variable>
+        <xsl:variable name="scenarioSub" select="replace($theScenario, '(\d+[a-zA-Z]?)\.?(\d*[a-zA-Z]?)\*?\s?.*', '$2')"/>
+        <xsl:variable name="scenario">
+            <xsl:choose>
+                <xsl:when test="string-length($scenarioSub) gt 0">
+                    <xsl:value-of select="$scenarioSub"/>
+                </xsl:when>
+                <xsl:when test="string-length($theScenario) gt 0">x</xsl:when>
+            </xsl:choose>
+        </xsl:variable>
+        
+        <xsl:variable name="theScenarioX" select="concat($theScenarioset, '.', $scenario)"/>
+        
+        <!-- Edit the scenarioset to the format 00 with trailing non-digits -->
+        <xsl:variable name="scenarioset00">
+            <xsl:analyze-string select="xs:string($theScenarioset)" regex="^(\d+)(.*)$">
+                <xsl:matching-substring>
+                    <xsl:value-of select="format-number(number(regex-group(1)), '00')"/>
+                    <xsl:value-of select="regex-group(2)"/>
+                </xsl:matching-substring>
+                <xsl:non-matching-substring>
+                    <xsl:value-of select="."/>
+                </xsl:non-matching-substring>
+            </xsl:analyze-string>
+        </xsl:variable>
+        
+        <scenarioString>
+            <xsl:attribute name="theScenario" select="$theScenario"/>
+            <xsl:attribute name="theScenarioX" select="$theScenarioX"/>
+            <xsl:attribute name="theScenarioHyphen" select="replace(nf:removeSpecialCharacters($theScenario), '\.', '-')"/>
+            <xsl:attribute name="theScenarioXHyphen" select="replace(nf:removeSpecialCharacters($theScenarioX), '\.', '-')"/>
+            <xsl:attribute name="scenarioset" select="$theScenarioset"/>
+            <xsl:attribute name="scenarioset00" select="$scenarioset00"/>
+            <xsl:attribute name="scenario" select="$scenario"/>
+        </scenarioString>
+    </xsl:template>
+    
+    <xsl:template name="getTestScriptString" as="element()*">
+        <xsl:choose>
+            <xsl:when test="self::beschikbaarstellen_medicatiegegevens | self::sturen_medicatiegegevens">
+                <testscriptstring short="meddata" long="MedicationData" full="Medication data" wiki="medicatiegegevens"/>
+            </xsl:when>
+            <xsl:when test="self::sturen_medicatievoorschrift">
+                <testscriptstring short="prescr" long="MedicationPrescription" full="Medication prescription" wiki="voorschrift"/>
+            </xsl:when>
+            <xsl:when test="self::sturen_afhandeling_medicatievoorschrift">
+                <testscriptstring short="prescrproc" long="PrescrProcessing" full="Prescription processing" wiki="afhandelen_voorschrift"/>
+            </xsl:when>
+            <xsl:when test="self::sturen_voorstel_medicatieafspraak">
+                <testscriptstring short="propma" long="ProposalMA" full="unknown" wiki="unknown"/>
+            </xsl:when>
+            <xsl:when test="self::sturen_antwoord_voorstel_medicatieafspraak">
+                <testscriptstring short="reppropma" long="ReplyProposalMA" full="unknown" wiki="unknown"/>
+            </xsl:when>
+            <xsl:when test="self::sturen_voorstel_verstrekkingsverzoek">
+                <testscriptstring short="propvv" long="ProposalVV" full="unknown" wiki="unknown"/>
+            </xsl:when>
+            <xsl:when test="self::sturen_antwoord_voorstel_verstrekkingsverzoek">
+                <testscriptstring short="reppropvv" long="ReplyProposalVV" full="unknown" wiki="unknown"/>
+            </xsl:when>
+            <xsl:otherwise>
+                <testscriptstring short="notsupp" long="NotSupported"/>
+                <xsl:call-template name="util:logMessage">
+                    <xsl:with-param name="level" select="$logWARN"/>
+                    <xsl:with-param name="msg">Ada transaction '<xsl:value-of select="local-name()"/>' with transaction type '<xsl:value-of select="$transactionType"/>' not properly supported yet.</xsl:with-param>
+                </xsl:call-template>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+    
 </xsl:stylesheet>
