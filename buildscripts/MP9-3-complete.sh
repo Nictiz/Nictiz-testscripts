@@ -1,3 +1,17 @@
 #/bin/bash
 
-ant -f ../src/build-multiple.xml -Dinput.dirs="src/MP9-3-0-0-beta/Test, src/MP9-3-0-0-beta/Test-MedMij, src/MP9-3-0-0-beta/Cert, src/MP9-3-0-0-beta/Cert-MedMij"
+# ant -f ../src/build-multiple.xml -Dinput.dirs="src/MP9-3-0-0-beta/Test, src/MP9-3-0-0-beta/Test-MedMij, src/MP9-3-0-0-beta/Cert, src/MP9-3-0-0-beta/Cert-MedMij"
+
+echo "ant mp9 30 MP9-3-build Test..."
+ant -f ../src/build-multiple.xml -Dinput.dirs="src/MP9-3-0-0-beta/Test" >MP9-3-0-0-beta_Test.log 
+
+echo "ant mp9 30 MP9-3-build Test-MedMij..."
+ant -f ../src/build-multiple.xml -Dinput.dirs="src/MP9-3-0-0-beta/Test-MedMij" >MP9-3-0-0-beta_Test-MedMij.log
+
+echo "ant mp9 30 MP9-3-build Cert..."
+ant -f ../src/build-multiple.xml -Dinput.dirs="src/MP9-3-0-0-beta/Cert" >MP9-3-0-0-beta_Cert.log 
+
+echo "ant mp9 30 MP9-3-build Cert-MedMij..."
+ant -f ../src/build-multiple.xml -Dinput.dirs="src/MP9-3-0-0-beta/Cert-MedMij" >MP9-3-0-0-beta_Cert-MedMij.log
+
+echo "Done"
