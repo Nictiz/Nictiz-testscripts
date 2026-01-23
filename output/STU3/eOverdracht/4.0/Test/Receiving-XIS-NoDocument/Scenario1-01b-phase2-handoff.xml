@@ -15,7 +15,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 1.1b for eOverdracht receiving systems. This scenario assumes that there is no negotiation phase ('aanmeldfase')."/>
+   <description value="Scenario 1.1b, test 2/2 for eOverdracht receiving systems. This test focuses on the handoff phase ('overdrachtfase'). In a normal scenario, the test for the negotiation phase ('aanmeldfase') has been completed before running this test, although it may be performed in isolation."/>
    <origin>
       <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
          <valueBoolean value="true"/>
@@ -60,12 +60,22 @@
       <autocreate value="false"/>
       <autodelete value="false"/>
       <resource>
-         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-cert-1_1b-IN-PROGRESS.xml"/>
+         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-test-1_1b-IN-PROGRESS.xml"/>
       </resource>
    </fixture>
+   <fixture id="completed-task-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
+      <resource>
+         <reference value="../_reference/resources/resources-specific/eOverdracht-Task-eov-test-1_1b-COMPLETED.xml"/>
+      </resource>
+   </fixture>
+   <profile id="eOverdracht-Task"
+            value="http://nictiz.nl/fhir/StructureDefinition/eOverdracht-Task"/>
    <variable>
       <name value="task-id"/>
-      <defaultValue value="eOverdracht-Task-eov-cert-${CD6}-1-1b-01"/>
+      <defaultValue value="eOverdracht-Task-eov-${CD6}"/>
+      <description value="You can leave the value as is, no need to change it."/>
    </variable>
    <variable>
       <name value="notificationEndpoint"/>
@@ -85,7 +95,7 @@
          <operation>
             <type>
                <system value="http://hl7.org/fhir/restful-interaction"/>
-               <code value="updateCreate"/>
+               <code value="update"/>
             </type>
             <resource value="Task"/>
             <description value="At the sending XIS, the Task resulting from the negotiation phase is updated with a reference to the nursing handoff Composition on Task.input."/>
@@ -96,7 +106,7 @@
             <params value="/${task-id}"/>
             <requestHeader>
                <field value="Authorization"/>
-               <value value="Bearer c380d9d0-5567-4658-9c9e-94414a0d9ed9"/>
+               <value value="Bearer 4777580a-690e-44ce-8a3c-1e29d420ab40"/>
             </requestHeader>
             <responseId value="setup-task-response"/>
             <sourceId value="initial-task-fixture"/>
@@ -162,7 +172,7 @@
             <params value="/${task-id}"/>
             <requestHeader>
                <field value="Authorization"/>
-               <value value="Bearer c380d9d0-5567-4658-9c9e-94414a0d9ed9"/>
+               <value value="Bearer 4777580a-690e-44ce-8a3c-1e29d420ab40"/>
             </requestHeader>
             <responseId value="in-progress-task-response"/>
          </operation>
@@ -212,7 +222,7 @@
             <params value="/${in-progress-task-response-composition-11171000146100-id}"/>
             <requestHeader>
                <field value="Authorization"/>
-               <value value="Bearer c380d9d0-5567-4658-9c9e-94414a0d9ed9"/>
+               <value value="Bearer 4777580a-690e-44ce-8a3c-1e29d420ab40"/>
             </requestHeader>
          </operation>
       </action>
@@ -230,6 +240,80 @@
             <description value="Make sure that the server of the test simulator returns the requested Composition resource."/>
             <direction value="response"/>
             <resource value="Composition"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Set Task to 'completed'"/>
+      <description value="The receiving XIS should set the status of the Task to 'completed'. This should be an update operation where the original Task is sent, with only the status element changed."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="update"/>
+            </type>
+            <resource value="Task"/>
+            <description value="Test sending XIS to handle an update to the eOverdracht Task"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${task-id}"/>
+            <requestHeader><!-- 0..* Each operation can have one or more header elements -->
+               <field value="Authorization"/>
+               <!-- 1..1 HTTP header field name: OAuth access token -->
+               <value value="Bearer 4777580a-690e-44ce-8a3c-1e29d420ab40"/>
+               <!-- 1..1 HTTP headerfield value: UUID4 -->
+            </requestHeader>
+            <sourceId value="completed-task-fixture"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the Task conforms to the eOverdracht Task profile"/>
+            <direction value="request"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="eOverdracht-Task"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that Task.status has been changed to 'completed'"/>
+            <direction value="request"/>
+            <expression value="Task.status = 'completed'"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Test some of the content of the Task sent. This should actually be done using a minimumId assert,
+        but at the moment Touchstone's support is too limited. -->
+      <action>
+         <assert>
+            <description value="Confirm that the Task resource contains 1 agent practitioner reference."/>
+            <direction value="request"/>
+            <expression value="Task.for"/>
+            <operator value="notEmpty"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the Task resource contains 1 agent practitioner reference."/>
+            <direction value="request"/>
+            <expression value="Task.requester.agent"/>
+            <operator value="notEmpty"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
