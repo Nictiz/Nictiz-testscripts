@@ -1,2 +1,2 @@
 #!/bin/bash
-ant -f  ..\..\build-single.xml -propertyfile build.properties $*
+ant -f  ../../build-single.xml -propertyfile build.properties $*

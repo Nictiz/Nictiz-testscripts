@@ -60,14 +60,18 @@ If needed, an ANT build script exists for each of the distinct build steps, What
 * `build-convertFixtures.xml` is used to convert fixtures from XML to JSON.
 * `build-CLPropertiesFiles.xml` is used to add property files for Conformancelab in all TestScript containing subfolders of an output folder.
 
-## Properties
+## Build properties
 As described above, each NTS source directory needs to have a `build.properties` file with the following properties:
 
 Parameters influencing the build process:
 
 * `input.dir` (required) - The directory of the NTS target, _relative to the base dir of this repo_.
 * `output.dir` (required) - The directory of the output folder, _relative to the base dir of this repo_.
-* `fhir.version` (required) - The FHIR version of the exchange that is being tested, either "STU3" or "R4".
+* `fhir.version` (required) - The FHIR version of the exchange that is being tested, either "STU3" or "R4". Used for generating content specific asserts and for the Conformancelab properties.json.
+* `goal` (required) - The goal of this set of scripts, either "Test" or "Cert".
+* `informationStandard` (required) - The human readable name of the information standard this set of TestScripts is about, normally including the major version number. This is what's shown in the ConformanceLab interface.
+* `usecase` (required) - The usecase, in the broadest sense of the word, these TestScripts apply to -- for example MedMij, eOverdracht MeO, etc. For MedMij, this must be the string "MedMij".
+* `serverAlias` (required) - The alias of the server that the test set should use on the Conformancelab platform.
 * [`targets.additional`] (optional) - Comma separated list of [additional targets](https://github.com/Nictiz/Nictiz-tooling-testscripts/tree/main/generate#building-different-variants) to build.
 * [`dontgenerate.narrative.pattern`] (optional) - Comma separated list of file name patterns that should be excluded from narrative generation. By default, the `minimum`, `rule` and `rules` folders and '-token.xml' files are excluded.
 * [`loadresources.exclude`] (optional) - A relative path to a folder containing the fixtures or to specific filenames to be excluded from the LoadResources script. Multiple entries can be comma separated. `*` is accepted as a wildcard.
@@ -76,17 +80,32 @@ Parameters influencing the build process:
 * `processfixtures.skip`
 
 Parameters to specify additional information:
-* `informationStandard` (required) - The human readable name of the information standard this set of TestScripts is about, normally including the major version number. This is what's shown in the ConformanceLab interface. Required.
-* `usecase` (required) - The usecase, in the broadest sense of the word, these TestScripts apply to -- for example MedMij, eOverdracht MeO, etc. For MedMij, this must be the string "MedMij".
-* [`goal`] (required if it cannot be inferred from the folder name) - The goal of this set of scripts, either "Test" or "Cert". By convention, these terms are also used for the name of the NTS folder, and in this case the `goal` parameter is inferred from the folder name.
-* [`version.addition`] (optional) - A string that will be added verbatim to the value in the `TestScript.version` from the input file. The default is defined in the folder `buildscripts/version.addition.properties`.
+* [`version.addition`] (optional) - A string that will be added verbatim to the value in the `TestScript.version` from the input file. The default is defined in the folder `Configuration/version.addition.properties`.
 * [`packages`] (optional) - Comma separated list with the canonicals of the FHIR packages that should be used when the test engine performs profile validation.
 * `package.[canonical]` (required for each package) - For each package listed using the `packages` property, the version of the package used. This is normally set in the common file `Configuration/package.version.properties`.
 * `target.description.[additional target]` (required for each additional target) - For each defined additional target, a human readable description of the target.
 * [`targets.adminOnly`] (optional) - Comma separated list of additional targets (see above) that in the test platform should be marked "admin only", i.e. not for end users.
-* [`roles`] (normally not needed) - The folder roles are organized by the role that the user (system under test) plays in the exchange. This setting is used to indicate which roles are recognized. It is required information, but a number of default roles is defined in `Configuration.roles.properties`.
-* [`role.description.[role]`] (normally not needed) - A description of the role. See the remark above.
-* [`server`] (normally not needed) - The name of the server that the test set should use on the Conformancelab platform. A number of default servers per use case and role are defined in `Configuration/servers.properties`.
+
+## Conformancelab properties
+Each output folder containing TestScripts and the folder containing a LoadResources-script, need a `properties.json` file to be accessible in Conformancelab. For the LoadResources folder, this file is generated from the build properties. 
+
+In each input folder containing NTS-files, a file called `src-properties.json` must be present. This required file, which is copied to the output folder, should contain the following properties:
+
+* `goal` (required) - Duplicates the property present in `build.properties`, `${goal}` should be used here to avoid entering the same property multiple times.
+* `fhirVersion` (required) - Duplicates the property present in `build.properties`, `${fhir.version}` should be used here to avoid entering the same property multiple times.
+* `informationStandard` (required) - Duplicates the property present in `build.properties`, `${informationStandard}` should be used here to avoid entering the same property multiple times.
+* `usecase` (required) - Duplicates the property present in `build.properties`, `${usecase}` should be used here to avoid entering the same property multiple times.
+* `role.name` (required) - The role that the user (system under test) plays in the exchange when using the TestScripts in this folder.
+* [`role.description`] (optional) - A description of the role.
+* [`category`] (optional) - Optional category of the set of TestScripts to be shown in the UI.
+* [`subcategory`] (optional) - Optional subcategory of the set of TestScripts to be shown in the UI.
+* [`adminOnly`] (optional) - If `true`, marks a folder that in the test platform should be marked "admin only", i.e. not for end users.
+* `serverAlias` (required) - Duplicates the property present in `build.properties`, `${serverAlias}` should be used here to avoid entering the same property multiple times.
+
+The following properties are automatically added to `properties.json` during the build:
+* [`fhirPackage`] (optional, including `.name` and `.version`) - Derived from the `packages` build property
+* [`variant`] (optional) - Added to the properties of a specific `target` that is defined in the `targets.additional` property. `target.description.[additional target]` is used as `variant.description`.
+* [`adminOnly`] (optional) - If absent of `false` in `src-properties.json`, this property with value `true` is added if the current target is present in the `targets.adminOnly` property.
 
 ### Overriding tool versions
 * `*.tool.version` - Override the tool version for one of the specific steps in the build process (the tool version is the full name of a git branch or tag). The wildcard aligns with the ANT project names of the build files in the `src` folder, so:
