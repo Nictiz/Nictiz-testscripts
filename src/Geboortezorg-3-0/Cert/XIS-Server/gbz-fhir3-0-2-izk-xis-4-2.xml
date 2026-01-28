@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
-<TestScript xmlns="http://hl7.org/fhir"
-            xmlns:nts="http://nictiz.nl/xsl/testscript"
-            nts:scenario="server">
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="server">
    <id value="gbz-fhir3-0-2-ikz-xis-4-2"/>
    <version value="stu3-3.0"/>
    <name value="Nictiz Geboortezorg - Server - Scenario 4.2 - Serve Integrale Zwangerschapskaart resources of twin pregnancy of Fiona Swart"/>
    <description value="Scenario 4.2: Serve Integrale Zwangerschapskaart resources of twin pregnancy of Fiona Swart"/>
-   <nts:authToken patientResourceId="FIONA-F-XXX-SWART"/>
+   <nts:authToken patientResourceId="FIONAXXX-Swart"/>
    <nts:include value="gbz-variable-episode-id" name="episode-id" sourceId="fixture-5-ServeMaternalRecord"/>
    <variable><name value="T"/><defaultValue value="${CURRENTDATE}"/></variable>
+   
    <!-- Patient - Zwangere vrouw -->
    <test id="1-ServeWoman">
       <name value="1-ServeWoman"/>
-      <description value="Query Patient resource for HCIM Woman"/>
+      <description value="Query Patient resource for HCIM Patient"/>
       <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Patient"/>
       </nts:include>
@@ -48,6 +47,7 @@
          <nts:with-parameter name="resource" value="Condition"/>
          <nts:with-parameter name="params" value="?context=EpisodeOfCare/${episode-id}"/>
       </nts:include>
+      <nts:include value="assert.response.numResources" scope="common" resource="Condition" count="3"/>
       <!-- bevinding betreffende zwangerschap (bevinding) -->
       <nts:include value="gbz-assert-returnCountWithCode">
          <nts:with-parameter name="additionalDescription" value="bevinding betreffende zwangerschap (bevinding)"/>
@@ -101,15 +101,82 @@
          <nts:with-parameter name="count" value="3"/>
          <nts:with-parameter name="code" value="11429006"/>
       </nts:include>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Encounter-a6dcb094-6b39-11ec-1275-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>period.start.where(value = ${DATE, T, D, -207})</nts:discriminator>
-      </nts:contentAsserts>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Encounter-bb5e99cf-6af2-11ec-1275-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>period.start.where(value = ${DATE, T, D, -10})</nts:discriminator>
-      </nts:contentAsserts>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Encounter-ec3d4f8f-6aef-11ec-1275-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>period.start.where(value = ${DATE, T, D, -70})</nts:discriminator>
-      </nts:contentAsserts>
+      
+<!--      Set of period.start
+      A => Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start
+      B => Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start
+      C => Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start
+      
+      Set of Encounters
+      E0 => Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0]
+      E1 => Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1]
+      E2 => Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2]-->
+      
+<!--      The logic implemented with the first selector is:
+      if( A < B and A > C, 
+      choose E0, 
+      else if( B < C, 
+               choose E1, 
+               else choose E2) 
+      ) -->
+   
+      <!-- consult: selectie T-207D obv period.start-->
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Encounter-a6dcb094-6b39-11ec-1275-020000000000.xml"          
+         selector="iif( Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start 
+                        and 
+                        Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start, 
+                        Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0], 
+                        iif( Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start, 
+                             Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1], 
+                             Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2]) 
+                        )"
+         nts:in-targets="CheckContent"/>
+         
+<!--  The logic implemented with the second selector is:
+      if((A > B and A < C) or (A > C and A < B), 
+      choose E0, 
+      else if( (B > A and B > C) or (B > C and B < A), 
+      choose E1, 
+      else choose E2)
+      )-->
+      
+      <!-- consult: selectie T-70D -->
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Encounter-ec3d4f8f-6aef-11ec-1275-020000000000.xml" 
+         selector="iif((Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start 
+                        and 
+                        Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start) 
+                        or 
+                       (Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start 
+                        and 
+                        Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start), 
+                        Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0], 
+                        iff( (Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start and Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start) 
+                              or 
+                             (Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start and Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start), 
+                              Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1], 
+                              Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2])
+                        )"
+         nts:in-targets="CheckContent"/>
+         
+<!--  The logic implemented with the third seelctor is:
+      if( A > B and A > C, 
+      choose E0, 
+      else if( B > C, 
+            choose E1, 
+            else choose E2)
+      )-->
+      
+      <!-- consult: selectie T-10D -->
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Encounter-bb5e99cf-6af2-11ec-1275-020000000000.xml" 
+         selector="iif( Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start 
+                        and 
+                        Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start, 
+                        Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0], 
+                        iff( Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start, 
+                             Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1], 
+                             Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2])
+                        )"
+         nts:in-targets="CheckContent"/>
    </test>
 
    <!-- Observations - Observaties gekoppeld aan episode -->
@@ -120,9 +187,9 @@
          <nts:with-parameter name="resource" value="Observation"/>
          <nts:with-parameter name="params" value="?context=EpisodeOfCare/${episode-id}"/>
       </nts:include>
-      <!-- [#] Parity -->
+      <!-- Parity -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="[#] Parity"/>
+         <nts:with-parameter name="additionalDescription" value="Parity"/>
          <nts:with-parameter name="resource" value="Observation"/>
          <nts:with-parameter name="count" value="1"/>
          <nts:with-parameter name="code" value="11977-6"/>
@@ -132,9 +199,9 @@
          <nts:discriminator>code.where(coding.where(code = 11977-6))</nts:discriminator>
          <!--<nts:discriminator>value.where(value = 0)</nts:discriminator>-->
       </nts:contentAsserts>
-      <!-- [#] Pregnancies -->
+      <!-- Gravidity -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="[#] Pregnancies"/>
+         <nts:with-parameter name="additionalDescription" value="Gravidity"/>
          <nts:with-parameter name="resource" value="Observation"/>
          <nts:with-parameter name="count" value="1"/>
          <nts:with-parameter name="code" value="11996-6"/>
@@ -281,9 +348,14 @@
          <nts:with-parameter name="code" value="363799009"/>
          <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation363799009-17cffc43-6aa1-11ec-2308-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[0].id < Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[1])" nts:in-targets="CheckContent">
+      <!--kloppen deze selectors? de id's worden numerisch vergeleken? kan toch niet?-->
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation363799009-17cffc43-6aa1-11ec-2308-020000000000.xml" 
+                           selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[0].id &lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[1])" 
+                           nts:in-targets="CheckContent">
       </nts:contentAsserts>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation363799009-44522c43-6b7b-11ec-2308-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[0].id < Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[1], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[0])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation363799009-44522c43-6b7b-11ec-2308-020000000000.xml" 
+                           selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[0].id %lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[1], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363799009')))[0])" 
+                           nts:in-targets="CheckContent">
       </nts:contentAsserts>
       <!-- observatie betreffende neurologie (waarneembare entiteit) -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -293,9 +365,13 @@
          <nts:with-parameter name="code" value="363820009"/>
          <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation363820009-144b7c43-6b58-11ec-2308-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[0].id < Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[1])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation363820009-144b7c43-6b58-11ec-2308-020000000000.xml" 
+                           selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[0].id %lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[1])" 
+                           nts:in-targets="CheckContent">
       </nts:contentAsserts>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation363820009-6c289c43-6b49-11ec-2308-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[0].id < Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[1], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[0])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation363820009-6c289c43-6b49-11ec-2308-020000000000.xml" 
+                           selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[0].id %lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[1], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='363820009')))[0])" 
+                           nts:in-targets="CheckContent">
       </nts:contentAsserts>
       <!-- observatie betreffende geslachtsorgaan (waarneembare entiteit) -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -305,9 +381,13 @@
          <nts:with-parameter name="code" value="364204002"/>
          <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364204002-6edcdc43-6b48-11ec-2304-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[0].id < Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[1])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364204002-6edcdc43-6b48-11ec-2304-020000000000.xml" 
+                          selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[0].id %lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[1])" 
+         nts:in-targets="CheckContent">
       </nts:contentAsserts>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364204002-c6b9fc43-6b39-11ec-2304-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[0].id < Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[1], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[0])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364204002-c6b9fc43-6b39-11ec-2304-020000000000.xml" 
+                          selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[0].id %lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[1], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364204002')))[0])" 
+                          nts:in-targets="CheckContent">
       </nts:contentAsserts>
       <!-- observatie betreffende hoofd-halsregio (waarneembare entiteit) -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -317,9 +397,9 @@
          <nts:with-parameter name="code" value="364403006"/>
          <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364403006-85d3fc43-6b51-11ec-2296-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[0].id < Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[1])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364403006-85d3fc43-6b51-11ec-2296-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[0].id %lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[1])" nts:in-targets="CheckContent">
       </nts:contentAsserts>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364403006-ddb11c43-6b42-11ec-2296-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[0].id < Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[1], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[0])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364403006-ddb11c43-6b42-11ec-2296-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[0].id %lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[1], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364403006')))[0])" nts:in-targets="CheckContent">
       </nts:contentAsserts>
       <!-- observatie betreffende wervelkolom (waarneembare entiteit) -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -329,9 +409,9 @@
          <nts:with-parameter name="code" value="364415005"/>
          <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364415005-0d979c43-6b75-11ec-2307-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[0].id < Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[1])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364415005-0d979c43-6b75-11ec-2307-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[0].id %lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[1])" nts:in-targets="CheckContent">
       </nts:contentAsserts>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364415005-e1156c43-6a9a-11ec-2307-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[0].id < Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[1], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[0])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364415005-e1156c43-6a9a-11ec-2307-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[0].id %lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[1], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364415005')))[0])" nts:in-targets="CheckContent">
       </nts:contentAsserts>
       <!-- aspect van thorax (waarneembare entiteit) -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -355,9 +435,13 @@
          <nts:with-parameter name="code" value="364446009"/>
          <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364446009-11571c43-6b28-11ec-2307-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[0].id < Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[1])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364446009-11571c43-6b28-11ec-2307-020000000000.xml" 
+                          selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[0].id %lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[1])" 
+                          nts:in-targets="CheckContent">
       </nts:contentAsserts>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364446009-69343c43-6b19-11ec-2307-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[0].id < Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[1], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[0])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ChildObservation364446009-69343c43-6b19-11ec-2307-020000000000.xml" 
+                          selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[0].id %lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[1], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='364446009')))[0])" 
+                          nts:in-targets="CheckContent">
       </nts:contentAsserts>
       <!-- observatie betreffende huid (waarneembare entiteit) -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -553,9 +637,11 @@
          <nts:with-parameter name="code" value="271692001"/>
          <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-FetusObservation271692001-06e003cf-6aaa-11ec-2416-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[0].id < Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[1])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-FetusObservation271692001-06e003cf-6aaa-11ec-2416-020000000000.xml" 
+                          selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[0].id %lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[0], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[1])" 
+                          nts:in-targets="CheckContent">
       </nts:contentAsserts>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-FetusObservation271692001-ed895d08-6b22-11ec-2416-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[0].id < Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[1], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[0])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-FetusObservation271692001-ed895d08-6b22-11ec-2416-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[0].id %lt; Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[1].id, Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[1], Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code='271692001')))[0])" nts:in-targets="CheckContent">
       </nts:contentAsserts>
       <!-- tijdstip waarop gebroken vliezen zijn geconstateerd (waarneembare entiteit) -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -713,9 +799,13 @@
          <nts:with-parameter name="code" value="3950001"/>
          <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Birth3950001-6965feaf-6a9e-11ec-2123-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[0].performedDateTime < Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[1].performedDateTime, Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[0], Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[1])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Birth3950001-6965feaf-6a9e-11ec-2123-020000000000.xml" 
+                          selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[0].performedDateTime %lt; Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[1].performedDateTime, Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[0], Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[1])" 
+                          nts:in-targets="CheckContent">
       </nts:contentAsserts>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Birth3950001-be71a8c7-6ae9-11ec-2123-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[0].performedDateTime < Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[1].performedDateTime, Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[1], Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[0])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Birth3950001-be71a8c7-6ae9-11ec-2123-020000000000.xml" 
+                          selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[0].performedDateTime %lt; Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[1].performedDateTime, Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[1], Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[0])" 
+                          nts:in-targets="CheckContent">
       </nts:contentAsserts>
       <!-- bloedonderzoek (verrichting) -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -761,9 +851,13 @@
          <nts:with-parameter name="code" value="80771000146107"/>
          <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ObstetricProcedure80771000146107-35557738-6b45-11ec-2160-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0].id < Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1].id, Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0], Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ObstetricProcedure80771000146107-35557738-6b45-11ec-2160-020000000000.xml" 
+                          selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0].id %lt; Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1].id, Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0], Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1])" 
+                          nts:in-targets="CheckContent">
       </nts:contentAsserts>
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ObstetricProcedure80771000146107-8703f6b8-6b2c-11ec-2160-020000000000.xml" selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0].id < Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1].id, Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1], Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0])" nts:in-targets="CheckContent">
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ObstetricProcedure80771000146107-8703f6b8-6b2c-11ec-2160-020000000000.xml" 
+                          selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0].id %lt; Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1].id, Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1], Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0])" 
+                          nts:in-targets="CheckContent">
       </nts:contentAsserts>
    </test>
 
