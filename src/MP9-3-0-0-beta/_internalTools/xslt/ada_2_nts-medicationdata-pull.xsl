@@ -278,7 +278,7 @@
         
         <xsl:variable name="buildingBlockLong" select="nf:makeBuildingBlockLong($buildingBlockShort)"/>
         
-        <xsl:variable name="newFilename" select="concat($buildingBlockShort, '-Scenarioset', $scenarioString/@scenarioset, '.xml')"/>
+        <xsl:variable name="newFilename" select="concat($idString, '.xml')"/>
         <xsl:call-template name="util:logMessage">
             <xsl:with-param name="level" select="$logINFO"/>
             <xsl:with-param name="msg">processing <xsl:value-of select="$newFilename"/></xsl:with-param>
@@ -504,8 +504,7 @@
         <xsl:variable name="matchCategoryCode" select="nf:matchCategoryCode($buildingBlockShort)"/>
         <xsl:variable name="matchResource" select="nf:matchResource($buildingBlockShort)"/>        
         
-        <!-- We should change this to something simpler. Building block and transaction type are already in folder names. Leaving it as is for refactoring purposes -->
-        <xsl:variable name="newFilename" select="concat($buildingBlockShort, '-Scenario', $scenarioString/@theScenarioHyphen, '.xml')"/>
+        <xsl:variable name="newFilename" select="concat($idString, '.xml')"/>
         
         <xsl:call-template name="util:logMessage">
             <xsl:with-param name="level" select="$logINFO"/>
@@ -702,39 +701,6 @@
                 <xsl:value-of select="nf:first-cap($transactionType)"/>
             </xsl:otherwise>
         </xsl:choose>
-    </xsl:function>
-    
-    <xd:doc>
-        <xd:desc>Normalize a filepath</xd:desc>
-        <xd:param name="in">The string to be handled</xd:param>
-    </xd:doc>
-    <xsl:function name="nf:normalize-path" as="xs:string?">
-        <xsl:param name="in" as="xs:string?"/>
-        <xsl:variable name="fixSlashes" select="replace($in, '\\', '/')"/>
-        <xsl:variable name="filePrefix">
-            <xsl:choose>
-                <xsl:when test="starts-with($fixSlashes, 'file:/')">
-                    <xsl:value-of select="$fixSlashes"/>
-                </xsl:when>
-                <xsl:when test="not(starts-with($fixSlashes, 'file:/')) and starts-with($fixSlashes, '/')">
-                    <xsl:value-of select="concat('file://', $fixSlashes)"/>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:value-of select="concat('file:/', $fixSlashes)"/>
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
-        <xsl:variable name="trailingSlash">
-            <xsl:choose>
-                <xsl:when test="ends-with($filePrefix, '/')">
-                    <xsl:value-of select="$filePrefix"/>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:value-of select="concat($filePrefix, '/')"/>
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
-        <xsl:value-of select="$trailingSlash"/>
     </xsl:function>
     
     <xd:doc>
