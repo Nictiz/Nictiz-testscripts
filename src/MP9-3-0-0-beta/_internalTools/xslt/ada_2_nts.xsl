@@ -117,40 +117,6 @@
                 </xsl:call-template>
             </xsl:variable>
             
-            <xsl:variable name="scriptNo" select="substring-before(substring-after($adaTransId, concat($fileNamePart, '-', $buildingBlockShort, '-script')), '-')[1]" as="xs:string*"/>
-            <xsl:variable name="wikiUrl">
-                <xsl:text>https://informatiestandaarden.nictiz.nl/wiki/mp:V9.3.0_</xsl:text>
-                <xsl:choose>
-                    <!--<xsl:when test="$testGoal = 'Test'"></xsl:when>-->
-                    <xsl:when test="$testGoal = 'Cert'">
-                        <xsl:text>kwalificatie</xsl:text>
-                    </xsl:when>
-                    <xsl:otherwise>unknown</xsl:otherwise>
-                </xsl:choose>
-                <xsl:text>_</xsl:text>
-                <xsl:value-of select="$testScriptString/@wiki"/>
-                <xsl:text>_</xsl:text>
-                <xsl:choose>
-                    <xsl:when test="normalize-space(upper-case($transactionType)) = 'RETRIEVE'">raadplegen</xsl:when>
-                    <xsl:when test="normalize-space(upper-case($transactionType)) = 'SEND'">sturen</xsl:when>
-                    <xsl:when test="normalize-space(upper-case($transactionType)) = 'SERVE'">beschikbaarstellen</xsl:when>
-                    <xsl:when test="normalize-space(upper-case($transactionType)) = 'RECEIVE'">ontvangen</xsl:when>
-                    <xsl:otherwise>unknown</xsl:otherwise>
-                </xsl:choose>
-                <xsl:text>_</xsl:text>
-                <xsl:value-of select="$buildingBlockShort"/>
-                <xsl:text>#</xsl:text>
-                <xsl:choose>
-                    <!--<xsl:when test="$testGoal = 'Test'"></xsl:when>-->
-                    <xsl:when test="$testGoal = 'Cert'">
-                        <xsl:text>Kwalificatie</xsl:text>
-                    </xsl:when>
-                    <xsl:otherwise>unknown</xsl:otherwise>
-                </xsl:choose>
-                <xsl:text>_script_</xsl:text>
-                <xsl:value-of select="$scriptNo"/>
-            </xsl:variable>
-            
             <xsl:variable name="testScriptDescription">
                 <xsl:call-template name="getTestScriptDescription">
                     <xsl:with-param name="transactionType" select="$transactionType"/>
@@ -159,6 +125,8 @@
                     <xsl:with-param name="patient" select="$fixturePatient/f:name/f:text/@value"/>
                     <xsl:with-param name="adaDescription" select="@desc"/>
                     <xsl:with-param name="adaTitle" select="@title"/>
+                    <xsl:with-param name="testGoal" select="$testGoal"/>
+                    <xsl:with-param name="wiki" select="$testScriptString/@wiki"/>
                 </xsl:call-template>
             </xsl:variable>
             
@@ -446,16 +414,16 @@
                 <testscriptstring short="prescrproc" full="Prescription processing" wiki="afhandelen_voorschrift"/>
             </xsl:when>
             <xsl:when test="self::sturen_voorstel_medicatieafspraak">
-                <testscriptstring short="propma" full="Proposal medication agreement" wiki="unknown"/>
+                <testscriptstring short="propma" full="Proposal medication agreement" wiki="vma"/>
             </xsl:when>
             <xsl:when test="self::sturen_antwoord_voorstel_medicatieafspraak">
-                <testscriptstring short="reppropma" full="Reply proposal medication agreement" wiki="unknown"/>
+                <testscriptstring short="reppropma" full="Reply proposal medication agreement" wiki="avma"/>
             </xsl:when>
             <xsl:when test="self::sturen_voorstel_verstrekkingsverzoek">
-                <testscriptstring short="propvv" full="Proposal dispense request" wiki="unknown"/>
+                <testscriptstring short="propvv" full="Proposal dispense request" wiki="vvv"/>
             </xsl:when>
             <xsl:when test="self::sturen_antwoord_voorstel_verstrekkingsverzoek">
-                <testscriptstring short="reppropvv" full="Reply proposal dispense request" wiki="unknown"/>
+                <testscriptstring short="reppropvv" full="Reply proposal dispense request" wiki="avvv"/>
             </xsl:when>
             <xsl:otherwise>
                 <testscriptstring short="notsupp" long="NotSupported"/>
@@ -467,7 +435,7 @@
         </xsl:choose>
     </xsl:template>
     
-    <xsl:template name="getIdString" as="xs:string*">
+    <xsl:template name="getIdString" as="xs:string">
         <xsl:param name="testGoal"/>
         <xsl:param name="short"/>
         <xsl:param name="buildingBlockShort"/>
@@ -489,7 +457,7 @@
         <xsl:value-of select="string-join($buildString,'')"/>
     </xsl:template>
     
-    <xsl:template name="getTestScriptTitle" as="xs:string*">
+    <xsl:template name="getTestScriptTitle" as="xs:string">
         <xsl:param name="theScenarioX"/>
         <xsl:param name="titleSuffix"/>
         
@@ -508,24 +476,66 @@
         <xsl:value-of select="string-join($buildString,'')"/>
     </xsl:template>
     
-    <xsl:template name="getTestScriptDescription" as="xs:string*">
+    <xsl:template name="getTestScriptDescription" as="xs:string">
         <xsl:param name="transactionType"/>
         <xsl:param name="full"/>
         <xsl:param name="buildingBlockShort"/>
         <xsl:param name="patient"/>
         <xsl:param name="adaDescription"/>
         <xsl:param name="adaTitle"/>
-
-        <xsl:value-of select="concat(nf:first-cap($transactionType), ' ', $full, ' ', $buildingBlockShort, ' building blocks for patient ', $patient)"/>
-        <xsl:if test="string-length($adaDescription) gt 0 or string-length($adaTitle) gt 0">
-            <xsl:value-of select="'&#xA;&#xA;Original description:'"/>
-        </xsl:if>
-        <xsl:if test="string-length($adaTitle) gt 0">
-            <xsl:value-of select="concat('&#xA;',$adaTitle)"/>
-        </xsl:if>
-        <xsl:if test="string-length($adaDescription) gt 0">
-            <xsl:value-of select="concat('&#xA;',replace(replace(replace($adaDescription,'&lt;div&gt;',''),'&lt;/div&gt;',''),'&lt;br&gt;','&#xA;'))"/>
-        </xsl:if>
+        <xsl:param name="testGoal" required="yes"/>
+        <xsl:param name="wiki" required="yes"/>
+        
+        <xsl:variable name="wikiUrl">
+            <xsl:variable name="buildString">
+                <xsl:text>https://informatiestandaarden.nictiz.nl/wiki/mp:V9.3.0_</xsl:text>
+                <xsl:choose>
+                    <xsl:when test="contains($buildingBlockShort, 'CONS-')">
+                        <xsl:text>consolidatie</xsl:text>
+                    </xsl:when>
+                    <xsl:when test="$testGoal = 'Test'">
+                        <xsl:text>testgegevens</xsl:text>
+                    </xsl:when>
+                    <xsl:when test="$testGoal = 'Cert'">
+                        <xsl:text>kwalificatie</xsl:text>
+                    </xsl:when>
+                    <xsl:otherwise>unknown</xsl:otherwise>
+                </xsl:choose>
+                <xsl:text>_</xsl:text>
+                <xsl:value-of select="$wiki"/>
+                <xsl:text>_</xsl:text>
+                <xsl:choose>
+                    <xsl:when test="normalize-space(upper-case($transactionType)) = 'RETRIEVE'">raadplegen</xsl:when>
+                    <xsl:when test="normalize-space(upper-case($transactionType)) = 'SEND'">sturen</xsl:when>
+                    <xsl:when test="normalize-space(upper-case($transactionType)) = 'SERVE'">beschikbaarstellen</xsl:when>
+                    <xsl:when test="normalize-space(upper-case($transactionType)) = 'RECEIVE'">ontvangen</xsl:when>
+                    <xsl:otherwise>unknown</xsl:otherwise>
+                </xsl:choose>
+                <xsl:if test="$buildingBlockShort = ('VV','MTD','MA','MVE','MGB','TA','WDS')">
+                    <xsl:text>_</xsl:text>
+                    <xsl:value-of select="$buildingBlockShort"/>
+                </xsl:if>
+            </xsl:variable>
+            
+            <xsl:value-of select="string-join($buildString, '')"/>
+        </xsl:variable>
+        
+        <xsl:variable name="buildString">
+            <xsl:value-of select="concat(nf:first-cap($transactionType), ' ', $full, ' ', $buildingBlockShort, ' building blocks for patient ', $patient)"/>
+            <xsl:value-of select="'&#xA;&#xA;For more info:&#xA;'"/>
+            <xsl:value-of select="$wikiUrl"/>
+            <xsl:if test="string-length($adaDescription) gt 0 or string-length($adaTitle) gt 0">
+                <xsl:value-of select="'&#xA;&#xA;Original description:'"/>
+            </xsl:if>
+            <xsl:if test="string-length($adaTitle) gt 0">
+                <xsl:value-of select="concat('&#xA;',$adaTitle)"/>
+            </xsl:if>
+            <xsl:if test="string-length($adaDescription) gt 0">
+                <xsl:value-of select="concat('&#xA;',replace(replace(replace($adaDescription,'&lt;div&gt;',''),'&lt;/div&gt;',''),'&lt;br&gt;','&#xA;'))"/>
+            </xsl:if>
+        </xsl:variable>
+        
+        <xsl:value-of select="string-join($buildString, '')"/>
     </xsl:template>
     
     <xsl:template name="getTestName" as="xs:string">
@@ -555,46 +565,6 @@
             </xsl:choose>
         </xsl:variable>
         <xsl:value-of select="concat(nf:first-cap($transactionType), ' ', $full, ' ', $buildingBlockShort, ' resources in a ', $bundleType, ' Bundle')"/>
-    </xsl:template>
-    
-    <xsl:template name="getWikiUrl">
-        <!--<xsl:variable name="scriptNo" select="substring-before(substring-after($adaInstance/@id, concat($fileNamePart, '-', $buildingBlockShort, '-script')), '-')[1]" as="xs:string*"/>
-        <xsl:variable name="wikiUrl">
-            <xsl:text>https://informatiestandaarden.nictiz.nl/wiki/mp:V9.3.0_</xsl:text>
-            <xsl:choose>
-                <!-/-<xsl:when test="$testGoal = 'Test'"></xsl:when>-/->
-                <xsl:when test="$testGoal = 'Cert'">
-                    <xsl:text>kwalificatie</xsl:text>
-                </xsl:when>
-                <xsl:otherwise>unknown</xsl:otherwise>
-            </xsl:choose>
-            <xsl:text>_medicatiegegevens_</xsl:text>
-            <xsl:choose>
-                <xsl:when test="normalize-space(upper-case($transactionType)) = 'RETRIEVE'">raadplegen</xsl:when>
-                <xsl:when test="normalize-space(upper-case($transactionType)) = 'SEND'">sturen</xsl:when>
-                <xsl:when test="normalize-space(upper-case($transactionType)) = 'SERVE'">beschikbaarstellen</xsl:when>
-                <xsl:when test="normalize-space(upper-case($transactionType)) = 'RECEIVE'">ontvangen</xsl:when>
-                <xsl:otherwise>unknown</xsl:otherwise>
-            </xsl:choose>
-            <xsl:text>_</xsl:text>
-            <xsl:value-of select="$buildingBlockShort"/>
-            <xsl:text>#</xsl:text>
-            <xsl:choose>
-                <!-/-<xsl:when test="$testGoal = 'Test'"></xsl:when>-/->
-                <xsl:when test="$testGoal = 'Cert' and $scenarioString/@scenarioset = ('9','10')">
-                    <xsl:text>Herkwalificatie</xsl:text>
-                </xsl:when>
-                <xsl:when test="$testGoal = 'Cert'">
-                    <xsl:text>Kwalificatie</xsl:text>
-                </xsl:when>
-                <xsl:otherwise>unknown</xsl:otherwise>
-            </xsl:choose>
-            <xsl:text>_script_</xsl:text>
-            <xsl:value-of select="$scriptNo"/>
-            <xsl:if test="$scenarioString/@scenarioset = ('0','10')">
-                <xsl:text>:_filtercriteria</xsl:text>
-            </xsl:if>
-        </xsl:variable>-->
     </xsl:template>
 
 </xsl:stylesheet>

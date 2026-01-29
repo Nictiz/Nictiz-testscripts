@@ -114,6 +114,8 @@
                     <xsl:with-param name="patient" select="$patientName"/>
                     <xsl:with-param name="adaDescription" select="$adaInstance/@desc"/>
                     <xsl:with-param name="adaTitle" select="$adaInstance/@title"/>
+                    <xsl:with-param name="testGoal" select="$testGoal"/>
+                    <xsl:with-param name="wiki" select="$testScriptString/@wiki"/>
                 </xsl:call-template>
             </xsl:variable>
             <xsl:variable name="testDescription">
@@ -213,6 +215,8 @@
                             <xsl:with-param name="patient" select="$patientName"/>
                             <xsl:with-param name="adaDescription" select="$adaInstance/@desc"/>
                             <xsl:with-param name="adaTitle" select="$adaInstance/@title"/>
+                            <xsl:with-param name="testGoal" select="$testGoal"/>
+                            <xsl:with-param name="wiki" select="$testScriptString/@wiki"/>
                         </xsl:call-template>
                     </xsl:variable>
                     <xsl:variable name="testDescription">
@@ -267,6 +271,7 @@
         <xsl:param name="testScriptTitle"/>
         <xsl:param name="testScriptDescription"/>
         <xsl:param name="testDescription"/>
+    
         <xsl:param name="fileNamePart"/>
         
         <xsl:variable name="adaInstance" select="adaxml/data/beschikbaarstellen_medicatiegegevens"/>
