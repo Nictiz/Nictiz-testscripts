@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <xsl:import href="../../../../../YATC-internal/ada-2-fhir-r4/env/fhir/2_fhir_fixtures.xsl"/>
+    <!--<xsl:import href="../../../../../YATC-internal/ada-2-fhir-r4/env/fhir/2_fhir_fixtures.xsl"/>-->
+    <xsl:import href="../../../../../YATC-public/MP9/Medicatieproces-9.3.0-1.0.11/common/includes/2_fhir_fixtures.xsl"/>
     <xsl:import href="ada_2_nts.xsl"/>
     
     <xsl:output indent="yes" omit-xml-declaration="yes"/>

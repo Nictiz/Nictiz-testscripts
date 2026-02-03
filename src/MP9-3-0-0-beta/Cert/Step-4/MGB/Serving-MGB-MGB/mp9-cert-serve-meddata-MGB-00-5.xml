@@ -1,0 +1,42 @@
+<TestScript xmlns:nts="http://nictiz.nl/xsl/testscript"
+            xmlns="http://hl7.org/fhir"
+            nts:scenario="server">
+   <id value="mp9-cert-serve-meddata-MGB-00-5"/>
+   <version value="r4-mp9-3.0.0"/>
+   <name value="mp9-cert-serve-meddata-MGB-00-5"/>
+   <title value="Scenario 0.5"/>
+   <description value="Serve Medication data MGB building blocks for patient G-XXX-Groot&#xA;&#xA;For more info:&#xA;https://informatiestandaarden.nictiz.nl/wiki/mp:V9.3.0_kwalificatie_medicatiegegevens_beschikbaarstellen_MGB&#xA;&#xA;Original description:&#xA;KWAL Medicatiegegevens MGB script0 (filterqueries)&#xA;Medicatiegebruik met een filter op gebruiksperiode – einddatum (alles voor T-13)&#xA;(Antwoord: bericht met 2x medicatiegebruik)"/>
+   <nts:authToken patientResourceId="nl-core-Patient-mp9-G-XXX-Groot"
+                  nts:in-targets="MedMij"/>
+   <nts:includeDateT value="yes"/>
+   <test id="mp9-cert-serve-meddata-MGB-00-5-01">
+      <name value="Scenario 0.5"/>
+      <description value="Serve Medication data MGB resources in a searchset Bundle"/>
+      <nts:include value="test.server.search" scope="common" nts:in-targets="#default">
+         <nts:with-parameter name="description"
+                             value="Test server to serve MedicationStatement resource(s) representing MP9 building block MedicationUse"/>
+         <nts:with-parameter name="resource" value="MedicationStatement"/>
+         <nts:with-parameter name="params"
+                             value="?patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999900596&amp;category=http://snomed.info/sct|422979000&amp;period-of-use=lt${DATE, T, D,-13}&amp;_include=MedicationStatement:medication&amp;_include=MedicationStatement:author&amp;_include=MedicationStatement:prescriber&amp;_include=MedicationStatement:source&amp;_include:iterate=PractitionerRole:organization&amp;_include:iterate=PractitionerRole:practitioner&amp;_include:iterate=PractitionerRole:location"/>
+      </nts:include>
+      <nts:include value="medmij/test.xis.search"
+                   scope="common"
+                   nts:in-targets="MedMij">
+         <nts:with-parameter name="description"
+                             value="Test XIS server to serve MedicationStatement resource(s) representing MP9 building block MedicationUse"/>
+         <nts:with-parameter name="resource" value="MedicationStatement"/>
+         <nts:with-parameter name="params"
+                             value="?category=http://snomed.info/sct|422979000&amp;period-of-use=lt${DATE, T, D,-13}&amp;_include=MedicationStatement:medication&amp;_include=MedicationStatement:author&amp;_include=MedicationStatement:prescriber&amp;_include=MedicationStatement:source&amp;_include:iterate=PractitionerRole:organization&amp;_include:iterate=PractitionerRole:practitioner&amp;_include:iterate=PractitionerRole:location"/>
+      </nts:include>
+      <nts:include value="assert.response.successfulSearch" scope="common"/>
+      <nts:include value="assert-responseBundleContent-noMM"/>
+      <nts:include value="assert-returnCount" scope="project">
+         <nts:with-parameter name="resource" value="MedicationStatement"/>
+         <nts:with-parameter name="count" value="2"/>
+      </nts:include>
+      <nts:include value="assert-returnCount" scope="project">
+         <nts:with-parameter name="resource" value="Medication"/>
+         <nts:with-parameter name="count" value="2"/>
+      </nts:include>
+   </test>
+</TestScript>
