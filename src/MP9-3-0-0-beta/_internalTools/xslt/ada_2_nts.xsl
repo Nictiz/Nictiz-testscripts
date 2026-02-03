@@ -542,7 +542,7 @@
                 <xsl:value-of select="concat('&#xA;',$adaTitle)"/>
             </xsl:if>
             <xsl:if test="string-length($adaDescription) gt 0">
-                <xsl:value-of select="concat('&#xA;',replace(replace(replace($adaDescription,'&lt;div&gt;',''),'&lt;/div&gt;',''),'&lt;br&gt;','&#xA;'))"/>
+                <xsl:value-of select="concat('&#xA;',replace(replace($adaDescription,'&lt;\/?(div|span)( style=&quot;.*?&quot;)?&gt;',''),'&lt;br&gt;','&#xA;')),''"/>
             </xsl:if>
         </xsl:variable>
         
