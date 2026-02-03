@@ -225,7 +225,8 @@
                     <xsl:result-document href="{concat($outputDirNormalized, '/', $newFilename)}">
                         <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                             <id value="{$idString}"/>
-                            <version value="r4-mp9-3.0.0-beta"/>
+                            <version value="r4-mp9-3.0.0"/>
+                            <name value="{$idString}"/>
                             <title value="{$testScriptTitle}"/>
                             <description value="{$testScriptDescription}"/>
                             <xsl:choose>

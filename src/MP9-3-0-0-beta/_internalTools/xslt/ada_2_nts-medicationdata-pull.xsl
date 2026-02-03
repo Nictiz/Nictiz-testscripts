@@ -385,7 +385,8 @@
                         <xsl:result-document href="{concat($outputDirNormalized, nf:makeCLCategoryFolder($buildingBlockShort), '/', nf:makeCLSubcategoryFolder($buildingBlockShort), '/', nf:makeCLRoleFolder($transactionTypeNormalized, $buildingBlockShort), '/', $newFilename)}">
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                                 <id value="{$idString}"/>
-                                <version value="r4-mp9-3.0.0-beta"/>
+                                <version value="r4-mp9-3.0.0"/>
+                                <name value="{$idString}"/>
                                 <title value="{$testScriptTitle}"/>
                                 
                                 <description value="{$testScriptDescription}"/>
@@ -605,7 +606,8 @@
                 </xsl:if>
                 
                 <id value="{$idString}"/>
-                <version value="r4-mp9-3.0.0-beta"/>
+                <version value="r4-mp9-3.0.0"/>
+                <name value="{$idString}"/>
                 <title value="{$testScriptTitle}"/>
                 <description value="{$testScriptDescription}"/>
                 <!-- NICTIZ-34243 "nl-core-Patient-mp9-" niet verwijderen, wordt later gebruikt om Bearer token op te halen middels QualificationTokens.json -->
