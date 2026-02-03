@@ -416,25 +416,25 @@
     <xsl:template name="getTestScriptString" as="element()*">
         <xsl:choose>
             <xsl:when test="self::beschikbaarstellen_medicatiegegevens | self::sturen_medicatiegegevens">
-                <testscriptstring short="meddata" full="Medication data" wiki="medicatiegegevens"/>
+                <testscriptstring short="mg" full="Medication data" wiki="medicatiegegevens"/>
             </xsl:when>
             <xsl:when test="self::sturen_medicatievoorschrift">
-                <testscriptstring short="prescr" full="Medication prescription" wiki="voorschrift"/>
+                <testscriptstring short="vs" full="Medication prescription" wiki="voorschrift"/>
             </xsl:when>
             <xsl:when test="self::sturen_afhandeling_medicatievoorschrift">
-                <testscriptstring short="prescrproc" full="Prescription processing" wiki="afhandelen_voorschrift"/>
+                <testscriptstring short="avs" full="Prescription processing" wiki="afhandelen_voorschrift"/>
             </xsl:when>
             <xsl:when test="self::sturen_voorstel_medicatieafspraak">
-                <testscriptstring short="propma" full="Proposal medication agreement" wiki="vma"/>
+                <testscriptstring short="vma" full="Proposal medication agreement" wiki="vma"/>
             </xsl:when>
             <xsl:when test="self::sturen_antwoord_voorstel_medicatieafspraak">
-                <testscriptstring short="reppropma" full="Reply proposal medication agreement" wiki="avma"/>
+                <testscriptstring short="avma" full="Reply proposal medication agreement" wiki="avma"/>
             </xsl:when>
             <xsl:when test="self::sturen_voorstel_verstrekkingsverzoek">
-                <testscriptstring short="propvv" full="Proposal dispense request" wiki="vvv"/>
+                <testscriptstring short="vvv" full="Proposal dispense request" wiki="vvv"/>
             </xsl:when>
             <xsl:when test="self::sturen_antwoord_voorstel_verstrekkingsverzoek">
-                <testscriptstring short="reppropvv" full="Reply proposal dispense request" wiki="avvv"/>
+                <testscriptstring short="avvv" full="Reply proposal dispense request" wiki="avvv"/>
             </xsl:when>
             <xsl:otherwise>
                 <testscriptstring short="notsupp" long="NotSupported"/>
@@ -454,7 +454,25 @@
         <xsl:param name="theScenario0XHyphen"/>
         
         <xsl:variable name="buildString">
-            <xsl:value-of select="concat('mp9-',lower-case($testGoal),'-', normalize-space(lower-case($transactionType)), '-', $short)"/>
+            <xsl:text>mp9-</xsl:text>
+            <xsl:choose>
+                <xsl:when test="lower-case($testGoal) = 'cert'">
+                    <xsl:text>c</xsl:text>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:text>t</xsl:text>
+                </xsl:otherwise>
+            </xsl:choose>
+            <xsl:text>-</xsl:text>
+            <xsl:choose>
+                <xsl:when test="normalize-space(upper-case($transactionType)) = 'RETRIEVE'">ret</xsl:when>
+                <xsl:when test="normalize-space(upper-case($transactionType)) = 'SEND'">sen</xsl:when>
+                <xsl:when test="normalize-space(upper-case($transactionType)) = 'SERVE'">ser</xsl:when>
+                <xsl:when test="normalize-space(upper-case($transactionType)) = 'RECEIVE'">rec</xsl:when>
+                <xsl:otherwise>unknown</xsl:otherwise>
+            </xsl:choose>
+            <xsl:text>-</xsl:text>
+            <xsl:value-of select="$short"/>
             <xsl:if test="$buildingBlockShort = ('VV','MTD','MA','MVE','MGB','TA','WDS') or contains($buildingBlockShort, 'CONS-')">
                 <xsl:value-of select="concat('-',$buildingBlockShort)"/>
             </xsl:if>
@@ -462,9 +480,17 @@
                 <xsl:value-of select="concat('-',$theScenario0XHyphen)"/>
             </xsl:if>
             <xsl:if test="not($buildingBlockShort = ('VV','MTD','MA','MVE','MGB','TA','WDS')) and not(contains($buildingBlockShort, 'CONS-')) and string-length($buildingBlockShort) gt 0">
-                <xsl:value-of select="concat('-',$buildingBlockShort)"/>
+                <xsl:value-of select="concat('-',substring($buildingBlockShort,1,20)"/>
             </xsl:if>
         </xsl:variable>
+        
+        <xsl:if test="string-length(string-join($buildString,'')) gt 64">
+            <xsl:call-template name="util:logMessage">
+                <xsl:with-param name="level" select="$logWARN"/>
+                <xsl:with-param name="msg">Id '<xsl:value-of select="string-join($buildString,'')"/>' is longer than 64 characters. Sorting in the simulator may give unexpected results</xsl:with-param>
+            </xsl:call-template>
+        </xsl:if>
+
         <xsl:value-of select="string-join($buildString,'')"/>
     </xsl:template>
     
