@@ -461,7 +461,7 @@
             <xsl:if test="string-length($theScenario0XHyphen) gt 1">
                 <xsl:value-of select="concat('-',$theScenario0XHyphen)"/>
             </xsl:if>
-            <xsl:if test="not($buildingBlockShort = ('VV','MTD','MA','MVE','MGB','TA','WDS')) and not(contains($buildingBlockShort, 'CONS-'))">
+            <xsl:if test="not($buildingBlockShort = ('VV','MTD','MA','MVE','MGB','TA','WDS')) and not(contains($buildingBlockShort, 'CONS-')) and string-length($buildingBlockShort) gt 0">
                 <xsl:value-of select="concat('-',$buildingBlockShort)"/>
             </xsl:if>
         </xsl:variable>
