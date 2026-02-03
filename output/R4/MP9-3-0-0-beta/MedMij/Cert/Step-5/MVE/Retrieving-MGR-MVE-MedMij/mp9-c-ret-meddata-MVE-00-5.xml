@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns:nts="http://nictiz.nl/xsl/testscript" xmlns="http://hl7.org/fhir">
+   <id value="mp9-c-ret-meddata-MVE-00-5-MedMij"/>
+   <url value="http://nictiz.nl/fhir/TestScript/mp9-c-ret-meddata-MVE-00-5-MedMij"/>
+   <version value="r4-mp9-3.0.0-patchlevel 2025.51"/>
+   <name value="mp9-c-ret-meddata-MVE-00-5 - target MedMij"/>
+   <title value="Scenario 0.5 - target MedMij"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Retrieve Medication data MVE building blocks for patient G-XXX-Groot&#xA;&#xA;For more info:&#xA;https://informatiestandaarden.nictiz.nl/wiki/mp:V9.3.0_kwalificatie_medicatiegegevens_raadplegen_MVE&#xA;&#xA;Original description:&#xA;KWAL Medicatiegegevens MVE Script0 (filterqueries)&#xA;Verstrekkingen met een filter op verstrekkingsperiode – einddatum (alles voor T-13) (Antwoord: bericht met 2 verstrekkingen) "/>
+   <origin>
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
+         <valueBoolean value="true"/>
+      </extension>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
+         <code value="FHIR-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
+         <valueBoolean value="false"/>
+      </extension>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <variable>
+      <name value="T"/>
+      <defaultValue value="${CURRENTDATE}"/>
+      <description value="Date that data and queries are expected to be relative to."/>
+   </variable>
+   <test id="mp9-c-ret-meddata-MVE-00-5-01">
+      <name value="Scenario 0.5"/>
+      <description value="Retrieve Medication data MVE resources in a searchset Bundle"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="MedicationDispense"/>
+            <description value="Test PHR client to retrieve MedicationDispense resource(s) representing MP9 building block MedicationDispense"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?category=http://snomed.info/sct|373784005&amp;whenhandedover=le${DATE, T, D,-13}&amp;_include=MedicationDispense:medication&amp;_include=MedicationDispense:performer&amp;_include=MedicationDispense:destination&amp;_include:iterate=PractitionerRole:organization&amp;_include:iterate=PractitionerRole:practitioner&amp;_include:iterate=PractitionerRole:location"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 36c93d00-6e6e-11ee-807c-0800200c9a66"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 36c93d00-6e6e-11ee-807c-0800200c9a66"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 36c93d00-6e6e-11ee-807c-0800200c9a66"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 2 MedicationDispense resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(MedicationDispense)).count() = 2"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 2 Medication resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Medication)).count() = 2"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
