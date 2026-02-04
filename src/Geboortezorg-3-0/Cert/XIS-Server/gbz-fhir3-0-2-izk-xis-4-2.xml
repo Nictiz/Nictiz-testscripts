@@ -102,81 +102,26 @@
          <nts:with-parameter name="code" value="11429006"/>
       </nts:include>
       
-<!--      Set of period.start
-      A => Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start
-      B => Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start
-      C => Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start
-      
-      Set of Encounters
-      E0 => Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0]
-      E1 => Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1]
-      E2 => Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2]-->
-      
-<!--      The logic implemented with the first selector is:
-      if( A < B and A > C, 
-      choose E0, 
-      else if( B < C, 
-               choose E1, 
-               else choose E2) 
-      ) -->
-   
-      <!-- consult: selectie T-207D obv period.start-->
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Encounter-a6dcb094-6b39-11ec-1275-020000000000.xml"          
-         selector="iif( Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start 
-                        and 
-                        Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start, 
-                        Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0], 
-                        iif( Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start, 
-                             Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1], 
-                             Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2]) 
-                        )"
-         nts:in-targets="CheckContent"/>
-         
-<!--  The logic implemented with the second selector is:
-      if((A > B and A < C) or (A > C and A < B), 
-      choose E0, 
-      else if( (B > A and B > C) or (B > C and B < A), 
-      choose E1, 
-      else choose E2)
-      )-->
+      <!-- consult: selectie T-207D obv reason-->
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Encounter-a6dcb094-6b39-11ec-1275-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>reason.exists().not()</nts:discriminator>
+      </nts:contentAsserts>
+      <!--if the above doesn't work try reason.count()=0 or reason.empty()-->
       
       <!-- consult: selectie T-70D -->
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Encounter-ec3d4f8f-6aef-11ec-1275-020000000000.xml" 
-         selector="iif((Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start 
-                        and 
-                        Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start) 
-                        or 
-                       (Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start 
-                        and 
-                        Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start), 
-                        Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0], 
-                        iff( (Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start and Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start) 
-                              or 
-                             (Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start and Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start), 
-                              Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1], 
-                              Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2])
-                        )"
-         nts:in-targets="CheckContent"/>
-         
-<!--  The logic implemented with the third seelctor is:
-      if( A > B and A > C, 
-      choose E0, 
-      else if( B > C, 
-            choose E1, 
-            else choose E2)
-      )-->
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Encounter-ec3d4f8f-6aef-11ec-1275-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>reason.extension.where(url='http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').valueReference.reference.startsWith('Condition/')</nts:discriminator>
+      </nts:contentAsserts>
+      <!--of deze met exists?
+      <nts:discriminator>reason.extension.where(url='http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').valueReference.reference.where(startsWith('Condition/')).exists()</nts:discriminator>-->
       
       <!-- consult: selectie T-10D -->
-      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Encounter-bb5e99cf-6af2-11ec-1275-020000000000.xml" 
-         selector="iif( Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start 
-                        and 
-                        Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start, 
-                        Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[0], 
-                        iff( Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2].period.start, 
-                             Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[1], 
-                             Bundle.entry.resource.ofType(Encounter).where(type.where(coding.code='11429006'))[2])
-                        )"
-         nts:in-targets="CheckContent"/>
+      <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Encounter-bb5e99cf-6af2-11ec-1275-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>reason.extension.where(url='http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').valueReference.reference.startsWith('Procedure/')</nts:discriminator>
+      </nts:contentAsserts>
+      <!--of deze met exists?
+      <nts:discriminator>reason.extension.where(url='http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').valueReference.reference.where(startsWith('Procedure/')).exists()</nts:discriminator>-->
+
    </test>
 
    <!-- Observations - Observaties gekoppeld aan episode -->
@@ -835,12 +780,14 @@
          <nts:with-parameter name="code" value="3950001"/>
          <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
+      <!--fixture with earlier effectiveDateTime = '${DATE, T, D, -207}'-->
       <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Birth3950001-6965feaf-6a9e-11ec-2123-020000000000.xml" 
                           selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[0].performedDateTime %lt; Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[1].performedDateTime, 
                                        Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[0], 
                                        Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[1])" 
                           nts:in-targets="CheckContent">
       </nts:contentAsserts>
+      <!--fixture with later effectiveDateTime = '${DATE, T, D, -207}'-->
       <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Birth3950001-be71a8c7-6ae9-11ec-2123-020000000000.xml" 
                           selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[0].performedDateTime %gt; Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[1].performedDateTime, 
                                        Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001')))[0], 
