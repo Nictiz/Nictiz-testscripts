@@ -208,7 +208,7 @@
                                                 <value value="return=representation"/>
                                             </requestHeader>
                                             <!--<responseId value="transaction-response-fixture" nts:in-targets="Nictiz-intern"/>-->
-                                            <sourceId value="{$adaTransId}"/>
+                                            <sourceId value="{$adaTransIdFile}"/>
                                         </operation>
                                     </action>
                                     <nts:include value="assert.response.success" scope="common"/>
@@ -246,7 +246,7 @@
                                             <destination value="1"/>
                                             <origin value="1"/>
                                             <responseId value="transaction-response-fixture"/>
-                                            <sourceId value="{$adaTransId}" nts:in-targets="Nictiz-intern"/>
+                                            <sourceId value="{$adaTransIdFile}" nts:in-targets="Nictiz-intern"/>
                                         </operation>
                                     </action>
                                     <nts:include value="test.client.successfulTransaction" scope="common"/>
