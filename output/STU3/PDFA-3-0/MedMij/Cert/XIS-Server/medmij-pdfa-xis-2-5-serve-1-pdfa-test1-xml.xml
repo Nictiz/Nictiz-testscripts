@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
-   <id value="xis-1-2-serve-0-documentreference-xml"/>
+   <id value="xis-2-5-serve-1-pdfa-test1-xml"/>
    <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-rule">
       <extension url="ruleId">
          <valueId value="assert-response-queryParamsInSelfLink"/>
@@ -9,10 +9,10 @@
          <valueString value="../_reference/rules/assert_response_queryParamsInSelfLink.groovy"/>
       </extension>
    </extension>
-   <url value="http://nictiz.nl/fhir/TestScript/xis-1-2-serve-0-documentreference-xml"/>
+   <url value="http://nictiz.nl/fhir/TestScript/xis-2-5-serve-1-pdfa-test1-xml"/>
    <version value="stu3-2.0-patchlevel 2026.06"/>
-   <name value="PDFA - XIS Server - Scenario 1.2 - Serve zero DocumentReference resources - XML Format"/>
-   <title value="PDFA - XIS Server - Scenario 1.2 - Serve zero DocumentReference resources - XML Format"/>
+   <name value="PDFA - XIS Server - Scenario 2.5 - Serve one PDFA document - XML Format"/>
+   <title value="PDFA - XIS Server - Scenario 2.5 - Serve one PDFA document - XML Format - TYPE GET - NO ACCEPT"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -23,7 +23,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 1.2 - Serve DocumentReference resources of XXX-Baltus that are indexed/created in the period from T-730 to T-365."/>
+   <description value="Scenario 2.5 - Serve one PDFA document of XXX-Schulte via an HTTP get. If PDFA documents are served through Binary resources, scenario 1.4 should be executed instead."/>
    <origin>
       <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
          <valueBoolean value="false"/>
@@ -44,26 +44,29 @@
          <code value="FHIR-Server"/>
       </profile>
    </destination>
+   <profile id="OperationOutcome-profile"
+            value="http://hl7.org/fhir/StructureDefinition/OperationOutcome"/>
    <profile id="Bundle-profile"
             value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
    <variable>
       <name value="patient-token-id"/>
-      <defaultValue value="Bearer f92b6141-55db-46d5-a3ae-874b69907d22"/>
+      <defaultValue value="Bearer aae7b5aa-d796-4fba-b4d3-852d9043ee66"/>
       <description value="OAuth Token for current patient"/>
    </variable>
    <variable>
-      <name value="T"/>
-      <defaultValue value="${CURRENTDATE}"/>
-      <description value="Date that data and queries are expected to be relative to."/>
+      <name value="pdfa-url"/>
+      <!-- Pick the absolute url as is or create an absolute url when a relative url is given by combining the base url given in the Bundle self link with the relative reference.-->
+      <expression value="iif(Bundle.entry.select(resource as DocumentReference)[0].content[0].attachment.url.startsWith('Binary/'), Bundle.link.url.replaceMatches('DocumentReference[/?].*$','') + Bundle.entry.select(resource as DocumentReference)[0].content[0].attachment.url, Bundle.entry.select(resource as DocumentReference)[0].content[0].attachment.url)"/>
+      <sourceId value="documentreference-search-response"/>
    </variable>
    <variable>
       <name value="X-Correlation-ID"/>
       <defaultValue value="${UUID}"/>
       <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
    </variable>
-   <test id="scenario1-2-serve-0-documentreference">
-      <name value="Scenario 1.2"/>
-      <description value="Serve all current DocumentReference resources of XXX-Baltus that are indexed/created in the period from T-730 to T-365."/>
+   <test id="scenario2-5-serve-1-documentreference">
+      <name value="Scenario 2.5 - Search DocumentReference"/>
+      <description value="Serve DocumentReference resources."/>
       <action>
          <operation>
             <type>
@@ -76,7 +79,7 @@
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
-            <params value="?indexed=ge${DATE, T, D,-730}&amp;indexed=le${DATE, T, D,-365}&amp;status=current"/>
+            <params value="?status=current"/>
             <requestHeader>
                <field value="Authorization"/>
                <value value="${patient-token-id}"/>
@@ -89,6 +92,7 @@
                <field value="X-Correlation-ID"/>
                <value value="${X-Correlation-ID}"/>
             </requestHeader>
+            <responseId value="documentreference-search-response"/>
          </operation>
       </action>
       <action>
@@ -260,10 +264,76 @@
       </action>
       <action>
          <assert>
-            <description value="Confirm that the response Bundle contains 0 DocumentReference resource(s). "/>
+            <description value="Confirm that the response Bundle contains 1 DocumentReference resource(s), or 2 if the server doesn't support the statuses defined in the test scenario and default to 'current'."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(DocumentReference)).count() = 0"/>
+            <expression value="Bundle.entry.where(resource.is(DocumentReference)).count() in (1 | 2)"/>
             <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that all the DocumentReference resources in the Bundle have the status 'current'. This check is needed to make sure that servers which don't support the statuses defined in the test scenario and default to 'current' actually only return results with this status."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(DocumentReference)).all(resource.status = 'current')"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned Bundle contains a DocumentReference with LOINC code 68626-1."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.select(resource as DocumentReference).where(type.coding.where(code = '68626-1')).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+   <test id="scenario2-5-serve-pdfa-document">
+      <name value="Scenario 2.5 - Get PDFA"/>
+      <description value="Serve PDFA document via an HTTP get."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://touchstone.aegis.net/touchstone/fhir/testing/CodeSystem/codesystem-testscript-operation-codes"/>
+               <code value="get"/>
+            </type>
+            <description value="Test XIS server get operation for a document on a known location, using the fullURL."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-id}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+            <url value="${pdfa-url}"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned resource type is a PDF."/>
+            <direction value="response"/>
+            <headerField value="Content-Type"/>
+            <stopTestOnFail value="false"/>
+            <value value="application/pdf"/>
             <warningOnly value="false"/>
          </assert>
       </action>
