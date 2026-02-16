@@ -525,7 +525,7 @@
         
         <xsl:variable name="wikiUrl">
             <xsl:variable name="buildString">
-                <xsl:text>https://informatiestandaarden.nictiz.nl/wiki/mp:V9.3.0_</xsl:text>
+                <xsl:text>https://informatiestandaarden.nictiz.nl/wiki/mp:V3.0.0_</xsl:text>
                 <xsl:choose>
                     <xsl:when test="contains($buildingBlockShort, 'CONS-')">
                         <xsl:text>consolidatie</xsl:text>
