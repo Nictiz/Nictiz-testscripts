@@ -482,7 +482,7 @@
                 <xsl:value-of select="concat('-',$theScenario0XHyphen)"/>
             </xsl:if>
             <xsl:if test="not($buildingBlockShort = ('VV','MTD','MA','MVE','MGB','TA','WDS')) and not(contains($buildingBlockShort, 'CONS-')) and string-length($buildingBlockShort) gt 0">
-                <xsl:value-of select="concat('-',substring($buildingBlockShort,1,20)"/>
+                <xsl:value-of select="concat('-',substring($buildingBlockShort,1,20))"/>
             </xsl:if>
         </xsl:variable>
         
@@ -527,7 +527,7 @@
         
         <xsl:variable name="wikiUrl">
             <xsl:variable name="buildString">
-                <xsl:text>https://informatiestandaarden.nictiz.nl/wiki/mp:V9.3.0_</xsl:text>
+                <xsl:text>https://informatiestandaarden.nictiz.nl/wiki/mp:V3.0.0_</xsl:text>
                 <xsl:choose>
                     <xsl:when test="contains($buildingBlockShort, 'CONS-')">
                         <xsl:text>consolidatie</xsl:text>
@@ -570,7 +570,7 @@
                 <xsl:value-of select="concat('&#xA;',$adaTitle)"/>
             </xsl:if>
             <xsl:if test="string-length($adaDescription) gt 0">
-                <xsl:value-of select="concat('&#xA;',replace(replace($adaDescription,'&lt;\/?(div|span)( style=&quot;.*?&quot;)?&gt;',''),'&lt;br&gt;','&#xA;')),''"/>
+                <xsl:value-of select="concat('&#xA;',replace(replace($adaDescription,'&lt;/?(div|span)( style=&quot;.*?&quot;)?&gt;',''),'&lt;br&gt;','&#xA;')),''"/>
             </xsl:if>
         </xsl:variable>
         
