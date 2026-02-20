@@ -6,7 +6,17 @@
    <name value="Nictiz Geboortezorg - Server - Scenario 4.2 - Serve Integrale Zwangerschapskaart resources of twin pregnancy of Fiona Swart"/>
    <description value="Scenario 4.2: Serve Integrale Zwangerschapskaart resources of twin pregnancy of Fiona Swart"/>
    <nts:authToken patientResourceId="FIONAXXX-Swart"/>
-   <nts:include value="gbz-variable-episode-id" name="episode-id" sourceId="fixture-5-ServeMaternalRecord"/>
+   <nts:include value="gbz-variable-episode-id" name="episode-id" sourceId="bundle-2-ServeMaternalRecord"/>
+   <variable>
+      <name value="variable-child1"/>
+      <expression value="Bundle.entry.resource.ofType(Observation).where(code.coding.where(system='http://loinc.org' and code='8339-4')).where(valueQuantity.value.toDecimal() = 2605).first().subject.reference"/>
+      <sourceId value="bundle-5a-ServeObservations"/>
+   </variable>
+   <variable>
+      <name value="variable-child2"/>
+      <expression value="Bundle.entry.resource.ofType(Observation).where(code.coding.where(system='http://loinc.org' and code='8339-4')).where(valueQuantity.value.toDecimal() = 2089).first().subject.reference"/>
+      <sourceId value="bundle-5a-ServeObservations"/>
+   </variable>
    <variable><name value="T"/><defaultValue value="${CURRENTDATE}"/></variable>
    
    <!-- Patient - Zwangere vrouw -->
@@ -31,7 +41,7 @@
       <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="EpisodeOfCare"/>
          <nts:with-parameter name="params" value="?type=http://snomed.info/sct|364320009&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
-         <nts:with-parameter name="responseId" value="fixture-5-ServeMaternalRecord"/>
+         <nts:with-parameter name="responseId" value="bundle-2-ServeMaternalRecord"/>
       </nts:include>
       <nts:include value="assert.response.numResources" scope="common" resource="EpisodeOfCare" count="1"/>
       <nts:include value="assert.response.numResources" scope="common" resource="Organization" count="1"/>
@@ -131,6 +141,7 @@
       <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Observation"/>
          <nts:with-parameter name="params" value="?context=EpisodeOfCare/${episode-id}"/>
+         <nts:with-parameter name="responseId" value="bundle-5a-ServeObservations"/>
       </nts:include>
       <!-- Parity -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -885,14 +896,14 @@
          <nts:with-parameter name="code" value="3950001"/>
          <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!--Onderstaande oplossing voor discriminators is waarschijnlijk niet juist, moet gereviewed worden-->
+      <!--The discriminators below use the variables variable-child1 and variable-child2, from the bundle-5a-ServeObservations -->
       <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Birth3950001-be71a8c7-6ae9-11ec-2123-020000000000.xml" nts:in-targets="CheckContent">
          <nts:discriminator>code.where(coding.where(code = 3950001))</nts:discriminator>
-         <nts:discriminator>subject.where(reference = Patient/JAN-J-XXX-SWART)</nts:discriminator>
+         <nts:discriminator>subject.reference = ${variable-child1}</nts:discriminator>
       </nts:contentAsserts>
       <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-Birth3950001-6965feaf-6a9e-11ec-2123-020000000000" nts:in-targets="CheckContent">
          <nts:discriminator>code.where(coding.where(code = 3950001))</nts:discriminator>
-         <nts:discriminator>subject.where(reference = Patient/LILIANNE-L-XXX-SWART)</nts:discriminator>
+         <nts:discriminator>subject.reference = ${variable-child2}</nts:discriminator>
       </nts:contentAsserts>
       <!-- bloedonderzoek (verrichting) -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -946,17 +957,38 @@
          <nts:with-parameter name="code" value="80771000146107"/>
          <nts:with-parameter name="system" value="http://snomed.info/sct"/>
       </nts:include>
-      <!--deze twee fixtures zijn identiek met alleen een verschil in de partOf waardes-->
-      <!-- HELP - er staat een comment in de oude TestScript, daar ook niet opgelost-->
+      <!--The fixtures below differ only in their partOf values, which have a reference to the Birth Procedures -->
+      <!--contentAssert for child2 LILIANNE-L-XXX-SWART-->
       <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ObstetricProcedure80771000146107-35557738-6b45-11ec-2160-020000000000.xml" 
-                          selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0].id %lt; Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1].id, Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0], Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1])" 
-                          nts:in-targets="CheckContent">
+         selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0].partOf.reference = 'Procedure/' &amp; Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001'))).where(subject.reference = ${variable-child2}).first().id,
+                       Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0],
+                       Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1])" 
+         nts:in-targets="CheckContent">
       </nts:contentAsserts>
+      <!--contentAssert for child1 Patient/JAN-J-XXX-SWART-->
       <nts:contentAsserts href="Verloskunde-Casus2/mm-gbz-bc-ObstetricProcedure80771000146107-8703f6b8-6b2c-11ec-2160-020000000000.xml" 
-                          selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0].id %lt; Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1].id, Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1], Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0])" 
-                          nts:in-targets="CheckContent">
+         selector="iif(Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0].partOf.reference = 'Procedure/' &amp; Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='3950001'))).where(subject.reference = ${variable-child1}).first().id,
+                       Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0],
+                       Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1])" 
+         nts:in-targets="CheckContent">
       </nts:contentAsserts>
    </test>
+
+   <!--use the iff below in case the partOf.reference is not a relative reference like Procedure/... but absolute:-->
+   <!--   iif(
+   Bundle.entry.resource.ofType(Procedure)
+   .where(code.where(coding.where(code='80771000146107')))[0]
+   .partOf.reference
+   .substring(indexOf('Procedure/') + 10)
+   =
+   Bundle.entry.resource.ofType(Procedure)
+   .where(code.where(coding.where(code='3950001')))
+   .where(subject.reference = ${birth-child2})
+   .first()
+   .id,
+   Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[0],
+   Bundle.entry.resource.ofType(Procedure).where(code.where(coding.where(code='80771000146107')))[1]
+   )-->
 
    <!-- RelatedPerson -->
    <test id="7-RelatedPerson">
