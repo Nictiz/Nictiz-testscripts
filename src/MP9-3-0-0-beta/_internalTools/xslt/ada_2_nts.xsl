@@ -25,14 +25,9 @@
         <xsl:for-each select="$adaTransaction">
             <!-- find corresponding FHIR fixture based on adaId -->
             <xsl:variable name="adaTransId" select="nf:removeSpecialCharacters(@id)"/>
-            <xsl:variable name="adaTransIdFile" select="replace($adaTransId, '\.', '-')"/>
-            <xsl:variable name="fhirFixture"
-                select="document(concat($mappingsUrl4FhirFixtures, '/', $adaTransIdFile, '.xml'))"/>
+            <xsl:variable name="adaTransIdFile" select="replace($adaTransId, '\.', '-')"/>           
             <!-- extract concise filename so the end user can distinguish between different scripts  -->
-            <xsl:variable name="fileName" select="replace($adaTransId,'.+(tst|kwal)-(.+)-v30', '$2')"/>
-            
-            <xsl:variable name="fixturePatient" select="$fhirFixture//f:Patient[1]"/>
-            
+            <xsl:variable name="fileName" select="replace($adaTransId,'.+(tst|kwal)-(.+)-v30', '$2')"/>       
             <xsl:variable name="testGoal">
                 <xsl:choose>
                     <xsl:when test="replace($adaTransId,'.+(tst|kwal)-(.+)-v30', '$1') = 'kwal'">Cert</xsl:when>
@@ -40,7 +35,7 @@
                 </xsl:choose>
             </xsl:variable>
             
-            <xsl:variable name="fhirFixture" select="document(concat($mappingsUrl4FhirFixtures, '/', $adaTransId, '.xml'))"/>
+            <xsl:variable name="fhirFixture" select="document(concat($mappingsUrl4FhirFixtures, '/', $adaTransIdFile, '.xml'))"/>
             <xsl:variable name="fixturePatient" select="$fhirFixture//f:Patient[1]"/>
             
             <xsl:variable name="ntsScenario" as="xs:string?">
@@ -239,7 +234,7 @@
                             <xsl:choose>
                                 <!-- Receive -->
                                 <xsl:when test="$ntsScenario = 'server'">
-                                    <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.{'{$_FORMAT}'}"/>
+                                    <nts:fixture id="{$adaTransIdFile}" href="fixtures/{$adaTransIdFile}.{'{$_FORMAT}'}"/>
                                     <nts:includeDateT value="yes"/>
                                     <!--<xsl:apply-templates select="$deleteStuff/f:variable" mode="Nictiz-intern"/>-->
                                     <test id="{$idString}-01">
@@ -260,7 +255,7 @@
                                                     <value value="return=representation"/>
                                                 </requestHeader>
                                                 <!--<responseId value="transaction-response-fixture" nts:in-targets="Nictiz-intern"/>-->
-                                                <sourceId value="{$adaTransId}"/>
+                                                <sourceId value="{$adaTransIdFile}"/>
                                             </operation>
                                         </action>
                                         <nts:include value="assert.response.success" scope="common"/>
@@ -275,7 +270,7 @@
                                  </xsl:when>
                                 <xsl:otherwise>
                                     <!-- assume Send -->
-                                    <nts:fixture id="{$adaTransId}" href="fixtures/{$adaTransId}.xml" nts:in-targets="Nictiz-intern"/>
+                                    <nts:fixture id="{$adaTransIdFile}" href="fixtures/{$adaTransIdFile}.xml" nts:in-targets="Nictiz-intern"/>
                                     <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
                                     <!--<xsl:copy-of select="$deleteStuff/f:variable"/>-->
                                     <test id="{$idString}-01">
@@ -291,7 +286,7 @@
                                                 <destination value="1"/>
                                                 <origin value="1"/>
                                                 <responseId value="transaction-response-fixture"/>
-                                                <sourceId value="{$adaTransId}" nts:in-targets="Nictiz-intern"/>
+                                                <sourceId value="{$adaTransIdFile}" nts:in-targets="Nictiz-intern"/>
                                             </operation>
                                         </action>
                                         <nts:include value="test.client.successfulTransaction" scope="common"/>
