@@ -224,16 +224,11 @@
                         </xsl:for-each-group>
                     </xsl:variable>
                     <xsl:variable name="cleanupVars" as="element(f:variable)*">
-                        <variable xmlns="http://hl7.org/fhir">
-                            <name value="patient-id"/>
-                            <sourceId value="transaction-response-fixture"/>
-                            <expression
-                                value="Bundle.entry.response.location
-                                   .where(startsWith($this,'Patient/'))
-                                   .first()
-                                   .substring(8)
-                                   .substringBefore('/_history')"/>
-                        </variable>
+                        <f:variable>
+                            <f:name value="patient-id"/>
+                            <f:sourceId value="transaction-response-fixture"/>
+                            <f:expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().substring(8).substringBefore('/_history')"/>
+                        </f:variable>
                     </xsl:variable>
                     <xsl:result-document href="{concat($outputDirNormalized, '/', $newFilename)}">
                         <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
