@@ -38,6 +38,11 @@
    </destination>
    <profile id="Bundle-profile"
             value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
+   <variable>
+      <name value="patient-id"/>
+      <sourceId value="transaction-response-fixture"/>
+      <expression value="replace(Bundle.entry.response.where(location.startsWith('Patient/')).location.first(), 'Patient/([0-9A-Za-z\-\.]+)/_history/.*', '$1')"/>
+   </variable>
    <test id="mp9-t-sen-vs-01-3-chronische-medicatie-01">
       <name value="Scenario 1.3"/>
       <description value="Send Medication prescription chronische-medicatie resources in a transaction Bundle"/>
@@ -211,4 +216,19 @@
          </assert>
       </action>
    </test>
+   <teardown>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="delete"/>
+            </type>
+            <resource value="Patient"/>
+            <description value="Delete the Patient and all subsequent Resources that were created during this test."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <params value="/Patient/${patient-id}/$purge"/>
+         </operation>
+      </action>
+   </teardown>
 </TestScript>

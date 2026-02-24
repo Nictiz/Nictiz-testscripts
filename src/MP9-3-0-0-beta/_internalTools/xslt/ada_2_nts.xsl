@@ -223,7 +223,13 @@
                              </xsl:choose>
                         </xsl:for-each-group>
                     </xsl:variable>
-                    
+                    <xsl:variable name="cleanupVars" as="element(f:variable)*">
+                        <variable xmlns="http://hl7.org/fhir">
+                            <name value="patient-id"/>
+                            <sourceId value="transaction-response-fixture"/>
+                            <expression value="replace(Bundle.entry.response.where(location.startsWith('Patient/')).location.first(), 'Patient/([0-9A-Za-z\-\.]+)/_history/.*', '$1')"/>
+                        </variable>
+                    </xsl:variable>
                     <xsl:result-document href="{concat($outputDirNormalized, '/', $newFilename)}">
                         <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                             <id value="{$idString}"/>
@@ -231,6 +237,7 @@
                             <name value="{$idString}"/>
                             <title value="{$testScriptTitle}"/>
                             <description value="{$testScriptDescription}"/>
+                            <xsl:copy-of select="$cleanupVars"/>
                             <xsl:choose>
                                 <!-- Receive -->
                                 <xsl:when test="$ntsScenario = 'server'">
@@ -267,8 +274,9 @@
                                          <!-\- the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
                                          <xsl:copy-of select="$deleteStuff/f:action"/>
                                          </teardown>-->
-                                 </xsl:when>
-                                <xsl:otherwise>
+                                   
+                             </xsl:when>
+                                <xsl:otherwise>                                    
                                     <!-- assume Send -->
                                     <nts:fixture id="{$adaTransIdFile}" href="fixtures/{$adaTransIdFile}.xml" nts:in-targets="Nictiz-intern"/>
                                     <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
@@ -292,6 +300,9 @@
                                         <nts:include value="test.client.successfulTransaction" scope="common"/>
                                         <xsl:copy-of select="$includeNumResources"/>
                                     </test>
+                                    <teardown>
+                                        <nts:include value="teardown-deletePatient" scope="project"/>
+                                    </teardown>
                                     <!--<teardown nts:in-targets="#default">
                                          <!-\- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
                                          <!-\- but not Patient, since we want to do a purge after -\->
@@ -317,8 +328,8 @@
                                          <!-\- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
                                          <xsl:copy-of select="$deleteStuff/f:action"/>
                                          <!-\- MP-746 no $purge needed for Nictiz internal scripts -\->
-                                         </teardown>-->
-                                 </xsl:otherwise>
+                                         </teardown>-->                                    
+                                </xsl:otherwise>
                             </xsl:choose>
                         </TestScript>
                     </xsl:result-document>
