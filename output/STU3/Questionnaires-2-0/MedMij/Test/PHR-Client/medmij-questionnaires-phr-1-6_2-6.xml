@@ -1,18 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
    <id value="medmij-questionnaires-phr-1.6-2.6"/>
-   <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-rule">
-      <extension url="ruleId">
-         <valueId value="assertMinimumRequest"/>
-      </extension>
-      <extension url="path">
-         <valueString value="../_reference/rules/assertMinimumRequest.groovy"/>
-      </extension>
-   </extension>
    <url value="http://nictiz.nl/fhir/TestScript/medmij-questionnaires-phr-1.6-2.6"/>
    <version value="stu3-2.0-patchlevel 2026.06"/>
    <name value="MedMij Questionnaires - PHR Client - Scenario 1.6 and 2.6"/>
-   <title value="MedMij Questionnaires - PHR Client - Scenario 1.6 and 2.6"/>
+   <title value="Scenario 1.6 and 2.6"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -58,26 +50,11 @@
          <reference value="../_reference/resources/resources-specific/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Boumann-PHQ9E-REJECTED.xml"/>
       </resource>
    </fixture>
-   <fixture id="task-minimum-fixture-xml">
-      <autocreate value="false"/>
-      <autodelete value="false"/>
-      <resource>
-         <reference value="../_reference/resources/minimum/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Boumann-PHQ9E-minimum.xml"/>
-      </resource>
-   </fixture>
-   <fixture id="task-minimum-fixture-json">
-      <autocreate value="false"/>
-      <autodelete value="false"/>
-      <resource>
-         <reference value="../_reference/resources/minimum/medmij-questionnaires-vl-QuestionnaireProvisioningTask-XXX_Boumann-PHQ9E-minimum.json"/>
-      </resource>
-   </fixture>
    <profile id="Task-profile"
             value="http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask"/>
    <variable>
       <name value="task-id"/>
-      <expression value="Task.id"/>
-      <sourceId value="task-requested-fixture"/>
+      <defaultValue value="vl-QuestionnaireProvisioningTask-XXXBoumann-PHQ9E-${RANDOM-10}"/>
    </variable>
    <variable>
       <name value="T"/>
@@ -113,7 +90,7 @@
       <action>
          <assert>
             <description value="If this test fails, someone else is running a test for this patient at the moment. Please try again at some later time or contact Nictiz Qualifications if this issue persists."/>
-            <expression value="Bundle.total = 0"/>
+            <expression value="Bundle.entry.where(resource.is(Task)).count() = 0"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -207,7 +184,7 @@
          <assert>
             <description value="Confirm that the search returns a Bundle with one entry."/>
             <direction value="response"/>
-            <expression value="Bundle.total = 1"/>
+            <expression value="Bundle.entry.where(resource.is(Task)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -264,7 +241,7 @@
          <assert>
             <description value="Confirm that the Task instance declares its profile"/>
             <direction value="request"/>
-            <expression value="meta.profile = 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask'"/>
+            <expression value="Task.meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/vl-QuestionnaireProvisioningTask').exists()"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -289,20 +266,54 @@
       </action>
       <action>
          <assert>
-            <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-assert-rule">
-               <extension url="ruleId">
-                  <valueId value="assertMinimumRequest"/>
-               </extension>
-               <extension url="param">
-                  <extension url="name">
-                     <valueString value="minimumFixtureBase"/>
-                  </extension>
-                  <extension url="value">
-                     <valueString value="task-minimum-fixture"/>
-                  </extension>
-               </extension>
-            </extension>
+            <description value="Confirm that the Task contains .intent with value 'order'"/>
             <direction value="request"/>
+            <expression value="Task.intent = 'order'"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the Task contains .code with .coding with .system = 'http://loinc.org' and .code = '74468-0'"/>
+            <direction value="request"/>
+            <expression value="Task.code.coding.where(system = 'http://loinc.org' and code = '74468-0').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the Task contains .requester.agent with references to the Practitioner and PractitionerRole from the orginal Task"/>
+            <direction value="request"/>
+            <expression value="Task.requester.agent.where(reference = 'Practitioner/000001111FRANSLIJSTER' and extension('http://nictiz.nl/fhir/StructureDefinition/practitionerrole-reference').value.where($this is Reference).reference = 'PractitionerRole/medmij-questionnaires-nl-core-practitionerrole-01').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the Task contains .owner with a reference to the Patient from the orginal Task"/>
+            <direction value="request"/>
+            <expression value="Task.owner.reference = 'Patient/XXXBOUMANN'"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the Task contains .input with .type.text = 'Questionnaire' and a reference to the Questionnaire from the original Task"/>
+            <direction value="request"/>
+            <expression value="Task.input.where(type.text = 'Questionnaire' and value.where($this is Reference).reference ='Questionnaire/PHQ-9-EXTENDED').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the Task contains .input with .type.text = 'Subject' and a reference to the Patient from the original Task"/>
+            <direction value="request"/>
+            <expression value="Task.input.where(type.text = 'Subject' and value.where($this is Reference).reference ='Patient/XXXBOUMANN').exists()"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
