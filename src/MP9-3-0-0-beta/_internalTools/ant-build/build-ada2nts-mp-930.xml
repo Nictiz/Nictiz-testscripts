@@ -531,22 +531,25 @@
             <fileset refid="outputFiles"/>
         </delete>
         
+        <property name="xsl.out.abs" location="${xsl.out}"/>
+        
         <fileset id="inputFiles" dir="${xsl.in}">
             <include name="${xsl.in.include}" if="xsl.in.include"/>
             <exclude name="${xsl.in.exclude}" if="xsl.in.exclude"/>
         </fileset>
         
         <echo>ADA 2 NTS input files ${xsl.in}/${xsl.in.include}, to be converted with: ${xsl.convert}</echo>
-        <xslt force="true" style="${xsl.convert}" destdir="${xsl.out}" extension=".xml" useImplicitFileset="false">
+        <property name="xslt.dummy.dir" value="${build.dir}/xslt-dummy"/>
+        <mkdir dir="${xslt.dummy.dir}"/>
+        <xslt force="true" style="${xsl.convert}" destdir="${xslt.dummy.dir}" extension=".xml" useImplicitFileset="false">
             <fileset refid="inputFiles"/>
-            <!-- make output filenames a bit more concise, beware: if regexpmapper can't make a match, you don't get any output -->
-            <regexpmapper from=".+(tst|kwal)-(.+)-v30.xml" to="\2.xml"/>
             <factory name="${xsl.saxon.class}"/>
             <classpath location="${xsl.saxon}"/>
             <param name="mappingsUrl4FhirFixtures" expression="${mappings.url.4.fhir.fixtures}${test.dir.lowercase}/4touchstone_mp"/>
             <param name="transactionType" expression="${transaction.type}"/>
+            <param name="outputDir" expression="${xsl.out.abs}"/>
         </xslt>
-        
+        <delete dir="${xslt.dummy.dir}" quiet="true"/>
     </target>
     
     <target name="copy_fixtures-Test">
