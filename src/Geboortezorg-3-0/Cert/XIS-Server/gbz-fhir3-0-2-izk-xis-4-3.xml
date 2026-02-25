@@ -8,7 +8,7 @@
    <name value="Nictiz Geboortezorg - Server - Scenario 4.3 - Serve Integrale Zwangerschapskaart resources of Micha Yassien-Mohamed (perinatal and maternal death)"/>
    <description value="Scenario 4.3: Serve Integrale Zwangerschapskaart resources of Micha Yassien-Mohamed  (perinatal and maternal death)"/>
    <nts:authToken patientResourceId="MICHA-M-XXX-YASSIEN-MOHAMED"/>
-   <nts:include value="gbz-variable-episode-id" name="episode-id" sourceId="fixture-5-ServeMaternalRecord"/>
+   <nts:include value="gbz-variable-episode-id" name="episode-id" sourceId="fixture-2-ServeMaternalRecord"/>
    <variable><name value="T"/><defaultValue value="${CURRENTDATE}"/></variable>
    <!-- Patient - Zwangere vrouw -->
    <test id="1-ServeWoman">
@@ -26,13 +26,13 @@
    </test>
 
    <!-- EpisodeOfCare - zorgepisode zwangerschap -->
-   <test id="5-ServeMaternalRecord">
-      <name value="5-ServeMaternalRecord"/>
+   <test id="2-ServeMaternalRecord">
+      <name value="2-ServeMaternalRecord"/>
       <description value="Test Server query operation for MaternalRecord (EpisodeOfCare) including managing organization (Organization) and care manager (Practitioner)"/>
       <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="EpisodeOfCare"/>
          <nts:with-parameter name="params" value="?type=http://snomed.info/sct|364320009&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
-         <nts:with-parameter name="responseId" value="fixture-5-ServeMaternalRecord"/>
+         <nts:with-parameter name="responseId" value="fixture-2-ServeMaternalRecord"/>
       </nts:include>
       <nts:include value="assert.response.numResources" scope="common" resource="EpisodeOfCare" count="1"/>
       <nts:include value="assert.response.numResources" scope="common" resource="Organization" count="1"/>
@@ -41,8 +41,8 @@
    </test>
 
    <!-- Conditions - Problemen gerelateerd aan zorgepisode -->
-   <test id="6a-ServeConditions">
-      <name value="6a-ServeConditions"/>
+   <test id="3-ServeConditions">
+      <name value="3-ServeConditions"/>
       <description value="Test Server query operation for Conditions (including Pregnancy)"/>
       <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Condition"/>
@@ -62,8 +62,8 @@
    </test>
 
    <!-- Encounters -->
-   <test id="7-ServeEncounters">
-      <name value="7-ServeEncounters"/>
+   <test id="4-ServeEncounters">
+      <name value="4-ServeEncounters"/>
       <description value="Test Server query operation for Encounters"/>
       <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Encounter"/>
@@ -79,17 +79,23 @@
          <nts:with-parameter name="count" value="2"/>
          <nts:with-parameter name="code" value="11429006"/>
       </nts:include>
-      <nts:contentAsserts href="Verloskunde-Casus3/mm-gbz-bc-Encounter-1e6a5fff-6b29-11ec-1275-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>period.start.where(value = ${DATE, T, D, -454})</nts:discriminator>
-      </nts:contentAsserts>
-      <nts:contentAsserts href="Verloskunde-Casus3/mm-gbz-bc-Encounter-5d92cb4f-6b2e-11ec-1275-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>period.start.where(value = ${DATE, T, D, -323})</nts:discriminator>
-      </nts:contentAsserts>
+      <!--Encounter with earlier period.start ${DATE, T, D, -454}-->
+      <nts:contentAsserts href="Verloskunde-Casus3/mm-gbz-bc-Encounter-1e6a5fff-6b29-11ec-1275-020000000000.xml" 
+         selector="iif(Bundle.entry.resource.ofType(Encounter).where(code.where(coding.where(code='11429006')))[0].period.start &lt; Bundle.entry.resource.ofType(Encounter).where(code.where(coding.where(code='11429006')))[1].period.start, 
+                       Bundle.entry.resource.ofType(Encounter).where(code.where(coding.where(code='11429006')))[0], 
+                       Bundle.entry.resource.ofType(Encounter).where(code.where(coding.where(code='11429006')))[1])"
+         nts:in-targets="CheckContent"/>
+      <!--Encounter with later period.start ${DATE, T, D, -323}-->
+      <nts:contentAsserts href="Verloskunde-Casus3/mm-gbz-bc-Encounter-5d92cb4f-6b2e-11ec-1275-020000000000.xml" 
+         selector="iif(Bundle.entry.resource.ofType(Encounter).where(code.where(coding.where(code='11429006')))[0].period.start &gt; Bundle.entry.resource.ofType(Encounter).where(code.where(coding.where(code='11429006')))[1].period.start, 
+                       Bundle.entry.resource.ofType(Encounter).where(code.where(coding.where(code='11429006')))[0], 
+                       Bundle.entry.resource.ofType(Encounter).where(code.where(coding.where(code='11429006')))[1])"
+         nts:in-targets="CheckContent"/> 
    </test>
 
    <!-- Observations - Observaties gekoppeld aan episode -->
-   <test id="8a-ServeObservations">
-      <name value="8a-ServeObservations"/>
+   <test id="5a-ServeObservations">
+      <name value="5a-ServeObservations"/>
       <description value="Test Server query operation for Observations"/>
       <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Observation"/>
@@ -105,11 +111,11 @@
       </nts:include>
       <nts:contentAsserts href="Verloskunde-Casus3/mm-gbz-zib-Pregnancy-Parity11977-6-8657760f-6ab3-11ec-2334-020000000000.xml" nts:in-targets="CheckContent">
          <nts:discriminator>code.where(coding.where(code = 11977-6))</nts:discriminator>
-         <nts:discriminator>value.where(value = 0)</nts:discriminator>
+         <nts:discriminator>value.ofType(Quantity).value = 0</nts:discriminator>
       </nts:contentAsserts>
-      <!-- [#] Pregnancies -->
+      <!-- Gravidity [#] Pregnancies -->
       <nts:include value="gbz-assert-returnCountWithCode">
-         <nts:with-parameter name="additionalDescription" value="[#] Pregnancies"/>
+         <nts:with-parameter name="additionalDescription" value="Gravidity [#] Pregnancies"/>
          <nts:with-parameter name="resource" value="Observation"/>
          <nts:with-parameter name="count" value="1"/>
          <nts:with-parameter name="code" value="11996-6"/>
@@ -117,7 +123,7 @@
       </nts:include>
       <nts:contentAsserts href="Verloskunde-Casus3/mm-gbz-zib-Pregnancy-Gravidity11996-6-83c5900b-6b72-11ec-2334-020000000000.xml" nts:in-targets="CheckContent">
          <nts:discriminator>code.where(coding.where(code = 11996-6))</nts:discriminator>
-         <nts:discriminator>value.where(value = 1)</nts:discriminator>
+         <nts:discriminator>value.ofType(Quantity).value = 1</nts:discriminator>
       </nts:contentAsserts>
       <!-- Datum van laatste menstruatie [datum] -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -129,7 +135,6 @@
       </nts:include>
       <nts:contentAsserts href="Verloskunde-Casus3/mm-gbz-zib-Pregnancy-DateLastMenstruation8665-2-1b4c8d9b-6af1-11ec-2335-020000000000.xml" nts:in-targets="CheckContent">
          <nts:discriminator>code.where(coding.where(code = 8665-2))</nts:discriminator>
-         <nts:discriminator>effectiveDateTime.where(value = ${DATE, T, D, -442})</nts:discriminator>
       </nts:contentAsserts>
       <!-- geschatte datum van partus (waarneembare entiteit) -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -141,7 +146,6 @@
       </nts:include>
       <nts:contentAsserts href="Verloskunde-Casus3/mm-gbz-bc-PregnancyObservation161714006-0230ba02-6ad4-11ec-2334-020000000000.xml" nts:in-targets="CheckContent">
          <nts:discriminator>code.where(coding.where(code = 161714006))</nts:discriminator>
-         <nts:discriminator>effectiveDateTime.where(value = ${DATE, T, D, -442})</nts:discriminator>
       </nts:contentAsserts>
       <!-- zwangerschapsduur -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -153,14 +157,13 @@
       </nts:include>
       <nts:contentAsserts href="Verloskunde-Casus3/mm-gbz-zib-Pregnancy-PregnancyDuration57036006-515ff727-6b2d-11ec-2334-020000000000.xml" nts:in-targets="CheckContent">
          <nts:discriminator>code.where(coding.where(code = 57036006))</nts:discriminator>
-         <nts:discriminator>value.where(value = 195)</nts:discriminator>
-         <nts:discriminator>effectiveDateTime.where(value = ${DATE, T, D, -442})</nts:discriminator>
+         <nts:discriminator>value.ofType(Quantity).value = 195</nts:discriminator>
       </nts:contentAsserts>
    </test>
 
    <!-- Observations - Observaties gekoppeld aan prenatale controle -->
-   <test id="8b-ServeObservations">
-      <name value="8b-ServeObservations"/>
+   <test id="5b-ServeObservations">
+      <name value="5b-ServeObservations"/>
       <description value="Test Server query operation for Observations"/>
       <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Observation"/>
@@ -176,7 +179,7 @@
       </nts:include>
       <nts:contentAsserts href="Verloskunde-Casus3/mm-gbz-zib-BloodPressure85354-9-0899e443-6b74-11ec-2106-020000000000.xml" nts:in-targets="CheckContent">
          <nts:discriminator>code.where(coding.where(code = 85354-9))</nts:discriminator>
-         <nts:discriminator>effectiveDateTime.where(value = ${DATE, T, D, -323})</nts:discriminator>
+         <nts:discriminator>value.ofType(Quantity).where(value = 85 and system = 'http://unitsofmeasure.org' and code = 'mm[Hg]')</nts:discriminator>
       </nts:contentAsserts>
       <!-- aantal levende foetussen (waarneembare entiteit) -->
       <nts:include value="gbz-assert-returnCountWithCode">
@@ -188,14 +191,13 @@
       </nts:include>
       <nts:contentAsserts href="Verloskunde-Casus3/mm-gbz-bc-PregnancyObservation142931000146106-8b7853cb-6ae4-11ec-2214-020000000000.xml" nts:in-targets="CheckContent">
          <nts:discriminator>code.where(coding.where(code = 142931000146106))</nts:discriminator>
-         <nts:discriminator>value.where(value = 1)</nts:discriminator>
-         <nts:discriminator>effectiveDateTime.where(value = ${DATE, T, D, -454})</nts:discriminator>
+         <nts:discriminator>value.ofType(Quantity).value = 1</nts:discriminator>
       </nts:contentAsserts>
    </test>
 
    <!-- RelatedPerson -->
-   <test id="13-RelatedPerson">
-      <name value="13-RelatedPerson"/>
+   <test id="6-RelatedPerson">
+      <name value="6-RelatedPerson"/>
       <description value="Test Server query operation for RelatedPerson"/>
       <nts:include value="medmij/test.xis.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="RelatedPerson"/>
