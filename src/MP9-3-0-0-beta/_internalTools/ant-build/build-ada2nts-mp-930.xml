@@ -22,9 +22,17 @@
     
     <property name="usecase.mg.input" value="beschikbaarstellen_medicatiegegevens"/>
     <property name="usecase.mg.rp.input" value="raadplegen_medicatiegegevens"/>
-    <property name="usecase.mg.output" value="MedicationData"/>
     
     <target name="convert_ada_2_nts_930_test">
+        <echo>Deleting previous results, if any</echo>
+        <delete includeEmptyDirs="true">
+            <fileset dir="${build.dir}/../Test">
+                <include name="*/**"/>
+                <exclude name="_*/**"/>
+                <exclude name="*.*"/>
+            </fileset>
+        </delete>
+
         <!-- this would be the umbrella target to build all scenarios -->
         <!-- pull medicationdata Test -->
         <antcall target="convert_ada2nts_pull_meddata_930">
@@ -38,9 +46,26 @@
             <!-- windows does not mind, but for the url we do need lowercase for mappings dir -->
             <param name="test.dir.lowercase" value="/test"/>
         </antcall>
+
+        <antcall target="targets">
+            <param name="testset.dir" value="${build.dir}/../Test"/>
+        </antcall>
+        <antcall target="properties">
+            <param name="testset.dir" value="${build.dir}/../Test"/>
+        </antcall>
+        
     </target>
     
     <target name="convert_ada_2_nts_930_cert">
+        <echo>Deleting previous results, if any</echo>
+        <delete includeEmptyDirs="true">
+            <fileset dir="${build.dir}/../Cert">
+                <include name="*/**"/>
+                <exclude name="_*/**"/>
+                <exclude name="*.*"/>
+            </fileset>
+        </delete>
+
         <!-- this would be the umbrella target to build all scenarios -->
         <!-- pull medicationdata Cert -->
         <antcall target="convert_ada2nts_pull_meddata_930">
@@ -54,6 +79,14 @@
             <!-- windows does not mind, but for the url we do need lowercase for mappings dir -->
             <param name="test.dir.lowercase" value="/cert"/>
         </antcall>
+        
+        <antcall target="targets">
+            <param name="testset.dir" value="${build.dir}/../Cert"/>
+        </antcall>
+        <antcall target="properties">
+            <param name="testset.dir" value="${build.dir}/../Cert"/>
+        </antcall>
+        
     </target>
     
     <target name="convert_ada2nts_pull_meddata_930">
@@ -64,18 +97,9 @@
         
         <property name="xsl.input.mg" value="${github.mp93.dir.local}${test.dir.lowercase}/${usecase.mg.input}/ada_instance"/>
         <property name="xsl.input.mg.abs" location="${xsl.input.mg}"/>
-        <property name="xsl.output.mg" value="${build.dir}/..${test.dir}/${usecase.mg.output}"/>
+        <property name="xsl.output.mg" value="${build.dir}/..${test.dir}"/>
         <property name="xsl.output.mg.abs" location="${xsl.output.mg}"/>
         <property name="ref.dir.notabs" location="${build.dir}/..${test.dir}/_reference/fixtures"/>
-        
-        <echo>Deleting previous results, if any</echo>
-        <mkdir dir="${xsl.output.mg.abs}"/>
-        <mkdir dir="${xsl.output.mg.abs}/Retrieving-System"/>
-        <mkdir dir="${xsl.output.mg.abs}/Serving-System"/>
-        <delete>
-            <fileset dir="${xsl.output.mg.abs}/Retrieving-System"/>
-            <fileset dir="${xsl.output.mg.abs}/Serving-System"/>
-        </delete>
         
         <!-- Retrieve -->
         <echo>[convert_ada2nts_pull_meddata_930] Retrieve input.dir = ${xsl.input.mg.abs}, output.dir = ${xsl.output.mg.abs}"</echo>
@@ -165,19 +189,24 @@
     <target name="convert_ada2nts_push_meddata_930">
         <!-- medication data push -->
         <echo>[convert_ada2nts_push_meddata_930] xsl.input.usecase: '${github.mp93.dir.local}${test.dir.lowercase}/sturen_medicatiegegevens/ada_instance_sets' and xsl.output.usecase: '${build.dir}${test.dir}/MedicationData'</echo>
-        <antcall target="convert_push_usecase_930_sub">
+        <antcall target="convert_push_usecase_930_medicationdata_sub">
             <param name="xsl.input.usecase" value="${github.mp93.dir.local}${test.dir.lowercase}/sturen_medicatiegegevens/ada_instance_sets"/>
-            <param name="xsl.output.usecase" value="${build.dir}${test.dir}/MedicationData"/>
+            <param name="xsl.output.usecase" value="${build.dir}${test.dir}"/>
+            <param name="role.code" value="MG"/>
+            <param name="role.code.send" value="S"/>
+            <param name="role.code.receive" value="O"/>
         </antcall>
-        
     </target>
     
     <target name="convert_ada2nts_prescription_930">
         <!-- target for medication prescription -->
-        <echo>[convert_ada2nts_prescription_930] xsl.input.usecase: '${github.mp93.dir.local}${test.dir.lowercase}/sturen_medicatievoorschrift/ada_instance' and xsl.output.usecase: '${build.dir}${test.dir}/MedicationPrescription'</echo>
+        <echo>[convert_ada2nts_prescription_930] xsl.input.usecase: '${github.mp93.dir.local}${test.dir.lowercase}/sturen_medicatievoorschrift/ada_instance' and xsl.output.usecase: '${build.dir}${test.dir}/Step-3/MA-VV'</echo>
         <antcall target="convert_push_usecase_930_sub">
             <param name="xsl.input.usecase" value="${github.mp93.dir.local}${test.dir.lowercase}/sturen_medicatievoorschrift/ada_instance"/>
-            <param name="xsl.output.usecase" value="${build.dir}${test.dir}/MedicationPrescription"/>
+            <param name="xsl.output.usecase" value="${build.dir}${test.dir}/Step-3/MA-VV"/>
+            <param name="role.code" value="VO"/>
+            <param name="role.code.send" value="S"/>
+            <param name="role.code.receive" value="O"/>
         </antcall>
     </target>
     
@@ -185,7 +214,10 @@
         <!-- target for medication prescription processing -->
         <antcall target="convert_push_usecase_930_sub">
             <param name="xsl.input.usecase" value="${github.mp93.dir.local}${test.dir.lowercase}/sturen_afhandeling_medicatievoorschrift/ada_instance"/>
-            <param name="xsl.output.usecase" value="${build.dir}${test.dir}/PrescrProcessing"/>
+            <param name="xsl.output.usecase" value="${build.dir}${test.dir}/Step-5/TA-MVE"/>
+            <param name="role.code" value="VA"/>
+            <param name="role.code.send" value="S"/>
+            <param name="role.code.receive" value="O"/>
         </antcall>
     </target>
     
@@ -193,7 +225,10 @@
         <!-- target for proposal medication agreement -->
         <antcall target="convert_push_usecase_930_sub">
             <param name="xsl.input.usecase" value="${github.mp93.dir.local}${test.dir.lowercase}/sturen_voorstel_medicatieafspraak/ada_instance"/>
-            <param name="xsl.output.usecase" value="${build.dir}${test.dir}/ProposalMA"/>
+            <param name="xsl.output.usecase" value="${build.dir}${test.dir}/Step-5/VMA"/>
+            <param name="role.code" value="VM"/>
+            <param name="role.code.send" value="S"/>
+            <param name="role.code.receive" value="O"/>
         </antcall>
     </target>
     
@@ -201,7 +236,10 @@
         <!-- target for reply proposal medication agreement -->
         <antcall target="convert_push_usecase_930_sub">
             <param name="xsl.input.usecase" value="${github.mp93.dir.local}${test.dir.lowercase}/sturen_antwoord_voorstel_medicatieafspraak/ada_instance"/>
-            <param name="xsl.output.usecase" value="${build.dir}${test.dir}/ReplyProposalMA"/>
+            <param name="xsl.output.usecase" value="${build.dir}${test.dir}/Step-5/AVMA"/>
+            <param name="role.code" value="VM"/>
+            <param name="role.code.send" value="O"/>
+            <param name="role.code.receive" value="S"/>
         </antcall>
     </target>
     
@@ -209,7 +247,10 @@
         <!-- target for proposal dispense request (verstrekkingsverzoek) -->
         <antcall target="convert_push_usecase_930_sub">
             <param name="xsl.input.usecase" value="${github.mp93.dir.local}${test.dir.lowercase}/sturen_voorstel_verstrekkingsverzoek/ada_instance"/>
-            <param name="xsl.output.usecase" value="${build.dir}${test.dir}/ProposalVV"/>
+            <param name="xsl.output.usecase" value="${build.dir}${test.dir}/Step-5/VVV"/>
+            <param name="role.code" value="VV"/>
+            <param name="role.code.send" value="S"/>
+            <param name="role.code.receive" value="O"/>
         </antcall>
     </target>
     
@@ -217,7 +258,10 @@
         <!-- target for reply proposal dispense request (verstrekkingsverzoek) -->
         <antcall target="convert_push_usecase_930_sub">
             <param name="xsl.input.usecase" value="${github.mp93.dir.local}${test.dir.lowercase}/sturen_antwoord_voorstel_verstrekkingsverzoek/ada_instance"/>
-            <param name="xsl.output.usecase" value="${build.dir}${test.dir}/ReplyProposalVV"/>
+            <param name="xsl.output.usecase" value="${build.dir}${test.dir}/Step-5/AVVV"/>
+            <param name="role.code" value="VV"/>
+            <param name="role.code.send" value="O"/>
+            <param name="role.code.receive" value="S"/>
         </antcall>
     </target>
     
@@ -311,7 +355,7 @@
             <param name="xsl.in" value="${xsl.input.usecase}"/>
             <param name="xsl.in.include" value="*mp-*.xml"/>
             <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
-            <param name="xsl.out" value="../${xsl.output.usecase}/Sending-System"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Sending-${role.code}${role.code.send}"/>
             <param name="transaction.type" value="Send"/>
         </antcall>
         
@@ -321,13 +365,156 @@
             <param name="xsl.in" value="${xsl.input.usecase}"/>
             <param name="xsl.in.include" value="*mp-*.xml"/>
             <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
-            <param name="xsl.out" value="../${xsl.output.usecase}/Receiving-System"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Receiving-${role.code}${role.code.receive}"/>
             <param name="transaction.type" value="Receive"/>
         </antcall>
-        
     </target>
-    
-    
+
+    <target name="convert_push_usecase_930_medicationdata_sub">
+        
+        <echo>[convert_push_usecase_930_medicationdata_sub] </echo>
+
+        <!-- Send MA -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*mp-*-MA-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-3/MA/Sending-${role.code}${role.code.send}-MA"/>
+            <param name="transaction.type" value="Send"/>
+        </antcall>
+        
+        <!-- Receive MA -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*mp-*-MA-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-3/MA/Receiving-${role.code}${role.code.receive}-MA"/>
+            <param name="transaction.type" value="Receive"/>
+        </antcall>
+
+        <!-- Send MGB -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*mp-*-MGB-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-4/MGB/Sending-${role.code}${role.code.send}-MGB"/>
+            <param name="transaction.type" value="Send"/>
+        </antcall>
+        
+        <!-- Receive MGB -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*mp-*-MGB-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-4/MGB/Receiving-${role.code}${role.code.receive}-MGB"/>
+            <param name="transaction.type" value="Receive"/>
+        </antcall>
+
+        <!-- Send MTD -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*mp-*-MTD-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-6/MTD/Sending-${role.code}${role.code.send}-MTD"/>
+            <param name="transaction.type" value="Send"/>
+        </antcall>
+        
+        <!-- Receive MTD -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*mp-*-MTD-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-6/MTD/Receiving-${role.code}${role.code.receive}-MTD"/>
+            <param name="transaction.type" value="Receive"/>
+        </antcall>
+
+        <!-- Send MVE -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*mp-*-MVE-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-5/MVE/Sending-${role.code}${role.code.send}-MVE"/>
+            <param name="transaction.type" value="Send"/>
+        </antcall>
+        
+        <!-- Receive MVE -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*mp-*-MVE-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-5/MVE/Receiving-${role.code}${role.code.receive}-MVE"/>
+            <param name="transaction.type" value="Receive"/>
+        </antcall>
+
+        <!-- Send TA -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*mp-*-TA-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-3/TA/Sending-${role.code}${role.code.send}-TA"/>
+            <param name="transaction.type" value="Send"/>
+        </antcall>
+        
+        <!-- Receive TA -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*mp-*-TA-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-3/TA/Receiving-${role.code}${role.code.receive}-TA"/>
+            <param name="transaction.type" value="Receive"/>
+        </antcall>
+
+        <!-- Send VV -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*mp-*-VV-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-3/VV/Sending-${role.code}${role.code.send}-VV"/>
+            <param name="transaction.type" value="Send"/>
+        </antcall>
+        
+        <!-- Receive VV -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*mp-*-VV-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-3/VV/Receiving-${role.code}${role.code.receive}-VV"/>
+            <param name="transaction.type" value="Receive"/>
+        </antcall>
+
+        <!-- Send WDS -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*mp-*-WDS-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-3/WDS/Sending-${role.code}${role.code.send}-WDS"/>
+            <param name="transaction.type" value="Send"/>
+        </antcall>
+        
+        <!-- Receive WDS -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${xsl.input.usecase}"/>
+            <param name="xsl.in.include" value="*mp-*-WDS-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${xsl.output.usecase}/Step-3/WDS/Receiving-${role.code}${role.code.receive}-WDS"/>
+            <param name="transaction.type" value="Receive"/>
+        </antcall>
+    </target>
+
     <target name="convert_ada_2_nts_sub">
         
         <echo>[convert_ada_2_nts_sub] test.dir = "${test.dir}", test.dir.lowercase = "${test.dir.lowercase}" xsl.in.include = "${xsl.in.include}, xsl.in.exclude = "${xsl.in.exclude}", xsl.out = "${xsl.out}"</echo>
@@ -434,5 +621,55 @@
             <factory name="${xsl.saxon.class}"/>
             <classpath location="${xsl.saxon}"/>
         </xslt>
+    </target>
+    
+    <target name="properties">
+        <echo message="Generating ConformanceLab properties files"/>
+
+        <property name="testset.dir.abs" location="${testset.dir}"/>
+        <pathconvert property="testset.dir.url" targetos="unix">
+            <path location="${testset.dir.abs}"/>
+            <!-- Output needs 3 slashes, i.e. file:///. For win style paths that start with a drive letter, simply prepend
+             file:///. For unix style paths that start with a slash, only the part after the slash is taken. -->
+            <mapper type="regexp" from="\/?(.*)" to="file:///\1"/>
+        </pathconvert>
+
+        <property name="xsl.output.dummy" value="${build.dir}/xslt/dummy.xml"/>
+        <xslt force="true" style="${build.dir}/xslt/src_properties.xsl" in="${build.dir}/xslt/src_properties.xsl" out="${xsl.output.dummy}" useImplicitFileset="false">
+            <factory name="${xsl.saxon.class}"/>
+            <classpath location="${xsl.saxon}"/>
+            <param name="baseDirUrl" expression="${testset.dir.url}"/>
+        </xslt>
+        <delete file="${xsl.output.dummy}"/>
+    </target>
+    
+    <target name="targets">
+        <echo message="Editing Nictiz NTS build.properties target properties"/>
+        
+        <property name="testset.dir.abs" location="${testset.dir}"/>
+        <pathconvert property="testset.dir.url" targetos="unix">
+            <path location="${testset.dir.abs}"/>
+            <mapper type="regexp" from="\/?(.*)" to="file:/\1"/>
+        </pathconvert>
+        
+        <property name="xsl.output.dummy" value="${build.dir}/xslt/dummy.xml"/>
+        <xslt force="true" style="${build.dir}/xslt/srctargets_2_buildproperties.xsl" in="${build.dir}/xslt/srctargets_2_buildproperties.xsl" out="${xsl.output.dummy}" useImplicitFileset="false">
+            <factory name="${xsl.saxon.class}"/>
+            <classpath location="${xsl.saxon}"/>
+            <param name="baseDirUrl" expression="${testset.dir.url}"/>
+            <param name="buildPropertiesDir" expression="${testset.dir.url}"/>
+            <param name="mode" expression="default"/>
+        </xslt>
+        <delete file="${xsl.output.dummy}"/>
+        
+        <property name="xsl.output.dummy" value="${build.dir}/xslt/dummy.xml"/>
+        <xslt force="true" style="${build.dir}/xslt/srctargets_2_buildproperties.xsl" in="${build.dir}/xslt/srctargets_2_buildproperties.xsl" out="${xsl.output.dummy}" useImplicitFileset="false">
+            <factory name="${xsl.saxon.class}"/>
+            <classpath location="${xsl.saxon}"/>
+            <param name="baseDirUrl" expression="${testset.dir.url}"/>
+            <param name="buildPropertiesDir" expression="${testset.dir.url}-MedMij"/>
+            <param name="mode" expression="MedMij"/>
+        </xslt>
+        <delete file="${xsl.output.dummy}"/>
     </target>
 </project>
