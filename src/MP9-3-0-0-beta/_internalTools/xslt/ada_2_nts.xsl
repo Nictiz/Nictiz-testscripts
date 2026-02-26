@@ -223,12 +223,12 @@
                              </xsl:choose>
                         </xsl:for-each-group>
                     </xsl:variable>
-                    <xsl:variable name="cleanupVars" as="element(f:variable)*">
-                        <f:variable>
-                            <f:name value="patient-id"/>
-                            <f:sourceId value="transaction-response-fixture"/>
-                            <f:expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().substring(8).substringBefore('/_history')"/>
-                        </f:variable>
+                    <xsl:variable name="cleanupVars" as="element()">
+                        <variable xmlns="http://hl7.org/fhir">
+                            <name value="patient-id"/>                            
+                            <expression value="Bundle.entry.response.location.where(startsWith($this,'Patient/')).first().substring(8).substringBefore('/_history')"/>
+                            <sourceId value="transaction-response-fixture"/>    
+                        </variable>
                     </xsl:variable>
                     <xsl:result-document href="{concat($outputDirNormalized, '/', $newFilename)}">
                         <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
@@ -236,8 +236,7 @@
                             <version value="r4-mp9-3.0.0"/>
                             <name value="{$idString}"/>
                             <title value="{$testScriptTitle}"/>
-                            <description value="{$testScriptDescription}"/>
-                            <xsl:copy-of select="$cleanupVars"/>
+                            <description value="{$testScriptDescription}"/>                            
                             <xsl:choose>
                                 <!-- Receive -->
                                 <xsl:when test="$ntsScenario = 'server'">
@@ -276,7 +275,8 @@
                                          </teardown>-->
                                    
                              </xsl:when>
-                                <xsl:otherwise>                                    
+                                <xsl:otherwise>  
+                                    <xsl:copy-of select="$cleanupVars"/>    
                                     <!-- assume Send -->
                                     <nts:fixture id="{$adaTransIdFile}" href="fixtures/{$adaTransIdFile}.xml" nts:in-targets="Nictiz-intern"/>
                                     <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
