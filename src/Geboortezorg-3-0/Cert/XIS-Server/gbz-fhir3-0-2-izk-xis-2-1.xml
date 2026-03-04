@@ -131,20 +131,46 @@
       
       <!-- Fixture containing type.coding.code -->
       <nts:contentAsserts href="Kraam-Casus1/mm-gbz-bc-Encounter-7b82e263-6aff-11ec-1275-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>type.coding.where(system = 'http://snomed.info/sct' and code = '158111000146102'))</nts:discriminator>
+         <nts:discriminator>type.coding.where(system='http://snomed.info/sct' and code='158111000146102'))</nts:discriminator>
       </nts:contentAsserts>
       
-      <!-- Nieuwe fixture -->
-      <nts:contentAsserts href="Kraam-Casus1/mm-gbz-bc-Encounter-52e660eb-6a9b-11ec-1275-020000000000.xml" nts:in-targets="CheckContent"/>
+      <!-- Fixture that has the same subject.reference as the fixture above -->
+      <nts:contentAsserts href="Kraam-Casus1/mm-gbz-bc-Encounter-af1d8067-6abc-11ec-1275-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>
+            Bundle.entry.resource.ofType(Encounter).where(
+            subject.reference = Bundle.entry.resource.ofType(Encounter).where(type.coding.where(system='http://snomed.info/sct' and code='158111000146102')).subject.reference
+            )
+         </nts:discriminator>
+      </nts:contentAsserts>
+<!--  alternative, if it needs to be a boolean:
+            Bundle.entry.resource.ofType(Encounter).exists(subject.reference = Bundle.entry.resource.ofType(Encounter).where(type.coding.where(system='http://snomed.info/sct' and code='158111000146102')).subject.reference)
+ -->  
       
-      <!-- Nieuwe fixture -->
-      <nts:contentAsserts href="Kraam-Casus1/mm-gbz-bc-Encounter-c326cab3-6b5d-11ec-1275-020000000000.xml" nts:in-targets="CheckContent"/>
-      
-      <!-- Nieuwe fixture -->
-      <nts:contentAsserts href="Kraam-Casus1/mm-gbz-bc-Encounter-af1d8067-6abc-11ec-1275-020000000000.xml" nts:in-targets="CheckContent"/>
-      
-      <!-- Nieuwe fixture -->
-      <nts:contentAsserts href="Kraam-Casus1/mm-gbz-nl-core-practitioner-practitioner-mm-gbz-2-16-528-1-1007-3-1-123456781.xml" nts:in-targets="CheckContent"/>
+      <!--The two fixtures below will be differentiated by comparing the subject.reference that differs from the subject.reference above
+      and comparing the period.start values-->
+      <!--fixture with earlier period.start value="${DATE, T, D, -107}"-->
+      <nts:contentAsserts href="Kraam-Casus1/mm-gbz-bc-Encounter-52e660eb-6a9b-11ec-1275-020000000000.xml"
+         selector="iif(Bundle.entry.resource.ofType(Encounter).where(not(subject.reference=Bundle.entry.resource.ofType(Encounter).where(type.coding.where(system='http://snomed.info/sct' and code='158111000146102')).subject.reference))[0].period.start 
+                       &lt;
+                       Bundle.entry.resource.ofType(Encounter).where(not(subject.reference=Bundle.entry.resource.ofType(Encounter).where(type.coding.where(system='http://snomed.info/sct' and code='158111000146102')).subject.reference))[1].period.start,
+                       Bundle.entry.resource.ofType(Encounter).where(not(subject.reference=Bundle.entry.resource.ofType(Encounter).where(type.coding.where(system='http://snomed.info/sct' and code='158111000146102')).subject.reference))[0],
+                       Bundle.entry.resource.ofType(Encounter).where(not(subject.reference=Bundle.entry.resource.ofType(Encounter).where(type.coding.where(system='http://snomed.info/sct' and code='158111000146102')).subject.reference))[1]
+                       )"
+         nts:in-targets="CheckContent"/>
+     
+      <!--fixture with later period.start value="${DATE, T, D, -105}"-->
+      <nts:contentAsserts href="Kraam-Casus1/mm-gbz-bc-Encounter-c326cab3-6b5d-11ec-1275-020000000000.xml"
+         selector="iif(Bundle.entry.resource.ofType(Encounter).where(not(subject.reference=Bundle.entry.resource.ofType(Encounter).where(type.coding.where(system='http://snomed.info/sct' and code='158111000146102')).subject.reference))[0].period.start 
+                       &lt;
+                       Bundle.entry.resource.ofType(Encounter).where(not(subject.reference=Bundle.entry.resource.ofType(Encounter).where(type.coding.where(system='http://snomed.info/sct' and code='158111000146102')).subject.reference))[1].period.start,
+                       Bundle.entry.resource.ofType(Encounter).where(not(subject.reference=Bundle.entry.resource.ofType(Encounter).where(type.coding.where(system='http://snomed.info/sct' and code='158111000146102')).subject.reference))[0],
+                       Bundle.entry.resource.ofType(Encounter).where(not(subject.reference=Bundle.entry.resource.ofType(Encounter).where(type.coding.where(system='http://snomed.info/sct' and code='158111000146102')).subject.reference))[1]
+                       )"
+         nts:in-targets="CheckContent"/>   
+      <!-- Practitioner fixture (might appear multiple times? three Encounters have the same participant -->
+      <nts:contentAsserts href="Kraam-Casus1/mm-gbz-nl-core-practitioner-practitioner-mm-gbz-2-16-528-1-1007-3-1-123456781.xml"
+         selector="Bundle.entry.resource.ofType(Practitioner)[0]"
+         nts:in-targets="CheckContent"/>
    </test>  
       
    <!-- Observations - Observaties gekoppeld aan episode -->  
