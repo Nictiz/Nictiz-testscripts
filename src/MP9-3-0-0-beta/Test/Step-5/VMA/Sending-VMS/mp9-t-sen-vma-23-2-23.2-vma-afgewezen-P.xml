@@ -6,6 +6,13 @@
    <name value="mp9-t-sen-vma-23-2-23.2-vma-afgewezen-P"/>
    <title value="Scenario 23.2 - 23.2-vma-afgewezen-PRK"/>
    <description value="Send Proposal medication agreement 23.2-vma-afgewezen-PRK building blocks for patient K. XXX_Wieling&#xA;&#xA;For more info:&#xA;https://informatiestandaarden.nictiz.nl/wiki/mp:V3.0.0_testgegevens_vma_sturen&#xA;&#xA;Original description:&#xA;TEST scenarioset 23.2 VMA&#xA;TEST scenarioset 23.2 VMA: Afwijzen VMA o.b.v. voorstel PRK "/>
+   <variable>
+      <name value="patient-id"/>
+      <expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().replace('Patient/([0-9A-Za-z\-\.]+)/_history/.*','$1')"/>
+      <sourceId value="transaction-response-fixture"/>
+   </variable>
+   <nts:fixture id="mp-vm-tst-23-2-vma-afgewezen-PRK-v30-all"
+                href="fixtures/mp-vm-tst-23-2-vma-afgewezen-PRK-v30.xml"/>
    <nts:fixture id="mp-vm-tst-23-2-vma-afgewezen-PRK-v30"
                 href="fixtures/mp-vm-tst-23-2-vma-afgewezen-PRK-v30.xml"
                 nts:in-targets="Nictiz-intern"/>
@@ -23,8 +30,7 @@
             <destination value="1"/>
             <origin value="1"/>
             <responseId value="transaction-response-fixture"/>
-            <sourceId value="mp-vm-tst-23-2-vma-afgewezen-PRK-v30"
-                      nts:in-targets="Nictiz-intern"/>
+            <sourceId value="mp-vm-tst-23-2-vma-afgewezen-PRK-v30-all"/>
          </operation>
       </action>
       <nts:include value="test.client.successfulTransaction" scope="common"/>
@@ -37,4 +43,24 @@
                    resource="Medication"
                    count="1"/>
    </test>
+   <teardown>
+      <variable>
+         <name value="patient-id"/>
+         <expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().replace('Patient/([0-9A-Za-z\-\.]+)/_history/.*','$1')"/>
+         <sourceId value="transaction-response-fixture"/>
+      </variable>
+      <action>
+         <operation>
+            <type>
+               <system value="http://touchstone.com/fhir/extended-operation-codes"/>
+               <code value="purge"/>
+            </type>
+            <resource value="Patient"/>
+            <description value="Delete the Patient and all subsequent Resources that were created during this test."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <params value="/$/$purge"/>
+         </operation>
+      </action>
+   </teardown>
 </TestScript>

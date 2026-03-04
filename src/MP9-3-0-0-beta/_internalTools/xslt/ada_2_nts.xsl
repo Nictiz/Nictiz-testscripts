@@ -13,7 +13,7 @@
     <xsl:param name="transactionType">Send</xsl:param>
     <xsl:param name="outputDir"/>
     <xsl:variable name="outputDirNormalized" select="nf:normalize-path($outputDir)"/>
-
+    
     <xsl:variable name="bsnSystem" select="$oidMap[@oid = $oidBurgerservicenummer]/@uri"/>
     
     <xd:doc>
@@ -79,7 +79,7 @@
                     </xsl:otherwise>
                 </xsl:choose>
             </xsl:variable>
-
+            
             <xsl:variable name="idString">
                 <xsl:call-template name="getIdString">
                     <xsl:with-param name="testGoal" select="$testGoal"/>
@@ -223,14 +223,21 @@
                              </xsl:choose>
                         </xsl:for-each-group>
                     </xsl:variable>
-                    
+                    <xsl:variable name="cleanupVars" as="element()">
+                        <variable xmlns="http://hl7.org/fhir">
+                            <name value="patient-id"/>
+                            <!-- Pak Patient/123/_history/1 -> 123 -->
+                            <expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().replace('Patient/([0-9A-Za-z\-\.]+)/_history/.*','$1')"/>
+                            <sourceId value="transaction-response-fixture"/>
+                        </variable>
+                    </xsl:variable>
                     <xsl:result-document href="{concat($outputDirNormalized, '/', $newFilename)}">
                         <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                             <id value="{$idString}"/>
                             <version value="r4-mp9-3.0.0"/>
                             <name value="{$idString}"/>
                             <title value="{$testScriptTitle}"/>
-                            <description value="{$testScriptDescription}"/>
+                            <description value="{$testScriptDescription}"/>                            
                             <xsl:choose>
                                 <!-- Receive -->
                                 <xsl:when test="$ntsScenario = 'server'">
@@ -267,10 +274,17 @@
                                          <!-\- the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
                                          <xsl:copy-of select="$deleteStuff/f:action"/>
                                          </teardown>-->
-                                 </xsl:when>
-                                <xsl:otherwise>
+                                         
+                             </xsl:when>
+                                <xsl:otherwise>  
+                                    <xsl:copy-of select="$cleanupVars"/>    
                                     <!-- assume Send -->
+                                    <!-- 1) Fixture ZONDER in-targets: altijd beschikbaar voor response capture + teardown -->
+                                    <nts:fixture id="{concat($adaTransIdFile,'-all')}" href="fixtures/{$adaTransIdFile}.xml"/>
+                                    
+                                    <!-- 2) Eventueel: behoud je intern-only fixture als je ’m nog nodig hebt -->
                                     <nts:fixture id="{$adaTransIdFile}" href="fixtures/{$adaTransIdFile}.xml" nts:in-targets="Nictiz-intern"/>
+                                    
                                     <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
                                     <!--<xsl:copy-of select="$deleteStuff/f:variable"/>-->
                                     <test id="{$idString}-01">
@@ -286,12 +300,31 @@
                                                 <destination value="1"/>
                                                 <origin value="1"/>
                                                 <responseId value="transaction-response-fixture"/>
-                                                <sourceId value="{$adaTransIdFile}" nts:in-targets="Nictiz-intern"/>
+                                                <sourceId value="{concat($adaTransIdFile,'-all')}"/>
                                             </operation>
                                         </action>
                                         <nts:include value="test.client.successfulTransaction" scope="common"/>
                                         <xsl:copy-of select="$includeNumResources"/>
                                     </test>
+                                    <teardown>
+                                        <!-- Definieer patient-id hier ook nog eens (extra zeker, voorkomt scope/framing issues) -->
+                                        <xsl:copy-of select="$cleanupVars"/>
+                                        
+                                        <action>
+                                            <operation>
+                                                <type>
+                                                    <system value="http://touchstone.com/fhir/extended-operation-codes"/>
+                                                    <code value="purge"/>
+                                                </type>
+                                                <resource value="Patient"/>
+                                                <description value="Delete the Patient and all subsequent Resources that were created during this test."/>
+                                                <destination value="1"/>
+                                                <encodeRequestUrl value="true"/>
+                                                <!-- LET OP: leading slash -->
+                                                <params value="/${patient-id}/$purge"/>
+                                            </operation>
+                                        </action>
+                                    </teardown>
                                     <!--<teardown nts:in-targets="#default">
                                          <!-\- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
                                          <!-\- but not Patient, since we want to do a purge after -\->
@@ -317,7 +350,7 @@
                                          <!-\- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
                                          <xsl:copy-of select="$deleteStuff/f:action"/>
                                          <!-\- MP-746 no $purge needed for Nictiz internal scripts -\->
-                                         </teardown>-->
+                                         </teardown>-->                                    
                                  </xsl:otherwise>
                             </xsl:choose>
                         </TestScript>
@@ -373,9 +406,9 @@
                     <xsl:value-of select="replace($theScenario, '(\d+[a-zA-Z]?)\.?(\d*[a-zA-Z]?)\*?\s?.*', '$1')"/>
                 </xsl:when>
                 <!--<xsl:when test="string-length(voorstel_gegevens/(voorstel | antwoord)/identificatie/@value) gt 0">
-                    <xsl:value-of select="lower-case(nf:assure-logicalid-chars(voorstel_gegevens/(voorstel | antwoord)/identificatie/@value))"/>
-                </xsl:when>-->
-            </xsl:choose>
+                     <xsl:value-of select="lower-case(nf:assure-logicalid-chars(voorstel_gegevens/(voorstel | antwoord)/identificatie/@value))"/>
+                     </xsl:when>-->
+             </xsl:choose>
         </xsl:variable>
         <xsl:variable name="scenarioSub" select="normalize-space(replace(replace($theScenario, '(\d+[a-zA-Z]?)\.?(\d*[a-zA-Z]?\*?\s?.*)', '$2'),'\*',''))"/>
         <xsl:variable name="scenario">
@@ -492,7 +525,7 @@
                 <xsl:with-param name="msg">Id '<xsl:value-of select="string-join($buildString,'')"/>' is longer than 64 characters. Sorting in the simulator may give unexpected results</xsl:with-param>
             </xsl:call-template>
         </xsl:if>
-
+        
         <xsl:value-of select="string-join($buildString,'')"/>
     </xsl:template>
     
@@ -590,12 +623,12 @@
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
-
+    
     <xsl:template name="getTestDescription" as="xs:string">
         <xsl:param name="transactionType"/>
         <xsl:param name="full"/>
         <xsl:param name="buildingBlockShort"/>
-
+        
         <xsl:variable name="bundleType">
             <xsl:choose>
                 <xsl:when test="normalize-space(upper-case($transactionType)) = ('RECEIVE', 'SEND')">transaction</xsl:when>
@@ -638,5 +671,5 @@
         </xsl:variable>
         <xsl:value-of select="$trailingSlash"/>
     </xsl:function>
-
+    
 </xsl:stylesheet>

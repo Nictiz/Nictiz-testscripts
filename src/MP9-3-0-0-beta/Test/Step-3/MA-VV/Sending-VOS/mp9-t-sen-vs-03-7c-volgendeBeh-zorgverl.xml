@@ -6,6 +6,13 @@
    <name value="mp9-t-sen-vs-03-7c-volgendeBeh-zorgverl"/>
    <title value="Scenario 3.7c - volgendeBeh-zorgverl"/>
    <description value="Send Medication prescription volgendeBeh-zorgverl building blocks for patient C van de XXX_Voortman&#xA;&#xA;For more info:&#xA;https://informatiestandaarden.nictiz.nl/wiki/mp:V3.0.0_testgegevens_voorschrift_sturen&#xA;&#xA;Original description:&#xA;TEST Scenarioset 3 VolgendeBehandelaar met Zorgverlener&#xA;Medicatieafspraak met Zorgverlener in VolgendeBehandelaar gevuldLET OP:&amp;nbsp; Hiermee wordt de MA van scenarioset 3.7a weer &#34;hervat&#34;. Als in het beleid van MA 3.7a wordt weer voortgezet met de MA van 3.7c "/>
+   <variable>
+      <name value="patient-id"/>
+      <expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().replace('Patient/([0-9A-Za-z\-\.]+)/_history/.*','$1')"/>
+      <sourceId value="transaction-response-fixture"/>
+   </variable>
+   <nts:fixture id="mv-mp-vo-tst-3-7c-volgendeBeh-zorgverl-v30-all"
+                href="fixtures/mv-mp-vo-tst-3-7c-volgendeBeh-zorgverl-v30.xml"/>
    <nts:fixture id="mv-mp-vo-tst-3-7c-volgendeBeh-zorgverl-v30"
                 href="fixtures/mv-mp-vo-tst-3-7c-volgendeBeh-zorgverl-v30.xml"
                 nts:in-targets="Nictiz-intern"/>
@@ -23,8 +30,7 @@
             <destination value="1"/>
             <origin value="1"/>
             <responseId value="transaction-response-fixture"/>
-            <sourceId value="mv-mp-vo-tst-3-7c-volgendeBeh-zorgverl-v30"
-                      nts:in-targets="Nictiz-intern"/>
+            <sourceId value="mv-mp-vo-tst-3-7c-volgendeBeh-zorgverl-v30-all"/>
          </operation>
       </action>
       <nts:include value="test.client.successfulTransaction" scope="common"/>
@@ -37,4 +43,24 @@
                    resource="Medication"
                    count="1"/>
    </test>
+   <teardown>
+      <variable>
+         <name value="patient-id"/>
+         <expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().replace('Patient/([0-9A-Za-z\-\.]+)/_history/.*','$1')"/>
+         <sourceId value="transaction-response-fixture"/>
+      </variable>
+      <action>
+         <operation>
+            <type>
+               <system value="http://touchstone.com/fhir/extended-operation-codes"/>
+               <code value="purge"/>
+            </type>
+            <resource value="Patient"/>
+            <description value="Delete the Patient and all subsequent Resources that were created during this test."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <params value="/$/$purge"/>
+         </operation>
+      </action>
+   </teardown>
 </TestScript>

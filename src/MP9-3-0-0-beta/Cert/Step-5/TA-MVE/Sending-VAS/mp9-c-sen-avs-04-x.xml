@@ -6,6 +6,13 @@
    <name value="mp9-c-sen-avs-04-x"/>
    <title value="Scenario 4.x"/>
    <description value="Send Prescription processing script4 building blocks for patient H. XXX_Smit&#xA;&#xA;For more info:&#xA;https://informatiestandaarden.nictiz.nl/wiki/mp:V3.0.0_kwalificatie_afhandelen_voorschrift_sturen&#xA;&#xA;Original description:&#xA;KWAL script 4&#xA;Kwalificatie script 4: afhandelen medicatievoorschrift met meerdere doseerinstructies. "/>
+   <variable>
+      <name value="patient-id"/>
+      <expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().replace('Patient/([0-9A-Za-z\-\.]+)/_history/.*','$1')"/>
+      <sourceId value="transaction-response-fixture"/>
+   </variable>
+   <nts:fixture id="av-mp-va-kwal-script4-v30-all"
+                href="fixtures/av-mp-va-kwal-script4-v30.xml"/>
    <nts:fixture id="av-mp-va-kwal-script4-v30"
                 href="fixtures/av-mp-va-kwal-script4-v30.xml"
                 nts:in-targets="Nictiz-intern"/>
@@ -23,7 +30,7 @@
             <destination value="1"/>
             <origin value="1"/>
             <responseId value="transaction-response-fixture"/>
-            <sourceId value="av-mp-va-kwal-script4-v30" nts:in-targets="Nictiz-intern"/>
+            <sourceId value="av-mp-va-kwal-script4-v30-all"/>
          </operation>
       </action>
       <nts:include value="test.client.successfulTransaction" scope="common"/>
@@ -36,4 +43,24 @@
                    resource="Medication"
                    count="1"/>
    </test>
+   <teardown>
+      <variable>
+         <name value="patient-id"/>
+         <expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().replace('Patient/([0-9A-Za-z\-\.]+)/_history/.*','$1')"/>
+         <sourceId value="transaction-response-fixture"/>
+      </variable>
+      <action>
+         <operation>
+            <type>
+               <system value="http://touchstone.com/fhir/extended-operation-codes"/>
+               <code value="purge"/>
+            </type>
+            <resource value="Patient"/>
+            <description value="Delete the Patient and all subsequent Resources that were created during this test."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <params value="/$/$purge"/>
+         </operation>
+      </action>
+   </teardown>
 </TestScript>

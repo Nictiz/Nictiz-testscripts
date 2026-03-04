@@ -36,8 +36,20 @@
          <code value="FHIR-Server"/>
       </profile>
    </destination>
+   <fixture id="av-mp-va-kwal-script9-v30-all">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
+      <resource>
+         <reference value="../../../_reference/fixtures/av-mp-va-kwal-script9-v30.xml"/>
+      </resource>
+   </fixture>
    <profile id="Bundle-profile"
             value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
+   <variable>
+      <name value="patient-id"/>
+      <expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().replace('Patient/([0-9A-Za-z\-\.]+)/_history/.*','$1')"/>
+      <sourceId value="transaction-response-fixture"/>
+   </variable>
    <test id="mp9-c-sen-avs-09-x-01">
       <name value="Scenario 9.x"/>
       <description value="Send Prescription processing script9 resources in a transaction Bundle"/>
@@ -52,6 +64,7 @@
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <responseId value="transaction-response-fixture"/>
+            <sourceId value="av-mp-va-kwal-script9-v30-all"/>
          </operation>
       </action>
       <action>
@@ -211,4 +224,19 @@
          </assert>
       </action>
    </test>
+   <teardown>
+      <action>
+         <operation>
+            <type>
+               <system value="http://touchstone.com/fhir/extended-operation-codes"/>
+               <code value="purge"/>
+            </type>
+            <resource value="Patient"/>
+            <description value="Delete the Patient and all subsequent Resources that were created during this test."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <params value="/$/$purge"/>
+         </operation>
+      </action>
+   </teardown>
 </TestScript>
