@@ -18,8 +18,8 @@
     <xsl:variable name="cleanupVars" as="element()">
         <variable xmlns="http://hl7.org/fhir">
             <name value="patient-id"/>
-            <sourceId value="transaction-response"/>
-            <expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().replace('Patient/([0-9A-Za-z\-\.]+)/_history/.*','$1')"/>
+            <expression value="entry.response.location.where(startsWith($this,'Patient/')).first().substringAfter('Patient/').substringBefore('/_history')"/>
+            <sourceId value="transaction-response"/>            
         </variable>
     </xsl:variable>
     <xd:doc>
