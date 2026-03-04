@@ -15,7 +15,13 @@
     <xsl:variable name="outputDirNormalized" select="nf:normalize-path($outputDir)"/>
     
     <xsl:variable name="bsnSystem" select="$oidMap[@oid = $oidBurgerservicenummer]/@uri"/>
-    
+    <xsl:variable name="cleanupVars" as="element()">
+        <variable xmlns="http://hl7.org/fhir">
+            <name value="patient-id"/>
+            <sourceId value="transaction-response-fixture"/>
+            <expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().replace('Patient/([0-9A-Za-z\-\.]+)/_history/.*','$1')"/>
+        </variable>
+    </xsl:variable>
     <xd:doc>
         <xd:desc>Start template. Handles ada test instances, converts them to nts.</xd:desc>
     </xd:doc>
@@ -223,13 +229,7 @@
                              </xsl:choose>
                         </xsl:for-each-group>
                     </xsl:variable>
-                    <xsl:variable name="cleanupVars" as="element()">
-                        <variable xmlns="http://hl7.org/fhir">
-                            <name value="patient-id"/>
-                            <expression value="entry.response.location.where(startsWith($this,'Patient/')).first().substringAfter('Patient/').substringBefore('/_history')"/>
-                            <sourceId value="transaction-response-fixture"/>
-                        </variable>
-                    </xsl:variable>
+                   
                     <xsl:result-document href="{concat($outputDirNormalized, '/', $newFilename)}">
                         <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                             <id value="{$idString}"/>
