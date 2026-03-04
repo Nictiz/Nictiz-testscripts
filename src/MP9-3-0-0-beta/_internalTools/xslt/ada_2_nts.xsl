@@ -227,7 +227,7 @@
                         <variable xmlns="http://hl7.org/fhir">
                             <name value="patient-id"/>
                             <!-- Pak Patient/123/_history/1 -> 123 -->
-                            <expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().replace('Patient/([0-9A-Za-z\-\.]+)/_history/.*','$1')"/>
+                            <expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().substringAfter('Patient/').substringBefore('/_history')"/>
                             <sourceId value="transaction-response-fixture"/>
                         </variable>
                     </xsl:variable>
@@ -307,23 +307,7 @@
                                         <xsl:copy-of select="$includeNumResources"/>
                                     </test>
                                     <teardown>
-                                        <!-- Definieer patient-id hier ook nog eens (extra zeker, voorkomt scope/framing issues) -->
-                                        <xsl:copy-of select="$cleanupVars"/>
-                                        
-                                        <action>
-                                            <operation>
-                                                <type>
-                                                    <system value="http://touchstone.com/fhir/extended-operation-codes"/>
-                                                    <code value="purge"/>
-                                                </type>
-                                                <resource value="Patient"/>
-                                                <description value="Delete the Patient and all subsequent Resources that were created during this test."/>
-                                                <destination value="1"/>
-                                                <encodeRequestUrl value="true"/>
-                                                <!-- LET OP: leading slash -->
-                                                <params value="/${patient-id}/$purge"/>
-                                            </operation>
-                                        </action>
+                                        <nts:include value="teardown-deletePatient" scope="project"/>
                                     </teardown>
                                     <!--<teardown nts:in-targets="#default">
                                          <!-\- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
