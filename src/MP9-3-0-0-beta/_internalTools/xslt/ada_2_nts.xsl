@@ -18,7 +18,7 @@
     <xsl:variable name="cleanupVars" as="element()">
         <variable xmlns="http://hl7.org/fhir">
             <name value="patient-id"/>
-            <sourceId value="transaction-response-fixture"/>
+            <sourceId value="transaction-response"/>
             <expression value="Bundle.entry.response.where(location.startsWith('Patient/')).location.first().replace('Patient/([0-9A-Za-z\-\.]+)/_history/.*','$1')"/>
         </variable>
     </xsl:variable>
@@ -298,7 +298,7 @@
                                                 <description value="Test client to POST a Bundle of type transaction."/>
                                                 <destination value="1"/>
                                                 <origin value="1"/>
-                                                <responseId value="transaction-response-fixture"/>
+                                                <responseId value="transaction-response"/>
                                                 <sourceId value="{concat($adaTransIdFile,'-all')}"/>
                                             </operation>
                                         </action>
