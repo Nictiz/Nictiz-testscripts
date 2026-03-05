@@ -19,7 +19,7 @@
         <variable xmlns="http://hl7.org/fhir">
             <name value="patient-id"/>
             <sourceId value="transaction-response"/>
-            <expression value="entry.response.location.value.where($this.matches('.*Patient/.*')).first().replace('.*Patient/', '').replace('/_history/.*', '').replace('/.*', '')"/>
+            <expression value="entry.response.location.value.where(startsWith('Patient/')).first().substringAfter('Patient/').substringBefore('/_history').substringBefore('/')"/>
         </variable>
     </xsl:variable>
     <xd:doc>
