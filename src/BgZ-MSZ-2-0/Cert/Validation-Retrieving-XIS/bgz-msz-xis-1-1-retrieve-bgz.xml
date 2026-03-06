@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
+    nts:scenario="client">
+    <id value="bgz-msz-xis-1-1-retrieve-bgz"/>
+    <version value="stu3-3.0"/>
+    <name value="BgZ MSZ - Client - Scenario 1.1 - Retrieve BgZ resources of AST" />
+    <description value="Scenario 1.1 - Retrieve BgZ resources of AST" />
+    <nts:authToken patientResourceId="AST"/>
+
+    <test id="01-retrieve-Patient">
+        <name value="Scenario 1.1 - Patient"/>
+        <description value="retrieve Patient resource including the patient's general practitioner for HCIM Patient"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="Patient"
+            params="?_revinclude=Provenance:target&amp;identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;_include=Patient:general-practitioner"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Patient" count="1"/>
+    </test>
+
+    <test id="02-retrieve-Payer">
+        <name value="Scenario 1.1 - Payer"/>
+        <description value="retrieve Coverage resource(s) including the insurer for HCIM Payer"/>
+        <nts:include value="test.client.search" scope="common" 
+            resource="Coverage"
+            params="?_revinclude=Provenance:target&amp;beneficiary.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;_include=Coverage:payor"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common" 
+            resource="Coverage" count="1"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Organization" count="1"/>
+    </test>
+
+    <test id="03-retrieve-TreatmentDirective">
+        <name value="Scenario 1.1 - TreatmentDirective"/>
+        <description value="retrieve Consent resource(s) for HCIM TreatmentDirective"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="Consent"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;category=http://snomed.info/sct|11291000146105"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common" 
+            resource="Consent" count="1"/>
+    </test>
+
+    <test id="04-retrieve-AdvanceDirective">
+        <name value="Scenario 1.1 - AdvanceDirective"/>
+        <description value="retrieve Consent resource(s) for HCIM AdvanceDirective"/>
+        <nts:include value="test.client.search" scope="common" 
+            resource="Consent"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;category=http://snomed.info/sct|11341000146107"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common" 
+            resource="Consent" count="1"/>
+    </test>
+
+    <test id="05-retrieve-FunctionalOrMentalStatus">
+        <name value="Scenario 1.1 - FunctionalOrMentalStatus"/>
+        <description value="retrieve Observation resource(s) for HCIM FunctionalOrMentalStatus"/>
+        <nts:include value="test.client.search" scope="common" 
+            resource="Observation"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;category=http://snomed.info/sct|118228005,http://snomed.info/sct|384821006"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common" 
+            resource="Observation" count="0"/>
+    </test>
+
+    <test id="06-retrieve-Problem">
+        <name value="Scenario 1.1 - Problem"/>
+        <description value="retrieve Condition resource(s) for HCIM Problem"/>
+        <nts:include value="test.client.search" scope="common" 
+            resource="Condition"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Condition" count="2"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Provenance" count="1"/> 
+    </test>
+
+    <test id="07-retrieve-LivingSituation">
+        <name value="Scenario 1.1 - LivingSituation"/>
+        <description value="retrieve Observation resource(s) for last known HCIM LivingSituation"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="Observation"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;code=http://snomed.info/sct|365508006"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+    </test>
+
+    <test id="08-retrieve-DrugUse">
+        <name value="Scenario 1.1 - DrugUse"/>
+        <description value="retrieve Observation resource(s) for HCIM DrugUse"/>
+        <nts:include value="test.client.search" scope="common" 
+            resource="Observation"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;code=http://snomed.info/sct|228366006"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+    </test>
+
+    <test id="09-retrieve-AlcoholUse">
+        <name value="Scenario 1.1 - AlcoholUse"/>
+        <description value="retrieve Observation resource(s) for HCIM AlcoholUse"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="Observation"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;code=http://snomed.info/sct|228273003"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+    </test>
+
+    <test id="10-retrieve-TobaccoUse">
+        <name value="Scenario 1.1 - TobaccoUse"/>
+        <description value="retrieve Observation resource(s) for HCIM TobaccoUse"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="Observation" 
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;code=http://snomed.info/sct|365980008"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+    </test>
+
+    <test id="11-retrieve-NutritionAdvice">
+        <name value="Scenario 1.1 - NutritionAdvice"/>
+        <description value="retrieve NutritionOrder resource(s) for HCIM NutritionAdvice"/>
+        <nts:include value="test.client.search" scope="common" 
+            resource="NutritionOrder"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="NutritionOrder" count="1"/>
+    </test>
+
+    <test id="12-retrieve-Alert">
+        <name value="Scenario 1.1 - Alert"/>
+        <description value="retrieve Flag resource(s) for HCIM Alert"/>
+        <nts:include value="test.client.search" scope="common" 
+            resource="Flag"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Flag" count="1"/>
+    </test>
+
+    <test id="13-retrieve-AllergyIntolerance">
+        <name value="Scenario 1.1 - AllergyIntolerance"/>
+        <description value="retrieve AllergyIntolerance resource(s) for HCIM AllergyIntolerance"/>
+        <nts:include value="test.client.search" scope="common" 
+            resource="AllergyIntolerance"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="AllergyIntolerance" count="1"/>
+    </test>
+    
+    <test id="14-retrieve-MedicationUse">
+        <name value="Scenario 1.1 - MedicationUse"/>
+        <description value="retrieve MedicationStatement resource(s) including the medication for HCIM MedicationUse"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="MedicationStatement"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;category=urn:oid:2.16.840.1.113883.2.4.3.11.60.20.77.5.3|6&amp;_include=MedicationStatement:medication"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="MedicationStatement" count="1" nts:in-targets="#default"/>
+    </test>
+    
+    <test id="15-retrieve-MedicationAgreement">
+        <name value="Scenario 1.1 - MedicationAgreement"/>
+        <description value="retrieve MedicationRequest resource(s) including the medication for HCIM MedicationAgreement"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="MedicationRequest"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;category=http://snomed.info/sct|16076005&amp;_include=MedicationRequest:medication"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="MedicationRequest" count="1" nts:in-targets="#default"/>
+    </test>
+    
+    <test id="16-retrieve-AdministrationAgreement">
+        <name value="Scenario 1.1 - AdministrationAgreement"/>
+        <description value="retrieve MedicationDispense resource(s) including the medication for HCIM AdministrationAgreement"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="MedicationDispense"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;category=http://snomed.info/sct|422037009&amp;_include=MedicationDispense:medication"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="MedicationDispense" count="1" nts:in-targets="#default"/>
+    </test>
+
+    <test id="17-retrieve-MedicalDevice">
+        <name value="Scenario 1.1 - MedicalDevice"/>
+        <description value="retrieve DeviceUseStatement resource(s) including the device for HCIM MedicalDevice"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="DeviceUseStatement"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;_include=DeviceUseStatement:device"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="DeviceUseStatement" count="1"/>
+        <nts:include value="assert.response.numResources" scope="common" 
+            resource="Device" count="1"/>
+    </test>
+
+    <test id="18-retrieve-Vaccination">
+        <name value="Scenario 1.1 - Vaccination"/>
+        <description value="retrieve Immunization resource(s) for HCIM Vaccination"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="Immunization"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;status=completed"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Immunization" count="1"/>
+    </test>
+
+    <test id="19-retrieve-BloodPressure">
+        <name value="Scenario 1.1 - BloodPressure (all)"/>
+        <description value="retrieve Observation resource(s) for HCIM BloodPressure"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="Observation"
+            params="/$lastn?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;code=http://loinc.org|85354-9"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+    </test>
+
+    <test id="20-retrieve-BodyWeight">
+        <name value="Scenario 1.1 - BodyWeight"/>
+        <description value="retrieve Observation resource(s) for last known HCIM BodyWeight"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="Observation"
+            params="/$lastn?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;code=http://loinc.org|29463-7"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+    </test>
+
+    <test id="21-retrieve-BodyHeight">
+        <name value="Scenario 1.1 - BodyHeight"/>
+        <description value="retrieve Observation resource(s) for last known HCIM BodyHeight"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="Observation"
+            params="/$lastn?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;code=http://loinc.org|8302-2,http://loinc.org|8306-3,http://loinc.org|8308-9"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+    </test>
+
+    <test id="22-retrieve-LaboratoryTestResult">
+        <name value="Scenario 1.1 - LaboratoryTestResult"/>
+        <description value="retrieve Observation resource(s) for HCIM LaboratoryTestResult"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="Observation"
+            params="/$lastn?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;category=http://snomed.info/sct|49581000146104&amp;_include=Observation:related-target"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Observation" count="1"/>
+        <!--<nts:include value="assert.response.numResources" scope="common"
+            resource="Specimen" count="2"/>-->
+    </test>
+
+    <test id="23-retrieve-Procedure">
+        <name value="Scenario 1.1 - Procedure"/>
+        <description value="retrieve Procedure resource(s) for HCIM Procedure"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="Procedure"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;category=http://snomed.info/sct|387713003,http://snomed.info/sct|258174001"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Procedure" count="1"/>
+    </test>
+
+    <test id="24-retrieve-Contact">
+        <name value="Scenario 1.1 - Contact (all)"/>
+        <description value="retrieve Encounter resource(s) for HCIM Contact"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="Encounter"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="Encounter" count="1"/>
+    </test>
+
+    <test id="25-retrieve-ProcedureRequest">
+        <name value="Scenario 1.1 - PlannedCareActivity-ProcedureRequest"/>
+        <description value="retrieve ProcedureRequest resource(s) for active HCIM PlannedCareActivity-ProcedureRequest"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="ProcedureRequest" 
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;status=active"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="ProcedureRequest" count="0"/>
+    </test>
+
+    <test id="26-retrieve-Careteam">
+        <name value="Scenario 1.1 - Careteam"/>
+        <description value="retrieve Careteam resource(s)"/>
+        <nts:include value="test.client.search" scope="common"
+            resource="CareTeam"
+            params="?_revinclude=Provenance:target&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|999906276&amp;status=active&amp;_include=CareTeam:participant"
+            useToken="true"/>
+        <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
+        <nts:include value="assert.response.numResources" scope="common"
+            resource="CareTeam" count="0"/>
+    </test>
+    
+</TestScript>
