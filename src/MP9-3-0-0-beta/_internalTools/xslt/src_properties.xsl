@@ -141,11 +141,12 @@
                     </xsl:if>
                     <xsl:if test="$subfolders[2]">
                         <xsl:variable name="clSubcategory">
+                        <!-- NICTIZ-38858 Namen matchen met de wiki testscripts van Test en Kwalificatie en van het verzoek -->
                             <xsl:choose>
-                                <xsl:when test="contains($subfolders[2], 'MA-VV')">Voorschrift</xsl:when>
-                                <xsl:when test="contains($subfolders[2], 'TA-MVE')">VoorschriftAfhandeling</xsl:when>
-                                <xsl:when test="contains($subfolders[2], 'AVMA')">Antwoord Voorstel MedicatieAfspraak (AVMA)</xsl:when>
-                                <xsl:when test="contains($subfolders[2], 'AVVV')">Antwoord Voorstel VerstrekkingsVerzoek (AVVV)</xsl:when>
+                                <xsl:when test="contains($subfolders[2], 'MA-VV')">Medicatievoorschrift (MP-VOS/MP-VOO)</xsl:when>
+                                <xsl:when test="contains($subfolders[2], 'TA-MVE')">Afhandelen medicatievoorschrift (MP-VAS/MP-VAO)</xsl:when>
+                                <xsl:when test="contains($subfolders[2], 'AVMA')">Antwoord voorstel medicatieafspraak (MP-VMO/MP-VMS)</xsl:when>
+                                <xsl:when test="contains($subfolders[2], 'AVVV')">Antwoord Voorstel VerstrekkingsVerzoek (MP-VSS/MP-VVO)</xsl:when>
                                 <xsl:when test="contains($subfolders[2], 'MA')">MedicatieAfspraak (MA)</xsl:when>
                                 <xsl:when test="contains($subfolders[2], 'MGB')">MedicatieGebruik (MGB)</xsl:when>
                                 <xsl:when test="contains($subfolders[2], 'MTD')">MedicatieToediening (MTD)</xsl:when>
