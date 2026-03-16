@@ -304,6 +304,12 @@
                                         </action>
                                         <nts:include value="test.client.successfulTransaction" scope="common"/>
                                         <xsl:copy-of select="$includeNumResources"/>
+                                        <xsl:if test="normalize-space(upper-case($transactionType)) = 'SEND' and self::sturen_medicatievoorschrift">
+                                            <nts:include value="assert-practitionerRoleTelecomExists" scope="project"/>
+                                        </xsl:if>
+                                        <xsl:if test="$adaTransIdFile = ('mv-mp-vo-tst-4-1-a-lengte-gewicht-v30', 'mv-mp-vo-tst-4-1-b-lengte-gewicht-persistent-v30')">
+                                            <nts:include value="assert-bodyWeight-bodyHeight" scope="project"/>                                            
+                                        </xsl:if>
                                     </test>
                                     <teardown>
                                         <nts:include value="teardown-deletePatient" scope="project"/>
