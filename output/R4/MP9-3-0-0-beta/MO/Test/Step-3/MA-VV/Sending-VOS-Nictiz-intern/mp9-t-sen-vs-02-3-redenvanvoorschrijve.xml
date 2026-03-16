@@ -36,6 +36,13 @@
          <code value="FHIR-Server"/>
       </profile>
    </destination>
+   <fixture id="mv-mp-vo-tst-2-3-redenvanvoorschrijven-v30-all">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
+      <resource>
+         <reference value="../../../_reference/fixtures/mv-mp-vo-tst-2-3-redenvanvoorschrijven-v30.xml"/>
+      </resource>
+   </fixture>
    <fixture id="mv-mp-vo-tst-2-3-redenvanvoorschrijven-v30">
       <autocreate value="false"/>
       <autodelete value="false"/>
@@ -45,6 +52,11 @@
    </fixture>
    <profile id="Bundle-profile"
             value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
+   <variable>
+      <name value="patient-id"/>
+      <sourceId value="transaction-response"/>
+      <expression value="entry.response.location.where($this.startsWith('Patient/')).first().split('/')[1]"/>
+   </variable>
    <variable>
       <name value="T"/>
       <defaultValue value="${CURRENTDATE}"/>
@@ -63,8 +75,8 @@
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
-            <responseId value="transaction-response-fixture"/>
-            <sourceId value="mv-mp-vo-tst-2-3-redenvanvoorschrijven-v30"/>
+            <responseId value="transaction-response"/>
+            <sourceId value="mv-mp-vo-tst-2-3-redenvanvoorschrijven-v30-all"/>
          </operation>
       </action>
       <action>
@@ -256,4 +268,19 @@
          </assert>
       </action>
    </test>
+   <teardown>
+      <action>
+         <operation>
+            <type>
+               <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-operation-codes"/>
+               <code value="purge"/>
+            </type>
+            <resource value="Patient"/>
+            <description value="Delete the Patient and all subsequent Resources that were created during this test."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <params value="/${patient-id}/$purge"/>
+         </operation>
+      </action>
+   </teardown>
 </TestScript>
