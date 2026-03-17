@@ -83,138 +83,154 @@
                             test="current-grouping-key() = ('MedicationAdministration', 'MedicationDispense', 'MedicationRequest', 'MedicationStatement')">
                             <xsl:variable name="resourceType" select="current-grouping-key()"/>                            
                             
-                            <xsl:for-each-group select="current-group()"
-                                group-by="f:category/f:coding/f:code/@value">
-                                <xsl:variable name="categoryCode" select="current-grouping-key()"/>
-                                <xsl:variable name="allMPBouwstenenOfSameKind"
-                                    select="current-group()"/>
-                                <!-- We  do not include mpBouwsteenBaseContext because the category code is included in all search queries. This might change though -->
-                                <xsl:variable name="mpBouwsteenBaseContext"
-                                    select="concat(
-                                            'Bundle.entry.resource.where($this is ', $resourceType, ')',
-                                            '.where(category.coding.code = ''', $categoryCode, ''')'
-                                        )"/>
-                                <xsl:for-each select="$allMPBouwstenenOfSameKind">
-                                    <xsl:variable name="currentMPBouwsteen" select="."/>
-                                    <xsl:variable name="medicationReference"
-                                        select="$currentMPBouwsteen/f:medicationReference/f:reference/@value"/>
-                                    <xsl:variable name="resolvedMedication"
-                                        select="$fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]/f:resource/f:Medication"/>
-                                    <xsl:variable name="medication-code"
-                                        select="distinct-values($resolvedMedication/f:code/f:coding/f:code/@value)"/>
-                                    <xsl:variable name="ingredient-code"
-                                        select="distinct-values($resolvedMedication/f:ingredient/f:itemCodeableConcept/f:coding/f:code/@value)"/>
-                                    
-                                    <!-- TODO: Add exception for 90million -->
-                                    <xsl:variable name="mpBouwstenenSameProduct" as="element()*">
-                                        <xsl:choose>
-                                            <xsl:when test="count($medication-code) = 0">
-                                                <xsl:sequence select="$allMPBouwstenenOfSameKind"/>
-                                            </xsl:when>
-                                            <xsl:when
-                                                test="count($medication-code) = 1 and $medication-code = 'OTH'">
-                                                <xsl:for-each select="$allMPBouwstenenOfSameKind">
-                                                    <xsl:variable name="medicationReference"
-                                                        select="f:medicationReference/f:reference/@value"/>
-                                                    <xsl:if
-                                                        test="$fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]/f:resource/f:Medication[f:code/f:coding/f:code/@value = $medication-code and f:ingredient/f:itemCodeableConcept/f:coding/f:code/@value = $ingredient-code]">
-                                                        <xsl:sequence select="."/>
-                                                    </xsl:if>
-                                                </xsl:for-each>
-                                            </xsl:when>
-                                            <xsl:otherwise>
-                                                <xsl:for-each select="$allMPBouwstenenOfSameKind">
-                                                    <xsl:variable name="medicationReference"
-                                                        select="f:medicationReference/f:reference/@value"/>
-                                                    <xsl:if test="
-                                                        $fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]/f:resource/f:Medication/f:code[every $code in $medication-code
-                                                            satisfies f:coding/f:code/@value = $code]">
-                                                        <xsl:sequence select="."/>
-                                                    </xsl:if>
-                                                </xsl:for-each>
-                                            </xsl:otherwise>
-                                        </xsl:choose>
-                                    </xsl:variable>
-                                    
-                                    <!-- Count how many MedicationRequests in this group point to an OTH Medication -->
-                                    <xsl:variable name="othCount"
-                                        select="
-                                            count(
-                                                $allMPBouwstenenOfSameKind[
-                                                    let $ref := f:medicationReference/f:reference/@value
-                                                    return boolean(
-                                                            $fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $ref]
-                                                            /f:resource/f:Medication
-                                                            /f:code/f:coding[
-                                                                f:system/@value = 'http://terminology.hl7.org/CodeSystem/v3-NullFlavor'
-                                                                and f:code/@value = 'OTH'
-                                                            ]
-                                                        )
-                                                ]
-                                            )
-                                        "/>
-                                    <xsl:variable name="isOTH" select="count($medication-code) = 1 and $medication-code = 'OTH'"/>
-                                    <xsl:variable name="expression">
-                                        <xsl:value-of select="$mpBouwsteenBaseContext"/>
-                                        <xsl:text>.where(</xsl:text>
-                                        
-                                        <xsl:choose>
-                                            <!-- OTH branch: only check OTH code on medication, no ingredient predicates -->
-                                            <xsl:when test="$isOTH">
-                                                <xsl:text>((medication.where($this is CodeableConcept).coding | medication.where($this is Reference).resolve().code.coding).exists(system = 'http://terminology.hl7.org/CodeSystem/v3-NullFlavor' and code = 'OTH'))</xsl:text>
-                                            </xsl:when>
-                                            
-                                            <!-- Non-OTH branch: your existing per-code checks -->
-                                            <xsl:otherwise>
-                                                <xsl:text>(</xsl:text>
-                                                <xsl:for-each select="$medication-code">
-                                                    <xsl:text>( (medication.where($this is CodeableConcept).coding | medication.where($this is Reference).resolve().code.coding).exists(code = '</xsl:text>
-                                                    <xsl:value-of select="."/>
-                                                    <xsl:text>') )</xsl:text>
-                                                    <xsl:if test="position() != last()">
-                                                        <xsl:text> and </xsl:text>
-                                                    </xsl:if>
-                                                </xsl:for-each>
-                                                <xsl:text>)</xsl:text>
-                                            </xsl:otherwise>
-                                        </xsl:choose>
-                                        
-                                        <xsl:text>)</xsl:text> <!-- close .where( … ) -->
-                                        
-                                        <!-- Only append disambiguators for non-OTH; for OTH we want the full group -->
-                                        <xsl:if test="not($isOTH)">
-                                            <xsl:call-template name="append-2-context">
-                                                <xsl:with-param name="categoryCode" select="$categoryCode"/>
-                                                <xsl:with-param name="currentMPBouwsteen" select="$currentMPBouwsteen"/>
-                                                <xsl:with-param name="mpBouwstenenSameProduct" select="$mpBouwstenenSameProduct"/>
-                                            </xsl:call-template>
+                            <xsl:variable name="allMPBouwstenenOfSameKind" select="current-group()"/>
+                            
+                            <xsl:for-each select="$allMPBouwstenenOfSameKind">
+                                <xsl:variable name="currentMPBouwsteen" select="."/>
+                                <xsl:variable name="categoryCode" select="f:category/f:coding/f:code/@value"/>
+                                <xsl:variable name="medicationReference"
+                                    select="$currentMPBouwsteen/f:medicationReference/f:reference/@value"/>
+                                <xsl:variable name="resolvedMedication"
+                                    select="$fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]/f:resource/f:Medication"/>
+                                <xsl:variable name="medication-code"
+                                    select="distinct-values($resolvedMedication/f:code/f:coding/f:code/@value)"/>
+                                <xsl:variable name="ingredient-code"
+                                    select="distinct-values($resolvedMedication/f:ingredient/f:itemCodeableConcept/f:coding/f:code/@value)"/>
+                                
+                                <!-- Alle bouwstenen van hetzelfde resourceType met hetzelfde product, ongeacht category -->
+                                <xsl:variable name="mpBouwstenenSameProduct" as="element()*">
+                                    <xsl:choose>
+                                        <xsl:when test="count($medication-code) = 0">
+                                            <xsl:sequence select="$allMPBouwstenenOfSameKind"/>
+                                        </xsl:when>
+                                        <xsl:when test="count($medication-code) = 1 and $medication-code = 'OTH'">
+                                            <xsl:for-each select="$allMPBouwstenenOfSameKind">
+                                                <xsl:variable name="medicationReference"
+                                                    select="f:medicationReference/f:reference/@value"/>
+                                                <xsl:if test="
+                                                    $fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]
+                                                    /f:resource/f:Medication[
+                                                        f:code/f:coding/f:code/@value = $medication-code
+                                                        and f:ingredient/f:itemCodeableConcept/f:coding/f:code/@value = $ingredient-code
+                                                    ]">
+                                                    <xsl:sequence select="."/>
+                                                </xsl:if>
+                                            </xsl:for-each>
+                                        </xsl:when>
+                                        <xsl:otherwise>
+                                            <xsl:for-each select="$allMPBouwstenenOfSameKind">
+                                                <xsl:variable name="medicationReference"
+                                                    select="f:medicationReference/f:reference/@value"/>
+                                                <xsl:if test="
+                                                    $fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $medicationReference]
+                                                    /f:resource/f:Medication/f:code[
+                                                        every $code in $medication-code
+                                                        satisfies f:coding/f:code/@value = $code
+                                                    ]">
+                                                    <xsl:sequence select="."/>
+                                                </xsl:if>
+                                            </xsl:for-each>
+                                        </xsl:otherwise>
+                                    </xsl:choose>
+                                </xsl:variable>
+                                
+                                <!-- Alle category codes binnen dezelfde productgroep -->
+                                <xsl:variable name="categoryCodesSameProduct" as="xs:string*"
+                                    select="distinct-values($mpBouwstenenSameProduct/f:category/f:coding/f:code/@value)"/>
+                                
+                                <!-- Basiscontext: zelfde resourceType + één van de categories van dit product -->
+                                <xsl:variable name="mpBouwsteenBaseContext">
+                                    <xsl:text>Bundle.entry.resource.where($this is </xsl:text>
+                                    <xsl:value-of select="$resourceType"/>
+                                    <xsl:text>).where(</xsl:text>
+                                    <xsl:for-each select="$categoryCodesSameProduct">
+                                        <xsl:text>category.coding.code = '</xsl:text>
+                                        <xsl:value-of select="."/>
+                                        <xsl:text>'</xsl:text>
+                                        <xsl:if test="position() != last()">
+                                            <xsl:text> or </xsl:text>
                                         </xsl:if>
-                                        
-                                        <!-- Compare against the right expected count -->
-                                        <xsl:value-of select="
-                                            concat('.count() = ',
-                                                if ($isOTH)
-                                                    then $othCount
-                                                else count($mpBouwstenenSameProduct)
-                                            )
-                                                        "/>
-                                    </xsl:variable>
+                                    </xsl:for-each>
+                                    <xsl:text>)</xsl:text>
+                                </xsl:variable>
+                                
+                                <!-- Count how many resources in this same-product set point to an OTH Medication -->
+                                <xsl:variable name="othCount"
+                                    select="
+                                        count(
+                                            $mpBouwstenenSameProduct[
+                                                let $ref := f:medicationReference/f:reference/@value
+                                                return boolean(
+                                                        $fhirFixture/f:Bundle/f:entry[f:fullUrl/@value = $ref]
+                                                        /f:resource/f:Medication
+                                                        /f:code/f:coding[
+                                                            f:system/@value = 'http://terminology.hl7.org/CodeSystem/v3-NullFlavor'
+                                                            and f:code/@value = 'OTH'
+                                                        ]
+                                                    )
+                                            ]
+                                        )
+                                    "/>
+                                
+                                <xsl:variable name="isOTH" select="count($medication-code) = 1 and $medication-code = 'OTH'"/>
+                                
+                                <xsl:variable name="expression">
+                                    <xsl:value-of select="$mpBouwsteenBaseContext"/>
+                                    <xsl:text>.where(</xsl:text>
                                     
-                                    <action xmlns="http://hl7.org/fhir">
-                                        <assert>
-                                            <!--<description value="{$description}"/>-->
-                                            <direction>
-                                                <xsl:attribute name="value">                                                   
-                                                    <xsl:value-of select="'request'"/>                                                       
-                                                </xsl:attribute>    
-                                            </direction>
-                                            <expression value="{$expression}"/>
-                                            <sourceId value="transaction-{$direction}"/>
-                                            <warningOnly value="false"/>
-                                        </assert>
-                                    </action>
-                                </xsl:for-each>
-                            </xsl:for-each-group>
+                                    <xsl:choose>
+                                        <xsl:when test="$isOTH">
+                                            <xsl:text>((medication.where($this is CodeableConcept).coding | medication.where($this is Reference).resolve().code.coding).exists(system = 'http://terminology.hl7.org/CodeSystem/v3-NullFlavor' and code = 'OTH'))</xsl:text>
+                                        </xsl:when>
+                                        <xsl:otherwise>
+                                            <xsl:text>(</xsl:text>
+                                            <xsl:for-each select="$medication-code">
+                                                <xsl:text>((medication.where($this is CodeableConcept).coding | medication.where($this is Reference).resolve().code.coding).exists(code = '</xsl:text>
+                                                <xsl:value-of select="."/>
+                                                <xsl:text>'))</xsl:text>
+                                                <xsl:if test="position() != last()">
+                                                    <xsl:text> and </xsl:text>
+                                                </xsl:if>
+                                            </xsl:for-each>
+                                            <xsl:text>)</xsl:text>
+                                        </xsl:otherwise>
+                                    </xsl:choose>
+                                    
+                                    <xsl:text>)</xsl:text>
+                                    
+                                    <!-- Alleen extra disambiguatie als alle matches binnen dezelfde category vallen -->
+                                    <xsl:variable name="mpBouwstenenSameProductSameCategory"    select="$mpBouwstenenSameProduct[f:category/f:coding/f:code/@value = $categoryCode]"/>
+                                    <xsl:if test="not($isOTH) and count($categoryCodesSameProduct) = 1">
+                                        <xsl:call-template name="append-2-context">
+                                            <xsl:with-param name="categoryCode" select="$categoryCode"/>
+                                            <xsl:with-param name="currentMPBouwsteen" select="$currentMPBouwsteen"/>
+                                            <xsl:with-param name="mpBouwstenenSameProduct" select="$mpBouwstenenSameProductSameCategory"/>
+                                        </xsl:call-template>
+                                    </xsl:if>
+                                                                        
+                                    <xsl:value-of select="
+                                        concat(
+                                            '.count() = ',
+                                            if ($isOTH)
+                                                then $othCount
+                                            else count($mpBouwstenenSameProduct)
+                                        )
+                                                    "/>
+                                </xsl:variable>
+                                
+                                <action xmlns="http://hl7.org/fhir">
+                                    <assert>
+                                        <direction>
+                                            <xsl:attribute name="value">
+                                                <xsl:value-of select="'request'"/>
+                                            </xsl:attribute>
+                                        </direction>
+                                        <expression value="{$expression}"/>
+                                        <sourceId value="transaction-{$direction}"/>
+                                        <warningOnly value="false"/>
+                                    </assert>
+                                </action>
+                            </xsl:for-each>
                         </xsl:when>
                         <xsl:when test="current-grouping-key() = 'Medication'">
                             <xsl:for-each-group select="current-group()"
