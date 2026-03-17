@@ -81,17 +81,19 @@
                         <!-- only check the primary resources and Medication, it is not obliged to send along the secondary resources -->
                         <xsl:when
                             test="current-grouping-key() = ('MedicationAdministration', 'MedicationDispense', 'MedicationRequest', 'MedicationStatement')">
-                            <xsl:variable name="resourceType" select="current-grouping-key()"/>
-                            <!-- We  do not include mpBouwsteenBaseContext because the category code is included in all search queries. This might change though -->
-                            <xsl:variable name="mpBouwsteenBaseContext"
-                                select="concat('Bundle.entry.resource.where($this is ', $resourceType, ')')"/>
+                            <xsl:variable name="resourceType" select="current-grouping-key()"/>                            
                             
                             <xsl:for-each-group select="current-group()"
                                 group-by="f:category/f:coding/f:code/@value">
                                 <xsl:variable name="categoryCode" select="current-grouping-key()"/>
                                 <xsl:variable name="allMPBouwstenenOfSameKind"
                                     select="current-group()"/>
-                                
+                                <!-- We  do not include mpBouwsteenBaseContext because the category code is included in all search queries. This might change though -->
+                                <xsl:variable name="mpBouwsteenBaseContext"
+                                    select="concat(
+                                            'Bundle.entry.resource.where($this is ', $resourceType, ')',
+                                            '.where(category.coding.code = ''', $categoryCode, ''')'
+                                        )"/>
                                 <xsl:for-each select="$allMPBouwstenenOfSameKind">
                                     <xsl:variable name="currentMPBouwsteen" select="."/>
                                     <xsl:variable name="medicationReference"
