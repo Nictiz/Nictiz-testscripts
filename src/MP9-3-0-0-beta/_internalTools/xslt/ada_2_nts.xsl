@@ -84,7 +84,9 @@
                             <xsl:variable name="resourceType" select="current-grouping-key()"/>                            
                             
                             <xsl:variable name="allMPBouwstenenOfSameKind" select="current-group()"/>
-                            <xsl:if test="false()">
+                            
+                            <!--The code between this if-statement creates valid FHIRPath expressions using .resolve(), but Conformancelab cannot process this. Remove the if once CL can handle resolve  -->
+                            <xsl:if test="false()"> 
                             <xsl:for-each select="$allMPBouwstenenOfSameKind">
                                 <xsl:variable name="currentMPBouwsteen" select="."/>
                                 <xsl:variable name="categoryCode" select="f:category/f:coding/f:code/@value"/>
