@@ -84,7 +84,7 @@
                             <xsl:variable name="resourceType" select="current-grouping-key()"/>                            
                             
                             <xsl:variable name="allMPBouwstenenOfSameKind" select="current-group()"/>
-                            
+                            <xsl:if test="false()">
                             <xsl:for-each select="$allMPBouwstenenOfSameKind">
                                 <xsl:variable name="currentMPBouwsteen" select="."/>
                                 <xsl:variable name="categoryCode" select="f:category/f:coding/f:code/@value"/>
@@ -231,6 +231,7 @@
                                     </assert>
                                 </action>
                             </xsl:for-each>
+                            </xsl:if>
                         </xsl:when>
                         <xsl:when test="current-grouping-key() = 'Medication'">
                             <xsl:for-each-group select="current-group()"
