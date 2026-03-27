@@ -1,0 +1,581 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="elz-serving-xis-scenario-3-Minimaal-CheckContent-xml"/>
+   <url value="http://nictiz.nl/fhir/TestScript/elz-serving-xis-scenario-3-Minimaal-CheckContent-xml"/>
+   <version value="R4-patchlevel 2026.10"/>
+   <name value="ELZ - Serving XIS - Scenario 3 Minimaal - Serving Consent resources of patient XXX_vanHenegouwen - target CheckContent - XML Format"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Scenario 3 - Serving Consent resources of patient XXX_vanHenegouwen"/>
+   <origin>
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
+         <valueBoolean value="false"/>
+      </extension>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
+         <code value="FHIR-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
+         <valueBoolean value="true"/>
+      </extension>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <variable>
+      <name value="patient-token-patient-XXX-vanHenegouwen"/>
+      <defaultValue value="Bearer 3c22aaf2-2930-11f1-b4ac-0800200c9a66"/>
+      <description value="OAuth Token for patient 'patient-XXX-vanHenegouwen'"/>
+   </variable>
+   <variable>
+      <name value="patient-XXX-vanHenegouwen-id"/>
+      <description value="Resource.id for Patient 1"/>
+      <expression value="Patient.id"/>
+      <sourceId value="fixture-serve-Consent-Resources-Minimaal"/>
+   </variable>
+   <variable>
+      <name value="pracrole-UZI1-id"/>
+      <description value="Resource.id for PractitionerRole 1"/>
+      <expression value="PractitionerRole.id"/>
+      <sourceId value="fixture-serve-Consent-Resources-Minimaal"/>
+   </variable>
+   <variable>
+      <name value="td-2025-08-09-40617009-id"/>
+      <description value="Resource.id for Consent 1"/>
+      <expression value="Consent.id"/>
+      <sourceId value="fixture-serve-Consent-Resources-Minimaal"/>
+   </variable>
+   <test id="serve-Consent-Resources-Minimaal">
+      <name value="Serving Consent resources of patient XXX_vanHenegouwen"/>
+      <description value="Serve Consent resources of patient XXX_vanHenegouwen"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="read"/>
+            </type>
+            <resource value="Consent"/>
+            <description value="Test server to serve Consent resource."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?scope=http://terminology.hl7.org/CodeSystem/consentscope|treatment&amp;patient.identifier=http://fhir.nl/fhir/NamingSystem/bsn|555555112&amp;status=active&amp;_include=Consent:actor&amp;_include=Consent:patient"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-patient-XXX-vanHenegouwen}"/>
+            </requestHeader>
+            <responseId value="fixture-serve-Consent-Resources-Minimaal"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that all Coding elements contain both a .system and a .code."/>
+            <direction value="response"/>
+            <expression value="Consent.descendants().where($this.is(Coding)).all(system.exists() and code.exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the OID of the zib valueset is not used for the system of a coding element."/>
+            <direction value="response"/>
+            <expression value="Consent.descendants().where($this.is(coding)).where(system.startsWith('urn:oid:2.16.840.1.113883.2.4.3.11.60.40.2')).exists().not()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that all CodeableConcept elements contain either a coding.display or a text value if no Coding exists or has an extension (e.g. a nullFlavor or data-absent-reason extension). For more information see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3Use_of_coded_concepts."/>
+            <direction value="response"/>
+            <expression value="Consent.descendants().where($this.is(CodeableConcept)) .all(coding.display.exists() or text.exists() or extension.exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that all References have a display value, see https://informatiestandaarden.nictiz.nl/wiki/FHIR:V1.0_FHIR_IG_STU3#Use_of_the_reference_datatype."/>
+            <direction value="response"/>
+            <expression value="Consent.descendants().where($this.is(Reference)).all(display.exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists() or extension.where(url = 'http://hl7.org/fhir/StructureDefinition/iso21090-nullFlavor').exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that all Identifiers have both a .system and a .value. In rare cases where a general category of identifiers can be used, .type can replace .system. Edge cases for both .system and .type to be unknown are not applicable to Nictiz. For more information, see https://www.hl7.org/fhir/stu3/datatypes.html#Identifier."/>
+            <direction value="response"/>
+            <expression value="Consent.descendants().where($this.is(Identifier)).all((system.exists() or type.exists()) and value.exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Serving Consent resources of patient XXX_vanHenegouwen - Check Patient"/>
+      <description value="Check if the previous operation results in a FHIR Patient that contains the values that are expected following Nictiz' materials (fixture .id: patient-XXX-vanHenegouwen)"/>
+      <action>
+         <assert>
+            <description value="Response contains exactly 1 Patient"/>
+            <direction value="response"/>
+            <expression value="Patient.count() = 1"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Patient resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Patient.id.exists()"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/nl-core-Patient'"/>
+            <direction value="response"/>
+            <expression value="Patient.where(id = '${patient-XXX-vanHenegouwen-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/nl-core-Patient').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-2"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="response"/>
+            <expression value="Patient.where(id = '${patient-XXX-vanHenegouwen-id}').identifier.where(system and value).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-3"/>
+            <description value="Contains .name with .use 'official', and .text with a value, and .family with a value and with .extension with url 'http://hl7.org/fhir/StructureDefinition/humanname-own-name' with .valueString with a value. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Patient.where(id = '${patient-XXX-vanHenegouwen-id}').name.where(use = 'official' and text.hasValue() and family.where($this.hasValue() and extension('http://hl7.org/fhir/StructureDefinition/humanname-own-name').value.ofType(string).hasValue())).exists()'-->
+            <expression value="Patient.where(id = '${patient-XXX-vanHenegouwen-id}').name.where(use = 'official' and text.hasValue() and family.where($this.hasValue() and extension('http://hl7.org/fhir/StructureDefinition/humanname-own-name').value.where($this is string).hasValue())).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-3-1"/>
+            <description value="Contains .name.use 'official'. This assert checks only one child. Assert 1-3 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Patient.where(id = '${patient-XXX-vanHenegouwen-id}').name.where(use = 'official').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-3-2"/>
+            <description value="Contains .name.text with a value. This assert checks only one child. Assert 1-3 checks if all children are present in the same parent. This assert only checks existence of a value, because string comparisons can have many possible caveats"/>
+            <direction value="response"/>
+            <expression value="Patient.where(id = '${patient-XXX-vanHenegouwen-id}').name.where(text.hasValue()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-3-3"/>
+            <description value="Contains .name.family with a value and with .extension with url 'http://hl7.org/fhir/StructureDefinition/humanname-own-name' with .valueString with a value. This assert checks only one child. Assert 1-3 checks if all children are present in the same parent. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails. This assert only checks existence of a value, because string comparisons can have many possible caveats"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Patient.where(id = '${patient-XXX-vanHenegouwen-id}').name.where(family.where($this.hasValue() and extension('http://hl7.org/fhir/StructureDefinition/humanname-own-name').value.ofType(string).hasValue()).exists()).exists()'-->
+            <expression value="Patient.where(id = '${patient-XXX-vanHenegouwen-id}').name.where(family.where($this.hasValue() and extension('http://hl7.org/fhir/StructureDefinition/humanname-own-name').value.where($this is string).hasValue()).exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-3-3-1"/>
+            <description value="Contains .name.family with a value. This assert checks only one child. Assert 1-3-3 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Patient.where(id = '${patient-XXX-vanHenegouwen-id}').name.where(family.hasValue()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-3-3-2"/>
+            <description value="Contains .name.family.extension with url 'http://hl7.org/fhir/StructureDefinition/humanname-own-name' with .valueString with a value. This assert checks only one child. Assert 1-3-3 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Patient.where(id = '${patient-XXX-vanHenegouwen-id}').name.where(family.extension('http://hl7.org/fhir/StructureDefinition/humanname-own-name').value.ofType(string).hasValue()).exists()'-->
+            <expression value="Patient.where(id = '${patient-XXX-vanHenegouwen-id}').name.where(family.extension('http://hl7.org/fhir/StructureDefinition/humanname-own-name').value.where($this is string).hasValue()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-4"/>
+            <description value="Contains .gender 'male' and with .extension with url 'http://nictiz.nl/fhir/StructureDefinition/ext-CodeSpecification' with .valueCodeableConcept with .coding with .system 'http://terminology.hl7.org/CodeSystem/v3-AdministrativeGender' and .code 'M' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Patient.where(id = '${patient-XXX-vanHenegouwen-id}').gender.where($this = 'male' and extension('http://nictiz.nl/fhir/StructureDefinition/ext-CodeSpecification').value.ofType(CodeableConcept).coding.where(system = 'http://terminology.hl7.org/CodeSystem/v3-AdministrativeGender' and code = 'M' and display)).exists()'-->
+            <expression value="Patient.where(id = '${patient-XXX-vanHenegouwen-id}').gender.where($this = 'male' and extension('http://nictiz.nl/fhir/StructureDefinition/ext-CodeSpecification').value.where($this is CodeableConcept).coding.where(system = 'http://terminology.hl7.org/CodeSystem/v3-AdministrativeGender' and code = 'M' and display)).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-4-1"/>
+            <description value="Contains .gender 'male'. This assert checks only one child. Assert 1-4 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Patient.where(id = '${patient-XXX-vanHenegouwen-id}').gender = 'male'"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-4-2"/>
+            <description value="Contains .gender.extension with url 'http://nictiz.nl/fhir/StructureDefinition/ext-CodeSpecification' with .valueCodeableConcept with .coding with .system 'http://terminology.hl7.org/CodeSystem/v3-AdministrativeGender' and .code 'M' and .display. This assert checks only one child. Assert 1-4 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Patient.where(id = '${patient-XXX-vanHenegouwen-id}').gender.extension('http://nictiz.nl/fhir/StructureDefinition/ext-CodeSpecification').value.ofType(CodeableConcept).coding.where(system = 'http://terminology.hl7.org/CodeSystem/v3-AdministrativeGender' and code = 'M' and display).exists()'-->
+            <expression value="Patient.where(id = '${patient-XXX-vanHenegouwen-id}').gender.extension('http://nictiz.nl/fhir/StructureDefinition/ext-CodeSpecification').value.where($this is CodeableConcept).coding.where(system = 'http://terminology.hl7.org/CodeSystem/v3-AdministrativeGender' and code = 'M' and display).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-5"/>
+            <description value="Contains .birthDate"/>
+            <direction value="response"/>
+            <expression value="Patient.where(id = '${patient-XXX-vanHenegouwen-id}').birthDate.exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Serving Consent resources of patient XXX_vanHenegouwen - Check PractitionerRole"/>
+      <description value="Check if the previous operation results in a FHIR PractitionerRole that contains the values that are expected following Nictiz' materials (fixture .id: pracrole-UZI1)"/>
+      <action>
+         <assert>
+            <description value="Response contains exactly 1 PractitionerRole"/>
+            <direction value="response"/>
+            <expression value="PractitionerRole.count() = 1"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="PractitionerRole resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="PractitionerRole.id.exists()"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/nl-core-HealthProfessional-PractitionerRole'"/>
+            <direction value="response"/>
+            <expression value="PractitionerRole.where(id = '${pracrole-UZI1-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/nl-core-HealthProfessional-PractitionerRole').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-2"/>
+            <description value="Contains .practitioner with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="PractitionerRole.where(id = '${pracrole-UZI1-id}').practitioner.where((reference or identifier) and display).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-3"/>
+            <description value="Contains .telecom with .system 'phone', and .value with a value. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="PractitionerRole.where(id = '${pracrole-UZI1-id}').telecom.where(system = 'phone' and value.hasValue()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-3-1"/>
+            <description value="Contains .telecom.system 'phone'. This assert checks only one child. Assert 1-3 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="PractitionerRole.where(id = '${pracrole-UZI1-id}').telecom.where(system = 'phone').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-3-2"/>
+            <description value="Contains .telecom.value with a value. This assert checks only one child. Assert 1-3 checks if all children are present in the same parent. This assert only checks existence of a value, because string comparisons can have many possible caveats"/>
+            <direction value="response"/>
+            <expression value="PractitionerRole.where(id = '${pracrole-UZI1-id}').telecom.where(value.hasValue()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-4"/>
+            <description value="Contains .telecom with .system 'email', and .value with a value. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="PractitionerRole.where(id = '${pracrole-UZI1-id}').telecom.where(system = 'email' and value.hasValue()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-4-1"/>
+            <description value="Contains .telecom.system 'email'. This assert checks only one child. Assert 1-4 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="PractitionerRole.where(id = '${pracrole-UZI1-id}').telecom.where(system = 'email').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-4-2"/>
+            <description value="Contains .telecom.value with a value. This assert checks only one child. Assert 1-4 checks if all children are present in the same parent. This assert only checks existence of a value, because string comparisons can have many possible caveats"/>
+            <direction value="response"/>
+            <expression value="PractitionerRole.where(id = '${pracrole-UZI1-id}').telecom.where(value.hasValue()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Serving Consent resources of patient XXX_vanHenegouwen - Check Consent"/>
+      <description value="Check if the previous operation results in a FHIR Consent that contains the values that are expected following Nictiz' materials (fixture .id: td-2025-08-09-40617009)"/>
+      <action>
+         <assert>
+            <description value="Response contains exactly 1 Consent"/>
+            <direction value="response"/>
+            <expression value="Consent.count() = 1"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Consent resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <expression value="Consent.id.exists()"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/nl-core-TreatmentDirective2'"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/nl-core-TreatmentDirective2').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-2"/>
+            <description value="Contains .modifierExtension with url 'http://nictiz.nl/fhir/StructureDefinition/ext-TreatmentDirective2.SpecificationOther' with .valueString with a value"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Consent.where(id = '${td-2025-08-09-40617009-id}').modifierExtension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-TreatmentDirective2.SpecificationOther').value.ofType(string).hasValue()'-->
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').modifierExtension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/ext-TreatmentDirective2.SpecificationOther').value.where($this is string).hasValue()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-3"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').identifier.where(system and value).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-4"/>
+            <description value="Contains .status 'active'"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').status = 'active'"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-5"/>
+            <description value="Contains .scope with .coding with .system 'http://terminology.hl7.org/CodeSystem/consentscope' and .code 'treatment' and .display"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').scope.coding.where(system = 'http://terminology.hl7.org/CodeSystem/consentscope' and code = 'treatment' and display).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-6"/>
+            <description value="Contains .category with .coding with .system 'http://snomed.info/sct' and .code '129125009' and .display"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').category.where(coding.where(system = 'http://snomed.info/sct' and code = '129125009' and display)).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-7"/>
+            <description value="Contains .patient with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').patient.where((reference or identifier) and display).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-8"/>
+            <description value="Contains .dateTime"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').dateTime.exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-9"/>
+            <description value="Contains .policy with .uri"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').policy.where(uri).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-10"/>
+            <description value="Contains .provision with .actor with .role with .coding with .system 'http://terminology.hl7.org/CodeSystem/v3-RoleCode' and .code 'CONSWIT' and .display and .reference with either .reference or .identifier and .display, and .actor with .role with .coding with .system 'http://terminology.hl7.org/CodeSystem/v3-RoleCode' and .code 'CONSENTER' and .display and .reference with either .reference or .identifier and .display, and .code with .coding with .system 'http://snomed.info/sct' and .code '40617009' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').provision.where(actor.where(role.coding.where(system = 'http://terminology.hl7.org/CodeSystem/v3-RoleCode' and code = 'CONSWIT' and display) and reference.where((reference or identifier) and display)) and actor.where(role.coding.where(system = 'http://terminology.hl7.org/CodeSystem/v3-RoleCode' and code = 'CONSENTER' and display) and reference.where((reference or identifier) and display)) and code.where(coding.where(system = 'http://snomed.info/sct' and code = '40617009' and display))).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-10-1"/>
+            <description value="Contains .provision.actor with .role with .coding with .system 'http://terminology.hl7.org/CodeSystem/v3-RoleCode' and .code 'CONSWIT' and .display, and .reference with either .reference or .identifier and .display. This assert checks only one child. Assert 1-10 checks if all children are present in the same parent. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').provision.actor.where(role.coding.where(system = 'http://terminology.hl7.org/CodeSystem/v3-RoleCode' and code = 'CONSWIT' and display) and reference.where((reference or identifier) and display)).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-10-1-1"/>
+            <description value="Contains .provision.actor.role with .coding with .system 'http://terminology.hl7.org/CodeSystem/v3-RoleCode' and .code 'CONSWIT' and .display. This assert checks only one child. Assert 1-10-1 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').provision.actor.where(role.coding.where(system = 'http://terminology.hl7.org/CodeSystem/v3-RoleCode' and code = 'CONSWIT' and display).exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-10-1-2"/>
+            <description value="Contains .provision.actor.reference with either .reference or .identifier and .display. This assert checks only one child. Assert 1-10-1 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').provision.actor.where(reference.where((reference or identifier) and display).exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-10-2"/>
+            <description value="Contains .provision.actor with .role with .coding with .system 'http://terminology.hl7.org/CodeSystem/v3-RoleCode' and .code 'CONSENTER' and .display, and .reference with either .reference or .identifier and .display. This assert checks only one child. Assert 1-10 checks if all children are present in the same parent. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').provision.actor.where(role.coding.where(system = 'http://terminology.hl7.org/CodeSystem/v3-RoleCode' and code = 'CONSENTER' and display) and reference.where((reference or identifier) and display)).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-10-2-1"/>
+            <description value="Contains .provision.actor.role with .coding with .system 'http://terminology.hl7.org/CodeSystem/v3-RoleCode' and .code 'CONSENTER' and .display. This assert checks only one child. Assert 1-10-2 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').provision.actor.where(role.coding.where(system = 'http://terminology.hl7.org/CodeSystem/v3-RoleCode' and code = 'CONSENTER' and display).exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-10-2-2"/>
+            <description value="Contains .provision.actor.reference with either .reference or .identifier and .display. This assert checks only one child. Assert 1-10-2 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').provision.actor.where(reference.where((reference or identifier) and display).exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-10-3"/>
+            <description value="Contains .provision.code with .coding with .system 'http://snomed.info/sct' and .code '40617009' and .display. This assert checks only one child. Assert 1-10 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <expression value="Consent.where(id = '${td-2025-08-09-40617009-id}').provision.code.where(coding.where(system = 'http://snomed.info/sct' and code = '40617009' and display)).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
