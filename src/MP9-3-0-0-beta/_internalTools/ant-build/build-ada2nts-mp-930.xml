@@ -199,6 +199,10 @@
     </target>
     
     <target name="convert_ada2nts_prescription_930">
+        <condition property="do.tris">
+            <equals arg1="${test.dir}" arg2="/Cert"/>
+        </condition>
+        
         <!-- target for medication prescription -->
         <echo>[convert_ada2nts_prescription_930] xsl.input.usecase: '${github.mp93.dir.local}${test.dir.lowercase}/sturen_medicatievoorschrift/ada_instance' and xsl.output.usecase: '${build.dir}${test.dir}/Step-3/MA-VV'</echo>
         <antcall target="convert_push_usecase_930_sub">
@@ -207,6 +211,22 @@
             <param name="role.code" value="VO"/>
             <param name="role.code.send" value="S"/>
             <param name="role.code.receive" value="O"/>
+            <param name="tris" value="false"/>
+        </antcall>
+        
+        <antcall target="convert_ada2nts_prescription_930_tris"/>
+    </target>
+    
+    <target name="convert_ada2nts_prescription_930_tris" if="do.tris">
+        <!-- Send TRIS -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${github.mp93.dir.local}${test.dir.lowercase}/sturen_medicatievoorschrift/ada_instance"/>
+            <param name="xsl.in.include" value="*mp-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${build.dir}${test.dir}/Step-3/MA-VV/Sending-VOS-TRIS"/>
+            <param name="transaction.type" value="Send"/>
+            <param name="tris" value="true"/>
         </antcall>
     </target>
     
@@ -220,6 +240,7 @@
             <param name="role.code.receive" value="O"/>
         </antcall>
     </target>
+
     
     <target name="convert_ada2nts_prop_ma_930">
         <!-- target for proposal medication agreement -->
@@ -548,6 +569,7 @@
             <param name="mappingsUrl4FhirFixtures" expression="${mappings.url.4.fhir.fixtures}${test.dir.lowercase}/4touchstone_mp"/>
             <param name="transactionType" expression="${transaction.type}"/>
             <param name="outputDir" expression="${xsl.out.abs}"/>
+            <param name="isTris" expression="${tris}" if="do.tris"/>
         </xslt>
         <delete dir="${xslt.dummy.dir}" quiet="true"/>
     </target>

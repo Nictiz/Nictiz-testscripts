@@ -12,6 +12,7 @@
     <!-- Send/Receive/Retrieve/Serve, this param defaults to Send -->
     <xsl:param name="transactionType">Send</xsl:param>
     <xsl:param name="outputDir"/>
+    <xsl:param name="isTris"/>
     <xsl:variable name="outputDirNormalized" select="nf:normalize-path($outputDir)"/>
     
     <xsl:variable name="bsnSystem" select="$oidMap[@oid = $oidBurgerservicenummer]/@uri"/>
@@ -484,135 +485,142 @@
                         </xsl:for-each-group>
                     </xsl:variable>
                     
-                    <xsl:result-document href="{concat($outputDirNormalized, '/', $newFilename)}">
-                        <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
-                            <id value="{$idString}"/>
-                            <version value="r4-mp9-3.0.0"/>
-                            <name value="{$idString}"/>
-                            <title value="{$testScriptTitle}"/>
-                            <description value="{$testScriptDescription}"/>                            
-                            <xsl:choose>
-                                <!-- Receive -->
-                                <xsl:when test="$ntsScenario = 'server'">
-                                    <nts:fixture id="{$adaTransIdFile}" href="fixtures/{$adaTransIdFile}.{'{$_FORMAT}'}"/>
-                                    <nts:includeDateT value="yes"/>
-                                    <!--<xsl:apply-templates select="$deleteStuff/f:variable" mode="Nictiz-intern"/>-->
-                                    <test id="{$idString}-01">
-                                        <name value="{$testName}"/>
-                                        <description value="{$testDescription}"/>
-                                        <action>
-                                            <operation>
-                                                <type>
-                                                    <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
-                                                    <code value="transaction"/>
-                                                </type>
-                                                <description value="Test server to handle a Bundle of type transaction."/>
-                                                <contentType value="{'{$_FORMAT}'}"/>
-                                                <destination value="1"/>
-                                                <origin value="1"/>
-                                                <requestHeader>
-                                                    <field value="Prefer"/>
-                                                    <value value="return=representation"/>
-                                                </requestHeader>
-                                                <!--<responseId value="transaction-response-fixture" nts:in-targets="Nictiz-intern"/>-->
-                                                <sourceId value="{$adaTransIdFile}"/>
-                                            </operation>
-                                        </action>
-                                        <nts:include value="assert.response.success" scope="common"/>
-                                        <nts:include value="assert.response.bundleContent" scope="common" bundleType="transaction-response"/>
-                                        <xsl:copy-of select="$includeNumResources"/>
-                                    </test>
-                                    <!-- teardown receive only needed for Nictiz internal tests -->
-                                    <!--<teardown nts:in-targets="Nictiz-intern">
-                                         <!-\- the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
-                                         <xsl:copy-of select="$deleteStuff/f:action"/>
-                                         </teardown>-->
-                                    <xsl:if test="count($identifyResources) gt 0">
-                                        <test id="{$idString}-identification">
-                                            <name value="Resource identification"/>
-                                            <description
-                                                value="Checks if all resources specified by the scenario can be identified unambiguously."/>
-                                            <xsl:copy-of select="$identifyResources"/>
+                    <!-- We do some TRIS magic here:
+                         - If variable isTris is empty, we output _everything_, because this is a usecase that doesn't involve TRISses
+                         - If variable isTris is 'true', we output only scenarios 2, 7 and 8
+                         - If variable isTris is 'false', we do not output scenarios 7 and 8
+                    -->
+                    <xsl:if test="string-length($isTris) = 0 or ($isTris = 'true' and $scenarioString/@scenarioset = ('2', '7', '8')) or ($isTris = 'false' and not($scenarioString/@scenarioset = ('7', '8')))">
+                        <xsl:result-document href="{concat($outputDirNormalized, '/', $newFilename)}">
+                            <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
+                                <id value="{$idString}"/>
+                                <version value="r4-mp9-3.0.0"/>
+                                <name value="{$idString}"/>
+                                <title value="{$testScriptTitle}"/>
+                                <description value="{$testScriptDescription}"/>                            
+                                <xsl:choose>
+                                    <!-- Receive -->
+                                    <xsl:when test="$ntsScenario = 'server'">
+                                        <nts:fixture id="{$adaTransIdFile}" href="fixtures/{$adaTransIdFile}.{'{$_FORMAT}'}"/>
+                                        <nts:includeDateT value="yes"/>
+                                        <!--<xsl:apply-templates select="$deleteStuff/f:variable" mode="Nictiz-intern"/>-->
+                                        <test id="{$idString}-01">
+                                            <name value="{$testName}"/>
+                                            <description value="{$testDescription}"/>
+                                            <action>
+                                                <operation>
+                                                    <type>
+                                                        <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+                                                        <code value="transaction"/>
+                                                    </type>
+                                                    <description value="Test server to handle a Bundle of type transaction."/>
+                                                    <contentType value="{'{$_FORMAT}'}"/>
+                                                    <destination value="1"/>
+                                                    <origin value="1"/>
+                                                    <requestHeader>
+                                                        <field value="Prefer"/>
+                                                        <value value="return=representation"/>
+                                                    </requestHeader>
+                                                    <!--<responseId value="transaction-response-fixture" nts:in-targets="Nictiz-intern"/>-->
+                                                    <sourceId value="{$adaTransIdFile}"/>
+                                                </operation>
+                                            </action>
+                                            <nts:include value="assert.response.success" scope="common"/>
+                                            <nts:include value="assert.response.bundleContent" scope="common" bundleType="transaction-response"/>
+                                            <xsl:copy-of select="$includeNumResources"/>
                                         </test>
-                                    </xsl:if>
-                                 </xsl:when>
-                                <xsl:otherwise> 
-                                    <xsl:copy-of select="$cleanupVars"/>    
-                                    <!-- assume Send -->
-                                    <!-- 1) Fixture ZONDER in-targets: altijd beschikbaar voor response capture + teardown -->
-                                    <nts:fixture id="{concat($adaTransIdFile,'-all')}" href="fixtures/{$adaTransIdFile}.xml"/>
-                                    
-                                    <!-- 2) Eventueel: behoud je intern-only fixture als je ’m nog nodig hebt -->
-                                    <nts:fixture id="{$adaTransIdFile}" href="fixtures/{$adaTransIdFile}.xml" nts:in-targets="Nictiz-intern"/>
-                                    
-                                    <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
-                                    <!--<xsl:copy-of select="$deleteStuff/f:variable"/>-->
-                                    <test id="{$idString}-01">
-                                        <name value="{$testName}"/>
-                                        <description value="{$testDescription}"/>
-                                        <action>
-                                            <operation>
-                                                <type>
-                                                    <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
-                                                    <code value="transaction"/>
-                                                </type>
-                                                <description value="Test client to POST a Bundle of type transaction."/>
-                                                <destination value="1"/>
-                                                <origin value="1"/>
-                                                <responseId value="transaction-response"/>
-                                                <sourceId value="{concat($adaTransIdFile,'-all')}"/>
-                                            </operation>
-                                        </action>
-                                        <nts:include value="test.client.successfulTransaction" scope="common"/>
-                                        <xsl:copy-of select="$includeNumResources"/>
-                                        <xsl:if test="normalize-space(upper-case($transactionType)) = 'SEND' and self::sturen_medicatievoorschrift">
-                                            <nts:include value="assert-practitionerRoleTelecomExists" scope="project"/>
+                                        <!-- teardown receive only needed for Nictiz internal tests -->
+                                        <!--<teardown nts:in-targets="Nictiz-intern">
+                                             <!-\- the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
+                                             <xsl:copy-of select="$deleteStuff/f:action"/>
+                                             </teardown>-->
+                                        <xsl:if test="count($identifyResources) gt 0">
+                                            <test id="{$idString}-identification">
+                                                <name value="Resource identification"/>
+                                                <description
+                                                    value="Checks if all resources specified by the scenario can be identified unambiguously."/>
+                                                <xsl:copy-of select="$identifyResources"/>
+                                            </test>
                                         </xsl:if>
-                                        <xsl:if test="$adaTransIdFile = ('mv-mp-vo-tst-4-1-a-lengte-gewicht-v30', 'mv-mp-vo-tst-4-1-b-lengte-gewicht-persistent-v30')">
-                                            <nts:include value="assert-bodyWeight-bodyHeight" scope="project"/>                                            
-                                        </xsl:if>
-                                    </test>
-                                    <xsl:if test="count($identifyResources) gt 0">
-                                        <test id="{$idString}-identification">
-                                            <name value="Resource identification"/>
-                                            <description
-                                                value="Checks if all resources specified by the scenario can be identified unambiguously."/>
-                                            <xsl:copy-of select="$identifyResources"/>
+                                    </xsl:when>
+                                    <xsl:otherwise> 
+                                        <xsl:copy-of select="$cleanupVars"/>    
+                                        <!-- assume Send -->
+                                        <!-- 1) Fixture ZONDER in-targets: altijd beschikbaar voor response capture + teardown -->
+                                        <nts:fixture id="{concat($adaTransIdFile,'-all')}" href="fixtures/{$adaTransIdFile}.xml"/>
+                                        
+                                        <!-- 2) Eventueel: behoud je intern-only fixture als je ’m nog nodig hebt -->
+                                        <nts:fixture id="{$adaTransIdFile}" href="fixtures/{$adaTransIdFile}.xml" nts:in-targets="Nictiz-intern"/>
+                                        
+                                        <nts:includeDateT value="yes" nts:in-targets="Nictiz-intern"/>
+                                        <!--<xsl:copy-of select="$deleteStuff/f:variable"/>-->
+                                        <test id="{$idString}-01">
+                                            <name value="{$testName}"/>
+                                            <description value="{$testDescription}"/>
+                                            <action>
+                                                <operation>
+                                                    <type>
+                                                        <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+                                                        <code value="transaction"/>
+                                                    </type>
+                                                    <description value="Test client to POST a Bundle of type transaction."/>
+                                                    <destination value="1"/>
+                                                    <origin value="1"/>
+                                                    <responseId value="transaction-response"/>
+                                                    <sourceId value="{concat($adaTransIdFile,'-all')}"/>
+                                                </operation>
+                                            </action>
+                                            <nts:include value="test.client.successfulTransaction" scope="common"/>
+                                            <xsl:copy-of select="$includeNumResources"/>
+                                            <xsl:if test="normalize-space(upper-case($transactionType)) = 'SEND' and self::sturen_medicatievoorschrift">
+                                                <nts:include value="assert-practitionerRoleTelecomExists" scope="project"/>
+                                            </xsl:if>
+                                            <xsl:if test="$adaTransIdFile = ('mv-mp-vo-tst-4-1-a-lengte-gewicht-v30', 'mv-mp-vo-tst-4-1-b-lengte-gewicht-persistent-v30')">
+                                                <nts:include value="assert-bodyWeight-bodyHeight" scope="project"/>                                            
+                                            </xsl:if>
                                         </test>
-                                    </xsl:if>
-                                    <teardown>
-                                        <nts:include value="teardown-deletePatient" scope="project"/>
-                                    </teardown>
-                                    <!--<teardown nts:in-targets="#default">
-                                         <!-\- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
-                                         <!-\- but not Patient, since we want to do a purge after -\->
-                                         <xsl:copy-of select="$deleteStuff/f:action[f:operation/f:resource[@value ne 'Patient']]"/>
-                                         <!-\- we do a patient purge for extra certainty, we don't know if whoever sent this Bundle sent the exact same number of resources that we expect 
-                                         and this way we will at least get rid of patient related resources which pollute BSN-based query's -\->
-                                         <action>
-                                         <operation>
-                                         <!-\- Purge the created Patient and all its remaining associated resources that have been sent. -\->
-                                         <type>
-                                         <system value="http://touchstone.com/fhir/extended-operation-codes"/>
-                                         <code value="purge"/>
-                                         </type>
-                                         <resource value="Patient"/>
-                                         <encodeRequestUrl value="true"/>
-                                         <params>
-                                         <xsl:attribute name="value">${patient-id}/$purge</xsl:attribute>
-                                         </params>
-                                         </operation>
-                                         </action>
-                                         </teardown>
-                                         <teardown nts:in-targets="Nictiz-intern">
-                                         <!-\- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
-                                         <xsl:copy-of select="$deleteStuff/f:action"/>
-                                         <!-\- MP-746 no $purge needed for Nictiz internal scripts -\->
-                                         </teardown>-->                                    
-                                 </xsl:otherwise>
-                            </xsl:choose>
-                        </TestScript>
-                    </xsl:result-document>
+                                        <xsl:if test="count($identifyResources) gt 0">
+                                            <test id="{$idString}-identification">
+                                                <name value="Resource identification"/>
+                                                <description
+                                                    value="Checks if all resources specified by the scenario can be identified unambiguously."/>
+                                                <xsl:copy-of select="$identifyResources"/>
+                                            </test>
+                                        </xsl:if>
+                                        <teardown>
+                                            <nts:include value="teardown-deletePatient" scope="project"/>
+                                        </teardown>
+                                        <!--<teardown nts:in-targets="#default">
+                                             <!-\- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
+                                             <!-\- but not Patient, since we want to do a purge after -\->
+                                             <xsl:copy-of select="$deleteStuff/f:action[f:operation/f:resource[@value ne 'Patient']]"/>
+                                             <!-\- we do a patient purge for extra certainty, we don't know if whoever sent this Bundle sent the exact same number of resources that we expect 
+                                             and this way we will at least get rid of patient related resources which pollute BSN-based query's -\->
+                                             <action>
+                                             <operation>
+                                             <!-\- Purge the created Patient and all its remaining associated resources that have been sent. -\->
+                                             <type>
+                                             <system value="http://touchstone.com/fhir/extended-operation-codes"/>
+                                             <code value="purge"/>
+                                             </type>
+                                             <resource value="Patient"/>
+                                             <encodeRequestUrl value="true"/>
+                                             <params>
+                                             <xsl:attribute name="value">${patient-id}/$purge</xsl:attribute>
+                                             </params>
+                                             </operation>
+                                             </action>
+                                             </teardown>
+                                             <teardown nts:in-targets="Nictiz-intern">
+                                             <!-\- first the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
+                                             <xsl:copy-of select="$deleteStuff/f:action"/>
+                                             <!-\- MP-746 no $purge needed for Nictiz internal scripts -\->
+                                             </teardown>-->                                    
+                                     </xsl:otherwise>
+                                </xsl:choose>
+                            </TestScript>
+                        </xsl:result-document>
+                    </xsl:if>
                 </xsl:when>
                 
                 <xsl:otherwise>
