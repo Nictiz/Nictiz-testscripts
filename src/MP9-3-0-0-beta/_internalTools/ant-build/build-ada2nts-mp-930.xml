@@ -52,6 +52,7 @@
         </antcall>
         <antcall target="properties">
             <param name="testset.dir" value="${build.dir}/../Test"/>
+            <param name="goal" value="Test"/>
         </antcall>
         
     </target>
@@ -85,6 +86,7 @@
         </antcall>
         <antcall target="properties">
             <param name="testset.dir" value="${build.dir}/../Cert"/>
+            <param name="goal" value="Cert"/>
         </antcall>
         
     </target>
@@ -196,13 +198,20 @@
             <param name="role.code.send" value="S"/>
             <param name="role.code.receive" value="O"/>
         </antcall>
+        
+        <!-- Send MA TRIS - should only be done when test.dir is Cert, but because of ANT ""behaviour"" we handle this in the XSLT -->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${github.mp93.dir.local}${test.dir.lowercase}/sturen_medicatiegegevens/ada_instance_sets"/>
+            <param name="xsl.in.include" value="*mp-*-MA-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${build.dir}${test.dir}/Step-3/MA/Sending-MGS-MA-TRIS"/>
+            <param name="transaction.type" value="Send"/>
+            <param name="tris" value="true"/>
+        </antcall>
     </target>
     
-    <target name="convert_ada2nts_prescription_930">
-        <condition property="do.tris">
-            <equals arg1="${test.dir}" arg2="/Cert"/>
-        </condition>
-        
+    <target name="convert_ada2nts_prescription_930">        
         <!-- target for medication prescription -->
         <echo>[convert_ada2nts_prescription_930] xsl.input.usecase: '${github.mp93.dir.local}${test.dir.lowercase}/sturen_medicatievoorschrift/ada_instance' and xsl.output.usecase: '${build.dir}${test.dir}/Step-3/MA-VV'</echo>
         <antcall target="convert_push_usecase_930_sub">
@@ -214,11 +223,7 @@
             <param name="tris" value="false"/>
         </antcall>
         
-        <antcall target="convert_ada2nts_prescription_930_tris"/>
-    </target>
-    
-    <target name="convert_ada2nts_prescription_930_tris" if="do.tris">
-        <!-- Send TRIS -->
+        <!-- Send TRIS - should only be done when test.dir is Cert, but because of ANT ""behaviour"" we handle this in the XSLT -->
         <antcall target="convert_ada_2_nts_sub">
             <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
             <param name="xsl.in" value="${github.mp93.dir.local}${test.dir.lowercase}/sturen_medicatievoorschrift/ada_instance"/>
@@ -230,7 +235,7 @@
         </antcall>
     </target>
     
-    <target name="convert_ada2nts_prescription_processing_930">
+    <target name="convert_ada2nts_prescription_processing_930">       
         <!-- target for medication prescription processing -->
         <antcall target="convert_push_usecase_930_sub">
             <param name="xsl.input.usecase" value="${github.mp93.dir.local}${test.dir.lowercase}/sturen_afhandeling_medicatievoorschrift/ada_instance"/>
@@ -238,9 +243,20 @@
             <param name="role.code" value="VA"/>
             <param name="role.code.send" value="S"/>
             <param name="role.code.receive" value="O"/>
+            <param name="tris" value="false"/>
+        </antcall>
+        
+        <!-- Receive TRIS - should only be done when test.dir is Cert, but because of ANT ""behaviour"" we handle this in the XSLT-->
+        <antcall target="convert_ada_2_nts_sub">
+            <param name="xsl.convert" value="${build.dir}/xslt/ada_2_nts.xsl"/>
+            <param name="xsl.in" value="${github.mp93.dir.local}${test.dir.lowercase}/sturen_afhandeling_medicatievoorschrift/ada_instance"/>
+            <param name="xsl.in.include" value="*mp-*.xml"/>
+            <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
+            <param name="xsl.out" value="../${build.dir}${test.dir}/Step-5/TA-MVE/Receiving-VAO-TRIS"/>
+            <param name="transaction.type" value="Receive"/>
+            <param name="tris" value="true"/>
         </antcall>
     </target>
-
     
     <target name="convert_ada2nts_prop_ma_930">
         <!-- target for proposal medication agreement -->
@@ -403,6 +419,7 @@
             <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
             <param name="xsl.out" value="../${xsl.output.usecase}/Step-3/MA/Sending-${role.code}${role.code.send}-MA"/>
             <param name="transaction.type" value="Send"/>
+            <param name="tris" value="false"/>
         </antcall>
         
         <!-- Receive MA -->
@@ -413,6 +430,7 @@
             <param name="xsl.in.exclude" value="*-Scenarioset0-*.xml"/>
             <param name="xsl.out" value="../${xsl.output.usecase}/Step-3/MA/Receiving-${role.code}${role.code.receive}-MA"/>
             <param name="transaction.type" value="Receive"/>
+            <param name="tris" value="false"/>
         </antcall>
 
         <!-- Send MGB -->
@@ -537,6 +555,10 @@
     </target>
 
     <target name="convert_ada_2_nts_sub">
+        <local name="send.tris"/>
+        <condition property="send.tris">
+            <isset property="tris"/>
+        </condition>
         
         <echo>[convert_ada_2_nts_sub] test.dir = "${test.dir}", test.dir.lowercase = "${test.dir.lowercase}" xsl.in.include = "${xsl.in.include}, xsl.in.exclude = "${xsl.in.exclude}", xsl.out = "${xsl.out}"</echo>
         
@@ -569,7 +591,7 @@
             <param name="mappingsUrl4FhirFixtures" expression="${mappings.url.4.fhir.fixtures}${test.dir.lowercase}/4touchstone_mp"/>
             <param name="transactionType" expression="${transaction.type}"/>
             <param name="outputDir" expression="${xsl.out.abs}"/>
-            <param name="isTris" expression="${tris}" if="do.tris"/>
+            <param name="isTris" expression="${tris}" if="send.tris"/>
         </xslt>
         <delete dir="${xslt.dummy.dir}" quiet="true"/>
     </target>
@@ -664,6 +686,7 @@
             <factory name="${xsl.saxon.class}"/>
             <classpath location="${xsl.saxon}"/>
             <param name="baseDirUrl" expression="${testset.dir.url}"/>
+            <param name="goal" expression="${goal}"/>
         </xslt>
         <delete file="${xsl.output.dummy}"/>
     </target>

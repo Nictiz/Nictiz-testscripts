@@ -488,10 +488,12 @@
                     
                     <!-- We do some TRIS magic here:
                          - If variable isTris is empty, we output _everything_, because this is a usecase that doesn't involve TRISses
-                         - If variable isTris is 'true', we output only scenarios 2, 7 and 8
-                         - If variable isTris is 'false', we do not output scenarios 7 and 8
+                         - If goal is 'Test', and if variable isTris is 'false', we output everything
+                         - If goal is 'Test', and if variable isTris is 'true', we output nothing
+                         - If goal is 'Cert' and if variable isTris is 'true', we output only scenarios 2, 7 and 8
+                         - If goal is 'Cert' and if variable isTris is 'false', we do not output scenarios 7 and 8
                     -->
-                    <xsl:if test="string-length($isTris) = 0 or ($isTris = 'true' and $scenarioString/@scenarioset = ('2', '7', '8')) or ($isTris = 'false' and not($scenarioString/@scenarioset = ('7', '8')))">
+                    <xsl:if test="string-length($isTris) = 0 or ($testGoal = 'Test' and $isTris = 'false') or ($testGoal = 'Cert' and ($isTris = 'true' and $scenarioString/@scenarioset = ('2', '7', '8')) or ($isTris = 'false' and not($scenarioString/@scenarioset = ('7', '8'))))">
                         <xsl:result-document href="{concat($outputDirNormalized, '/', $newFilename)}">
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                                 <id value="{$idString}"/>
@@ -785,7 +787,7 @@
             <xsl:if test="not($buildingBlockShort = ('VV','MTD','MA','MVE','MGB','TA','WDS')) and not(contains($buildingBlockShort, 'CONS-')) and string-length($buildingBlockShort) gt 0">
                 <xsl:value-of select="concat('-',substring($buildingBlockShort,1,20))"/>
             </xsl:if>
-            <xsl:if test="$isTris = 'true'">
+            <xsl:if test="$isTris = 'true' and $testGoal = 'Cert'">
                 <xsl:text>-tris</xsl:text>
             </xsl:if>
         </xsl:variable>

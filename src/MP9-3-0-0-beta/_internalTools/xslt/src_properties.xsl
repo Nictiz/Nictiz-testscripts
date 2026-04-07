@@ -15,6 +15,7 @@
         This file contains the machinery to write a ConformanceLab properties file.
     -->
     <xsl:param name="baseDirUrl"/>
+    <xsl:param name="goal"/>
 
     <xsl:template match="/">
         <xsl:for-each select="nts:findFolders(fn:false())">
@@ -92,7 +93,7 @@
                                 <xsl:value-of select="."/>
                             </xsl:if>
                         </xsl:for-each>
-                    </xsl:variable> 
+                    </xsl:variable>
                 
                     <map key="role">
                         <xsl:variable name="clRole">
@@ -124,7 +125,7 @@
                             <xsl:message select="$clRole"/>
                         </string>
                         <xsl:variable name="clRoleDescConfig" select="document('role-description-config.xml')"/>
-                        <xsl:variable name="clRoleDesc" select="$clRoleDescConfig//role[name/text() = $clRole]/description/text()"/>
+                        <xsl:variable name="clRoleDesc" select="$clRoleDescConfig//role[name/text() = $clRole][goal/text() = $goal or not(goal/text())]/description/text()"/>
                         <xsl:if test="not(empty($clRoleDesc))">
                             <string key="description">
                                 <xsl:value-of select="$clRoleDesc"/>
