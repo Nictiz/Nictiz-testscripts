@@ -358,6 +358,7 @@
                     </xsl:with-param>
                     <xsl:with-param name="transactionType" select="$transactionType"/>
                     <xsl:with-param name="theScenario0XHyphen" select="$scenarioString/@theScenario0XHyphen"/>
+                    <xsl:with-param name="isTris" select="$isTris"/>
                 </xsl:call-template>
             </xsl:variable>
             
@@ -753,6 +754,7 @@
         <xsl:param name="buildingBlockShort"/>
         <xsl:param name="transactionType"/>
         <xsl:param name="theScenario0XHyphen"/>
+        <xsl:param name="isTris"/>
         
         <xsl:variable name="buildString">
             <xsl:text>mp9-</xsl:text>
@@ -782,6 +784,9 @@
             </xsl:if>
             <xsl:if test="not($buildingBlockShort = ('VV','MTD','MA','MVE','MGB','TA','WDS')) and not(contains($buildingBlockShort, 'CONS-')) and string-length($buildingBlockShort) gt 0">
                 <xsl:value-of select="concat('-',substring($buildingBlockShort,1,20))"/>
+            </xsl:if>
+            <xsl:if test="$isTris = 'true'">
+                <xsl:text>-tris</xsl:text>
             </xsl:if>
         </xsl:variable>
         

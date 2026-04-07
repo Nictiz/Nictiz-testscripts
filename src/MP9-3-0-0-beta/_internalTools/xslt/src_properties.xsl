@@ -105,8 +105,18 @@
                                     <xsl:message terminate="yes">Could not determine clRole: <xsl:value-of select="$subfolders[3]"/></xsl:message>
                                 </xsl:otherwise>
                             </xsl:choose>
+                            <xsl:if test="contains($subfolders[3], '-TRIS')">
+                                <xsl:value-of select="' TRIS'"/>
+                            </xsl:if>
                             <xsl:value-of select="' (MP-'"/>
-                            <xsl:value-of select="substring-after($subfolders[3],'-')"/>
+                            <xsl:choose>
+                                <xsl:when test="contains($subfolders[3], '-TRIS')">
+                                    <xsl:value-of select="substring-before(substring-after($subfolders[3],'-'),'-TRIS')"/>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:value-of select="substring-after($subfolders[3],'-')"/>
+                                </xsl:otherwise>
+                            </xsl:choose>
                             <xsl:value-of select="')'"/>
                         </xsl:variable>
                         <string key="name">
