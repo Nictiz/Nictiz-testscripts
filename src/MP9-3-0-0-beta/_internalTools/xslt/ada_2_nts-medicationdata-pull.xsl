@@ -142,19 +142,45 @@
                                 <xsl:with-param name="testScriptDescription" select="$testScriptDescription"/>
                                 <xsl:with-param name="testDescription" select="$testDescription"/>
                             </xsl:call-template>
+                            <!-- Output TRIS scripts here -->
+                            <xsl:if test="$testGoal = 'Cert' and $transactionTypeNormalized = 'serve' and $buildingBlockShort = 'MA'">
+                                <xsl:call-template name="handleFilterScenario">
+                                    <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
+                                    <xsl:with-param name="scenarioString" select="$scenarioString"/>
+                                    <xsl:with-param name="testScriptTitle" select="$testScriptTitle"/>
+                                    <xsl:with-param name="idString" select="concat($idString,'-tris')"/>
+                                    <xsl:with-param name="testScriptDescription" select="$testScriptDescription"/>
+                                    <xsl:with-param name="testDescription" select="$testDescription"/>
+                                    <xsl:with-param name="isTris" select="true()"/>
+                                </xsl:call-template>
+                            </xsl:if>
                         </xsl:otherwise>
                     </xsl:choose>                   
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:call-template name="createNts">
-                        <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
-                        <xsl:with-param name="scenarioString" select="$scenarioString"/>
-                        <xsl:with-param name="testScriptTitle" select="$testScriptTitle"/>
-                        <xsl:with-param name="idString" select="$idString"/>
-                        <xsl:with-param name="testScriptDescription" select="$testScriptDescription"/>
-                        <xsl:with-param name="testDescription" select="$testDescription"/>
-                        <xsl:with-param name="fileNamePart" select="$fileNamePart"/>
-                    </xsl:call-template>
+                    <!-- Prevent outputting TRIS specific scripts here -->
+                    <xsl:if test="not($testGoal = 'Cert' and $buildingBlockShort = 'MA' and $scenarioString/@scenarioset = ('7','8'))">
+                        <xsl:call-template name="createNts">
+                            <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
+                            <xsl:with-param name="scenarioString" select="$scenarioString"/>
+                            <xsl:with-param name="testScriptTitle" select="$testScriptTitle"/>
+                            <xsl:with-param name="idString" select="$idString"/>
+                            <xsl:with-param name="testScriptDescription" select="$testScriptDescription"/>
+                            <xsl:with-param name="testDescription" select="$testDescription"/>
+                        </xsl:call-template>
+                    </xsl:if>
+                    <!-- Output TRIS scripts here -->
+                    <xsl:if test="$testGoal = 'Cert' and $transactionTypeNormalized = 'serve' and $buildingBlockShort = 'MA' and $scenarioString/@scenarioset = ('2','7','8')">
+                        <xsl:call-template name="createNts">
+                            <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
+                            <xsl:with-param name="scenarioString" select="$scenarioString"/>
+                            <xsl:with-param name="testScriptTitle" select="$testScriptTitle"/>
+                            <xsl:with-param name="idString" select="concat($idString,'-tris')"/>
+                            <xsl:with-param name="testScriptDescription" select="$testScriptDescription"/>
+                            <xsl:with-param name="testDescription" select="$testDescription"/>
+                            <xsl:with-param name="isTris" select="true()"/>
+                        </xsl:call-template>
+                    </xsl:if>
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:for-each>
@@ -234,7 +260,6 @@
                         <xsl:with-param name="idString" select="$idString"/>
                         <xsl:with-param name="testScriptDescription" select="$testScriptDescription"/>
                         <xsl:with-param name="testDescription" select="$testDescription"/>
-                        <xsl:with-param name="fileNamePart" select="$fileNamePart"/>
                     </xsl:call-template>
                 </xsl:otherwise>
             </xsl:choose>
@@ -271,8 +296,7 @@
         <xsl:param name="testScriptTitle"/>
         <xsl:param name="testScriptDescription"/>
         <xsl:param name="testDescription"/>
-    
-        <xsl:param name="fileNamePart"/>
+        <xsl:param name="isTris" select="false()"/>
         
         <xsl:variable name="adaInstance" select="adaxml/data/beschikbaarstellen_medicatiegegevens"/>
         
@@ -382,7 +406,7 @@
                     <!--Only the individual Consolidation ada instances (i.e. CONS-MA, CONS-MGB and CONS-TA) need to be converted to a retrieve test script-->
                     <!--For Consolidation there is no serve use case-->
                     <xsl:when test="($transactionTypeNormalized = 'retrieve' and $buildingBlockShort != 'CONS') or ($transactionTypeNormalized = 'serve' and not(contains($buildingBlockShort, 'CONS')))">
-                        <xsl:result-document href="{concat($outputDirNormalized, nf:makeCLCategoryFolder($buildingBlockShort), '/', nf:makeCLSubcategoryFolder($buildingBlockShort), '/', nf:makeCLRoleFolder($transactionTypeNormalized, $buildingBlockShort), '/', $newFilename)}">
+                        <xsl:result-document href="{concat($outputDirNormalized, nf:makeCLCategoryFolder($buildingBlockShort), '/', nf:makeCLSubcategoryFolder($buildingBlockShort), '/', nf:makeCLRoleFolder($transactionTypeNormalized, $buildingBlockShort, $isTris), '/', $newFilename)}">
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                                 <id value="{$idString}"/>
                                 <version value="r4-mp9-3.0.0"/>
@@ -391,7 +415,9 @@
                                 
                                 <description value="{$testScriptDescription}"/>
                                 <!-- NICTIZ-34243 "nl-core-Patient-mp9-" niet verwijderen, wordt later gebruikt om Bearer token op te halen middels QualificationTokens.json -->
-                                <nts:authToken patientResourceId="nl-core-Patient-mp9-{$patientName}" nts:in-targets="MedMij"/>
+                                <xsl:if test="$isTris = false()">
+                                    <nts:authToken patientResourceId="nl-core-Patient-mp9-{$patientName}" nts:in-targets="MedMij"/>
+                                </xsl:if>
                                 <nts:includeDateT value="no"/>
                                 
                                 <test id="{$idString}-01">
@@ -404,11 +430,13 @@
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                                             </nts:include>
-                                            <nts:include value="medmij/test.phr.search" scope="common" nts:in-targets="MedMij">
-                                                <nts:with-parameter name="description" value="Test PHR client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
-                                                <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                                <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
-                                            </nts:include>
+                                            <xsl:if test="$isTris = false()">
+                                                <nts:include value="medmij/test.phr.search" scope="common" nts:in-targets="MedMij">
+                                                    <nts:with-parameter name="description" value="Test PHR client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                                    <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                                    <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
+                                                </nts:include>
+                                            </xsl:if>
                                             <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
                                             <nts:include value="assert-returnCount" scope="project">
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -428,11 +456,13 @@
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                                             </nts:include>
-                                            <nts:include value="medmij/test.xis.search" scope="common" nts:in-targets="MedMij">
-                                                <nts:with-parameter name="description" value="Test XIS server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
-                                                <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                                <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
-                                            </nts:include>
+                                            <xsl:if test="$isTris = false()">
+                                                <nts:include value="medmij/test.xis.search" scope="common" nts:in-targets="MedMij">
+                                                    <nts:with-parameter name="description" value="Test XIS server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                                    <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                                    <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
+                                                </nts:include>
+                                            </xsl:if>
                                             <nts:include value="assert.response.successfulSearch" scope="common"/>
                                             <nts:include value="assert-responseBundleContent-noMM"/>
                                             <nts:include value="assert-returnCountAtLeast" scope="project">
@@ -481,6 +511,7 @@
         <xsl:param name="idString"/>
         <xsl:param name="testScriptDescription"/>
         <xsl:param name="testDescription"/>
+        <xsl:param name="isTris" select="false()"/>
         
         <xsl:variable name="adaInstance" select="adaxml/data/beschikbaarstellen_medicatiegegevens"/>
         
@@ -584,7 +615,7 @@
             </xsl:choose>
         </xsl:variable>
 
-        <xsl:result-document href="{concat($outputDirNormalized, nf:makeCLCategoryFolder($buildingBlockShort), '/', nf:makeCLSubcategoryFolder($buildingBlockShort), '/', nf:makeCLRoleFolder($transactionTypeNormalized, $buildingBlockShort), '/', $newFilename)}">
+        <xsl:result-document href="{concat($outputDirNormalized, nf:makeCLCategoryFolder($buildingBlockShort), '/', nf:makeCLSubcategoryFolder($buildingBlockShort), '/', nf:makeCLRoleFolder($transactionTypeNormalized, $buildingBlockShort, $isTris), '/', $newFilename)}">
             <xsl:variable name="ntsScenario" as="xs:string?">
                 <xsl:choose>
                     <xsl:when test="$transactionTypeNormalized = ('retrieve')">client</xsl:when>
@@ -611,7 +642,9 @@
                 <title value="{$testScriptTitle}"/>
                 <description value="{$testScriptDescription}"/>
                 <!-- NICTIZ-34243 "nl-core-Patient-mp9-" niet verwijderen, wordt later gebruikt om Bearer token op te halen middels QualificationTokens.json -->
-                <nts:authToken patientResourceId="nl-core-Patient-mp9-{$patientName}" nts:in-targets="MedMij"/>
+                <xsl:if test="$isTris = false()">
+                    <nts:authToken patientResourceId="nl-core-Patient-mp9-{$patientName}" nts:in-targets="MedMij"/>
+                </xsl:if>
                 <xsl:if test="contains($additionalScenarioParams, '${DATE, T,')">
                     <nts:includeDateT value="yes"/>
                 </xsl:if>
@@ -627,11 +660,13 @@
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                             </nts:include>
-                            <nts:include value="medmij/test.phr.search" scope="common" nts:in-targets="MedMij">
-                                <nts:with-parameter name="description" value="Test PHR client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
-                                <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
-                            </nts:include>
+                            <xsl:if test="$isTris = false()">
+                                <nts:include value="medmij/test.phr.search" scope="common" nts:in-targets="MedMij">
+                                    <nts:with-parameter name="description" value="Test PHR client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                    <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                    <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
+                                </nts:include>
+                            </xsl:if>
                             
                             <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
                             <nts:include value="assert-returnCount" scope="project">
@@ -652,11 +687,13 @@
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                             </nts:include>
-                            <nts:include value="medmij/test.xis.search" scope="common" nts:in-targets="MedMij">
-                                <nts:with-parameter name="description" value="Test XIS server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
-                                <nts:with-parameter name="resource" value="{$matchResource}"/>
-                                <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
-                            </nts:include>
+                            <xsl:if test="$isTris = false()">
+                                <nts:include value="medmij/test.xis.search" scope="common" nts:in-targets="MedMij">
+                                    <nts:with-parameter name="description" value="Test XIS server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                    <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                    <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
+                                </nts:include>
+                            </xsl:if>
                             
                             <nts:include value="assert.response.successfulSearch" scope="common"/>
                             <nts:include value="assert-responseBundleContent-noMM"/>
@@ -692,12 +729,14 @@
     <xsl:function name="nf:makeCLRoleFolder" as="xs:string">
         <xsl:param name="transactionType" as="xs:string?"/>
         <xsl:param name="buildingBlockShort" as="xs:string?"/>
+        <xsl:param name="isTris" as="xs:boolean"/>
+
         <xsl:variable name="transactionTypeNormalized" select="normalize-space(lower-case($transactionType))"/>
         <xsl:choose>
-            <xsl:when test="$transactionTypeNormalized = 'retrieve'"><xsl:value-of select="concat('Retrieving-MGR-',$buildingBlockShort)"/></xsl:when>
-            <xsl:when test="$transactionTypeNormalized = 'serve'"><xsl:value-of select="concat('Serving-MGB-',$buildingBlockShort)"/></xsl:when>
-            <xsl:when test="$transactionTypeNormalized = 'receive'"><xsl:value-of select="concat('Receiving-MGO-',$buildingBlockShort)"/></xsl:when>
-            <xsl:when test="$transactionTypeNormalized = 'send'"><xsl:value-of select="concat('Sending-MGS-',$buildingBlockShort)"/></xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'retrieve'"><xsl:value-of select="concat('Retrieving', if ($isTris) then '-TRIS' else '', '-MGR-',$buildingBlockShort)"/></xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'serve'"><xsl:value-of select="concat('Serving', if ($isTris) then '-TRIS' else '', '-MGB-',$buildingBlockShort)"/></xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'receive'"><xsl:value-of select="concat('Receiving', if ($isTris) then '-TRIS' else '', '-MGO-',$buildingBlockShort)"/></xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'send'"><xsl:value-of select="concat('Sending', if ($isTris) then '-TRIS' else '', '-MGS-',$buildingBlockShort)"/></xsl:when>
             <!-- fallback: Keep current behaviour -->
             <xsl:otherwise>
                 <xsl:value-of select="nf:first-cap($transactionType)"/>

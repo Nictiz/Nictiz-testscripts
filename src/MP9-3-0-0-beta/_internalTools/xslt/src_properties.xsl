@@ -15,6 +15,7 @@
         This file contains the machinery to write a ConformanceLab properties file.
     -->
     <xsl:param name="baseDirUrl"/>
+    <xsl:param name="goal"/>
 
     <xsl:template match="/">
         <xsl:for-each select="nts:findFolders(fn:false())">
@@ -92,7 +93,7 @@
                                 <xsl:value-of select="."/>
                             </xsl:if>
                         </xsl:for-each>
-                    </xsl:variable> 
+                    </xsl:variable>
                 
                     <map key="role">
                         <xsl:variable name="clRole">
@@ -105,8 +106,18 @@
                                     <xsl:message terminate="yes">Could not determine clRole: <xsl:value-of select="$subfolders[3]"/></xsl:message>
                                 </xsl:otherwise>
                             </xsl:choose>
+                            <xsl:if test="contains($subfolders[3], '-TRIS')">
+                                <xsl:value-of select="' TRIS'"/>
+                            </xsl:if>
                             <xsl:value-of select="' (MP-'"/>
-                            <xsl:value-of select="substring-after($subfolders[3],'-')"/>
+                            <xsl:choose>
+                                <xsl:when test="contains($subfolders[3], '-TRIS')">
+                                    <xsl:value-of select="substring-after($subfolders[3],'TRIS-')"/>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:value-of select="substring-after($subfolders[3],'-')"/>
+                                </xsl:otherwise>
+                            </xsl:choose>
                             <xsl:value-of select="')'"/>
                         </xsl:variable>
                         <string key="name">
@@ -114,7 +125,7 @@
                             <xsl:message select="$clRole"/>
                         </string>
                         <xsl:variable name="clRoleDescConfig" select="document('role-description-config.xml')"/>
-                        <xsl:variable name="clRoleDesc" select="$clRoleDescConfig//role[name/text() = $clRole]/description/text()"/>
+                        <xsl:variable name="clRoleDesc" select="$clRoleDescConfig//role[name/text() = $clRole][goal/text() = $goal or not(goal/text())]/description/text()"/>
                         <xsl:if test="not(empty($clRoleDesc))">
                             <string key="description">
                                 <xsl:value-of select="$clRoleDesc"/>
