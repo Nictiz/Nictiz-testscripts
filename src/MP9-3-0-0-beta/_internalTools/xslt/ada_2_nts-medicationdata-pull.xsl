@@ -406,7 +406,7 @@
                     <!--Only the individual Consolidation ada instances (i.e. CONS-MA, CONS-MGB and CONS-TA) need to be converted to a retrieve test script-->
                     <!--For Consolidation there is no serve use case-->
                     <xsl:when test="($transactionTypeNormalized = 'retrieve' and $buildingBlockShort != 'CONS') or ($transactionTypeNormalized = 'serve' and not(contains($buildingBlockShort, 'CONS')))">
-                        <xsl:result-document href="{concat($outputDirNormalized, nf:makeCLCategoryFolder($buildingBlockShort), '/', nf:makeCLSubcategoryFolder($buildingBlockShort), '/', nf:makeCLRoleFolder($transactionTypeNormalized, $buildingBlockShort), if ($isTris) then '-TRIS' else '', '/', $newFilename)}">
+                        <xsl:result-document href="{concat($outputDirNormalized, nf:makeCLCategoryFolder($buildingBlockShort), '/', nf:makeCLSubcategoryFolder($buildingBlockShort), '/', nf:makeCLRoleFolder($transactionTypeNormalized, $buildingBlockShort, $isTris), '/', $newFilename)}">
                             <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                                 <id value="{$idString}"/>
                                 <version value="r4-mp9-3.0.0"/>
@@ -615,7 +615,7 @@
             </xsl:choose>
         </xsl:variable>
 
-        <xsl:result-document href="{concat($outputDirNormalized, nf:makeCLCategoryFolder($buildingBlockShort), '/', nf:makeCLSubcategoryFolder($buildingBlockShort), '/', nf:makeCLRoleFolder($transactionTypeNormalized, $buildingBlockShort), if ($isTris) then '-TRIS' else '', '/', $newFilename)}">
+        <xsl:result-document href="{concat($outputDirNormalized, nf:makeCLCategoryFolder($buildingBlockShort), '/', nf:makeCLSubcategoryFolder($buildingBlockShort), '/', nf:makeCLRoleFolder($transactionTypeNormalized, $buildingBlockShort, $isTris), '/', $newFilename)}">
             <xsl:variable name="ntsScenario" as="xs:string?">
                 <xsl:choose>
                     <xsl:when test="$transactionTypeNormalized = ('retrieve')">client</xsl:when>
@@ -729,12 +729,14 @@
     <xsl:function name="nf:makeCLRoleFolder" as="xs:string">
         <xsl:param name="transactionType" as="xs:string?"/>
         <xsl:param name="buildingBlockShort" as="xs:string?"/>
+        <xsl:param name="isTris" as="xs:boolean"/>
+
         <xsl:variable name="transactionTypeNormalized" select="normalize-space(lower-case($transactionType))"/>
         <xsl:choose>
-            <xsl:when test="$transactionTypeNormalized = 'retrieve'"><xsl:value-of select="concat('Retrieving-MGR-',$buildingBlockShort)"/></xsl:when>
-            <xsl:when test="$transactionTypeNormalized = 'serve'"><xsl:value-of select="concat('Serving-MGB-',$buildingBlockShort)"/></xsl:when>
-            <xsl:when test="$transactionTypeNormalized = 'receive'"><xsl:value-of select="concat('Receiving-MGO-',$buildingBlockShort)"/></xsl:when>
-            <xsl:when test="$transactionTypeNormalized = 'send'"><xsl:value-of select="concat('Sending-MGS-',$buildingBlockShort)"/></xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'retrieve'"><xsl:value-of select="concat('Retrieving', if ($isTris) then '-TRIS' else '', '-MGR-',$buildingBlockShort)"/></xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'serve'"><xsl:value-of select="concat('Serving', if ($isTris) then '-TRIS' else '', '-MGB-',$buildingBlockShort)"/></xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'receive'"><xsl:value-of select="concat('Receiving', if ($isTris) then '-TRIS' else '', '-MGO-',$buildingBlockShort)"/></xsl:when>
+            <xsl:when test="$transactionTypeNormalized = 'send'"><xsl:value-of select="concat('Sending', if ($isTris) then '-TRIS' else '', '-MGS-',$buildingBlockShort)"/></xsl:when>
             <!-- fallback: Keep current behaviour -->
             <xsl:otherwise>
                 <xsl:value-of select="nf:first-cap($transactionType)"/>

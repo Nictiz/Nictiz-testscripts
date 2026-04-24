@@ -112,7 +112,7 @@
                             <xsl:value-of select="' (MP-'"/>
                             <xsl:choose>
                                 <xsl:when test="contains($subfolders[3], '-TRIS')">
-                                    <xsl:value-of select="substring-before(substring-after($subfolders[3],'-'),'-TRIS')"/>
+                                    <xsl:value-of select="substring-after($subfolders[3],'TRIS-')"/>
                                 </xsl:when>
                                 <xsl:otherwise>
                                     <xsl:value-of select="substring-after($subfolders[3],'-')"/>
