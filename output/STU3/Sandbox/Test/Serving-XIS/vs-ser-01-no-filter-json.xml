@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
-   <id value="vs-ret-01-no-filter"/>
-   <url value="http://nictiz.nl/fhir/TestScript/vs-ret-01-no-filter"/>
+   <id value="vs-ser-01-no-filter-json"/>
+   <url value="http://nictiz.nl/fhir/TestScript/vs-ser-01-no-filter-json"/>
    <version value="stu3-2.0-patchlevel 2026.14"/>
-   <name value="Vs_ret_01_no_filter"/>
-   <title value="Scenario 01 - Retrieve vital signs resources"/>
+   <name value="Vs_ser_01_no_filter_json"/>
+   <title value="Scenario 01 - Serve vital signs resources - JSON Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -15,10 +15,10 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Retrieve all vital signs resources of patient XXX_Bourgonjee basic requests"/>
+   <description value="Serve all vital signs resources of patient XXX_Bourgonjee basic requests"/>
    <origin>
       <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
-         <valueBoolean value="true"/>
+         <valueBoolean value="false"/>
       </extension>
       <index value="1"/>
       <profile>
@@ -28,7 +28,7 @@
    </origin>
    <destination>
       <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
-         <valueBoolean value="false"/>
+         <valueBoolean value="true"/>
       </extension>
       <index value="1"/>
       <profile>
@@ -37,13 +37,23 @@
       </profile>
    </destination>
    <variable>
+      <name value="patient-token-XXX_Bourgonjee"/>
+      <defaultValue value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
+      <description value="OAuth Token for patient 'XXX_Bourgonjee'"/>
+   </variable>
+   <variable>
       <name value="T"/>
       <defaultValue value="${CURRENTDATE}"/>
       <description value="Date that data and queries are expected to be relative to."/>
    </variable>
-   <test id="test-01-retrieve-patient-resource">
+   <variable>
+      <name value="X-Correlation-ID"/>
+      <defaultValue value="${UUID}"/>
+      <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
+   </variable>
+   <test id="test-01-serve-patient-resource">
       <name value="Test 01 Patient Resource"/>
-      <description value="Retrieve patient resource"/>
+      <description value="Serve patient resource"/>
       <action>
          <operation>
             <type>
@@ -51,64 +61,25 @@
                <code value="search"/>
             </type>
             <resource value="Patient"/>
-            <description value="Test PHR client to retrieve Patient resources."/>
+            <description value="Test XIS server to serve Patient resources."/>
+            <accept value="json"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?_include=Patient:general-practitioner"/>
             <requestHeader>
                <field value="Authorization"/>
-               <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <stopTestOnFail value="false"/>
-            <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="patient="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="subject="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Make sure that the server of the test simulator gives a success response."/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-            <stopTestOnFail value="true"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that the server of the test simulator returns a Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
       </action>
       <action>
          <assert>
@@ -129,9 +100,9 @@
          </assert>
       </action>
    </test>
-   <test id="test-02-retrieve-respiration-resource">
+   <test id="test-02-serve-respiration-resource">
       <name value="Test 02 Respiration Resource"/>
-      <description value="Retrieve respiration resource"/>
+      <description value="Serve respiration resource"/>
       <action>
          <operation>
             <type>
@@ -139,46 +110,25 @@
                <code value="search"/>
             </type>
             <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="json"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://snomed.info/sct|422834003"/>
             <requestHeader>
                <field value="Authorization"/>
-               <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <stopTestOnFail value="false"/>
-            <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="patient="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="subject="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
       </action>
       <action>
          <assert>
@@ -208,9 +158,9 @@
          </assert>
       </action>
    </test>
-   <test id="test-03-retrieve-bloodpressure-resource">
+   <test id="test-03-serve-bloodpressure-resource">
       <name value="Test 03 Blood Pressure Resource"/>
-      <description value="Retrieve blood pressure resource"/>
+      <description value="Serve blood pressure resource"/>
       <action>
          <operation>
             <type>
@@ -218,46 +168,25 @@
                <code value="search"/>
             </type>
             <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="json"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://loinc.org|85354-9"/>
             <requestHeader>
                <field value="Authorization"/>
-               <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <stopTestOnFail value="false"/>
-            <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="patient="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="subject="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
       </action>
       <action>
          <assert>
@@ -287,9 +216,9 @@
          </assert>
       </action>
    </test>
-   <test id="test-04-retrieve-bodyweight-resource">
+   <test id="test-04-serve-bodyweight-resource">
       <name value="Test 04 Body Weight Resource"/>
-      <description value="Retrieve body weight resource"/>
+      <description value="Serve body weight resource"/>
       <action>
          <operation>
             <type>
@@ -297,46 +226,25 @@
                <code value="search"/>
             </type>
             <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="json"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://loinc.org|29463-7"/>
             <requestHeader>
                <field value="Authorization"/>
-               <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <stopTestOnFail value="false"/>
-            <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="patient="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="subject="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
       </action>
       <action>
          <assert>
@@ -366,9 +274,9 @@
          </assert>
       </action>
    </test>
-   <test id="test-05-retrieve-bodyheight-resource">
+   <test id="test-05-serve-bodyheight-resource">
       <name value="Test 05 Body Height Resource"/>
-      <description value="Retrieve body height resource"/>
+      <description value="Serve body height resource"/>
       <action>
          <operation>
             <type>
@@ -376,46 +284,25 @@
                <code value="search"/>
             </type>
             <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="json"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://loinc.org|8302-2"/>
             <requestHeader>
                <field value="Authorization"/>
-               <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <stopTestOnFail value="false"/>
-            <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="patient="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="subject="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
       </action>
       <action>
          <assert>
@@ -445,9 +332,9 @@
          </assert>
       </action>
    </test>
-   <test id="test-06-retrieve-bodytemperature-resource">
+   <test id="test-06-serve-bodytemperature-resource">
       <name value="Test 06 Body Temperature Resource"/>
-      <description value="Retrieve body temperature resource"/>
+      <description value="Serve body temperature resource"/>
       <action>
          <operation>
             <type>
@@ -455,46 +342,25 @@
                <code value="search"/>
             </type>
             <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="json"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://loinc.org|8310-5"/>
             <requestHeader>
                <field value="Authorization"/>
-               <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <stopTestOnFail value="false"/>
-            <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="patient="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="subject="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
       </action>
       <action>
          <assert>
@@ -524,9 +390,9 @@
          </assert>
       </action>
    </test>
-   <test id="test-07-retrieve-oxygensaturation-resource">
+   <test id="test-07-serve-oxygensaturation-resource">
       <name value="Test 07 Oxygen Saturation Resource"/>
-      <description value="Retrieve oxygen saturation resource"/>
+      <description value="Serve oxygen saturation resource"/>
       <action>
          <operation>
             <type>
@@ -534,46 +400,25 @@
                <code value="search"/>
             </type>
             <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="json"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://loinc.org|59408-5"/>
             <requestHeader>
                <field value="Authorization"/>
-               <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <stopTestOnFail value="false"/>
-            <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="patient="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="subject="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
       </action>
       <action>
          <assert>
@@ -603,9 +448,9 @@
          </assert>
       </action>
    </test>
-   <test id="test-10-retrieve-heartrate-resource">
+   <test id="test-10-serve-heartrate-resource">
       <name value="Test 10 Heart Rate Resource"/>
-      <description value="Retrieve heart rate resource"/>
+      <description value="Serve heart rate resource"/>
       <action>
          <operation>
             <type>
@@ -613,46 +458,25 @@
                <code value="search"/>
             </type>
             <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="json"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://loinc.org|8867-4"/>
             <requestHeader>
                <field value="Authorization"/>
-               <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <stopTestOnFail value="false"/>
-            <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="patient="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="subject="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
       </action>
       <action>
          <assert>
@@ -682,9 +506,9 @@
          </assert>
       </action>
    </test>
-   <test id="test-11-retrieve-pulserate-resource">
+   <test id="test-11-serve-pulserate-resource">
       <name value="Test 11 Pulse Rate Resource"/>
-      <description value="Retrieve pulse rate resource"/>
+      <description value="Serve pulse rate resource"/>
       <action>
          <operation>
             <type>
@@ -692,46 +516,25 @@
                <code value="search"/>
             </type>
             <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="json"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://loinc.org|8889-8"/>
             <requestHeader>
                <field value="Authorization"/>
-               <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <stopTestOnFail value="false"/>
-            <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="patient="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="subject="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
       </action>
       <action>
          <assert>
@@ -761,9 +564,9 @@
          </assert>
       </action>
    </test>
-   <test id="test-12-retrieve-bloodglucose-resource">
+   <test id="test-12-serve-bloodglucose-resource">
       <name value="Test 12 Blood Glucose Resource"/>
-      <description value="Retrieve blood glucose resource"/>
+      <description value="Serve blood glucose resource"/>
       <action>
          <operation>
             <type>
@@ -771,46 +574,25 @@
                <code value="search"/>
             </type>
             <resource value="Observation"/>
-            <description value="Test PHR client to retrieve Observation resources."/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="json"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="?code=http://loinc.org|14760-3,http://loinc.org|14743-9,http://loinc.org|14770-2"/>
             <requestHeader>
                <field value="Authorization"/>
-               <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
             </requestHeader>
          </operation>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <stopTestOnFail value="false"/>
-            <value value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="patient="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="subject="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
       </action>
       <action>
          <assert>
