@@ -1,0 +1,625 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="vs-ser-01-no-filter-xml"/>
+   <url value="http://nictiz.nl/fhir/TestScript/vs-ser-01-no-filter-xml"/>
+   <version value="stu3-2.0-patchlevel 2026.14"/>
+   <name value="Vs_ser_01_no_filter_xml"/>
+   <title value="Scenario 01 - Serve vital signs resources - XML Format"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Serve all vital signs resources of patient XXX_Bourgonjee basic requests"/>
+   <origin>
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
+         <valueBoolean value="false"/>
+      </extension>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
+         <code value="FHIR-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
+         <valueBoolean value="true"/>
+      </extension>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <variable>
+      <name value="patient-token-XXX_Bourgonjee"/>
+      <defaultValue value="Bearer d9f8d61b-c236-489f-aba5-b3bebd312c30"/>
+      <description value="OAuth Token for patient 'XXX_Bourgonjee'"/>
+   </variable>
+   <variable>
+      <name value="T"/>
+      <defaultValue value="${CURRENTDATE}"/>
+      <description value="Date that data and queries are expected to be relative to."/>
+   </variable>
+   <variable>
+      <name value="X-Correlation-ID"/>
+      <defaultValue value="${UUID}"/>
+      <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
+   </variable>
+   <test id="test-01-serve-patient-resource">
+      <name value="Test 01 Patient Resource"/>
+      <description value="Serve patient resource"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Patient"/>
+            <description value="Test XIS server to serve Patient resources."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?_include=Patient:general-practitioner"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 1 Patient resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Patient)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 1 Practitioner resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Practitioner)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="test-02-serve-respiration-resource">
+      <name value="Test 02 Respiration Resource"/>
+      <description value="Serve respiration resource"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?code=http://snomed.info/sct|422834003"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 Observation resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="test-03-serve-bloodpressure-resource">
+      <name value="Test 03 Blood Pressure Resource"/>
+      <description value="Serve blood pressure resource"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?code=http://loinc.org|85354-9"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 2 Observation resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 2"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="test-04-serve-bodyweight-resource">
+      <name value="Test 04 Body Weight Resource"/>
+      <description value="Serve body weight resource"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?code=http://loinc.org|29463-7"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 2 Observation resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 2"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="test-05-serve-bodyheight-resource">
+      <name value="Test 05 Body Height Resource"/>
+      <description value="Serve body height resource"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?code=http://loinc.org|8302-2"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 Observation resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="test-06-serve-bodytemperature-resource">
+      <name value="Test 06 Body Temperature Resource"/>
+      <description value="Serve body temperature resource"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?code=http://loinc.org|8310-5"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 Observation resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="test-07-serve-oxygensaturation-resource">
+      <name value="Test 07 Oxygen Saturation Resource"/>
+      <description value="Serve oxygen saturation resource"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?code=http://loinc.org|59408-5"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 Observation resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="test-10-serve-heartrate-resource">
+      <name value="Test 10 Heart Rate Resource"/>
+      <description value="Serve heart rate resource"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?code=http://loinc.org|8867-4"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 2 Observation resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 2"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="test-11-serve-pulserate-resource">
+      <name value="Test 11 Pulse Rate Resource"/>
+      <description value="Serve pulse rate resource"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?code=http://loinc.org|8889-8"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 Observation resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="test-12-serve-bloodglucose-resource">
+      <name value="Test 12 Blood Glucose Resource"/>
+      <description value="Serve blood glucose resource"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test XIS server to serve Observation resources."/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?code=http://loinc.org|14760-3,http://loinc.org|14743-9,http://loinc.org|14770-2"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-XXX_Bourgonjee}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="MedMij-Request-ID"/>
+               <value value="${UUID}"/>
+            </requestHeader>
+            <requestHeader>
+               <field value="X-Correlation-ID"/>
+               <value value="${X-Correlation-ID}"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 3 Observation resource(s). "/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 3"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
