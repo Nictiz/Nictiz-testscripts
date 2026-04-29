@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <xsl:import href="../../../../../YATC-internal/ada-2-fhir-r4/env/fhir/2_fhir_fixtures.xsl"/>
+
     <xsl:import href="ada_2_nts.xsl"/>
     
     <xsl:output indent="yes" omit-xml-declaration="yes"/>
@@ -64,7 +64,7 @@
             <xsl:call-template name="util:logMessage">
                 <xsl:with-param name="level" select="$logINFO"/>
                 <xsl:with-param name="msg">2. buildingBlockShort:  <xsl:value-of select="$buildingBlockShort"/> and scenarioset: <xsl:value-of select="$scenarioString/@scenarioset"/> 
-                    and identifier: <xsl:value-of select="./adaxml/data/beschikbaarstellen_medicatiegegevens/medicamenteuze_behandeling/*/identificatie/@value"/>
+                    and identifier: <xsl:value-of select="(./adaxml/data/beschikbaarstellen_medicatiegegevens/medicamenteuze_behandeling/*/identificatie/@value) | (./adaxml/data/beschikbaarstellen_medicatiegegevens/*/identificatie/@value)"/>
                 </xsl:with-param>
             </xsl:call-template>
             
@@ -354,7 +354,7 @@
         <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts, $theAdditionalParamParts)"/>
         <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts, $theAdditionalParamParts)"/>
         
-        <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
+        <xsl:variable name="returnCount" select="(count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)] | $adaInstance/*[not(self::identificatie)]))"/>
         <!-- Select ADA Medication entries -->
         <xsl:variable name="medicationValues" as="xs:string*"
             select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
@@ -566,10 +566,10 @@
         <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts, $theAdditionalParamParts)"/>
         <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts , $theAdditionalParamParts)"/>
         
-        <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)])"/>
+        <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)] | $adaInstance/*[not(self::identificatie)])"/>
         <!-- Select ADA Medication entries -->
         <xsl:variable name="medicationValues" as="xs:string*"
-            select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
+            select="($adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value | $adaInstance//farmaceutisch_product/@value)"/>
         <xsl:variable name="medicationValuesDistinct" as="xs:string*" select="distinct-values($medicationValues)"/>  
         <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
         <xsl:variable name="returnEntryCount" select="$returnCount + $expectedMedCount"/>

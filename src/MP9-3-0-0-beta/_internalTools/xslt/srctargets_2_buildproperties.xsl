@@ -7,7 +7,9 @@
     xmlns:map="http://www.w3.org/2005/xpath-functions/map"
     xmlns:nts="http://nictiz.nl/xsl/testscript"
     xmlns:nf="http://www.nictiz.nl/functions"
+    xmlns:util="urn:hl7:utilities" 
     exclude-result-prefixes="#all">
+    <xsl:import href="ada_2_nts.xsl"/>
     <xsl:output method="xml" indent="yes"/>
     <xsl:strip-space elements="*"/>
     
@@ -43,9 +45,15 @@
         <xsl:variable name="targetsAdditionalString" select="string-join($targets[not(ends-with(., '#default')) and not(ends-with(., 'MedMij'))],',')"/>
         <xsl:variable name="targetsAdminOnlyString"  select="string-join($targets[ends-with(., 'Nictiz-intern')],',')"/>
         <xsl:variable name="targetsMedMijString" select="string-join($targets[ends-with(., 'MedMij')],',')"/>
-
+        <xsl:call-template name="util:logMessage">
+            <xsl:with-param name="level" select="$logINFO"/>
+            <xsl:with-param name="msg">srctargets_2_buildproperties: buildPropertiesDir<xsl:value-of select="$buildPropertiesDir"/></xsl:with-param>
+        </xsl:call-template>
         <xsl:variable name="propFile" as="xs:string" select="iri-to-uri(concat($buildPropertiesDir,'/build.properties'))"/>
-        
+        <xsl:call-template name="util:logMessage">
+            <xsl:with-param name="level" select="$logINFO"/>
+            <xsl:with-param name="msg">srctargets_2_buildproperties: propFile<xsl:value-of select="$propFile"/></xsl:with-param>
+        </xsl:call-template>
         <!-- Parse the build.properties per line -->
         <xsl:variable name="text" as="xs:string" select="unparsed-text($propFile)"/>
         <xsl:variable name="lines" as="xs:string*" select="tokenize($text, '\r?\n', 's')"/>
