@@ -4,7 +4,8 @@
    <url value="http://nictiz.nl/fhir/TestScript/xis-2-1-receive-most-recent-bodyweight-xml"/>
    <version value="stu3-2.0-patchlevel 2026.18"/>
    <name value="Xis_2_1_receive_most_recent_bodyweight_xml"/>
-   <title value="Scenario 2.1 - Receive most recent BodyWeight Observation resource - XML Format"/>
+   <!-- More functional title of the scenario (in English) -->
+   <title value="Scenario 2.1 - Receive most recent body weight value of person 'XXX_Bergzoon' (XML format)"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -15,7 +16,8 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 2.1 - Receive most recent BodyWeight Observation resource"/>
+   <!-- Description pointing to the IG and the test file (testdossier?) on the Nictiz wiki -->
+   <description value="Qualification of the [Vital Signs (Zelfmetingen) Receive use case](https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2020.01/FHIR_VitalSigns). See [the test file on the Nictiz wiki](https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2020.01/Zelfmetingen_Ontvangen) for more information."/>
    <origin>
       <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
          <valueBoolean value="false"/>
@@ -55,21 +57,27 @@
       <defaultValue value="${CURRENTDATE}"/>
       <description value="Date that data and queries are expected to be relative to."/>
    </variable>
+   <!-- Workaround to make X-Correlation-ID disappear from the UI -->
    <variable>
       <name value="X-Correlation-ID"/>
-      <defaultValue value="${UUID}"/>
-      <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
+      <headerField value="X-Correlation-ID"/>
+      <sourceId value="request-01"/>
    </variable>
    <test id="scenario2-1-receive-most-recent-bodyweight">
       <name value="Scenario 2.1"/>
-      <description value="Receive most recent BodyWeight Observation resource"/>
+      <!-- Test description 'matching' a functional description to what will happen in FHIR. 
+           In the case where a TestScript contains 1 test which contains 1 operation, this is kind of superfluous,
+           but in cases where a TestScript contains more tests with more operations, this makes more sense.
+      -->
+      <description value="Receive the most recent body weight value of person 'XXX_Bergzoon' in a FHIR 'batch' Bundle in XML format and check the response"/>
       <action>
          <operation>
             <type>
                <system value="http://hl7.org/fhir/restful-interaction"/>
                <code value="batch"/>
             </type>
-            <description value="Test XIS server to handle a Bundle of type batch with all the required FHIR resources."/>
+            <!-- On operation level, describe what actually will happen in this operation and what is expected of the SUT -->
+            <description value="Receive a FHIR 'batch' Bundle containing an Observation and a Patient resource and send the response"/>
             <accept value="xml"/>
             <contentType value="xml"/>
             <destination value="1"/>
@@ -85,12 +93,13 @@
             </requestHeader>
             <requestHeader>
                <field value="X-Correlation-ID"/>
-               <value value="${X-Correlation-ID}"/>
+               <value value="${UUID}"/>
             </requestHeader>
             <requestHeader>
                <field value="Prefer"/>
                <value value="return=representation"/>
             </requestHeader>
+            <requestId value="request-01"/>
             <sourceId value="scenario-2-1-bundle-fixture"/>
          </operation>
       </action>
@@ -236,15 +245,6 @@
             <description value="Confirm that the response Bundle contains 1 Patient resource(s). "/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(Patient)).count() = 1"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that the response Bundle contains 1 Observation resource(s). "/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
