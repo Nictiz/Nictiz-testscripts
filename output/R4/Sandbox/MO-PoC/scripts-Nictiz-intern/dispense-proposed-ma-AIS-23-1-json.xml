@@ -89,6 +89,24 @@
       <defaultValue value="${CURRENTDATE}"/>
       <description value="Date that data and queries are expected to be relative to."/>
    </variable>
+   <variable>
+      <name value="created-patient-id-setup"/>
+      <description value="The id of the created patient resource"/>
+      <expression value="Bundle.entry.where(response.location.startsWith('Patient/')).response.location.split('/')[1]"/>
+      <sourceId value="setup-transaction-response-fixture"/>
+   </variable>
+   <variable>
+      <name value="created-patient-id-trans-1"/>
+      <description value="The id of the created patient resource"/>
+      <expression value="Bundle.entry.where(response.location.startsWith('Patient/')).response.location.split('/')[1]"/>
+      <sourceId value="transaction-1-response-fixture"/>
+   </variable>
+   <variable>
+      <name value="created-patient-id-trans-2"/>
+      <description value="The id of the created patient resource"/>
+      <expression value="Bundle.entry.where(response.location.startsWith('Patient/')).response.location.split('/')[1]"/>
+      <sourceId value="transaction-2-response-fixture"/>
+   </variable>
    <setup>
       <name value="Step 01"/>
       <description value="Receive Medication prescription vma-geaccepteerd resources in a transaction Bundle"/>
@@ -108,6 +126,7 @@
                <value value="return=representation"/>
             </requestHeader>
             <sourceId value="mv-mp-vo-vsg-tst-23-1a-vma-geaccepteerd-v30"/>
+            <responseId value="setup-transaction-response-fixture"/>
          </operation>
       </action>
       <action>
@@ -262,7 +281,7 @@
             <destination value="2"/>
             <encodeRequestUrl value="true"/>
             <origin value="2"/>
-            <responseId value="transaction-response-fixture"/>
+            <responseId value="transaction-1-response-fixture"/>
             <sourceId value="av-mp-va-vsg-tst-23-1a-vma-geaccepteerd-v30"/>
          </operation>
       </action>
@@ -437,7 +456,7 @@
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
-            <responseId value="transaction-response-fixture"/>
+            <responseId value="transaction-2-response-fixture"/>
             <sourceId value="mp-vm-tst-23-1-vma-geaccepteerd-v30"/>
          </operation>
       </action>
@@ -598,4 +617,87 @@
          </assert>
       </action>
    </test>
+   <teardown>
+      <name value=""/>
+      <description value="Delete all created resources"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="create"/>
+            </type>
+            <description value="Test server to handle a Bundle of type transaction."/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${created-patient-id-setup}/$purge"/>
+            <requestHeader>
+               <field value="Prefer"/>
+               <value value="return=representation"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="create"/>
+            </type>
+            <description value="Test server to handle a Bundle of type transaction."/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${created-patient-id-trans-1}/$purge"/>
+            <requestHeader>
+               <field value="Prefer"/>
+               <value value="return=representation"/>
+            </requestHeader>
+         </operation>
+         <action>
+            <assert>
+               <description value="Confirm that the operation was successful"/>
+               <operator value="in"/>
+               <responseCode value="200,201"/>
+               <warningOnly value="false"/>
+            </assert>
+         </action>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="create"/>
+            </type>
+            <description value="Test server to handle a Bundle of type transaction."/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${created-patient-id-trans-2}/$purge"/>
+            <requestHeader>
+               <field value="Prefer"/>
+               <value value="return=representation"/>
+            </requestHeader>
+         </operation>
+         <action>
+            <assert>
+               <description value="Confirm that the operation was successful"/>
+               <operator value="in"/>
+               <responseCode value="200,201"/>
+               <warningOnly value="false"/>
+            </assert>
+         </action>
+      </action>
+   </teardown>
 </TestScript>
