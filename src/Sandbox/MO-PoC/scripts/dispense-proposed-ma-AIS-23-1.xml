@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="server">
+    
+   <id value="dispense-proposed-ma-AIS-23-1"/>
+   <url value="http://nictiz.nl/fhir/TestScript/AIS-send-MVE"/>
+   <version value="r4-MP9.3.0.0-rc2"/>
+   <title value="Scenario 23.1"/>
+   <description value=" Dispense before approval of proposed medication agreement for additional medication"/>
+   <nts:authToken patientResourceId="nl-core-Patient-mp9-K-XXX-Verbeekz" id="XXX_Verbeekz"/>
+   <nts:include value="header.originsAndDestinations"/>
+   
+   <nts:fixture id="mv-mp-vo-vsg-tst-23-1a-vma-geaccepteerd-v30"
+                href="mv-mp-vo-vsg-tst-23-1a-vma-geaccepteerd-v30.xml"/>
+   <nts:fixture id="av-mp-va-vsg-tst-23-1a-vma-geaccepteerd-v30"
+                href="av-mp-va-vsg-tst-23-1a-vma-geaccepteerd-v30.xml"
+                nts:in-targets="Nictiz-intern"/>
+   <nts:fixture id="mp-vm-tst-23-1-vma-geaccepteerd-v30"
+                href="fixtures/mp-vm-tst-23-1-vma-geaccepteerd-v30.xml"
+                nts:in-targets="Nictiz-intern"/>
+   <nts:includeDateT value="yes"/>
+   
+   <variable>
+      <!--Change this to the actual MA ID, more info about variable see Interoplob IG-->
+      <name value="MA-id"/>
+      <defaultValue value="eOverdracht-Task-eov-${CD6}"/>
+   </variable>
+    
+   <setup>
+      <name value="Step 01"/>
+      <description value="Receive Medication prescription vma-geaccepteerd resources in a transaction Bundle"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="transaction"/>
+            </type>
+            <description value="Test server to handle a Bundle of type transaction."/>
+            <contentType value="{$_FORMAT}"/>
+            <origin value="1"/>
+            <destination value="1"/>
+            <requestHeader>
+               <field value="Prefer"/>
+               <value value="return=representation"/>
+            </requestHeader>
+            <sourceId value="mv-mp-vo-vsg-tst-23-1a-vma-geaccepteerd-v30"/>
+         </operation>
+      </action>
+      <nts:include value="assert.response.success" scope="common"/>
+      <nts:include value="assert.response.bundleContent"
+                   scope="common"
+                   bundleType="transaction-response"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="MedicationRequest"
+                   count="2"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="Medication"
+                   count="1"/>
+   </setup>
+
+   <test id="mp9-t-sen-avs-23-1a-vma-geaccepteerd-01">
+      <name value="Step 02"/>
+      <description value="Send Prescription processing vma-geaccepteerd resources in a transaction Bundle"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="transaction"/>
+            </type>
+            <description value="Test client to POST a Bundle of type transaction."/>
+            <origin value="2"/>
+            <destination value="2"/>
+            <responseId value="transaction-response-fixture"/>
+            <sourceId value="av-mp-va-vsg-tst-23-1a-vma-geaccepteerd-v30"
+                      nts:in-targets="Nictiz-intern"/>
+         </operation>
+      </action>
+      <nts:include value="test.client.successfulTransaction" scope="common"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="MedicationDispense"
+                   count="2"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="Medication"
+                   count="1"/>
+   </test>
+
+   <test id="mp9-t-sen-vma-23-1-23.1-vma-geaccepteer-01">
+      <name value="Step 03"/>
+      <description value="Send Proposal medication agreement 23.1-vma-geaccepteerd resources in a transaction Bundle"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="transaction"/>
+            </type>
+            <description value="Test client to POST a Bundle of type transaction."/>
+            <destination value="1"/>
+            <origin value="1"/>
+            <responseId value="transaction-response-fixture"/>
+            <sourceId value="mp-vm-tst-23-1-vma-geaccepteerd-v30"
+                      nts:in-targets="Nictiz-intern"/>
+         </operation>
+      </action>
+      <nts:include value="test.client.successfulTransaction" scope="common"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="MedicationRequest"
+                   count="1"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="Medication"
+                   count="1"/>
+   </test>
+
+
+</TestScript>
