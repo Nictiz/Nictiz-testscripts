@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source BgZ-MSZ-1-complete.sh
+source BgZ-MSZ-complete.sh
 source eOverdracht-4-complete.sh
 source MP9-3-complete.sh
 source Geboortezorg-complete.sh
