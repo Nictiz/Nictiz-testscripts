@@ -354,10 +354,10 @@
         <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts, $theAdditionalParamParts)"/>
         <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts, $theAdditionalParamParts)"/>
         
-        <xsl:variable name="returnCount" select="(count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)] | $adaInstance/*[not(self::identificatie)]))"/>
+        <xsl:variable name="returnCount" select="(count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)] | $adaInstance//medicamenteuze_behandeling_id/parent::node()))"/>
         <!-- Select ADA Medication entries -->
         <xsl:variable name="medicationValues" as="xs:string*"
-            select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value"/>
+            select="$adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value | $adaInstance//medicamenteuze_behandeling_id/..//farmaceutisch_product/@value"/>
         <xsl:variable name="medicationValuesDistinct" as="xs:string*" select="distinct-values($medicationValues)"/>  
         <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
         <xsl:variable name="returnEntryCount" select="$returnCount + $expectedMedCount"/>
@@ -566,10 +566,10 @@
         <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts, $theAdditionalParamParts)"/>
         <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts , $theAdditionalParamParts)"/>
         
-        <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)] | $adaInstance/*[not(self::identificatie)])"/>
+        <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)] | $adaInstance//medicamenteuze_behandeling_id/parent::node())"/>
         <!-- Select ADA Medication entries -->
         <xsl:variable name="medicationValues" as="xs:string*"
-            select="($adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value | $adaInstance//farmaceutisch_product/@value)"/>
+            select="($adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value | $adaInstance//medicamenteuze_behandeling_id/..//farmaceutisch_product/@value)"/>
         <xsl:variable name="medicationValuesDistinct" as="xs:string*" select="distinct-values($medicationValues)"/>  
         <xsl:variable name="expectedMedCount" select="count($medicationValuesDistinct)"/>
         <xsl:variable name="returnEntryCount" select="$returnCount + $expectedMedCount"/>
