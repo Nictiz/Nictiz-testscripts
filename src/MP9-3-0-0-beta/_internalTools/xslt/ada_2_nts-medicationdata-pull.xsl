@@ -512,7 +512,7 @@
             <xsl:with-param name="msg">Processing <xsl:value-of select="$newFilename"/></xsl:with-param>
         </xsl:call-template>
         
-        <xsl:variable name="set0config" select="document('set0-config.xml')"/>
+        <xsl:variable name="set0config" select="document('set0-config-generated.xml')"/>
         <xsl:variable name="configCurrentScenario" select="$set0config//*[local-name() = $testGoal]/*[local-name() = nf:first-cap($transactionTypeNormalized)]/*[local-name() = $buildingBlockLong]/TestScript[scenarioFullNumber/@value = $scenarioString/@theScenario]"/>
         
         <xsl:variable name="additionalScenarioParams" select="$configCurrentScenario/params/@value" as="xs:string?"/>
