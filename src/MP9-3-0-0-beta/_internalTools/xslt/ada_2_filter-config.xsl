@@ -22,7 +22,7 @@
 
     <xsl:template match="/">
 
-        <ScenarioSet0>
+        <ScenarioSet0or10>
             <Test>
                 <xsl:call-template name="makeFilterConfig">
                     <xsl:with-param name="adaFiles" select="$adaFiles//raadplegen_medicatiegegevens[contains(@id, '-tst-')]"/>
@@ -34,7 +34,7 @@
                     <xsl:with-param name="adaFiles" select="$adaFiles//raadplegen_medicatiegegevens[contains(@id, '-kwal-')]"/>
                 </xsl:call-template>
             </Cert>
-        </ScenarioSet0>
+        </ScenarioSet0or10>
     </xsl:template>
 
     <xsl:template name="makeFilterConfig">
