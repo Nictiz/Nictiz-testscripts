@@ -80,13 +80,13 @@
       <hint value="Please provide the Resource.id of the Task that will be used. The notification endpoint will be shown when executing the test, based on the variable filled out here (it is dynamically determined by Touchstone)."/>
    </variable>
    <variable>
+      <name value="auth-token"/>
+      <description value="Enter the OAuth Token of your system or test patient"/>
+   </variable>
+   <variable>
       <name value="in-progress-task-response-composition-11171000146100-id"/>
       <expression value="Task.input.where(type.where(coding.where(system = 'http://snomed.info/sct' and code = '11171000146100'))).value.reference.replace('Composition/', '')"/>
       <sourceId value="in-progress-task-response"/>
-   </variable>
-   <variable>
-      <name value="auth-token"/>
-      <description value="Enter the OAuth Token of your system or test patient"/>
    </variable>
    <test>
       <name value="Notify new Task"/>
@@ -111,6 +111,26 @@
    <test>
       <name value="Serve 'in-progress' Task"/>
       <description value="The sending XIS should serve the Task specified in the notification."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="read"/>
+            </type>
+            <resource value="Task"/>
+            <description value="Test server to serve Task resource."/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="${task-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${auth-token}"/>
+            </requestHeader>
+            <responseId value="in-progress-task-response"/>
+         </operation>
+      </action>
       <action>
          <assert>
             <description value="Confirm that the operation was successful"/>
@@ -206,10 +226,6 @@
             <requestHeader>
                <field value="Authorization"/>
                <value value="${auth-token}"/>
-            </requestHeader>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="${}"/>
             </requestHeader>
          </operation>
       </action>
@@ -395,11 +411,9 @@
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
             <params value="/${task-id}"/>
-            <requestHeader><!-- 0..* Each operation can have one or more header elements -->
+            <requestHeader>
                <field value="Authorization"/>
-               <!-- 1..1 HTTP header field name: OAuth access token -->
-               <value value="${}"/>
-               <!-- 1..1 HTTP headerfield value: UUID4 -->
+               <value value="${auth-token}"/>
             </requestHeader>
             <sourceId value="completed-task-fixture"/>
          </operation>
