@@ -5,6 +5,15 @@
     <xsl:strip-space elements="*"/>
 
     <xsl:param name="adaDir" as="xs:string?" select="'../../../../../art_decor/adarefs2ada/mp/9.3.0/raadplegen_medicatiegegevens/ada_instance'"/>
+    <!-- parameters from ant are one string  -->
+    <xsl:param name="antTestGoal" as="xs:string?" select="'test,cert'"/>
+    
+    <xsl:variable name="testGoal" as="xs:string*">
+        <xsl:choose>
+            <xsl:when test="string-length($antTestGoal) gt 0"><xsl:sequence select="tokenize(normalize-space(lower-case($antTestGoal)), ',')"/></xsl:when>
+            <xsl:otherwise><xsl:sequence select="('test', 'cert')"/></xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
 
     <xsl:variable name="adaFiles" as="node()*">
         <xsl:sequence select="collection($adaDir || '?select=*.xml')"/>
@@ -23,17 +32,23 @@
     <xsl:template match="/">
 
         <ScenarioSet0or10>
-            <Test>
-                <xsl:call-template name="makeFilterConfig">
-                    <xsl:with-param name="adaFiles" select="$adaFiles//raadplegen_medicatiegegevens[contains(@id, '-tst-')]"/>
-                </xsl:call-template>
-            </Test>
+            
+            <xsl:if test="$testGoal = 'test'">
+                <Test>
+                    <xsl:call-template name="makeFilterConfig">
+                        <xsl:with-param name="adaFiles" select="$adaFiles//raadplegen_medicatiegegevens[contains(@id, '-tst-')]"/>
+                    </xsl:call-template>
+                </Test>
+            </xsl:if>
 
-            <Cert>
-                <xsl:call-template name="makeFilterConfig">
-                    <xsl:with-param name="adaFiles" select="$adaFiles//raadplegen_medicatiegegevens[contains(@id, '-kwal-')]"/>
-                </xsl:call-template>
-            </Cert>
+            <xsl:if test="$testGoal = 'cert'">
+                <Cert>
+                    <xsl:call-template name="makeFilterConfig">
+                        <xsl:with-param name="adaFiles" select="$adaFiles//raadplegen_medicatiegegevens[contains(@id, '-kwal-')]"/>
+                    </xsl:call-template>
+                </Cert>
+            </xsl:if>
+            
         </ScenarioSet0or10>
     </xsl:template>
 
