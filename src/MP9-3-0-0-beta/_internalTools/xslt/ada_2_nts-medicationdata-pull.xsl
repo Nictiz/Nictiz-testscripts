@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <xsl:import href="../../../../../YATC-internal/ada-2-fhir-r4/env/fhir/2_fhir_fixtures.xsl"/>
+<xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xsl:import href="ada_2_nts.xsl"/>
+    <xsl:import href="../../../../../YATC-internal/ada-2-fhir-r4/env/fhir/2_fhir_fixtures.xsl"/>
     
     <xsl:output indent="yes" omit-xml-declaration="yes"/>
     
@@ -11,7 +11,6 @@
     <xsl:param name="inputDir"/>
     <xsl:param name="outputDir"/>
     <xsl:param name="refDir"/>
-    <xsl:variable name="refDirNormalized" select="nf:normalize-path($refDir)"/>
     <xsl:param name="testGoal" as="xs:string?">
         <xsl:choose>
             <xsl:when test="contains(upper-case($outputDir), 'CERT')">Cert</xsl:when>
@@ -20,36 +19,50 @@
     </xsl:param>
     
     <xsl:variable name="transactionTypeNormalized" select="normalize-space(lower-case($transactionType))"/>
-    <xsl:variable name="inputDirNormalized" select="nf:normalize-path($inputDir)"/>
-    <xsl:variable name="outputDirNormalized" select="nf:normalize-path($outputDir)"/>
+    <xsl:variable name="inputDirNormalized" select="resolve-uri(nf:normalize-path($inputDir), static-base-uri())"/>
+    <xsl:variable name="outputDirNormalized" select="resolve-uri(nf:normalize-path($outputDir), static-base-uri())"/>
+    <xsl:variable name="refDirNormalized" select="resolve-uri(nf:normalize-path($refDir), static-base-uri())"/>
     
-    <xd:doc>
-        <xd:desc>Start template. Handles some ada transactions, converts them to nts. Very specific for each transaction.</xd:desc>
-    </xd:doc>
     <xsl:template match="/">
+        <!-- Start template. Handles some ada transactions, converts them to nts. Very specific for each transaction. -->
         
         <xsl:call-template name="util:logMessage">
             <xsl:with-param name="level" select="$logINFO"/>
-            <xsl:with-param name="msg">refDirNormalized <xsl:value-of select="$refDirNormalized"/></xsl:with-param>
-        </xsl:call-template>
-        <xsl:call-template name="util:logMessage">
-            <xsl:with-param name="level" select="$logINFO"/>
-            <xsl:with-param name="msg">refDir <xsl:value-of select="$refDir"/></xsl:with-param>
+            <xsl:with-param name="msg">huidige dir <xsl:value-of select="static-base-uri()"/></xsl:with-param>
         </xsl:call-template>
         
+        <xsl:call-template name="util:logMessage">
+            <xsl:with-param name="level" select="$logINFO"/>
+            <xsl:with-param name="msg">refDir '<xsl:value-of select="$refDir"/>' and refDirNormalized <xsl:value-of select="$refDirNormalized"/></xsl:with-param>
+        </xsl:call-template>
+
         <xsl:call-template name="util:logMessage">
             <xsl:with-param name="level" select="$logINFO"/>
             <xsl:with-param name="msg">transactionTypeNormalized: <xsl:value-of select="$transactionTypeNormalized"/> - inputDir: <xsl:value-of select="$inputDirNormalized"/> - outputDir: <xsl:value-of select="$outputDirNormalized"/></xsl:with-param>
         </xsl:call-template>
-        <!-- ada files have been prepocessed per building block and scenarioset -->
+        
         <xsl:variable name="fileNamePart" as="xs:string">
             <xsl:choose>
                 <xsl:when test="$testGoal = 'Cert'">kwal</xsl:when>
                 <xsl:otherwise>tst</xsl:otherwise>
             </xsl:choose>
-        </xsl:variable>
-
-        <xsl:for-each select="collection(concat($inputDirNormalized, '?select=mg-mp-mg-', $fileNamePart, '-*.xml'))">
+        </xsl:variable>        
+        
+        <xsl:call-template name="util:logMessage">
+            <xsl:with-param name="level" select="$logINFO"/>
+            <xsl:with-param name="msg">resolved inputdir to absolute path <xsl:value-of select="$inputDirNormalized"/></xsl:with-param>
+        </xsl:call-template>
+        
+        <xsl:variable name="uri-collection" select="concat($inputDirNormalized, '?select=mg-mp-mg-', $fileNamePart, '-*.xml')"/>
+        
+        <xsl:call-template name="util:logMessage">
+            <xsl:with-param name="level" select="$logINFO"/>
+            <xsl:with-param name="msg">uri-collection <xsl:value-of select="$uri-collection"/></xsl:with-param>
+        </xsl:call-template>
+        
+        
+        <xsl:for-each select="collection($uri-collection)">
+    
             <xsl:variable name="adaTransId" select="./adaxml/data/beschikbaarstellen_medicatiegegevens/@id"/>
             <xsl:call-template name="util:logMessage">
                 <xsl:with-param name="level" select="$logINFO"/>
@@ -160,7 +173,14 @@
         </xsl:for-each>
         
         <!-- consolidation -->
-        <xsl:for-each select="collection(concat($inputDirNormalized, '?select=mg-mp-mg-CONS-*.xml'))">
+        <xsl:variable name="uri-collection-cons" select="concat($inputDirNormalized, '?select=mg-mp-mg-CONS-*.xml')"/>
+        
+        <xsl:call-template name="util:logMessage">
+            <xsl:with-param name="level" select="$logINFO"/>
+            <xsl:with-param name="msg">uri-collection for CONS <xsl:value-of select="$uri-collection-cons"/></xsl:with-param>
+        </xsl:call-template>
+        
+        <xsl:for-each select="collection($uri-collection-cons)">
             <xsl:call-template name="util:logMessage">
                 <xsl:with-param name="level" select="$logINFO"/>
                 <xsl:with-param name="msg">handling <xsl:value-of select="./adaxml/data/beschikbaarstellen_medicatiegegevens/@id"/></xsl:with-param>
@@ -242,12 +262,10 @@
     </xsl:template>
     
     
-    <xd:doc>
-        <xd:desc>Finds the fixtures to base the content assert on</xd:desc>
-        <xd:param name="identifier">the identifier of the resource</xd:param>
-    </xd:doc>
     <xsl:template name="findContentAssertFixture">
-        <xsl:param name="identifier"/>
+        <!-- Finds the fixtures to base the content assert on -->
+        <xsl:param name="identifier">
+            <!-- the identifier of the resource --></xsl:param>
         <xsl:for-each select="collection(concat($refDirNormalized, '?select=mp-*-*.xml'))">
             <xsl:variable name="logicalId" select="./*/f:id/@value"/>
             <xsl:variable name="resIdentifier" select="./*/f:identifier/f:value/@value"/>
@@ -259,14 +277,13 @@
         </xsl:for-each>
     </xsl:template>        
     
-    <xd:doc>
-        <xd:desc>Creates NTS</xd:desc>
-        <xd:param name="buildingBlockShort">The building block abbreviation, such as MA, MGB and the like</xd:param>
-        <xd:param name="scenarioset">The scenarioset to be converted into nts format</xd:param>
-    </xd:doc>
     <xsl:template name="createNts">
-        <xsl:param name="buildingBlockShort"/>
-        <xsl:param name="scenarioString"/>
+        <!-- Creates NTS -->
+        
+        <xsl:param name="buildingBlockShort">
+            <!-- The building block abbreviation, such as MA, MGB and the like --></xsl:param>
+        <xsl:param name="scenarioString">
+            <!-- The scenarioset to be converted into nts format --></xsl:param>
         <xsl:param name="idString"/>
         <xsl:param name="testScriptTitle"/>
         <xsl:param name="testScriptDescription"/>
@@ -469,13 +486,12 @@
         </xsl:choose>
     </xsl:template>
     
-    <xd:doc>
-        <xd:desc>Handle filter scenario</xd:desc>
-        <xd:param name="buildingBlockShort"/>
-        <xd:param name="scenarioset"/>
-    </xd:doc>
     <xsl:template name="handleFilterScenario">
-        <xsl:param name="buildingBlockShort"/>
+        <!-- Handle filter scenario -->
+        
+        <xsl:param name="buildingBlockShort" as="xs:string?">
+            <!-- short building block string: MA/WDS/VV/TA/MVE/MGB/MTD --></xsl:param>
+        
         <xsl:param name="scenarioString"/>
         <xsl:param name="testScriptTitle"/>
         <xsl:param name="idString"/>
@@ -512,7 +528,7 @@
             <xsl:with-param name="msg">Processing <xsl:value-of select="$newFilename"/></xsl:with-param>
         </xsl:call-template>
         
-        <xsl:variable name="set0config" select="document('set0-config.xml')"/>
+        <xsl:variable name="set0config" select="document('set0-config-generated.xml')"/>
         <xsl:variable name="configCurrentScenario" select="$set0config//*[local-name() = $testGoal]/*[local-name() = nf:first-cap($transactionTypeNormalized)]/*[local-name() = $buildingBlockLong]/TestScript[scenarioFullNumber/@value = $scenarioString/@theScenario]"/>
         
         <xsl:variable name="additionalScenarioParams" select="$configCurrentScenario/params/@value" as="xs:string?"/>
@@ -684,14 +700,13 @@
         
     </xsl:template>
     
-    <xd:doc>
-        <xd:desc>Change the folder names to contain "-System" and include the role code </xd:desc>
-        <xd:param name="transactionType">The transactionType to be transformed </xd:param>
-        <xd:param name="buildingBlockShort"></xd:param>
-    </xd:doc>
     <xsl:function name="nf:makeCLRoleFolder" as="xs:string">
-        <xsl:param name="transactionType" as="xs:string?"/>
-        <xsl:param name="buildingBlockShort" as="xs:string?"/>
+        <!-- Change the folder names to contain "-System" and include the role code  -->
+        <xsl:param name="transactionType" as="xs:string?">
+            <!-- The transactionType to be transformed  --></xsl:param>
+        <xsl:param name="buildingBlockShort" as="xs:string?">
+            <!-- short building block string: MA/WDS/VV/TA/MVE/MGB/MTD --></xsl:param>
+        
         <xsl:variable name="transactionTypeNormalized" select="normalize-space(lower-case($transactionType))"/>
         <xsl:choose>
             <xsl:when test="$transactionTypeNormalized = 'retrieve'"><xsl:value-of select="concat('Retrieving-MGR-',$buildingBlockShort)"/></xsl:when>
@@ -705,12 +720,11 @@
         </xsl:choose>
     </xsl:function>
     
-    <xd:doc>
-        <xd:desc>Make long building block string based on short building block string</xd:desc>
-        <xd:param name="buildingBlockShort">short building block string: MA/WDS/VV/TA/MVE/MGB/MTD</xd:param>
-    </xd:doc>
     <xsl:function name="nf:makeBuildingBlockLong" as="xs:string?">
-        <xsl:param name="buildingBlockShort" as="xs:string?"/>
+        <!-- Make long building block string based on short building block string -->
+        
+        <xsl:param name="buildingBlockShort" as="xs:string?">
+            <!-- short building block string: MA/WDS/VV/TA/MVE/MGB/MTD --></xsl:param>
         
         <xsl:choose>
             <!-- consolidation buildingBlockShort is a string like "CONS-MA" -->
@@ -732,12 +746,10 @@
         
     </xsl:function>
 
-    <xd:doc>
-        <xd:desc>Make Conformancelab category folder name string based on short building block string</xd:desc>
-        <xd:param name="buildingBlockShort">short building block string: MA/WDS/VV/TA/MVE/MGB/MTD</xd:param>
-    </xd:doc>
     <xsl:function name="nf:makeCLCategoryFolder" as="xs:string?">
-        <xsl:param name="buildingBlockShort" as="xs:string?"/>
+        <!-- Make Conformancelab category folder name string based on short building block string -->
+        <xsl:param name="buildingBlockShort" as="xs:string?">
+            <!-- short building block string: MA/WDS/VV/TA/MVE/MGB/MTD --></xsl:param>
         
         <xsl:choose>
             <!-- consolidation buildingBlockShort is a string like "CONS-MA" -->
@@ -760,12 +772,10 @@
         
     </xsl:function>
 
-    <xd:doc>
-        <xd:desc>Make Conformancelab subcategory folder name string based on short building block string</xd:desc>
-        <xd:param name="buildingBlockShort">short building block string: MA/WDS/VV/TA/MVE/MGB/MTD</xd:param>
-    </xd:doc>
     <xsl:function name="nf:makeCLSubcategoryFolder" as="xs:string?">
-        <xsl:param name="buildingBlockShort" as="xs:string?"/>
+        <!-- Make Conformancelab subcategory folder name string based on short building block string -->
+        <xsl:param name="buildingBlockShort" as="xs:string?">
+            <!-- short building block string: MA/WDS/VV/TA/MVE/MGB/MTD --></xsl:param>
         
         <xsl:choose>
             <!-- consolidation buildingBlockShort is a string like "CONS-MA" -->
@@ -787,12 +797,11 @@
         
     </xsl:function>
     
-    <xd:doc>
-        <xd:desc>Match FHIR Category code based on short building block string</xd:desc>
-        <xd:param name="buildingBlockShort">short building block string: MA/WDS/VV/TA/MVE/MGB/MTD</xd:param>
-    </xd:doc>
     <xsl:function name="nf:matchCategoryCode" as="xs:string?">
-        <xsl:param name="buildingBlockShort" as="xs:string?"/>
+        <!-- Match FHIR Category code based on short building block string -->
+        
+        <xsl:param name="buildingBlockShort" as="xs:string?">
+            <!-- short building block string: MA/WDS/VV/TA/MVE/MGB/MTD --></xsl:param>
         
         <xsl:choose>
             <xsl:when test="contains($buildingBlockShort, 'TA')">
@@ -820,12 +829,10 @@
         
     </xsl:function>
     
-    <xd:doc>
-        <xd:desc>Match FHIR Resource based on short building block string</xd:desc>
-        <xd:param name="buildingBlockShort">short building block string: MA/WDS/VV/TA/MVE/MGB/MTD</xd:param>
-    </xd:doc>
     <xsl:function name="nf:matchResource" as="xs:string?">
-        <xsl:param name="buildingBlockShort" as="xs:string?"/>
+        <!-- Match FHIR Resource based on short building block string -->
+        <xsl:param name="buildingBlockShort" as="xs:string?">
+            <!-- short building block string: MA/WDS/VV/TA/MVE/MGB/MTD --></xsl:param>
         
         <xsl:choose>
             <xsl:when test="contains($buildingBlockShort, 'TA') or $buildingBlockShort = 'MVE'">

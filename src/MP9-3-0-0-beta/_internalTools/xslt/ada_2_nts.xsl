@@ -1,43 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xsl:stylesheet exclude-result-prefixes="#all" xmlns:nf="http://www.nictiz.nl/functions" xmlns:f="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:util="urn:hl7:utilities" version="2.0" xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <!--Import mp specific constants (and package for underlying imports)-->
     <xsl:import href="../../../../../YATC-internal/ada-2-fhir-r4/env/mp/9.3.0/payload/mp9_latest_package.xsl"/>
     <xsl:output method="xml" indent="yes" omit-xml-declaration="yes"/>
-    
+
     <xsl:strip-space elements="*"/>
-    
+
     <!--    <xsl:param name="mappingsUrl4FhirFixtures">https://raw.githubusercontent.com/Nictiz/HL7-mappings/master/ada_2_fhir-r4/mp/9.3.0/touchstone/test/4touchstone_mp</xsl:param>-->
     <xsl:param name="mappingsUrl4FhirFixtures">../../../../../HL7-mappings/master/ada_2_fhir-r4/mp/9.3.0/touchstone/test/4touchstone_mp</xsl:param>
-    
-    <!-- Send/Receive/Retrieve/Serve, this param defaults to Send -->
-    <xsl:param name="transactionType">Send</xsl:param>
+
+
+    <xsl:param name="transactionType" select="'Send'">
+        <!-- Send/Receive/Retrieve/Serve, this param defaults to Send --></xsl:param>
     <xsl:param name="outputDir"/>
-    <xsl:variable name="outputDirNormalized" select="nf:normalize-path($outputDir)"/>
+
+    <xsl:variable name="outputDirNormalized" select="resolve-uri(nf:normalize-path($outputDir), static-base-uri())"/>
 
     <xsl:variable name="bsnSystem" select="$oidMap[@oid = $oidBurgerservicenummer]/@uri"/>
-    
-    <xd:doc>
-        <xd:desc>Start template. Handles ada test instances, converts them to nts.</xd:desc>
-    </xd:doc>
+
     <xsl:template match="/">
+        <!-- Start template. Handles ada test instances, converts them to nts. -->
         <xsl:variable name="adaTransaction" select="adaxml/data/*" as="element()*"/>
-        
+
         <xsl:for-each select="$adaTransaction">
             <!-- find corresponding FHIR fixture based on adaId -->
             <xsl:variable name="adaTransId" select="nf:removeSpecialCharacters(@id)"/>
-            <xsl:variable name="adaTransIdFile" select="replace($adaTransId, '\.', '-')"/>           
+            <xsl:variable name="adaTransIdFile" select="replace($adaTransId, '\.', '-')"/>
             <!-- extract concise filename so the end user can distinguish between different scripts  -->
-            <xsl:variable name="fileName" select="replace($adaTransId,'.+(tst|kwal)-(.+)-v30', '$2')"/>       
+            <xsl:variable name="fileName" select="replace($adaTransId, '.+(tst|kwal)-(.+)-v30', '$2')"/>
             <xsl:variable name="testGoal">
                 <xsl:choose>
-                    <xsl:when test="replace($adaTransId,'.+(tst|kwal)-(.+)-v30', '$1') = 'kwal'">Cert</xsl:when>
+                    <xsl:when test="replace($adaTransId, '.+(tst|kwal)-(.+)-v30', '$1') = 'kwal'">Cert</xsl:when>
                     <xsl:otherwise>Test</xsl:otherwise>
                 </xsl:choose>
             </xsl:variable>
-            
+
             <xsl:variable name="fhirFixture" select="document(concat($mappingsUrl4FhirFixtures, '/', $adaTransIdFile, '.xml'))"/>
             <xsl:variable name="fixturePatient" select="$fhirFixture//f:Patient[1]"/>
-            
+
             <xsl:variable name="ntsScenario" as="xs:string?">
                 <xsl:choose>
                     <xsl:when test="normalize-space(upper-case($transactionType)) = ('RETRIEVE', 'SEND')">client</xsl:when>
@@ -45,33 +45,33 @@
                     <xsl:otherwise>unknown</xsl:otherwise>
                 </xsl:choose>
             </xsl:variable>
-            
+
             <xsl:variable name="testScriptString" as="element(testscriptstring)*">
                 <xsl:call-template name="getTestScriptString"/>
             </xsl:variable>
             <xsl:variable name="scenarioString" as="element(scenarioString)">
                 <xsl:call-template name="getScenarioString"/>
             </xsl:variable>
-            
+
             <xsl:variable name="fileNamePart" as="xs:string">
                 <xsl:choose>
                     <xsl:when test="$testGoal = 'Cert'">kwal</xsl:when>
                     <xsl:otherwise>tst</xsl:otherwise>
                 </xsl:choose>
             </xsl:variable>
-            
+
             <!-- Check if buildingBlockShort really is a building block, if not we catch a bigger part of the filename to account for stuff like 'script1' and 'script1-wijziging' (which may include hyphens)
                  However, sometimes this 'extra stuff' is still preceded by a legit 'scenario-subscenario', so we want to filter that out -->
             <xsl:variable name="buildingBlockShort" as="xs:string*">
                 <xsl:variable name="attempt1" select="substring-before(substring-after($adaTransId, concat($fileNamePart, '-')), '-')[1]"/>
-                <xsl:variable name="attempt2" select="substring-before(substring-after($adaTransId, concat($fileNamePart, '-', $scenarioString/@theScenarioHyphen,'-')), '-v30')[1]"/>
+                <xsl:variable name="attempt2" select="substring-before(substring-after($adaTransId, concat($fileNamePart, '-', $scenarioString/@theScenarioHyphen, '-')), '-v30')[1]"/>
                 <xsl:variable name="attempt3" select="substring-before(substring-after($adaTransId, concat($fileNamePart, '-')), '-v30')[1]"/>
                 <xsl:choose>
-                    
-                    <xsl:when test="$attempt1 = ('VV','MTD','MA','MVE','MGB','TA','WDS')">
+
+                    <xsl:when test="$attempt1 = ('VV', 'MTD', 'MA', 'MVE', 'MGB', 'TA', 'WDS')">
                         <xsl:value-of select="$attempt1"/>
                     </xsl:when>
-                    <xsl:when test="starts-with($attempt3, concat($scenarioString/@theScenarioHyphen,'-'))">
+                    <xsl:when test="starts-with($attempt3, concat($scenarioString/@theScenarioHyphen, '-'))">
                         <xsl:value-of select="$attempt2"/>
                     </xsl:when>
                     <xsl:otherwise>
@@ -88,7 +88,7 @@
                         <xsl:choose>
                             <!-- Filter 'script[digit]' from the id -->
                             <xsl:when test="matches($buildingBlockShort, '^script\d{1,2}(-)?')">
-                                <xsl:value-of select="replace($buildingBlockShort,'^script\d{1,2}(-)?','')"/>
+                                <xsl:value-of select="replace($buildingBlockShort, '^script\d{1,2}(-)?', '')"/>
                             </xsl:when>
                             <xsl:otherwise>
                                 <xsl:value-of select="$buildingBlockShort"/>
@@ -99,13 +99,13 @@
                     <xsl:with-param name="theScenario0XHyphen" select="$scenarioString/@theScenario0XHyphen"/>
                 </xsl:call-template>
             </xsl:variable>
-            
+
             <xsl:variable name="titleSuffix" as="xs:string?">
-                <xsl:if test="not($buildingBlockShort = ('VV','MTD','MA','MVE','MGB','TA','WDS'))">
+                <xsl:if test="not($buildingBlockShort = ('VV', 'MTD', 'MA', 'MVE', 'MGB', 'TA', 'WDS'))">
                     <xsl:choose>
                         <!-- Filter 'script[digit]' from the title -->
                         <xsl:when test="matches($buildingBlockShort, '^script\d{1,2}(-)?')">
-                            <xsl:value-of select="replace($buildingBlockShort,'^script\d{1,2}(-)?','')"/>
+                            <xsl:value-of select="replace($buildingBlockShort, '^script\d{1,2}(-)?', '')"/>
                         </xsl:when>
                         <xsl:otherwise>
                             <xsl:value-of select="$buildingBlockShort"/>
@@ -113,14 +113,14 @@
                     </xsl:choose>
                 </xsl:if>
             </xsl:variable>
-            
+
             <xsl:variable name="testScriptTitle">
                 <xsl:call-template name="getTestScriptTitle">
                     <xsl:with-param name="theScenarioX" select="$scenarioString/@theScenarioX"/>
                     <xsl:with-param name="titleSuffix" select="$titleSuffix"/>
                 </xsl:call-template>
             </xsl:variable>
-            
+
             <xsl:variable name="testScriptDescription">
                 <xsl:call-template name="getTestScriptDescription">
                     <xsl:with-param name="transactionType" select="$transactionType"/>
@@ -133,14 +133,14 @@
                     <xsl:with-param name="wiki" select="$testScriptString/@wiki"/>
                 </xsl:call-template>
             </xsl:variable>
-            
+
             <xsl:variable name="testName">
                 <xsl:call-template name="getTestName">
                     <xsl:with-param name="theScenarioX" select="$scenarioString/@theScenarioX"/>
                     <xsl:with-param name="fallback" select="$buildingBlockShort"/>
                 </xsl:call-template>
             </xsl:variable>
-            
+
             <xsl:variable name="testDescription">
                 <xsl:call-template name="getTestDescription">
                     <xsl:with-param name="transactionType" select="$transactionType"/>
@@ -148,13 +148,13 @@
                     <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
                 </xsl:call-template>
             </xsl:variable>
-            
+
             <xsl:variable name="newFilename" select="concat($idString, '.xml')"/>
             <xsl:call-template name="util:logMessage">
                 <xsl:with-param name="level" select="$logINFO"/>
                 <xsl:with-param name="msg">processing <xsl:value-of select="$newFilename"/></xsl:with-param>
             </xsl:call-template>
-            
+
             <xsl:choose>
                 <!-- pull beschikbaarstellen_medicatiegegevens -->
                 <xsl:when test="self::beschikbaarstellen_medicatiegegevens and normalize-space(upper-case($transactionType)) = ('RETRIEVE', 'SERVE')">
@@ -164,7 +164,7 @@
                         <xsl:with-param name="terminate" select="true()"/>
                     </xsl:call-template>
                 </xsl:when>
-                
+
                 <!-- push all transactions -->
                 <xsl:when test="normalize-space(upper-case($transactionType)) = ('SEND', 'RECEIVE')">
                     <!-- variable to prepare TestScript variable and accompanying delete/purge actions for cleanup of push stuff -->
@@ -200,7 +200,7 @@
                          </xsl:for-each-group>
                          </deleteStuff>
                          </xsl:variable>-->
-                    
+
                     <xsl:variable name="includeNumResources" as="element()*">
                         <xsl:for-each-group select="$fhirFixture/f:Bundle/f:entry/f:resource/f:*" group-by="local-name()">
                             <xsl:choose>
@@ -220,10 +220,10 @@
                                      </xsl:otherwise>
                                      </xsl:choose>
                                      </xsl:when>-->
-                             </xsl:choose>
+                            </xsl:choose>
                         </xsl:for-each-group>
                     </xsl:variable>
-                    
+
                     <xsl:result-document href="{concat($outputDirNormalized, '/', $newFilename)}">
                         <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="{$ntsScenario}">
                             <id value="{$idString}"/>
@@ -267,7 +267,7 @@
                                          <!-\- the individual deletes, so we can also get rid of non-patient related resources, such as PractitionerRole/Practitioner/Organization and the like -\->
                                          <xsl:copy-of select="$deleteStuff/f:action"/>
                                          </teardown>-->
-                                 </xsl:when>
+                                </xsl:when>
                                 <xsl:otherwise>
                                     <!-- assume Send -->
                                     <nts:fixture id="{$adaTransIdFile}" href="fixtures/{$adaTransIdFile}.xml" nts:in-targets="Nictiz-intern"/>
@@ -318,53 +318,46 @@
                                          <xsl:copy-of select="$deleteStuff/f:action"/>
                                          <!-\- MP-746 no $purge needed for Nictiz internal scripts -\->
                                          </teardown>-->
-                                 </xsl:otherwise>
+                                </xsl:otherwise>
                             </xsl:choose>
                         </TestScript>
                     </xsl:result-document>
                 </xsl:when>
-                
+
                 <xsl:otherwise>
                     <xsl:call-template name="util:logMessage">
                         <xsl:with-param name="level" select="$logWARN"/>
                         <xsl:with-param name="msg">Ada transaction '<xsl:value-of select="local-name()"/>' with transaction type '<xsl:value-of select="$transactionType"/>' not supported yet.</xsl:with-param>
                     </xsl:call-template>
-                    
+
                 </xsl:otherwise>
             </xsl:choose>
-            
+
         </xsl:for-each>
     </xsl:template>
-    
-    <xd:doc>
-        <xd:desc>Add in-target to deleteStuff</xd:desc>
-    </xd:doc>
+
     <xsl:template match="f:action | f:variable" mode="Nictiz-intern">
+        <!-- Add in-target to deleteStuff -->
         <xsl:copy>
             <xsl:apply-templates select="@*" mode="#current"/>
             <xsl:attribute name="nts:in-targets">Nictiz-intern</xsl:attribute>
             <xsl:apply-templates select="node()" mode="#current"/>
         </xsl:copy>
     </xsl:template>
-    
-    <xd:doc>
-        <xd:desc>Default copy template</xd:desc>
-    </xd:doc>
+
     <xsl:template match="@* | node()" mode="#all">
+        <!-- Default copy template -->
         <xsl:copy>
             <xsl:apply-templates select="@* | node()" mode="#current"/>
         </xsl:copy>
     </xsl:template>
-    
-    <xd:doc>
-        <xd:desc>Capitalize first letter of a string</xd:desc>
-        <xd:param name="in">The string to be handled</xd:param>
-    </xd:doc>
+
     <xsl:function name="nf:first-cap" as="xs:string?">
-        <xsl:param name="in" as="xs:string?"/>
+        <!-- Capitalize first letter of a string -->
+        <xsl:param name="in" as="xs:string?"><!-- The string to be handled --></xsl:param>
         <xsl:sequence select="concat(upper-case(substring($in, 1, 1)), substring($in, 2))"/>
     </xsl:function>
-    
+
     <xsl:template name="getScenarioString" as="element()*">
         <xsl:variable name="theScenario" select="(.//scenario-nr/@value)[1]"/>
         <xsl:variable name="theScenarioset">
@@ -377,7 +370,7 @@
                 </xsl:when>-->
             </xsl:choose>
         </xsl:variable>
-        <xsl:variable name="scenarioSub" select="normalize-space(replace(replace($theScenario, '(\d+[a-zA-Z]?)\.?(\d*[a-zA-Z]?\*?\s?.*)', '$2'),'\*',''))"/>
+        <xsl:variable name="scenarioSub" select="normalize-space(replace(replace($theScenario, '(\d+[a-zA-Z]?)\.?(\d*[a-zA-Z]?\*?\s?.*)', '$2'), '\*', ''))"/>
         <xsl:variable name="scenario">
             <xsl:choose>
                 <xsl:when test="string-length($scenarioSub) gt 0">
@@ -386,9 +379,9 @@
                 <xsl:when test="string-length($theScenario) gt 0">x</xsl:when>
             </xsl:choose>
         </xsl:variable>
-        
+
         <xsl:variable name="theScenarioX" select="concat($theScenarioset, '.', $scenario)"/>
-        
+
         <!-- Edit the scenarioset to the format 00 with trailing non-digits -->
         <xsl:variable name="scenarioset00">
             <xsl:analyze-string select="xs:string($theScenarioset)" regex="^(\d+)(.*)$">
@@ -401,9 +394,9 @@
                 </xsl:non-matching-substring>
             </xsl:analyze-string>
         </xsl:variable>
-        
+
         <xsl:variable name="theScenario0X" select="concat($scenarioset00, '.', $scenario)"/>
-        
+
         <scenarioString>
             <xsl:attribute name="theScenario" select="$theScenario"/>
             <xsl:attribute name="theScenarioX" select="$theScenarioX"/>
@@ -414,7 +407,7 @@
             <xsl:attribute name="scenario" select="$scenario"/>
         </scenarioString>
     </xsl:template>
-    
+
     <xsl:template name="getTestScriptString" as="element()*">
         <xsl:choose>
             <xsl:when test="self::beschikbaarstellen_medicatiegegevens | self::sturen_medicatiegegevens">
@@ -447,14 +440,14 @@
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
-    
+
     <xsl:template name="getIdString" as="xs:string">
         <xsl:param name="testGoal"/>
         <xsl:param name="short"/>
         <xsl:param name="buildingBlockShort"/>
         <xsl:param name="transactionType"/>
         <xsl:param name="theScenario0XHyphen"/>
-        
+
         <xsl:variable name="buildString">
             <xsl:text>mp9-</xsl:text>
             <xsl:choose>
@@ -475,31 +468,31 @@
             </xsl:choose>
             <xsl:text>-</xsl:text>
             <xsl:value-of select="$short"/>
-            <xsl:if test="$buildingBlockShort = ('VV','MTD','MA','MVE','MGB','TA','WDS') or contains($buildingBlockShort, 'CONS-')">
-                <xsl:value-of select="concat('-',$buildingBlockShort)"/>
+            <xsl:if test="$buildingBlockShort = ('VV', 'MTD', 'MA', 'MVE', 'MGB', 'TA', 'WDS') or contains($buildingBlockShort, 'CONS-')">
+                <xsl:value-of select="concat('-', $buildingBlockShort)"/>
             </xsl:if>
             <xsl:if test="string-length($theScenario0XHyphen) gt 1">
-                <xsl:value-of select="concat('-',$theScenario0XHyphen)"/>
+                <xsl:value-of select="concat('-', $theScenario0XHyphen)"/>
             </xsl:if>
-            <xsl:if test="not($buildingBlockShort = ('VV','MTD','MA','MVE','MGB','TA','WDS')) and not(contains($buildingBlockShort, 'CONS-')) and string-length($buildingBlockShort) gt 0">
-                <xsl:value-of select="concat('-',substring($buildingBlockShort,1,20))"/>
+            <xsl:if test="not($buildingBlockShort = ('VV', 'MTD', 'MA', 'MVE', 'MGB', 'TA', 'WDS')) and not(contains($buildingBlockShort, 'CONS-')) and string-length($buildingBlockShort) gt 0">
+                <xsl:value-of select="concat('-', substring($buildingBlockShort, 1, 20))"/>
             </xsl:if>
         </xsl:variable>
-        
-        <xsl:if test="string-length(string-join($buildString,'')) gt 64">
+
+        <xsl:if test="string-length(string-join($buildString, '')) gt 64">
             <xsl:call-template name="util:logMessage">
                 <xsl:with-param name="level" select="$logWARN"/>
-                <xsl:with-param name="msg">Id '<xsl:value-of select="string-join($buildString,'')"/>' is longer than 64 characters. Sorting in the simulator may give unexpected results</xsl:with-param>
+                <xsl:with-param name="msg">Id '<xsl:value-of select="string-join($buildString, '')"/>' is longer than 64 characters. Sorting in the simulator may give unexpected results</xsl:with-param>
             </xsl:call-template>
         </xsl:if>
 
-        <xsl:value-of select="string-join($buildString,'')"/>
+        <xsl:value-of select="string-join($buildString, '')"/>
     </xsl:template>
-    
+
     <xsl:template name="getTestScriptTitle" as="xs:string">
         <xsl:param name="theScenarioX"/>
         <xsl:param name="titleSuffix"/>
-        
+
         <xsl:variable name="buildString">
             <xsl:value-of select="'Scenario '"/>
             <xsl:if test="not($theScenarioX = '.')">
@@ -512,9 +505,9 @@
                 <xsl:value-of select="$titleSuffix"/>
             </xsl:if>
         </xsl:variable>
-        <xsl:value-of select="string-join($buildString,'')"/>
+        <xsl:value-of select="string-join($buildString, '')"/>
     </xsl:template>
-    
+
     <xsl:template name="getTestScriptDescription" as="xs:string">
         <xsl:param name="transactionType"/>
         <xsl:param name="full"/>
@@ -524,7 +517,7 @@
         <xsl:param name="adaTitle"/>
         <xsl:param name="testGoal" required="yes"/>
         <xsl:param name="wiki" required="yes"/>
-        
+
         <xsl:variable name="wikiUrl">
             <xsl:variable name="buildString">
                 <xsl:text>https://informatiestandaarden.nictiz.nl/wiki/mp:V3.0.0_</xsl:text>
@@ -550,15 +543,15 @@
                     <xsl:when test="normalize-space(upper-case($transactionType)) = 'RECEIVE'">ontvangen</xsl:when>
                     <xsl:otherwise>unknown</xsl:otherwise>
                 </xsl:choose>
-                <xsl:if test="$buildingBlockShort = ('VV','MTD','MA','MVE','MGB','TA','WDS')">
+                <xsl:if test="$buildingBlockShort = ('VV', 'MTD', 'MA', 'MVE', 'MGB', 'TA', 'WDS')">
                     <xsl:text>_</xsl:text>
                     <xsl:value-of select="$buildingBlockShort"/>
                 </xsl:if>
             </xsl:variable>
-            
+
             <xsl:value-of select="string-join($buildString, '')"/>
         </xsl:variable>
-        
+
         <xsl:variable name="buildString">
             <xsl:value-of select="concat(nf:first-cap($transactionType), ' ', $full, ' ', $buildingBlockShort, ' building blocks for patient ', $patient)"/>
             <xsl:value-of select="'&#xA;&#xA;For more info:&#xA;'"/>
@@ -567,20 +560,20 @@
                 <xsl:value-of select="'&#xA;&#xA;Original description:'"/>
             </xsl:if>
             <xsl:if test="string-length($adaTitle) gt 0">
-                <xsl:value-of select="concat('&#xA;',$adaTitle)"/>
+                <xsl:value-of select="concat('&#xA;', $adaTitle)"/>
             </xsl:if>
             <xsl:if test="string-length($adaDescription) gt 0">
-                <xsl:value-of select="concat('&#xA;',replace(replace($adaDescription,'&lt;/?(div|span)( style=&quot;.*?&quot;)?&gt;',''),'&lt;br&gt;','&#xA;')),''"/>
+                <xsl:value-of select="concat('&#xA;', replace(replace($adaDescription, '&lt;/?(div|span)( style=&quot;.*?&quot;)?&gt;', ''), '&lt;br&gt;', '&#xA;')), ''"/>
             </xsl:if>
         </xsl:variable>
-        
+
         <xsl:value-of select="string-join($buildString, '')"/>
     </xsl:template>
-    
+
     <xsl:template name="getTestName" as="xs:string">
         <xsl:param name="theScenarioX"/>
         <xsl:param name="fallback"/>
-        
+
         <xsl:choose>
             <xsl:when test="not($theScenarioX = '.')">
                 <xsl:value-of select="concat('Scenario ', $theScenarioX)"/>
@@ -605,13 +598,11 @@
         </xsl:variable>
         <xsl:value-of select="concat(nf:first-cap($transactionType), ' ', $full, ' ', $buildingBlockShort, ' resources in a ', $bundleType, ' Bundle')"/>
     </xsl:template>
-    
-    <xd:doc>
-        <xd:desc>Normalize a filepath</xd:desc>
-        <xd:param name="in">The string to be handled</xd:param>
-    </xd:doc>
+
     <xsl:function name="nf:normalize-path" as="xs:string?">
-        <xsl:param name="in" as="xs:string?"/>
+        <!-- Normalize a filepath, needed for when we get (windows) inputpaths from ant -->
+        <xsl:param name="in" as="xs:string?">
+            <!-- The string to be handled --></xsl:param>
         <xsl:variable name="fixSlashes" select="replace($in, '\\', '/')"/>
         <xsl:variable name="filePrefix">
             <xsl:choose>
