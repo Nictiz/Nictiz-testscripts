@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../../general/schematron/NictizTestScript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="server">
+    
+   <id value="dispense-proposed-ma-EVS-23-1"/>
+   <url value="http://nictiz.nl/fhir/TestScript/EVS-send-MVE"/>
+   <version value="r4-MP9.3.0.0-rc2"/>
+   <title value="Scenario 23.1"/>
+   <description value="EVS flow see documentation xxx"/>
+   <nts:include value="header.originsAndDestinations"/>
+   
+   <!-- step 01 -->
+   <nts:fixture id="mv-mp-vo-vsg-tst-23-1a-vma-geaccepteerd-v30"
+                href="mv-mp-vo-vsg-tst-23-1a-vma-geaccepteerd-v30.{$_FORMAT}"
+                nts:in-targets="Nictiz-intern"/>
+   <!-- step 02 -->
+   <nts:fixture id="mp-vm-tst-23-1-vma-geaccepteerd-v30"
+                href="mp-vm-tst-23-1-vma-geaccepteerd-v30.{$_FORMAT}"/>
+   <!-- step 03a -->
+   <nts:fixture id="mp-am-tst-23-1-vma-geaccepteerd-v30"
+                href="mp-am-tst-23-1-vma-geaccepteerd-v30.{$_FORMAT}"
+                nts:in-targets="Nictiz-intern"/>
+   <!-- step 03c -->
+   <nts:fixture id="mv-mp-vo-vsg-tst-23-1b-vma-geaccepteerd-v30"
+                href="mv-mp-vo-vsg-tst-23-1b-vma-geaccepteerd-v30.{$_FORMAT}"
+                nts:in-targets="Nictiz-intern"/>
+   <!-- step 04 -->
+   <nts:fixture id="av-mp-va-vsg-tst-23-1a-vma-geaccepteerd-v30"
+                href="av-mp-va-vsg-tst-23-1a-vma-geaccepteerd-v30.{$_FORMAT}"/>
+
+   <nts:includeDateT value="yes"/> 
+
+   <variable nts:in-targets="Nictiz-intern">
+      <name value="created-patient-id-trans-1"/>
+      <description value="The id of the created patient resource"/>
+      <expression value="Bundle.entry.where(response.location.startsWith('Patient/')).response.location.split('/')[1]"/>
+      <sourceId value="transaction-1-response-fixture"/>      
+   </variable>
+   
+   <variable nts:in-targets="Nictiz-intern">
+      <name value="created-patient-id-trans-2"/>
+      <description value="The id of the created patient resource"/>
+      <expression value="Bundle.entry.where(response.location.startsWith('Patient/')).response.location.split('/')[1]"/>
+      <sourceId value="transaction-2-response-fixture"/>
+   </variable>
+
+   <variable nts:in-targets="Nictiz-intern">
+      <name value="created-patient-id-trans-3a"/>
+      <description value="The id of the created patient resource"/>
+      <expression value="Bundle.entry.where(response.location.startsWith('Patient/')).response.location.split('/')[1]"/>
+      <sourceId value="transaction-3a-response-fixture"/>
+   </variable>
+
+   <variable nts:in-targets="Nictiz-intern">
+      <name value="created-patient-id-trans-3c"/>
+      <description value="The id of the created patient resource"/>
+      <expression value="Bundle.entry.where(response.location.startsWith('Patient/')).response.location.split('/')[1]"/>
+      <sourceId value="transaction-3c-response-fixture"/>
+   </variable>
+
+   <variable nts:in-targets="Nictiz-intern">
+      <name value="created-patient-id-trans-4"/>
+      <description value="The id of the created patient resource"/>
+      <expression value="Bundle.entry.where(response.location.startsWith('Patient/')).response.location.split('/')[1]"/>
+      <sourceId value="transaction-4-response-fixture"/>
+   </variable>
+
+   <test> 
+      <id value="mp9-t-sen-vs-23-1a-vma-geaccepteerd"/>
+      <name value="Step 01"/>
+      <description value="Send Medication prescription vma-geaccepteerd resources in a transaction Bundle"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="transaction"/>
+            </type>
+            <description value="Test client to POST a Bundle of type transaction."/>
+            <destination value="2"/>
+            <origin value="2"/>
+            <responseId value="transaction-1-response-fixture"/>
+            <sourceId value="mv-mp-vo-vsg-tst-23-1a-vma-geaccepteerd-v30"
+                      nts:in-targets="Nictiz-intern"/>
+         </operation>
+      </action>
+      <nts:include value="test.client.successfulTransaction" scope="common"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="MedicationRequest"
+                   count="2"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="Medication"
+                   count="1"/>
+   </test>
+
+   <test id="mp9-t-rec-vma-23-1-23.1-vma-geaccepteer-01">
+      <name value="Step 02"/>
+      <description value="Receive Proposal medication agreement 23.1-vma-geaccepteerd resources in a transaction Bundle"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="transaction"/>
+            </type>
+            <description value="Test server to handle a Bundle of type transaction."/>
+            <contentType value="{$_FORMAT}"/>
+            <destination value="1"/>
+            <origin value="1"/>
+            <requestHeader>
+               <field value="Prefer"/>
+               <value value="return=representation"/>
+            </requestHeader>
+            <sourceId value="mp-vm-tst-23-1-vma-geaccepteerd-v30"/>
+            <responseId value="transaction-2-response-fixture"/>
+         </operation>
+      </action>
+      <nts:include value="assert.response.success" scope="common"/>
+      <nts:include value="assert.response.bundleContent"
+                   scope="common"
+                   bundleType="transaction-response"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="MedicationRequest"
+                   count="1"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="Medication"
+                   count="1"/>
+   </test>
+
+   <test id="mp9-t-sen-avma-23-1-23.1-vma-geaccepteer-01">
+      <name value="Step 03a"/>
+      <description value="Send Reply proposal medication agreement 23.1-vma-geaccepteerd resources in a transaction Bundle"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="transaction"/>
+            </type>
+            <description value="Test client to POST a Bundle of type transaction."/>
+            <destination value="2"/>
+            <origin value="2"/>
+            <responseId value="transaction-3a-response-fixture"/>
+            <sourceId value="mp-am-tst-23-1-vma-geaccepteerd-v30"
+                      nts:in-targets="Nictiz-intern"/>
+         </operation>
+      </action>
+      <nts:include value="test.client.successfulTransaction" scope="common"/>
+   </test>
+
+   <test id="mp9-t-sen-vs-23-1b-vma-geaccepteerd-01">
+      <name value="Step 03c"/>
+      <description value="Send Medication prescription vma-geaccepteerd resources in a transaction Bundle"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="transaction"/>
+            </type>
+            <description value="Test client to POST a Bundle of type transaction."/>
+            <destination value="2"/>
+            <origin value="2"/>
+            <responseId value="transaction-3c-response-fixture"/>
+            <sourceId value="mv-mp-vo-vsg-tst-23-1b-vma-geaccepteerd-v30"
+                      nts:in-targets="Nictiz-intern"/>
+         </operation>
+      </action>
+      <nts:include value="test.client.successfulTransaction" scope="common"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="MedicationRequest"
+                   count="2"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="Medication"
+                   count="1"/>
+   </test>
+
+   <test id="mp9-t-rec-avs-23-1a-vma-geaccepteerd-01">
+      <name value="Step 04"/>
+      <description value="Receive Prescription processing vma-geaccepteerd resources in a transaction Bundle"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://terminology.hl7.org/CodeSystem/testscript-operation-codes"/>
+               <code value="transaction"/>
+            </type>
+            <description value="Test server to handle a Bundle of type transaction."/>
+            <contentType value="{$_FORMAT}"/>
+            <destination value="1"/>
+            <origin value="1"/>
+            <requestHeader>
+               <field value="Prefer"/>
+               <value value="return=representation"/>
+            </requestHeader>
+            <sourceId value="av-mp-va-vsg-tst-23-1a-vma-geaccepteerd-v30"/>
+            <responseId value="transaction-4-response-fixture"/>
+         </operation>
+      </action>
+      <nts:include value="assert.response.success" scope="common"/>
+      <nts:include value="assert.response.bundleContent"
+                   scope="common"
+                   bundleType="transaction-response"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="MedicationDispense"
+                   count="2"/>
+      <nts:include value="assert.request.numResources"
+                   scope="common"
+                   resource="Medication"
+                   count="1"/>
+   </test>
+   
+   <teardown nts:in-targets="Nictiz-intern">
+      <name value=""/>
+      <description value="Delete all created resources"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-operation-codes"/>
+               <code value="purge"/>
+            </type>
+            <description value="Cascade delete all resources coupled to the created patient."/>
+            <resource value="Patient"/>
+            <accept value="xml"/>
+            <contentType value="xml"/>
+            <encodeRequestUrl value="true"/>
+            <params value="/${created-patient-id-trans-1}/$purge"/>
+            <requestHeader>
+               <field value="Prefer"/>
+               <value value="return=representation"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-operation-codes"/>
+               <code value="purge"/>
+            </type>
+            <description value="Cascade delete all resources coupled to the created patient."/>
+            <resource value="Patient"/>
+            <accept value="xml"/>
+            <contentType value="xml"/>
+            <encodeRequestUrl value="true"/>
+            <params value="/${created-patient-id-trans-2}/$purge"/>
+            <requestHeader>
+               <field value="Prefer"/>
+               <value value="return=representation"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-operation-codes"/>
+               <code value="purge"/>
+            </type>
+            <description value="Cascade delete all resources coupled to the created patient."/>
+            <resource value="Patient"/>
+            <accept value="xml"/>
+            <contentType value="xml"/>
+            <encodeRequestUrl value="true"/>
+            <params value="/${created-patient-id-trans-3a}/$purge"/>
+            <requestHeader>
+               <field value="Prefer"/>
+               <value value="return=representation"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-operation-codes"/>
+               <code value="purge"/>
+            </type>
+            <description value="Cascade delete all resources coupled to the created patient."/>
+            <resource value="Patient"/>
+            <accept value="xml"/>
+            <contentType value="xml"/>
+            <encodeRequestUrl value="true"/>
+            <params value="/${created-patient-id-trans-3c}/$purge"/>
+            <requestHeader>
+               <field value="Prefer"/>
+               <value value="return=representation"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-operation-codes"/>
+               <code value="purge"/>
+            </type>
+            <description value="Cascade delete all resources coupled to the created patient."/>
+            <resource value="Patient"/>
+            <accept value="xml"/>
+            <contentType value="xml"/>
+            <encodeRequestUrl value="true"/>
+            <params value="/${created-patient-id-trans-4}/$purge"/>
+            <requestHeader>
+               <field value="Prefer"/>
+               <value value="return=representation"/>
+            </requestHeader>
+         </operation>
+      </action>
+   </teardown>
+</TestScript>
