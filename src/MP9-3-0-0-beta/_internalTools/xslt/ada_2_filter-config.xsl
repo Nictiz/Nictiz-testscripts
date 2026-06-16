@@ -143,7 +143,7 @@
                         <periodParam operator="ge" dateDays="{substring-before(substring-after(ingangsdatum/@value, 'T'), 'D')}"/>
                     </xsl:when>
                     <xsl:when test="einddatum[@value]">
-                        <periodParam operator="le" dateDays="{substring-before(substring-after(einddatum/@value, 'T'), 'D')}"/>
+                        <periodParam operator="lt" dateDays="{substring-before(substring-after(einddatum/@value, 'T'), 'D')}"/>
                     </xsl:when>
                 </xsl:choose>
             </xsl:variable>
