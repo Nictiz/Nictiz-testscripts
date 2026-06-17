@@ -140,10 +140,10 @@
             </xsl:variable>
             
             <xsl:choose>
-                <!-- Special handling for scenarioset 0 -->
-                <xsl:when test="$scenarioString/@scenarioset = 0">
+                <!-- Special handling for scenarioset 0 and scenarioset 10-->
+                <xsl:when test="$scenarioString/@scenarioset = ('0','10')">
                     <xsl:choose>
-                        <xsl:when test="$scenarioString/@theScenario = '0'">
+                        <xsl:when test="$scenarioString/@theScenario = ('0','10')">
                             <!-- do nothing, filter scenario's are handled using ada_instance_filter folder, those are 0.x format-->                            
                         </xsl:when>
                         <xsl:otherwise>
@@ -189,8 +189,8 @@
                 <xsl:call-template name="getScenarioString"/>
             </xsl:variable>
             <xsl:choose>
-                <!-- Do nothing for scenarioset 0, handled by manually maintaining nts due to complexities in generating this -->
-                <xsl:when test="$scenarioString/@scenarioset = '0'"/>
+                <!-- Do nothing for scenarioset 0 and 10, handled by manually maintaining nts due to complexities in generating this -->
+                <xsl:when test="$scenarioString/@scenarioset = ('0','10')"/>
                 <xsl:otherwise>
                     <xsl:variable name="buildingBlockShort" select="substring-before(substring-after(./adaxml/data/beschikbaarstellen_medicatiegegevens/@id, 'mg-mp-mg-'), '-Scenarioset')"/>
                     <xsl:variable name="testScriptTitle">
