@@ -69,6 +69,18 @@
     <xsl:template name="generatePropertiesFile">
         <xsl:param name="relFolderPath" as="xs:string" required="yes"/>
         <xsl:param name="loadscriptFolder" as="xs:boolean" required="yes"/>
+        
+        <xsl:variable name="targets" as="xs:string*">
+            <!-- All TestScripts, recursively, that contain @nts:in-targets -->
+            <xsl:variable name="targetTestScripts" select="collection(iri-to-uri(concat($baseDirUrl, '/', $relFolderPath, '?select=', '*.xml;recurse=yes')))//f:TestScript[//@nts:in-targets]"/>
+            <xsl:for-each-group select="$targetTestScripts" group-by="replace(base-uri(.), '/[^/]+$', '')">
+                <xsl:variable name="atts" as="attribute()*" select="current-group()//@nts:in-targets"/>
+                <xsl:variable name="tokens" as="xs:string*" select="tokenize(string-join($atts ! string(.), ' '), '\s*,\s*|\s+')"/>
+                <xsl:variable name="relPath" select="substring-after(current-grouping-key(),concat($baseDirUrl,'/'))"/>
+                
+                <xsl:value-of select="distinct-values($tokens)[. != ''][. != '#default']"/>
+            </xsl:for-each-group>
+        </xsl:variable>
 
         <!-- Create an XML representation of the desired JSON structure, which can be written as JSON using xml-to-json. --> 
         <xsl:variable name="properties">
@@ -93,34 +105,77 @@
                             </xsl:if>
                         </xsl:for-each>
                     </xsl:variable> 
-                
+                    
+                    <xsl:variable name="clRole">
+                        <xsl:choose>
+                            <xsl:when test="contains($subfolders[3], 'Receiving')">Receiving System</xsl:when>
+                            <xsl:when test="contains($subfolders[3], 'Retrieving')">Retrieving System</xsl:when>
+                            <xsl:when test="contains($subfolders[3], 'Sending')">Sending System</xsl:when>
+                            <xsl:when test="contains($subfolders[3], 'Serving')">Serving System</xsl:when>
+                            <xsl:otherwise>
+                                <xsl:message terminate="yes">Could not determine clRole: <xsl:value-of select="$subfolders[3]"/></xsl:message>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                        <xsl:value-of select="' (MP-'"/>
+                        <xsl:value-of select="substring-after($subfolders[3],'-')"/>
+                        <xsl:value-of select="')'"/>
+                    </xsl:variable>
+                    <xsl:variable name="clRoleDescConfig" select="document('role-description-config.xml')"/>
+                    <xsl:variable name="clRoleDesc" select="$clRoleDescConfig//role[name/text() = $clRole]/description/text()"/>
                     <map key="role">
-                        <xsl:variable name="clRole">
-                            <xsl:choose>
-                                <xsl:when test="contains($subfolders[3], 'Receiving')">Receiving System</xsl:when>
-                                <xsl:when test="contains($subfolders[3], 'Retrieving')">Retrieving System</xsl:when>
-                                <xsl:when test="contains($subfolders[3], 'Sending')">Sending System</xsl:when>
-                                <xsl:when test="contains($subfolders[3], 'Serving')">Serving System</xsl:when>
-                                <xsl:otherwise>
-                                    <xsl:message terminate="yes">Could not determine clRole: <xsl:value-of select="$subfolders[3]"/></xsl:message>
-                                </xsl:otherwise>
-                            </xsl:choose>
-                            <xsl:value-of select="' (MP-'"/>
-                            <xsl:value-of select="substring-after($subfolders[3],'-')"/>
-                            <xsl:value-of select="')'"/>
-                        </xsl:variable>
                         <string key="name">
                              <xsl:value-of select="$clRole"/>
                             <xsl:message select="$clRole"/>
                         </string>
-                        <xsl:variable name="clRoleDescConfig" select="document('role-description-config.xml')"/>
-                        <xsl:variable name="clRoleDesc" select="$clRoleDescConfig//role[name/text() = $clRole]/description/text()"/>
                         <xsl:if test="not(empty($clRoleDesc))">
                             <string key="description">
-                                <xsl:value-of select="$clRoleDesc"/>
+                                <xsl:choose>
+                                    <xsl:when test="$targets = 'MedMij'">
+                                        <xsl:value-of select="replace($clRoleDesc, '(, |)PGO', '')"/>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <xsl:value-of select="$clRoleDesc"/>
+                                    </xsl:otherwise>
+                                </xsl:choose>
                             </string>
                         </xsl:if>
                     </map>
+                    
+                    <xsl:for-each select="$targets">
+                        <xsl:variable name="target" select="."/>
+                        <map key="{concat('role-',.)}">
+                            <string key="name">
+                                <xsl:value-of select="$clRole"/>
+                                <xsl:text> - </xsl:text>
+                                <xsl:choose>
+                                    <xsl:when test="$target = 'MedMij'">
+                                        <xsl:text>MedMij</xsl:text>
+                                    </xsl:when>
+                                    <xsl:when test="$target = 'Nictiz-intern'">
+                                        <xsl:text>Nictiz internal</xsl:text>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <xsl:value-of select="$target"/>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                            </string>
+                            <xsl:if test="$target = 'MedMij'">
+                                <string key="description">
+                                    <xsl:choose>
+                                        <xsl:when test="contains($clRoleDesc, 'Cons')">
+                                            <xsl:text>Consoldiatie voor PGO</xsl:text>
+                                        </xsl:when>
+                                        <xsl:when test="contains($clRole, 'Retrieving')">
+                                            <xsl:text>PGO</xsl:text>
+                                        </xsl:when>
+                                        <xsl:otherwise>
+                                            <xsl:value-of select="$clRoleDesc"/>
+                                        </xsl:otherwise>
+                                    </xsl:choose>
+                                </string>
+                            </xsl:if>
+                        </map>
+                    </xsl:for-each>    
 
                     <xsl:if test="$subfolders[1]">
                         <xsl:variable name="clCategory">
