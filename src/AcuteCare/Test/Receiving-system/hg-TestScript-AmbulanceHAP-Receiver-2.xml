@@ -1,166 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
-	nts:scenario="server">
-    <id value="hg-TestScript-AmbulanceHAP-Receiver-2"/>
-    <version value="0.1.0-alpha.1"/>
-    <title value="Scenario 2 - Receive minimal"/>
-    <description value="Receive an ambulance-to-HAP referral message with a lean message"/>
-    <nts:includeDateT value="yes"/>
+  nts:scenario="server">
+  <id value="hg-TestScript-AmbulanceHAP-Receiver-2" />
+  <version value="0.1.0-alpha.1" />
+  <title value="Scenario 2 - Receive minimal" />
+  <description value="Receive an ambulance-to-HAP referral message with a lean message" />
+  <nts:includeDateT value="yes" />
 
-    <variable>
-        <name value="created-patient-id"/>
-        <description value="The id of the created patient resource"/>
-        <expression value="Bundle.entry.where(response.location.startsWith('Patient/')).response.location.split('/')[1]"/>
-        <sourceId value="scenario-1-bundle-fixture"/>      
-    </variable>
+  <variable>
+    <name value="created-patient-id" />
+    <description value="The id of the created patient resource" />
+    <expression
+      value="Bundle.entry.where(response.location.startsWith('Patient/')).response.location.split('/')[1]" />
+    <sourceId value="scenario-bundle-fixture" />
+  </variable>
 
-    <nts:fixture id="scenario-bundle-fixture"
-        href="REPLACE-hg-ReferralBundle-AmbulanceHAP-min.xml"/> 
+  <nts:fixture id="scenario-bundle-fixture"
+    href="REPLACE-Bundle-hg-ReferralBundle-AmbulanceHAP-min.xml" />
 
-    <test id="01-receive-ambulance-referral">
-		  <description value="Receive patient az-ave-tst-3-minimaalTestdag."/>
-      <action>
-        <operation>
-            <type>
-                <system value="http://hl7.org/fhir/restful-interaction"/>
-                <code value="create"/>
-            </type>
-            <resource value="Bundle"/>
-            <description value="Send the ambulance-to-HAP referral message Bundle to the receiver. PROVISIONAL: modelled as a create/POST pending the exchange-paradigm choice (#14)."/>
-            <origin value="1"/>
-            <destination value="1"/>
-            <encodeRequestUrl value="true"/>
-            <sourceId value="scenario-bundle-fixture"/>
-        </operation>
-      </action>
-      <nts:include value="assert.response.success" scope="common"/>
-      <nts:include value="assert.response.bundleContent" scope="common"/>
-    </test>
-    <teardown>
-      <name value="teardown"/>
-      <description value="Delete the created resources"/>
-      <action>
-        <operation>
-            <type>
-              <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-operation-codes"/>
-              <code value="purge"/>
-            </type>
-            <description value="Delete all resources created during this test run that are associated with the created Patient resource."/>
-            <resource value="Patient"/>
-            <encodeRequestUrl value="true"/>
-            <params value="/${created-patient-id}/$purge"/>
-            <requestHeader>
-              <field value="Prefer"/>
-              <value value="return=representation"/>
-            </requestHeader>
-        </operation>
-      </action>
-    </teardown>
+  <test id="01-receive-ambulance-referral">
+    <description value="Receive patient az-ave-tst-3-minimaalTestdag." />
+    <action>
+      <operation>
+        <type>
+          <system value="http://hl7.org/fhir/restful-interaction" />
+          <code value="create" />
+        </type>
+        <resource value="Bundle" />
+        <description
+          value="Send the ambulance-to-HAP referral message Bundle to the receiver. PROVISIONAL: modelled as a create/POST pending the exchange-paradigm choice (#14)." />
+        <origin value="1" />
+        <destination value="1" />
+        <encodeRequestUrl value="true" />
+        <sourceId value="scenario-bundle-fixture" />
+      </operation>
+    </action>
+    <nts:include value="assert.response.success" scope="common" />
+    <nts:include value="assert.response.bundleContent" scope="common" />
+  </test>
+  <teardown>
+    <name value="teardown" />
+    <description value="Delete the created resources" />
+    <action>
+      <operation>
+        <type>
+          <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-operation-codes" />
+          <code value="purge" />
+        </type>
+        <description
+          value="Delete all resources created during this test run that are associated with the created Patient resource." />
+        <resource value="Patient" />
+        <encodeRequestUrl value="true" />
+        <params value="/${created-patient-id}/$purge" />
+        <requestHeader>
+          <field value="Prefer" />
+          <value value="return=representation" />
+        </requestHeader>
+      </operation>
+    </action>
+  </teardown>
 </TestScript>
-
-
-
-
-
-
-<!--{
-  "resourceType": "TestScript",
-  "id": "hg-TestScript-AmbulanceHAP-Receiver",
-  "meta": {
-    "profile": [
-      "http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-TestScript-core"
-    ]
-  },
-  "url": "http://nictiz.nl/fhir/TestScript/hg-TestScript-AmbulanceHAP-Receiver",
-  "title": "Acute Zorg - Ambulanceverwijzing - Receiver (accept message)",
-  "description": "Sends a conformant ambulance-to-HAP referral message to a receiving system (the system under test) and confirms it is accepted.",
-  "status": "active",
-  "version": "0.1.0-alpha.1",
-  "experimental": true,
-  "publisher": "Nictiz",
-  "contact": [
-    {
-      "name": "Nictiz",
-      "telecom": [
-        {
-          "system": "email",
-          "value": "kwalificatie@nictiz.nl"
-        }
-      ]
-    }
-  ],
-  "name": "hg-TestScript-AmbulanceHAP-Receiver",
-  "origin": [
-    {
-      "extension": [
-        {
-          "url": "http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT",
-          "valueBoolean": false
-        }
-      ],
-      "index": 1,
-      "profile": {
-        "code": "FHIR-Client",
-        "system": "http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"
-      }
-    }
-  ],
-  "destination": [
-    {
-      "extension": [
-        {
-          "url": "http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT",
-          "valueBoolean": true
-        }
-      ],
-      "index": 1,
-      "profile": {
-        "code": "FHIR-Server",
-        "system": "http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"
-      }
-    }
-  ],
-  "fixture": [
-    {
-      "id": "referral",
-      "autocreate": false,
-      "autodelete": false,
-      "resource": {
-        "reference": "../_reference/resources/Bundle-hg-ReferralBundle-AmbulanceHAP-referral.json"
-      }
-    }
-  ],
-  "test": [
-    {
-      "name": "Send the AMB-naar-HAP message to the receiver",
-      "description": "The engine pushes a conformant referral message; the receiving system (SUT) must accept it.",
-      "action": [
-        {
-          "operation": {
-            "type": {
-              "code": "create",
-              "system": "http://hl7.org/fhir/restful-interaction"
-            },
-            "resource": "Bundle",
-            "description": "Send the ambulance-to-HAP referral message Bundle to the receiver. PROVISIONAL: modelled as a create/POST pending the exchange-paradigm choice (#14).",
-            "sourceId": "referral",
-            "origin": 1,
-            "destination": 1,
-            "encodeRequestUrl": true
-          }
-        },
-        {
-          "assert": {
-            "description": "The receiving system accepts the message.",
-            "direction": "response",
-            "operator": "in",
-            "responseCode": "200,201",
-            "warningOnly": false,
-            "stopTestOnFail": true
-          }
-        }
-      ]
-    }
-  ]
-}-->
