@@ -14,7 +14,63 @@
 		<description value="Send patient az-ave-tst-3-minimaalTestdag." />
 		<nts:include value="test.general.createBundle" description="The sending system (SUT) pushes the ambulance-to-HAP referral message Bundle. PROVISIONAL: modelled as a create/POST pending the exchange-paradigm choice (#14)." />
 		<nts:include value="assert.response.success" scope="common" />
-		<nts:include value="assert.request.bundleContent" scope="common" />
+		<action>
+            <assert>
+                <description value="The pushed resource is a Bundle."/>
+                <direction value="request"/>
+                <resource value="Bundle"/>
+                <stopTestOnFail value="true"/>
+                <warningOnly value="false"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="The pushed Bundle is a message Bundle (Bundle.type = message)."/>
+                <direction value="request"/>
+                <expression value="Bundle.type = 'message'"/>
+                <stopTestOnFail value="true"/>
+                <warningOnly value="false"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="The pushed Bundle is a message Bundle (Bundle.type = message)."/>
+                <direction value="request"/>
+                <expression value="Bundle.type = 'message'"/>
+                <stopTestOnFail value="true"/>
+                <warningOnly value="false"/>
+            </assert>
+        </action>
+        
+        <nts:include value="assert.request.bundleContent" scope="common" />
+        
+        <action>
+            <assert>
+                <description value="The MessageHeader carries the AMB-naar-HAP transaction event (145)."/>
+                <direction value="request"/>
+                <expression value="Bundle.entry.resource.ofType(MessageHeader).event.ofType(Coding).code = '145'"/>
+                <stopTestOnFail value="true"/>
+                <warningOnly value="false"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="The MessageHeader focuses a resource (the referral ServiceRequest)."/>
+                <direction value="request"/>
+                <expression value="Bundle.entry.resource.ofType(MessageHeader).focus.exists()"/>
+                <stopTestOnFail value="false"/>
+                <warningOnly value="false"/>
+            </assert>
+        </action>
+        <action>
+            <assert>
+                <description value="The Composition carries the mandatory 'reason for referral' section (SNOMED 440378000)."/>
+                <direction value="request"/>
+                <expression value="Bundle.entry.resource.ofType(Composition).section.code.coding.where(system = 'http://snomed.info/sct' and code = '440378000').exists()"/>
+                <stopTestOnFail value="false"/>
+                <warningOnly value="false"/>
+            </assert>
+        </action> 
 	</test>
 	
     <nts:include value="teardown.general.bundle"/>
