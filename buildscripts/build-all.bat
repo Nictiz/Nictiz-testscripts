@@ -7,3 +7,4 @@
 @echo | call MedMij-2020.01-complete.bat
 @echo | call MedMij-2020.02-complete.bat
 @echo | call MedMij-V6-complete.bat
+@echo | call BirthCare-complete.bat

@@ -8,3 +8,4 @@ source MedMij-2019.01-complete.sh
 source MedMij-2020.01-complete.sh
 source MedMij-2020.02-complete.sh
 source MedMij-V6-complete.sh
+source BirthCare-complete.sh
