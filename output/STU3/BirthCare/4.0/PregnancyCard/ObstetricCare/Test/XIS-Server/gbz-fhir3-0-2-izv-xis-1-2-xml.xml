@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
-   <id value="gbz-fhir3-0-2-ikz-xis-1-1-xml"/>
+   <id value="gbz-fhir3-0-2-ikz-xis-1-2-xml"/>
    <extension url="http://touchstone.aegis.net/touchstone/fhir/testing/StructureDefinition/testscript-rule">
       <extension url="ruleId">
          <valueId value="assert-response-queryParamsInSelfLink"/>
@@ -9,9 +9,9 @@
          <valueString value="../_reference/rules/assert_response_queryParamsInSelfLink.groovy"/>
       </extension>
    </extension>
-   <url value="http://nictiz.nl/fhir/TestScript/gbz-fhir3-0-2-ikz-xis-1-1-xml"/>
+   <url value="http://nictiz.nl/fhir/TestScript/gbz-fhir3-0-2-ikz-xis-1-2-xml"/>
    <version value="stu3-3.0-patchlevel 2026.30"/>
-   <name value="Gbz_fhir3_0_2_ikz_xis_1_1_xml"/>
+   <name value="Gbz_fhir3_0_2_ikz_xis_1_2_xml"/>
    <title value="Scenario Obstetric Care casus 2 - Retrieve Pregnancy card - midwife care data set - Obstetric care resources of pregnancy with twins of Fiona Swartz - XML Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
@@ -66,6 +66,28 @@
       <name value="X-Correlation-ID"/>
       <defaultValue value="${UUID}"/>
       <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
+   </variable>
+   <variable>
+      <name value="bodysite1-id"/>
+      <description value="ID of the first fetus resource"/>
+      <expression value="Bundle.entry.resource.where($this is Observation).extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/observation-focusSTU3').value.where($this is Reference).reference.where(startsWith('BodySite/')).distinct()[0]"/>
+      <sourceId value="fixture-10a-ServeObservations"/>
+   </variable>
+   <variable>
+      <name value="bodysite2-id"/>
+      <description value="ID of the second fetus resource"/>
+      <expression value="Bundle.entry.resource.where($this is Observation).extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/observation-focusSTU3').value.where($this is Reference).reference.where(startsWith('BodySite/')).distinct()[1]"/>
+      <sourceId value="fixture-10a-ServeObservations"/>
+   </variable>
+   <variable>
+      <name value="babyAid"/>
+      <expression value="Bundle.entry.resource.where($this is BodySite).where(description.lower().replace(' ', '') = 'babya').id"/>
+      <sourceId value="bodysite-search-response"/>
+   </variable>
+   <variable>
+      <name value="babyBid"/>
+      <expression value="Bundle.entry.resource.where($this is BodySite).where(description.lower().replace(' ', '') = 'babyb').id"/>
+      <sourceId value="bodysite-search-response"/>
    </variable>
    <test id="1-ServeWoman">
       <name value="1-ServeWoman"/>
@@ -2218,204 +2240,6 @@
             <warningOnly value="false"/>
          </assert>
       </action>
-      <!-- Bevalling -->
-      <!-- Ontsluitingsfase -->
-      <!-- tijdstip begin actieve ontsluiting -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 160621000146107. (start time of active dilation)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '160621000146107').count()=1).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- Wijze begin baring -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 160611000146102. (method of starting delivery)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '160611000146102').count()=1).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- tijdstip breken vliezen -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 289251005. (time of membrane rupture)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '289251005').count()=2).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- IK BEN HIER GEBLEVEN!!!!!-->
-      <!-- baby A -->
-      <!-- baby B -->
-      <!-- vruchtwater -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 168089007. (amniotic fluid)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '168089007').count()=2).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-DeliveryObservation168089007-b3d83f0b-6b76-11ec-2412-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>ofType(Observation).where(extension.value.ofType(Reference).reference.startsWith('Procedure/') and code.coding.where(system = 'http://snomed.info/sct' and code = '168089007'))</nts:discriminator>
-      </nts:contentAsserts>
-      <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-FetusObservation168089007-c37ac316-6b3f-11ec-1112-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>ofType(Observation).where(extension.value.ofType(Reference).reference.startsWith('BodySite/') and code.coding.where(system = 'http://snomed.info/sct' and code = '168089007'))</nts:discriminator>
-      </nts:contentAsserts> -->
-      <!-- Uitdrijvingsfase -->
-      <!-- tijdstip gebroken vliezen, zie ontsluitingsfase-->
-      <!-- aard vruchtwater, zie ontsluitingsfase-->
-      <!-- Actief meepersen -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 249163006. (active pushing)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '249163006').count()=1).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-BirthObservation249163006-96b40f0d-6ae8-11ec-2413-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>code.where(coding.where(code = '249163006'))</nts:discriminator>
-      </nts:contentAsserts> -->
-      <!-- type partus -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364336006. (pattern of delivery)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364336006').count()=1).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-BirthObservation364336006-22cdaece-6ae0-11ec-2414-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>code.where(coding.where(code = '364336006'))</nts:discriminator>
-      </nts:contentAsserts> -->
-      <!-- ligging kind -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 271692001. (Foetal presentation)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '271692001').count()=1).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-FetusObservation271692001-e0b79630-6b2a-11ec-2416-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>code.where(coding.where(code = '271692001'))</nts:discriminator>
-      </nts:contentAsserts> -->
-      <!-- bevinding betreffen locatie van partus -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 366344009. (place of birth - finding)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '366344009').count()=1).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-BirthObservation366344009-6633c092-6ade-11ec-2419-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>code.where(coding.where(code = '366344009'))</nts:discriminator>
-      </nts:contentAsserts> -->
-      <!-- Nageboortefase -->
-      <!-- Perineum -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 609625009. (Finding of pelvic region of trunk)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '609625009').count()=1).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-PerinealAssessment609625009-684ffb15-6aaa-11ec-2395-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>code.where(coding.where(code = '609625009'))</nts:discriminator>
-      </nts:contentAsserts> -->
-      <!-- Wijze Geboorte Placenta -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 236994008. (placental delivery procedure)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '236994008').count()=1).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-DeliveryObservation236994008-2c9c7a0f-6add-11ec-2421-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>code.where(coding.where(code = '236994008'))</nts:discriminator>
-      </nts:contentAsserts> -->
-      <!-- Geboorte placenta tijd -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 136311000146100. (date and time of delivery of placenta)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '136311000146100').count()=1).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-DeliveryObservation136311000146100-d6fda78b-6aeb-11ec-2423-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>code.where(coding.where(code = '136311000146100'))</nts:discriminator>
-      </nts:contentAsserts> -->
-      <!-- compleetheid placenta -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364343000. (completeness of placenta)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364343000').count()=1).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-DeliveryObservation364343000-b02d12f7-6b47-11ec-2424-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>code.where(coding.where(code = '364343000'))</nts:discriminator>
-      </nts:contentAsserts> -->
-      <!-- compleetheid van vruchtvliezen -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364351002. (Completeness of membranes)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364351002').count()=1).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-DeliveryObservation364351002-ea91873b-6b13-11ec-2427-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>code.where(coding.where(code = '364351002'))</nts:discriminator>
-      </nts:contentAsserts> -->
-      <!-- aantal bloedvaten in navelstreng -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 249191003. (Number of blood vessels in umbilical cord)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '249191003').count()=1).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-DeliveryObservation249191003-832a4629-6b23-11ec-2429-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>code.where(coding.where(code = '249191003'))</nts:discriminator>
-      </nts:contentAsserts> -->
-      <!-- bloedverlies -->
-      <action>
-         <assert>
-            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364332008. (blood loss in labour)"/>
-            <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364332008').count()=1).exists()"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-DeliveryObservation364332008-2ed14cf4-6b34-11ec-2396-020000000000.xml" nts:in-targets="CheckContent">
-         <nts:discriminator>code.where(coding.where(code = '364332008'))</nts:discriminator>
-      </nts:contentAsserts> -->
       <action>
          <assert>
             <description value="Confirm that the response Bundle contains 30 Observation resource(s)."/>
@@ -2623,6 +2447,7 @@
             <warningOnly value="true"/>
          </assert>
       </action>
+      <!-- resolve fetus resources -->
       <!-- Prenatale controle -->
       <!-- Lichaamsgewicht -->
       <action>
@@ -2686,6 +2511,203 @@
             <warningOnly value="true"/>
          </assert>
       </action>
+      <!-- Bevalling -->
+      <!-- Ontsluitingsfase -->
+      <!-- tijdstip begin actieve ontsluiting -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 160621000146107. (start time of active dilation)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '160621000146107').count()=1).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Wijze begin baring -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 160611000146102. (method of starting delivery)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '160611000146102').count()=1).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- tijdstip breken vliezen -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 3 Observation resource(s) with code http://snomed.info/sct | 289251005. (time of membrane rupture)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '289251005').count()=3).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- baby A -->
+      <!-- baby B -->
+      <!-- vruchtwater -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 168089007. (amniotic fluid)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '168089007').count()=2).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-DeliveryObservation168089007-b3d83f0b-6b76-11ec-2412-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>ofType(Observation).where(extension.value.ofType(Reference).reference.startsWith('Procedure/') and code.coding.where(system = 'http://snomed.info/sct' and code = '168089007'))</nts:discriminator>
+      </nts:contentAsserts>
+      <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-FetusObservation168089007-c37ac316-6b3f-11ec-1112-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>ofType(Observation).where(extension.value.ofType(Reference).reference.startsWith('BodySite/') and code.coding.where(system = 'http://snomed.info/sct' and code = '168089007'))</nts:discriminator>
+      </nts:contentAsserts> -->
+      <!-- Uitdrijvingsfase -->
+      <!-- tijdstip gebroken vliezen, zie ontsluitingsfase-->
+      <!-- aard vruchtwater, zie ontsluitingsfase-->
+      <!-- Actief meepersen -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 249163006. (active pushing)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '249163006').count()=1).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-BirthObservation249163006-96b40f0d-6ae8-11ec-2413-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code = '249163006'))</nts:discriminator>
+      </nts:contentAsserts> -->
+      <!-- type partus -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364336006. (pattern of delivery)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364336006').count()=1).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-BirthObservation364336006-22cdaece-6ae0-11ec-2414-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code = '364336006'))</nts:discriminator>
+      </nts:contentAsserts> -->
+      <!-- ligging kind -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 271692001. (Foetal presentation)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '271692001').count()=1).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-FetusObservation271692001-e0b79630-6b2a-11ec-2416-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code = '271692001'))</nts:discriminator>
+      </nts:contentAsserts> -->
+      <!-- bevinding betreffen locatie van partus -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 366344009. (place of birth - finding)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '366344009').count()=1).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-BirthObservation366344009-6633c092-6ade-11ec-2419-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code = '366344009'))</nts:discriminator>
+      </nts:contentAsserts> -->
+      <!-- Nageboortefase -->
+      <!-- Perineum -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 609625009. (Finding of pelvic region of trunk)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '609625009').count()=1).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-PerinealAssessment609625009-684ffb15-6aaa-11ec-2395-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code = '609625009'))</nts:discriminator>
+      </nts:contentAsserts> -->
+      <!-- Wijze Geboorte Placenta -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 236994008. (placental delivery procedure)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '236994008').count()=1).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-DeliveryObservation236994008-2c9c7a0f-6add-11ec-2421-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code = '236994008'))</nts:discriminator>
+      </nts:contentAsserts> -->
+      <!-- Geboorte placenta tijd -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 136311000146100. (date and time of delivery of placenta)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '136311000146100').count()=1).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-DeliveryObservation136311000146100-d6fda78b-6aeb-11ec-2423-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code = '136311000146100'))</nts:discriminator>
+      </nts:contentAsserts> -->
+      <!-- compleetheid placenta -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364343000. (completeness of placenta)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364343000').count()=1).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-DeliveryObservation364343000-b02d12f7-6b47-11ec-2424-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code = '364343000'))</nts:discriminator>
+      </nts:contentAsserts> -->
+      <!-- compleetheid van vruchtvliezen -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364351002. (Completeness of membranes)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364351002').count()=1).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-DeliveryObservation364351002-ea91873b-6b13-11ec-2427-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code = '364351002'))</nts:discriminator>
+      </nts:contentAsserts> -->
+      <!-- aantal bloedvaten in navelstreng -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 249191003. (Number of blood vessels in umbilical cord)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '249191003').count()=1).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-DeliveryObservation249191003-832a4629-6b23-11ec-2429-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code = '249191003'))</nts:discriminator>
+      </nts:contentAsserts> -->
+      <!-- bloedverlies -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364332008. (blood loss in labour)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364332008').count()=1).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-DeliveryObservation364332008-2ed14cf4-6b34-11ec-2396-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code = '364332008'))</nts:discriminator>
+      </nts:contentAsserts> -->
       <action>
          <assert>
             <description value="Confirm that the response Bundle contains 7 Observation resource(s)."/>
