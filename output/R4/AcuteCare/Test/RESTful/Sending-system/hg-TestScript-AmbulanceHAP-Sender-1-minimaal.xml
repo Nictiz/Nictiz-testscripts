@@ -39,6 +39,12 @@
    </fixture>
    <profile id="Bundle-profile"
             value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
+   <variable>
+      <name value="created-servicerequest-id"/>
+      <description value="The id of the created ServiceRequest resource"/>
+      <expression value="Bundle.entry.response.location.where(startsWith('ServiceRequest/')).replaceMatches('^ServiceRequest/([^/]+).*$','$1')"/>
+      <sourceId value="scenario-servicerequest-response"/>
+   </variable>
    <test id="01-send-ambulance-referral">
       <description value="Send patient az-ave-tst-1-minimaal."/>
       <action>
@@ -187,4 +193,24 @@
          </assert>
       </action>
    </test>
+   <teardown>
+      <name value="teardown"/>
+      <description value="Delete the created resources"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-operation-codes"/>
+               <code value="delete"/>
+            </type>
+            <description value="Delete Bundle resource created during this test run."/>
+            <resource value="Bundle"/>
+            <encodeRequestUrl value="true"/>
+            <params value="/${created-servicerequest-id}"/>
+            <requestHeader>
+               <field value="Prefer"/>
+               <value value="return=representation"/>
+            </requestHeader>
+         </operation>
+      </action>
+   </teardown>
 </TestScript>
