@@ -15,7 +15,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario Maternity Care casus 1 of the [Birth Care - Retrieve maternity care data set use case](https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2020.01/FHIR_Implementation_Guide:_Pregnancy_Card_Maternity_Care). See [the test file on the Nictiz wiki](https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2020.01/Geboortezorg_3.2_-_kwalificatie_MedMij_-_Beschikbaarstellen_Integrale_Zwangerschapskaart_2.0_Echo) for more information."/>
+   <description value="Scenario Maternity Care casus 1 of the [Birth Care - Retrieve maternity care data set use case](https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2020.01/FHIR_Implementation_Guide:_Pregnancy_Card_Maternity_Care). See [the test file on the Nictiz wiki](https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2020.01/Geboortezorg_3.2_-_kwalificatie_MedMij_-_Raadplegen_Integrale_Zwangerschapskaart_2.0_Kraam) for more information."/>
    <origin>
       <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
          <valueBoolean value="true"/>
@@ -55,7 +55,7 @@
    </variable>
    <test id="1-RetrieveWoman">
       <name value="1-RetrieveWoman"/>
-      <description value="Query Patient resource for HCIM Patient"/>
+      <description value="Retrieve all Patient resources provided for this test"/>
       <action>
          <operation>
             <type>
@@ -133,7 +133,7 @@
    </test>
    <test id="2-RetrievePayer">
       <name value="2-RetrievePayer"/>
-      <description value="Query Coverage resource for HCIM Payer"/>
+      <description value="Retrieve all Coverage resources provided for this test"/>
       <action>
          <operation>
             <type>
@@ -211,7 +211,7 @@
    </test>
    <test id="3-RetrieveFamilyMemberHistory">
       <name value="3-RetrieveFamilyMemberHistory"/>
-      <description value="Query FamilyMemberHistory resource for FamilyMemberHistory"/>
+      <description value="Retrieve all FamilyMemberHistory resources provided for this test"/>
       <action>
          <operation>
             <type>
@@ -289,7 +289,7 @@
    </test>
    <test id="4-RetrieveDeviceUseStatement">
       <name value="4-RetrieveDeviceUseStatement"/>
-      <description value="Query DeviceUseStatement resource for HCIM BladderFunction-UrineCatheter"/>
+      <description value="Retrieve all DeviceUseStatement resources provided for this test"/>
       <action>
          <operation>
             <type>
@@ -366,9 +366,87 @@
          </assert>
       </action>
    </test>
-   <test id="5-RetrieveMaternalRecord">
-      <name value="5-RetrieveMaternalRecord"/>
-      <description value="Test Client query operation for MaternalRecord (EpisodeOfCare) including managing organization (Organization) and care manager (Practitioner)"/>
+   <test id="5-RetrieveRelatedPerson">
+      <name value="5-RetrieveRelatedPerson"/>
+      <description value="Retrieve all RelatedPerson resources provided for this test"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="RelatedPerson"/>
+            <description value="Test PHR client to retrieve RelatedPerson resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 56b4b2b6-f9a3-43df-9e14-7e853c784138"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 56b4b2b6-f9a3-43df-9e14-7e853c784138"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 56b4b2b6-f9a3-43df-9e14-7e853c784138"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 1 RelatedPerson resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(RelatedPerson)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="6-RetrieveMaternalRecord">
+      <name value="6-RetrieveMaternalRecord"/>
+      <description value="Retrieve all MaternalRecord (EpisodeOfCare) resources provided for this test, including managing organization (Organization) and care manager (Practitioner)"/>
       <action>
          <operation>
             <type>
@@ -463,9 +541,9 @@
          </assert>
       </action>
    </test>
-   <test id="6-RetrieveConditions">
-      <name value="6-RetrieveConditions"/>
-      <description value="Test Client query operation for Conditions (including Pregnancy)"/>
+   <test id="7-RetrieveConditions">
+      <name value="7-RetrieveConditions"/>
+      <description value="Retrieve all Condition (including Pregnancy) resources linked to the EpisodeOfCare provided for this test"/>
       <action>
          <operation>
             <type>
@@ -562,9 +640,9 @@
          </assert>
       </action>
    </test>
-   <test id="7-RetrieveEncounters">
-      <name value="7-RetrieveEncounters"/>
-      <description value="Test Client query operation for Encounters"/>
+   <test id="8-RetrieveEncounters">
+      <name value="8-RetrieveEncounters"/>
+      <description value="Retrieve all Encounter resources provided for this test, including the associated Practitioner"/>
       <action>
          <operation>
             <type>
@@ -650,9 +728,9 @@
          </assert>
       </action>
    </test>
-   <test id="8a-RetrieveObservations">
-      <name value="8a-RetrieveObservations"/>
-      <description value="Test Client query operation for Observations"/>
+   <test id="9a-RetrieveObservations">
+      <name value="9a-RetrieveObservations"/>
+      <description value="Retrieve all Observation resources linked to the EpisodeOfCare provided for this test"/>
       <action>
          <operation>
             <type>
@@ -1122,9 +1200,9 @@
          </assert>
       </action>
    </test>
-   <test id="8b-RetrieveObservations">
-      <name value="8b-RetrieveObservations"/>
-      <description value="Test Client query operation for Observations"/>
+   <test id="9b-RetrieveObservations">
+      <name value="9b-RetrieveObservations"/>
+      <description value="Retrieve all Observation resources linked to the Encounter within the EpisodeOfCare provided for this test"/>
       <action>
          <operation>
             <type>
@@ -1242,9 +1320,9 @@
          </assert>
       </action>
    </test>
-   <test id="9-RetrieveProcedures">
-      <name value="9-RetrieveProcedures"/>
-      <description value="Test Client query operation for (Obstetric) Procedures"/>
+   <test id="10-RetrieveProcedures">
+      <name value="10-RetrieveProcedures"/>
+      <description value="Retrieve all Procedure resources linked to the EpisodeOfCare provided for this test, including the performer and based-on procedure resources"/>
       <action>
          <operation>
             <type>
@@ -1359,9 +1437,9 @@
          </assert>
       </action>
    </test>
-   <test id="10-RetrieveCareTeam">
-      <name value="10-RetrieveCareTeam"/>
-      <description value="Test Client query operation for CareTeam"/>
+   <test id="11-RetrieveCareTeam">
+      <name value="11-RetrieveCareTeam"/>
+      <description value="Retrieve all CareTeam resources linked to the EpisodeOfCare provided for this test"/>
       <action>
          <operation>
             <type>
@@ -1433,84 +1511,6 @@
             <description value="Confirm that the response Bundle contains 0 CareTeam resource(s)."/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(CareTeam)).count() = 0"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-   </test>
-   <test id="11-RetrieveRelatedPerson">
-      <name value="11-RetrieveRelatedPerson"/>
-      <description value="Test Client query operation for RelatedPerson"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/restful-interaction"/>
-               <code value="search"/>
-            </type>
-            <resource value="RelatedPerson"/>
-            <description value="Test PHR client to retrieve RelatedPerson resources."/>
-            <destination value="1"/>
-            <encodeRequestUrl value="true"/>
-            <origin value="1"/>
-            <requestHeader>
-               <field value="Authorization"/>
-               <value value="Bearer 56b4b2b6-f9a3-43df-9e14-7e853c784138"/>
-            </requestHeader>
-         </operation>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 56b4b2b6-f9a3-43df-9e14-7e853c784138"/>
-            <direction value="request"/>
-            <headerField value="Authorization"/>
-            <stopTestOnFail value="false"/>
-            <value value="Bearer 56b4b2b6-f9a3-43df-9e14-7e853c784138"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="patient="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
-            <direction value="request"/>
-            <operator value="notContains"/>
-            <requestURL value="subject="/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Make sure that the server of the test simulator gives a success response."/>
-            <operator value="in"/>
-            <responseCode value="200,201"/>
-            <stopTestOnFail value="true"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that the server of the test simulator returns a Bundle."/>
-            <direction value="response"/>
-            <resource value="Bundle"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Confirm that the response Bundle contains 1 RelatedPerson resource(s)."/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.where(resource.is(RelatedPerson)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
