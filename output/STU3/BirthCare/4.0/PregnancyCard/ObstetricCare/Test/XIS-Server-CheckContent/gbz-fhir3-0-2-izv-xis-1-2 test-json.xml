@@ -63,11 +63,6 @@
       <description value="Date that data and queries are expected to be relative to."/>
    </variable>
    <variable>
-      <name value="X-Correlation-ID"/>
-      <defaultValue value="${UUID}"/>
-      <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
-   </variable>
-   <variable>
       <name value="bodysite1-id"/>
       <description value="ID of the first fetus resource"/>
       <expression value="Bundle.entry.resource.where($this is Observation).extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/observation-focusSTU3').value.where($this is Reference).reference.where(startsWith('BodySite/')).distinct()[0]"/>
@@ -88,6 +83,18 @@
       <name value="babyBid"/>
       <expression value="Bundle.entry.resource.where($this is BodySite).where(description.lower().replace(' ', '') = 'babyb').id"/>
       <sourceId value="bodysite-search-response"/>
+   </variable>
+   <variable>
+      <name value="X-Correlation-ID"/>
+      <defaultValue value="${UUID}"/>
+      <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
+   </variable>
+   <variable>
+      <name value="0332ec90-6af5-11ec-2107-020000000000-id"/>
+      <description value="Resource.id for Observation 1"/>
+      <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code = '29463-7'))).id'-->
+      <expression value="Bundle.entry.resource.where($this is Observation).where(code.where(coding.where(code = '29463-7'))).id"/>
+      <sourceId value="fixture-10b-ServeObservations"/>
    </variable>
    <test id="10b-ServeObservations">
       <name value="10b-ServeObservations"/>
@@ -117,6 +124,7 @@
                <field value="X-Correlation-ID"/>
                <value value="${X-Correlation-ID}"/>
             </requestHeader>
+            <responseId value="fixture-10b-ServeObservations"/>
          </operation>
       </action>
       <action>
@@ -286,7 +294,168 @@
             <warningOnly value="true"/>
          </assert>
       </action>
-      <!-- resolve fetus resources -->
+      <!-- Prenatale controle -->
+      <!-- Lichaamsgewicht -->
+   </test>
+   <test>
+      <name value="10b-ServeObservations - Check Observation"/>
+      <description value="Check if the previous operation results in a FHIR Observation that contains the values that are expected following Nictiz' materials (fixture .id: 0332ec90-6af5-11ec-2107-020000000000)"/>
+      <action>
+         <assert>
+            <description value="Response Bundle contains exactly 1 Observation"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code = '29463-7'))).count() = 1'-->
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.where(coding.where(code = '29463-7'))).count() = 1"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Observation resource evaluated in the previous assert contains an .id"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(code.where(coding.where(code = '29463-7'))).id.exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.where(coding.where(code = '29463-7'))).id.exists()"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-1"/>
+            <description value="Contains .meta with .profile 'http://nictiz.nl/fhir/StructureDefinition/zib-BodyWeight'"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-BodyWeight').exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').meta.profile.where($this = 'http://nictiz.nl/fhir/StructureDefinition/zib-BodyWeight').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-2"/>
+            <description value="Contains .identifier with .system and .value"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').identifier.where(system and value).exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').identifier.where(system and value).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-3"/>
+            <description value="Contains .status 'final'"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').status = 'final''-->
+            <expression value="Bundle.entry.resource.where($this is Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').status = 'final'"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-4"/>
+            <description value="Contains .category with .coding with .system 'http://hl7.org/fhir/observation-category' and .code 'vital-signs' and .display"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').category.where(coding.where(system = 'http://hl7.org/fhir/observation-category' and code = 'vital-signs' and display)).exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').category.where(coding.where(system = 'http://hl7.org/fhir/observation-category' and code = 'vital-signs' and display)).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-5"/>
+            <description value="Contains .code with .coding with .system 'http://loinc.org' and .code '29463-7' and .display"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').code.coding.where(system = 'http://loinc.org' and code = '29463-7' and display).exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').code.coding.where(system = 'http://loinc.org' and code = '29463-7' and display).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-6"/>
+            <description value="Contains .subject with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').subject.where((reference or identifier) and display).exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').subject.where((reference or identifier) and display).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-7"/>
+            <description value="Contains .context with either .reference or .identifier and .display"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').context.where((reference or identifier) and display).exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').context.where((reference or identifier) and display).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-8"/>
+            <description value="Contains .effectiveDateTime"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').effective.ofType(dateTime).exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').effective.where($this is dateTime).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-9"/>
+            <description value="Contains .valueQuantity with .value '63' and .unit and .system 'http://unitsofmeasure.org' and .code 'kg'"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').value.ofType(Quantity).where(value = 63 and unit and system = 'http://unitsofmeasure.org' and code = 'kg').exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').value.where($this is Quantity).where(value = 63 and unit and system = 'http://unitsofmeasure.org' and code = 'kg').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-10"/>
+            <description value="Contains .component with .code with .coding with .system 'http://loinc.org' and .code '8352-7' and .display, and .valueCodeableConcept with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.3.11.60.40.4.8.1' and .code 'MINIMAL' and .display. This assert checks if all children exist (if applicable with their specific values) and if they are present within one element. Following asserts check if individual children exist to help you debug if this assert fails"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').component.where(code.coding.where(system = 'http://loinc.org' and code = '8352-7' and display) and value.ofType(CodeableConcept).coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.3.11.60.40.4.8.1' and code = 'MINIMAL' and display)).exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').component.where(code.coding.where(system = 'http://loinc.org' and code = '8352-7' and display) and value.where($this is CodeableConcept).coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.3.11.60.40.4.8.1' and code = 'MINIMAL' and display)).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-10-1"/>
+            <description value="Contains .component.code with .coding with .system 'http://loinc.org' and .code '8352-7' and .display. This assert checks only one child. Assert 1-10 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').component.where(code.coding.where(system = 'http://loinc.org' and code = '8352-7' and display).exists()).exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').component.where(code.coding.where(system = 'http://loinc.org' and code = '8352-7' and display).exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="1-10-2"/>
+            <description value="Contains .component.valueCodeableConcept with .coding with .system 'urn:oid:2.16.840.1.113883.2.4.3.11.60.40.4.8.1' and .code 'MINIMAL' and .display. This assert checks only one child. Assert 1-10 checks if all children are present in the same parent"/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').component.where(value.ofType(CodeableConcept).coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.3.11.60.40.4.8.1' and code = 'MINIMAL' and display).exists()).exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Observation).where(id = '${0332ec90-6af5-11ec-2107-020000000000-id}').component.where(value.where($this is CodeableConcept).coding.where(system = 'urn:oid:2.16.840.1.113883.2.4.3.11.60.40.4.8.1' and code = 'MINIMAL' and display).exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="10c-ResolveFetusResources">
+      <name value="10c-ResolveFetusResources"/>
+      <description value="Resolve fetus resources for testing purposes."/>
       <action>
          <operation>
             <type>

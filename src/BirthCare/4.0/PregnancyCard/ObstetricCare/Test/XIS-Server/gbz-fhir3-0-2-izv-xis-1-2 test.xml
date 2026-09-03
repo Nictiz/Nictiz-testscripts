@@ -8,17 +8,7 @@
    <nts:include value="gbz-variable-episode-id-with-status" name="episode-id" status="finished" sourceId="fixture-7-ServeMaternalRecord"/>
    <nts:includeDateT value="yes"/>
    
-      
-   <!-- Observations - Observaties gekoppeld aan prenatale controle -->  
-   <test id="10b-ServeObservations">
-      <name value="10b-ServeObservations"/>
-      <description value="Test Server query operation for Observations"/>  
-      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
-         <nts:with-parameter name="resource" value="Observation"/>
-         <nts:with-parameter name="params" value="?context:Encounter.episodeofcare=EpisodeOfCare/${episode-id}"/>
-      </nts:include>
-      <!-- resolve fetus resources -->
-      <variable>
+   <variable>
          <name value="bodysite1-id"/>
          <description value="ID of the first fetus resource"/>
          <expression value="Bundle.entry.resource.where($this is Observation).extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/observation-focusSTU3').value.where($this is Reference).reference.where(startsWith('BodySite/')).distinct()[0]"/>
@@ -40,6 +30,33 @@
          <expression value="Bundle.entry.resource.where($this is BodySite).where(description.lower().replace(' ', '') = 'babyb').id"/>
          <sourceId value="bodysite-search-response"/>
       </variable>
+      
+   <!-- Observations - Observaties gekoppeld aan prenatale controle -->  
+   <test id="10b-ServeObservations">
+      <name value="10b-ServeObservations"/>
+      <description value="Test Server query operation for Observations"/>  
+      <nts:include value="medmij/test.xis.successfulSearch" scope="common">
+         <nts:with-parameter name="resource" value="Observation"/>
+         <nts:with-parameter name="params" value="?context:Encounter.episodeofcare=EpisodeOfCare/${episode-id}"/>
+      </nts:include>
+      <!-- Prenatale controle -->
+      <!-- Lichaamsgewicht -->
+       <nts:include value="gbz-assert-returnCountWithCode" nts:in-targets="#default">
+         <nts:with-parameter name="additionalDescription" value="(body weight)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Observation"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="29463-7"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://loinc.org"></nts:with-parameter>
+      </nts:include>
+      <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-zib-BodyWeight29463-7-0332ec90-6af5-11ec-2107-020000000000.xml" nts:in-targets="CheckContent">
+         <nts:discriminator>code.where(coding.where(code = '29463-7'))</nts:discriminator>
+      </nts:contentAsserts>
+   </test>
+
+   <test id="10c-ResolveFetusResources">
+      <name value="10c-ResolveFetusResources"/>
+      <description value="Resolve fetus resources for testing purposes."/>
+   
       <action nts:in-targets="CheckContent">
          <operation>
             <type>
@@ -67,6 +84,5 @@
             <stopTestOnFail value="false"/>
          </assert>
       </action>
-   </test>
-   
+   </test>   
 </TestScript>

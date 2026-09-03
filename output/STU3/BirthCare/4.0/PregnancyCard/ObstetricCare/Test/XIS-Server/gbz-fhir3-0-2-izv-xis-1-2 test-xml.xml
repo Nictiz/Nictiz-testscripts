@@ -63,11 +63,6 @@
       <description value="Date that data and queries are expected to be relative to."/>
    </variable>
    <variable>
-      <name value="X-Correlation-ID"/>
-      <defaultValue value="${UUID}"/>
-      <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
-   </variable>
-   <variable>
       <name value="bodysite1-id"/>
       <description value="ID of the first fetus resource"/>
       <expression value="Bundle.entry.resource.where($this is Observation).extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/observation-focusSTU3').value.where($this is Reference).reference.where(startsWith('BodySite/')).distinct()[0]"/>
@@ -88,6 +83,11 @@
       <name value="babyBid"/>
       <expression value="Bundle.entry.resource.where($this is BodySite).where(description.lower().replace(' ', '') = 'babyb').id"/>
       <sourceId value="bodysite-search-response"/>
+   </variable>
+   <variable>
+      <name value="X-Correlation-ID"/>
+      <defaultValue value="${UUID}"/>
+      <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
    </variable>
    <test id="10b-ServeObservations">
       <name value="10b-ServeObservations"/>
@@ -286,6 +286,20 @@
             <warningOnly value="true"/>
          </assert>
       </action>
-      <!-- resolve fetus resources -->
+      <!-- Prenatale controle -->
+      <!-- Lichaamsgewicht -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 29463-7. (body weight)"/>
+            <direction value="response"/>
+            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '29463-7').count()=1).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="10c-ResolveFetusResources">
+      <name value="10c-ResolveFetusResources"/>
+      <description value="Resolve fetus resources for testing purposes."/>
    </test>
 </TestScript>
