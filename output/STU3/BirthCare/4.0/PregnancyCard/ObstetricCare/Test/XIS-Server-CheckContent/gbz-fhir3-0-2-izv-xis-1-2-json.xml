@@ -57,6 +57,21 @@
       <description value="Date that data and queries are expected to be relative to."/>
    </variable>
    <variable>
+      <name value="childJanId"/>
+      <expression value="Bundle.entry.resource.where(name.given.where($this.matches('(?i)^\\s*jan\\s*$'))).id"/>
+      <sourceId value="patient-resources"/>
+   </variable>
+   <variable>
+      <name value="childLilianneId"/>
+      <expression value="Bundle.entry.resource.where(name.given.where($this.matches('(?i)^\\s*lilianne\\s*$'))).id"/>
+      <sourceId value="patient-resources"/>
+   </variable>
+   <variable>
+      <name value="womanFionaId"/>
+      <expression value="Bundle.entry.resource.where(name.given.where($this.matches('(?i)^\\s*fiona\\s*$'))).id"/>
+      <sourceId value="patient-resources"/>
+   </variable>
+   <variable>
       <name value="bodysite1-id"/>
       <description value="ID of the first fetus resource"/>
       <expression value="Bundle.entry.resource.where($this is Observation).extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/observation-focusSTU3').value.where($this is Reference).reference.where(startsWith('BodySite/')).distinct()[0].replace('BodySite/', '')"/>
@@ -95,21 +110,6 @@
       <description value="ID of the third Procedure resource"/>
       <expression value="Bundle.entry.resource.where($this is Observation).extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/observation-focusSTU3').value.where($this is Reference).reference.where(startsWith('Procedure/')).distinct()[2].replace('Procedure/', '')"/>
       <sourceId value="observation-resources"/>
-   </variable>
-   <variable>
-      <name value="childJanId"/>
-      <expression value="Bundle.entry.resource.where(name.given.where($this.matches('(?i)^\\s*jan\\s*$'))).id"/>
-      <sourceId value="patient-resources"/>
-   </variable>
-   <variable>
-      <name value="childLilianneId"/>
-      <expression value="Bundle.entry.resource.where(name.given.where($this.matches('(?i)^\\s*lilianne\\s*$'))).id"/>
-      <sourceId value="patient-resources"/>
-   </variable>
-   <variable>
-      <name value="womanFionaId"/>
-      <expression value="Bundle.entry.resource.where(name.given.where($this.matches('(?i)^\\s*fiona\\s*$'))).id"/>
-      <sourceId value="patient-resources"/>
    </variable>
    <variable>
       <name value="procedureJanId"/>
@@ -207,8 +207,8 @@
    <variable>
       <name value="a6dcb094-6b39-11ec-1275-020000000000-id"/>
       <description value="Resource.id for Encounter 1"/>
-      <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(diagnosis.condition.display = 'Zwangerschap 1 XXX_Swart' and participant.type.coding.where(system = 'http://snomed.info/sct' and code = '768832004')).id'-->
-      <expression value="Bundle.entry.resource.where($this is Encounter).where(diagnosis.condition.display = 'Zwangerschap 1 XXX_Swart' and participant.type.coding.where(system = 'http://snomed.info/sct' and code = '768832004')).id"/>
+      <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.exists().not()).id'-->
+      <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.exists().not()).id"/>
       <sourceId value="fixture-9-ServeEncounters"/>
    </variable>
    <variable>
@@ -221,15 +221,15 @@
    <variable>
       <name value="bb5e99cf-6af2-11ec-1275-020000000000-id"/>
       <description value="Resource.id for Encounter 2"/>
-      <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').value.where($this is Reference).display = 'probleem zwangerschap XXX_Swart').id'-->
-      <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').value.where($this is Reference).display = 'probleem zwangerschap XXX_Swart').id"/>
+      <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.extension.valueReference.reference.startsWith('Procedure/')).id'-->
+      <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.extension.valueReference.reference.startsWith('Procedure/')).id"/>
       <sourceId value="fixture-9-ServeEncounters"/>
    </variable>
    <variable>
       <name value="ec3d4f8f-6aef-11ec-1275-020000000000-id"/>
       <description value="Resource.id for Encounter 3"/>
-      <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').value.where($this is Reference).display = 'verrichting kindspecifieke maternale verrichtingen zwangerschap 1 XXX_Swart').id'-->
-      <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').value.where($this is Reference).display = 'verrichting kindspecifieke maternale verrichtingen zwangerschap 1 XXX_Swart').id"/>
+      <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.extension.valueReference.reference.startsWith('Condition/')).id'-->
+      <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.extension.valueReference.reference.startsWith('Condition/')).id"/>
       <sourceId value="fixture-9-ServeEncounters"/>
    </variable>
    <variable>
@@ -4887,10 +4887,10 @@
       <description value="Check if the previous operation results in a FHIR Encounter that contains the values that are expected following Nictiz' materials (fixture .id: a6dcb094-6b39-11ec-1275-020000000000)"/>
       <action>
          <assert>
-            <description value="Response Bundle contains exactly 1 Encounter with properties: contains diagnosis.condition.display = 'Zwangerschap 1 XXX_Swart' and participant is Care manager"/>
+            <description value="Response Bundle contains exactly 1 Encounter with properties: contains no reason element"/>
             <direction value="response"/>
-            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(diagnosis.condition.display = 'Zwangerschap 1 XXX_Swart' and participant.type.coding.where(system = 'http://snomed.info/sct' and code = '768832004')).count() = 1'-->
-            <expression value="Bundle.entry.resource.where($this is Encounter).where(diagnosis.condition.display = 'Zwangerschap 1 XXX_Swart' and participant.type.coding.where(system = 'http://snomed.info/sct' and code = '768832004')).count() = 1"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.exists().not()).count() = 1'-->
+            <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.exists().not()).count() = 1"/>
             <stopTestOnFail value="true"/>
             <warningOnly value="false"/>
          </assert>
@@ -4899,8 +4899,8 @@
          <assert>
             <description value="Encounter resource evaluated in the previous assert contains an .id"/>
             <direction value="response"/>
-            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(diagnosis.condition.display = 'Zwangerschap 1 XXX_Swart' and participant.type.coding.where(system = 'http://snomed.info/sct' and code = '768832004')).id.exists()'-->
-            <expression value="Bundle.entry.resource.where($this is Encounter).where(diagnosis.condition.display = 'Zwangerschap 1 XXX_Swart' and participant.type.coding.where(system = 'http://snomed.info/sct' and code = '768832004')).id.exists()"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.exists().not()).id.exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.exists().not()).id.exists()"/>
             <stopTestOnFail value="true"/>
             <warningOnly value="false"/>
          </assert>
@@ -5287,10 +5287,10 @@
       <description value="Check if the previous operation results in a FHIR Encounter that contains the values that are expected following Nictiz' materials (fixture .id: bb5e99cf-6af2-11ec-1275-020000000000)"/>
       <action>
          <assert>
-            <description value="Response Bundle contains exactly 1 Encounter with properties: contains reason.display = 'probleem zwangerschap XXX_Swart'"/>
+            <description value="Response Bundle contains exactly 1 Encounter with properties: Encounter with reason referencing a Procedure"/>
             <direction value="response"/>
-            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').value.where($this is Reference).display = 'probleem zwangerschap XXX_Swart').count() = 1'-->
-            <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').value.where($this is Reference).display = 'probleem zwangerschap XXX_Swart').count() = 1"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.extension.valueReference.reference.startsWith('Procedure/')).count() = 1'-->
+            <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.extension.valueReference.reference.startsWith('Procedure/')).count() = 1"/>
             <stopTestOnFail value="true"/>
             <warningOnly value="false"/>
          </assert>
@@ -5299,8 +5299,8 @@
          <assert>
             <description value="Encounter resource evaluated in the previous assert contains an .id"/>
             <direction value="response"/>
-            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').value.where($this is Reference).display = 'probleem zwangerschap XXX_Swart').id.exists()'-->
-            <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').value.where($this is Reference).display = 'probleem zwangerschap XXX_Swart').id.exists()"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.extension.valueReference.reference.startsWith('Procedure/')).id.exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.extension.valueReference.reference.startsWith('Procedure/')).id.exists()"/>
             <stopTestOnFail value="true"/>
             <warningOnly value="false"/>
          </assert>
@@ -5443,10 +5443,10 @@
       <description value="Check if the previous operation results in a FHIR Encounter that contains the values that are expected following Nictiz' materials (fixture .id: ec3d4f8f-6aef-11ec-1275-020000000000)"/>
       <action>
          <assert>
-            <description value="Response Bundle contains exactly 1 Encounter with properties: contains reason.display = 'verrichting kindspecifieke maternale verrichtingen zwangerschap 1 XXX_Swart'"/>
+            <description value="Response Bundle contains exactly 1 Encounter with properties: Encounter with reason referencing a Condition"/>
             <direction value="response"/>
-            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').value.where($this is Reference).display = 'verrichting kindspecifieke maternale verrichtingen zwangerschap 1 XXX_Swart').count() = 1'-->
-            <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').value.where($this is Reference).display = 'verrichting kindspecifieke maternale verrichtingen zwangerschap 1 XXX_Swart').count() = 1"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.extension.valueReference.reference.startsWith('Condition/')).count() = 1'-->
+            <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.extension.valueReference.reference.startsWith('Condition/')).count() = 1"/>
             <stopTestOnFail value="true"/>
             <warningOnly value="false"/>
          </assert>
@@ -5455,8 +5455,8 @@
          <assert>
             <description value="Encounter resource evaluated in the previous assert contains an .id"/>
             <direction value="response"/>
-            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').value.where($this is Reference).display = 'verrichting kindspecifieke maternale verrichtingen zwangerschap 1 XXX_Swart').id.exists()'-->
-            <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').value.where($this is Reference).display = 'verrichting kindspecifieke maternale verrichtingen zwangerschap 1 XXX_Swart').id.exists()"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Encounter).where(reason.extension.valueReference.reference.startsWith('Condition/')).id.exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Encounter).where(reason.extension.valueReference.reference.startsWith('Condition/')).id.exists()"/>
             <stopTestOnFail value="true"/>
             <warningOnly value="false"/>
          </assert>

@@ -8,8 +8,23 @@
    <nts:include value="gbz-variable-episode-id-with-status" name="episode-id" status="finished" sourceId="fixture-7-ServeMaternalRecord"/>
    <nts:includeDateT value="yes"/>
 
-
-    <!-- resolve fetus variables -->
+   <!-- link patient resources to patients -->
+   <variable>
+      <name value="childJanId"/>
+      <expression value="Bundle.entry.resource.where(name.given.where($this.matches('(?i)^\\s*jan\\s*$'))).id"/>
+      <sourceId value="patient-resources"/>
+   </variable>
+   <variable>
+      <name value="childLilianneId"/>
+      <expression value="Bundle.entry.resource.where(name.given.where($this.matches('(?i)^\\s*lilianne\\s*$'))).id"/>
+      <sourceId value="patient-resources"/>
+   </variable>
+   <variable>
+      <name value="womanFionaId"/>
+      <expression value="Bundle.entry.resource.where(name.given.where($this.matches('(?i)^\\s*fiona\\s*$'))).id"/>
+      <sourceId value="patient-resources"/>
+   </variable>
+   <!-- resolve fetus variables -->
    <variable nts:in-targets="CheckContent">
       <name value="bodysite1-id"/>
       <description value="ID of the first fetus resource"/>
@@ -50,21 +65,6 @@
       <description value="ID of the third Procedure resource"/>
       <expression value="Bundle.entry.resource.where($this is Observation).extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/observation-focusSTU3').value.where($this is Reference).reference.where(startsWith('Procedure/')).distinct()[2].replace('Procedure/', '')"/>
       <sourceId value="observation-resources"/>
-   </variable>
-   <variable nts:in-targets="CheckContent">
-      <name value="childJanId"/>
-      <expression value="Bundle.entry.resource.where(name.given.where($this.matches('(?i)^\\s*jan\\s*$'))).id"/>
-      <sourceId value="patient-resources"/>
-   </variable>
-   <variable nts:in-targets="CheckContent">
-      <name value="childLilianneId"/>
-      <expression value="Bundle.entry.resource.where(name.given.where($this.matches('(?i)^\\s*lilianne\\s*$'))).id"/>
-      <sourceId value="patient-resources"/>
-   </variable>
-   <variable nts:in-targets="CheckContent">
-      <name value="womanFionaId"/>
-      <expression value="Bundle.entry.resource.where(name.given.where($this.matches('(?i)^\\s*fiona\\s*$'))).id"/>
-      <sourceId value="patient-resources"/>
    </variable>
    <variable nts:in-targets="CheckContent">
       <name value="procedureJanId"/>
@@ -321,8 +321,8 @@
       <nts:include value="assert.response.numResources" scope="common" resource="Practitioner" count="2"/> 
       <!-- Contact Contact-207D -->
       <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-Encounter-a6dcb094-6b39-11ec-1275-020000000000.xml" 
-         description="contains diagnosis.condition.display = 'Zwangerschap 1 XXX_Swart' and participant is Care manager" 
-         discriminator="diagnosis.condition.display = 'Zwangerschap 1 XXX_Swart' and participant.type.coding.where(system = 'http://snomed.info/sct' and code = '768832004')"
+         description="contains no reason element" 
+         discriminator="reason.exists().not()"
          nts:in-targets="CheckContent"/>
       <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-nl-core-practitioner-practitioner-mm-gbz-2-16-528-1-1007-3-1-123400011.xml" 
          description="contains name.text = 'Gemma XXX_Groeneboom-XXX_Gras'" 
@@ -330,13 +330,13 @@
          nts:in-targets="CheckContent"/>
       <!-- Contact Contact-70D -->
       <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-Encounter-bb5e99cf-6af2-11ec-1275-020000000000.xml" 
-         description="contains reason.display = 'probleem zwangerschap XXX_Swart'" 
-         discriminator="reason.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').value.where($this is Reference).display = 'probleem zwangerschap XXX_Swart'"
+         description="Encounter with reason referencing a Procedure"
+         discriminator="reason.extension.valueReference.reference.startsWith('Procedure/')"
          nts:in-targets="CheckContent"/>
       <!-- Contact Contact-10D -->
       <nts:contentAsserts href="gz-izv-kwa-casus2/mm-gbz-bc-Encounter-ec3d4f8f-6aef-11ec-1275-020000000000.xml" 
-         description="contains reason.display = 'verrichting kindspecifieke maternale verrichtingen zwangerschap 1 XXX_Swart'" 
-         discriminator="reason.extension.where(url = 'http://nictiz.nl/fhir/StructureDefinition/bc-encounter-reasonreference').value.where($this is Reference).display = 'verrichting kindspecifieke maternale verrichtingen zwangerschap 1 XXX_Swart'"
+         description="Encounter with reason referencing a Condition"
+         discriminator="reason.extension.valueReference.reference.startsWith('Condition/')"
          nts:in-targets="CheckContent"/>
    </test>  
       
