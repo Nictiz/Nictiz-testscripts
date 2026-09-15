@@ -96,9 +96,9 @@
          </test>
      
    <!-- Conditions - Problemen gerelateerd aan zorgepisode incl. zwangerschap -->
-   <test id="8-RetrieveConditions">
+   <test id="8a-RetrieveConditions">
       <nts:include value="test.client.ext.requestModes" scope="common" requestMode="random-order"/>
-      <name value="8-RetrieveConditions"/>
+      <name value="8a-RetrieveConditions"/>
       <description value="Retrieve all Condition (including Pregnancy) resources linked to the EpisodeOfCare provided for this test"/>
       <nts:include value="medmij/test.phr.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Condition"/>
@@ -129,6 +129,18 @@
          <nts:with-parameter name="code" value="22033007"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
+   </test>
+   
+   <!-- Conditions - Problemen gerelateerd aan een contact -->
+   <test id="8b-RetrieveConditions">
+      <nts:include value="test.client.ext.requestModes" scope="common" requestMode="random-order"/>
+      <name value="8b-RetrieveConditions"/>
+      <description value="Retrieve all Condition resources linked to an Encounter linked to the EpisodeOfCare provided for this test"/>
+      <nts:include value="medmij/test.phr.successfulSearch" scope="common">
+         <nts:with-parameter name="resource" value="Condition"/>
+         <nts:with-parameter name="params" value="?context:Encounter.episodeofcare=EpisodeOfCare/${episode-id}"/>
+      </nts:include>  
+      <nts:include value="assert.response.numResources" scope="common" resource="Condition" count="0"/>
    </test>
    
    <!-- Encounters -->
@@ -407,9 +419,9 @@
    </test>
 
    <!-- Alle verrichtingen -->
-   <test id="11-RetrieveProcedures">
+   <test id="11a-RetrieveProcedures">
       <nts:include value="test.client.ext.requestModes" scope="common" requestMode="random-order"/>
-      <name value="11-RetrieveProcedures"/>
+      <name value="11a-RetrieveProcedures"/>
       <description value="Retrieve all Procedure resources linked to the EpisodeOfCare provided for this test, including the performer and based-on procedure resources"/>
       <nts:include value="medmij/test.phr.successfulSearch" scope="common">
          <nts:with-parameter name="resource" value="Procedure"/>
@@ -449,8 +461,53 @@
          <nts:with-parameter name="count" value="1"></nts:with-parameter>
          <nts:with-parameter name="code" value="32485007"></nts:with-parameter>
          <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>  
+   </test>
+   
+   <test id="11b-RetrieveProcedures">
+      <nts:include value="test.client.ext.requestModes" scope="common" requestMode="random-order"/>
+      <name value="11b-RetrieveProcedures"/>
+      <description value="Retrieve all Procedure resources linked to the Encounter within the EpisodeOfCare provided for this test, including the performer and based-on procedure resources"/>
+      <nts:include value="medmij/test.phr.successfulSearch" scope="common">
+         <nts:with-parameter name="resource" value="Procedure"/>
+         <nts:with-parameter name="params" value="?context:Encounter.episodeofcare=EpisodeOfCare/${episode-id}&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
+      </nts:include>  
+      <nts:include value="assert.response.numResources" scope="common" resource="Procedure" count="7"/>
+      <nts:include value="assert.response.numResources" scope="common" resource="Organization" count="0"/>
+      <nts:include value="assert.response.numResources" scope="common" resource="Practitioner" count="1"/>
+      <nts:include value="assert.response.numResources" scope="common" resource="ProcedureRequest" count="0"/>
+      <!-- uitdrijvingsfase -->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Birth procedure)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
+         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="code" value="3950001"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
       </nts:include>
-      
+      <!-- verrichting_kindspecifieke_maternale_verrichtingen -->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(Lung inflation)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
+         <nts:with-parameter name="count" value="1"></nts:with-parameter>
+         <nts:with-parameter name="code" value="243140006"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>
+      <!-- primaire sectio caesarea -->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(primaire sectio caesarea)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
+         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="code" value="80771000146107"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>
+      <!-- vitamine K toediening aan neonaat -->
+      <nts:include value="gbz-assert-returnCountWithCode">
+         <nts:with-parameter name="additionalDescription" value="(vitamine K toediening aan neonaat)"></nts:with-parameter>
+         <nts:with-parameter name="resource" value="Procedure"></nts:with-parameter>
+         <nts:with-parameter name="count" value="2"></nts:with-parameter>
+         <nts:with-parameter name="code" value="698350008:370131001=133933007"></nts:with-parameter>
+         <nts:with-parameter name="system" value="http://snomed.info/sct"></nts:with-parameter>
+      </nts:include>
    </test>
    
    <!-- Zorgteam -->
