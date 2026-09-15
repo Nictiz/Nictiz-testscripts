@@ -17,9 +17,6 @@
    </contact>
    <description value="Scenario Maternity Care casus 1 of the [Birth Care - Retrieve maternity care data set use case](https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2020.01/FHIR_Implementation_Guide:_Pregnancy_Card_Maternity_Care). See [the test file on the Nictiz wiki](https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2020.01/Geboortezorg_3.2_-_kwalificatie_MedMij_-_Raadplegen_Integrale_Zwangerschapskaart_2.0_Kraam) for more information."/>
    <origin>
-      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
-         <valueBoolean value="true"/>
-      </extension>
       <index value="1"/>
       <profile>
          <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
@@ -27,13 +24,10 @@
       </profile>
    </origin>
    <destination>
-      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-SUT">
-         <valueBoolean value="false"/>
-      </extension>
       <index value="1"/>
       <profile>
-         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
-         <code value="FHIR-Server"/>
+         <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-destination-profile"/>
+         <code value="Conformancelab-Server"/>
       </profile>
    </destination>
    <fixture id="episodeofcare-fixture">
@@ -541,8 +535,8 @@
          </assert>
       </action>
    </test>
-   <test id="7-RetrieveConditions">
-      <name value="7-RetrieveConditions"/>
+   <test id="7a-RetrieveConditions">
+      <name value="7a-RetrieveConditions"/>
       <description value="Retrieve all Condition (including Pregnancy) resources linked to the EpisodeOfCare provided for this test"/>
       <action>
          <operation>
@@ -624,7 +618,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Condition resource(s) with code http://snomed.info/sct | 118185001. (Pregnancy)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Condition)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '118185001').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Condition).where(code.coding.where(system = 'http://snomed.info/sct' and code = '118185001').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -634,7 +628,86 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Condition resource(s) with code http://snomed.info/sct | 708014007. (Does not have an informal caregiver)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Condition)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '708014007').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Condition).where(code.coding.where(system = 'http://snomed.info/sct' and code = '708014007').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="7b-RetrieveConditions">
+      <name value="7b-RetrieveConditions"/>
+      <description value="Retrieve all Condition (including Pregnancy) resources linked to the Encounter within the EpisodeOfCare provided for this test"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Condition"/>
+            <description value="Test PHR client to retrieve Condition resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?context:Encounter.episodeofcare=EpisodeOfCare/${episode-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 56b4b2b6-f9a3-43df-9e14-7e853c784138"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 56b4b2b6-f9a3-43df-9e14-7e853c784138"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 56b4b2b6-f9a3-43df-9e14-7e853c784138"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 Condition resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Condition)).count() = 0"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -803,7 +876,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 365470003. (family situation)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '365470003').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '365470003').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -813,7 +886,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 365508006. (living situation)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '365508006').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '365508006').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -823,7 +896,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 314845004. (partipicity in society)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '314845004').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '314845004').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -834,7 +907,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 365469004. (social network)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '365469004').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '365469004').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -844,7 +917,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 423340009. (family situation assessment)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '423340009').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '423340009').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -855,7 +928,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 11977-6. (parity)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '11977-6').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://loinc.org' and code = '11977-6').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -865,7 +938,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 11996-6. (gravidity)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '11996-6').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://loinc.org' and code = '11996-6').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -875,7 +948,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 142961000146102. (preferred location of delivery)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '142961000146102').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '142961000146102').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -885,7 +958,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 268467002. (Feeding intention)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '268467002').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '268467002').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -895,7 +968,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 160631000146109. (indicated number of hours of maternity care)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '160631000146109').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '160631000146109').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -905,7 +978,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 228273003. (alcohol use)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '228273003').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '228273003').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="true"/>
          </assert>
@@ -915,7 +988,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 365980008. (tobacco use)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '365980008').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '365980008').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="true"/>
          </assert>
@@ -927,7 +1000,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 160621000146107. (start time of active dilation)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '160621000146107').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '160621000146107').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -937,7 +1010,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 160611000146102. (way of starting delivery)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '160611000146102').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '160611000146102').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -947,7 +1020,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 289251005. (time of membrane rupture)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '289251005').count()=2).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '289251005').exists() and (true)).count() = 2"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -957,7 +1030,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 168089007. (amniotic fluid)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '168089007').count()=2).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '168089007').exists() and (true)).count() = 2"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -968,7 +1041,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 249163006. (active pushing)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '249163006').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '249163006').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -978,7 +1051,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364336006. (pattern of delivery)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364336006').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '364336006').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -988,7 +1061,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 366344009. (place of birth - finding)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '366344009').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '366344009').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -999,7 +1072,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 236994008. (placental delivery procedure)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '236994008').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '236994008').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1009,7 +1082,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 136311000146100. (date and time of delivery of placenta)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '136311000146100').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '136311000146100').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1019,7 +1092,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364343000. (completeness of placenta)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364343000').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '364343000').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1029,7 +1102,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364332008. (blood loss in labour)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364332008').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '364332008').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1040,7 +1113,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 8339-4. (Birth weight Measured)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '8339-4').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://loinc.org' and code = '8339-4').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1050,7 +1123,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 9272-6. (1 minute Apgar Score)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '9272-6').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://loinc.org' and code = '9272-6').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1060,7 +1133,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 9274-2. (5 minute Apgar Score)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '9274-2').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://loinc.org' and code = '9274-2').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1070,7 +1143,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 9271-8. (10 minute Apgar Score)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '9271-8').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://loinc.org' and code = '9271-8').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1080,7 +1153,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364528001. (Skin observable)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364528001').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '364528001').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1090,7 +1163,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364204002. (Genital observable)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364204002').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '364204002').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1102,7 +1175,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 129879003. (ability to take care of child)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '129879003').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '129879003').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1112,7 +1185,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://loinc.org | 8310-5. (Body temperature)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '8310-5').count()=2).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://loinc.org' and code = '8310-5').exists() and (true)).count() = 2"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1122,7 +1195,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 3 Observation resource(s) with code http://loinc.org | 29463-7. (Body weight)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://loinc.org' and code = '29463-7').count()=3).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://loinc.org' and code = '29463-7').exists() and (true)).count() = 3"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1132,7 +1205,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 289145007. (Finding of infant feeding pattern)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '289145007').count()=2).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '289145007').exists() and (true)).count() = 2"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1145,7 +1218,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 252957005. (Children's hearing test)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '252957005').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '252957005').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1155,7 +1228,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 77262006. (Heel stick)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '77262006').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '77262006').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1165,7 +1238,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 698350008. (Administration of vitamin K1 via oral route)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '698350008').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '698350008').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1175,7 +1248,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 1263932002. (Education about sleep)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '1263932002').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '1263932002').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1185,7 +1258,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 118791000146100. (Education about administration of vitamin D)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '118791000146100').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '118791000146100').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1275,7 +1348,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364062005. (Respiration observable)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364062005').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '364062005').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1285,7 +1358,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 404950004. (Sleep behaviour)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '404950004').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '404950004').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1295,7 +1368,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 28263002. (Crying)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '28263002').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '28263002').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1305,7 +1378,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364595007. (Appearance of umbilical stump)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Observation)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '364595007').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '364595007').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1320,8 +1393,8 @@
          </assert>
       </action>
    </test>
-   <test id="10-RetrieveProcedures">
-      <name value="10-RetrieveProcedures"/>
+   <test id="10a-RetrieveProcedures">
+      <name value="10a-RetrieveProcedures"/>
       <description value="Retrieve all Procedure resources linked to the EpisodeOfCare provided for this test, including the performer and based-on procedure resources"/>
       <action>
          <operation>
@@ -1421,7 +1494,7 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 236973005. (Delivery procedure)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Procedure)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '236973005').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Procedure).where(code.coding.where(system = 'http://snomed.info/sct' and code = '236973005').exists() and (true)).count() = 1"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -1431,7 +1504,104 @@
          <assert>
             <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 3950001. (Birth)"/>
             <direction value="response"/>
-            <expression value="Bundle.where(entry.where(resource.is(Procedure)).resource.code.coding.where(system = 'http://snomed.info/sct' and code = '3950001').count()=1).exists()"/>
+            <expression value="Bundle.entry.resource.where($this is Procedure).where(code.coding.where(system = 'http://snomed.info/sct' and code = '3950001').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="10b-RetrieveProcedures">
+      <name value="10b-RetrieveProcedures"/>
+      <description value="Retrieve all Procedure resources linked to the Encounter within the EpisodeOfCare provided for this test, including the performer and based-on procedure resources"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Procedure"/>
+            <description value="Test PHR client to retrieve Procedure resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?context:Encounter.episodeofcare=EpisodeOfCare/${episode-id}&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 56b4b2b6-f9a3-43df-9e14-7e853c784138"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 56b4b2b6-f9a3-43df-9e14-7e853c784138"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 56b4b2b6-f9a3-43df-9e14-7e853c784138"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 Procedure resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Procedure)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 Organization resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Organization)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 ProcedureRequest resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(ProcedureRequest)).count() = 0"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
