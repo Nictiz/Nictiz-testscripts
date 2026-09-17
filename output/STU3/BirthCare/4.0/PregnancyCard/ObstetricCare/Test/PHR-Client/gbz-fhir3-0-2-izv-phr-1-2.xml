@@ -1,0 +1,1745 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="gbz-fhir3-0-2-ikz-phr-1-2"/>
+   <url value="http://nictiz.nl/fhir/TestScript/gbz-fhir3-0-2-ikz-phr-1-2"/>
+   <version value="stu3-3.0-patchlevel 2026.34"/>
+   <name value="Gbz_fhir3_0_2_ikz_phr_1_2"/>
+   <title value="Scenario Obstetric Care casus 2 - Retrieve Pregnancy card - midwife care data set - Obstetric care resources of pregnancy with twins of Fiona Swartz"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Scenario Obstetric Care casus 2 of the [Birth Care - Retrieve Pregnancy card - midwife care data set use case](https://informatiestandaarden.nictiz.nl/wiki/gz:FHIR_Pregnancy_Card). See [the test file on the Nictiz wiki](https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2020.01/Geboortezorg_3.2_-_kwalificatie_MedMij_-_Beschikbaarstellen_Integrale_Zwangerschapskaart_2.0_Echo) for more information."/>
+   <origin>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-origin-types"/>
+         <code value="FHIR-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <index value="1"/>
+      <profile>
+         <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-destination-profile"/>
+         <code value="Conformancelab-Server"/>
+      </profile>
+   </destination>
+   <fixture id="episodeofcare-fixture">
+      <autocreate value="false"/>
+      <autodelete value="false"/>
+      <resource>
+         <reference value="../_reference/gz-izv-kwa-casus2/mm-gbz-bc-MaternalRecord-8b4a1a6f-6b0c-11ec-0000-020000000000.xml"/>
+      </resource>
+   </fixture>
+   <variable>
+      <name value="episode-id"/>
+      <expression value="EpisodeOfCare.id"/>
+      <sourceId value="episodeofcare-fixture"/>
+   </variable>
+   <variable>
+      <name value="T"/>
+      <defaultValue value="${CURRENTDATE}"/>
+      <description value="Date that data and queries are expected to be relative to."/>
+   </variable>
+   <test id="1-RetrievePatient">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="1-RetrievePatient"/>
+      <description value="Retrieve all Patient resources provided for this test"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Patient"/>
+            <description value="Test PHR client to retrieve Patient resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 3 Patient resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Patient)).count() = 3"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="2-RetrievePayer">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="2-RetrievePayer"/>
+      <description value="Retrieve all Coverage resources provided for this test."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Coverage"/>
+            <description value="Test PHR client to retrieve Coverage resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 Coverage resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Coverage)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="3-RetrieveFamilyMemberHistory">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="3-RetrieveFamilyMemberHistory"/>
+      <description value="Retrieve all FamilyMemberHistory resources provided for this test."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="FamilyMemberHistory"/>
+            <description value="Test PHR client to retrieve FamilyMemberHistory resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 FamilyMemberHistory resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(FamilyMemberHistory)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="4-RetrieveDeviceUseStatement">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="4-RetrieveDeviceUseStatement"/>
+      <description value="Retrieve all DeviceUseStatement resources provided for this test."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="DeviceUseStatement"/>
+            <description value="Test PHR client to retrieve DeviceUseStatement resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?_include=DeviceUseStatement:device"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 DeviceUseStatement resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(DeviceUseStatement)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="5-RetrieveConsent">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="5-RetrieveConsent"/>
+      <description value="Retrieve all Consent resources provided for this test."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Consent"/>
+            <description value="Test PHR client to retrieve Consent resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 Consent resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Consent)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="6-RetrieveRelatedPerson">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="6-RetrieveRelatedPerson"/>
+      <description value="Retrieve all RelatedPerson resources provided for this test"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="RelatedPerson"/>
+            <description value="Test PHR client to retrieve RelatedPerson resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 1 RelatedPerson resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(RelatedPerson)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="7-RetrieveMaternalRecord">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="7-RetrieveMaternalRecord"/>
+      <description value="Retrieve all MaternalRecord (EpisodeOfCare) resources provided for this test, including managing organization (Organization) and care manager (Practitioner)"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="EpisodeOfCare"/>
+            <description value="Test PHR client to retrieve EpisodeOfCare resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?type=http://snomed.info/sct|364320009&amp;status=finished&amp;_include=EpisodeOfCare:organization&amp;_include=EpisodeOfCare:care-manager"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 1 EpisodeOfCare resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(EpisodeOfCare)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 1 Organization resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Organization)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 1 Practitioner resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Practitioner)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="8a-RetrieveConditions">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="8a-RetrieveConditions"/>
+      <description value="Retrieve all Condition (including Pregnancy) resources linked to the EpisodeOfCare provided for this test"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Condition"/>
+            <description value="Test PHR client to retrieve Condition resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?context=EpisodeOfCare/${episode-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 3 Condition resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Condition)).count() = 3"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Zwangerschap -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Condition resource(s) with code http://snomed.info/sct | 118185001. (Pregnancy)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Condition).where(code.coding.where(system = 'http://snomed.info/sct' and code = '118185001').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- meerlingzwangerschap -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Condition resource(s) with code http://snomed.info/sct | 16356006. (Multiple pregnancy)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Condition).where(code.coding.where(system = 'http://snomed.info/sct' and code = '16356006').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- tweede kind blijft erg achter in ontwikkeling -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Condition resource(s) with code http://snomed.info/sct | 22033007. (Fetal growth restriction)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Condition).where(code.coding.where(system = 'http://snomed.info/sct' and code = '22033007').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="8b-RetrieveConditions">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="8b-RetrieveConditions"/>
+      <description value="Retrieve all Condition resources linked to an Encounter linked to the EpisodeOfCare provided for this test"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Condition"/>
+            <description value="Test PHR client to retrieve Condition resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?context:Encounter.episodeofcare=EpisodeOfCare/${episode-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 Condition resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Condition)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="9-RetrieveEncounters">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="9-RetrieveEncounters"/>
+      <description value="Retrieve all Encounter resources provided for this test, including the associated Practitioner"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Encounter"/>
+            <description value="Test PHR client to retrieve Encounter resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?episodeofcare=${episode-id}&amp;_include=Encounter:practitioner"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 3 Encounter resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Encounter)).count() = 3"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 2 Practitioner resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Practitioner)).count() = 2"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="10a-RetrieveObservations">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="10a-RetrieveObservations"/>
+      <description value="Retrieve all Observation resources linked to the EpisodeOfCare provided for this test"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test PHR client to retrieve Observation resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?context=EpisodeOfCare/${episode-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Zwangerschapsgegevens -->
+      <!-- zwangerschapsduur -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 4 Observation resource(s) with code http://snomed.info/sct | 57036006. (Fetal gestational age)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '57036006').exists() and (true)).count() = 4"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- parity -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 11977-6. (parity)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://loinc.org' and code = '11977-6').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- gravidity -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 11996-6. (gravidity)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://loinc.org' and code = '11996-6').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- geschatte bevallingsdatum -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 161714006. (Estimated date of delivery)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '161714006').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- DatumLaatsteMenstruatie -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 8665-2. (Last menstrual period start date)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://loinc.org' and code = '8665-2').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Meerling zwangerschap -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 65147003. (Twin pregnancy)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '65147003').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- definitieve uitgerekende datum van partus -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 147781000146105. (Definite date of delivery)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '147781000146105').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- AantalLevendeKinderenWaarde -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 143881000146107. (Number of live offspring)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '143881000146107').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Foliumzuur -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 792807003. (Folic acid intake)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '792807003').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 40 Observation resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 40"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="10b-RetrieveObservations">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="10b-RetrieveObservations"/>
+      <description value="Retrieve all Observation resources linked to the Encounter within the EpisodeOfCare provided for this test"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Observation"/>
+            <description value="Test PHR client to retrieve Observation resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?context:Encounter.episodeofcare=EpisodeOfCare/${episode-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Prenatale controle -->
+      <!-- Lichaamsgewicht -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://loinc.org | 29463-7. (body weight)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://loinc.org' and code = '29463-7').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Bloeddruk -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://loinc.org | 85354-9. (blood pressure)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://loinc.org' and code = '85354-9').exists() and (true)).count() = 2"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- alcoholgebruik -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 228273003. (alcohol use)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '228273003').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <!-- drugsgebruik -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 228366006. (drug use)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '228366006').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <!-- tabakgebruik -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 365980008. (tobacco use)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '365980008').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <!-- Leven voelen -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364618000. (Pattern of fetal movement)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '364618000').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <!-- Bevalling -->
+      <!-- Ontsluitingsfase -->
+      <!-- tijdstip begin actieve ontsluiting -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 160621000146107. (start time of active dilation)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '160621000146107').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Wijze begin baring -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 160611000146102. (method of starting delivery)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '160611000146102').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- tijdstip breken vliezen -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 3 Observation resource(s) with code http://snomed.info/sct | 289251005. (time of membrane rupture)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '289251005').exists() and (true)).count() = 3"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- aard vruchtwater -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 3 Observation resource(s) with code http://snomed.info/sct | 168089007. (amniotic fluid)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '168089007').exists() and (true)).count() = 3"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Uitdrijvingsfase -->
+      <!-- tijdstip gebroken vliezen, zie ontsluitingsfase-->
+      <!-- aard vruchtwater, zie ontsluitingsfase-->
+      <!-- type partus -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 364336006. (pattern of delivery)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '364336006').exists() and (true)).count() = 2"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- ligging kind -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 271692001. (Foetal presentation)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '271692001').exists() and (true)).count() = 2"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- bevinding betreffen locatie van partus -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 2 Observation resource(s) with code http://snomed.info/sct | 366344009. (place of birth - finding)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '366344009').exists() and (true)).count() = 2"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Nageboortefase -->
+      <!-- Wijze Geboorte Placenta -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 236994008. (placental delivery procedure)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '236994008').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- Geboorte placenta tijd -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 136311000146100. (date and time of delivery of placenta)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '136311000146100').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- compleetheid placenta -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364343000. (completeness of placenta)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '364343000').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- compleetheid van vruchtvliezen -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364351002. (Completeness of membranes)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '364351002').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- aantal bloedvaten in navelstreng -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 249191003. (Number of blood vessels in umbilical cord)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '249191003').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- bloedverlies -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Observation resource(s) with code http://snomed.info/sct | 364332008. (blood loss in labour)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Observation).where(code.coding.where(system = 'http://snomed.info/sct' and code = '364332008').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 27 Observation resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Observation)).count() = 27"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="11a-RetrieveProcedures">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="11a-RetrieveProcedures"/>
+      <description value="Retrieve all Procedure resources linked to the EpisodeOfCare provided for this test, including the performer and based-on procedure resources"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Procedure"/>
+            <description value="Test PHR client to retrieve Procedure resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?context=EpisodeOfCare/${episode-id}&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 4 Procedure resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Procedure)).count() = 4"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 Organization resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Organization)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 ProcedureRequest resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(ProcedureRequest)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- bevalling -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 236973005. (Delivery procedure)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Procedure).where(code.coding.where(system = 'http://snomed.info/sct' and code = '236973005').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- bloedonderzoek -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 396550006. (Blood test)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Procedure).where(code.coding.where(system = 'http://snomed.info/sct' and code = '396550006').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- dieetmanagement -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 410175003. (Dietary regime management)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Procedure).where(code.coding.where(system = 'http://snomed.info/sct' and code = '410175003').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- opname ziekenhuis -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 32485007. (Hospital admission)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Procedure).where(code.coding.where(system = 'http://snomed.info/sct' and code = '32485007').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="11b-RetrieveProcedures">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="11b-RetrieveProcedures"/>
+      <description value="Retrieve all Procedure resources linked to the Encounter within the EpisodeOfCare provided for this test, including the performer and based-on procedure resources"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Procedure"/>
+            <description value="Test PHR client to retrieve Procedure resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?context:Encounter.episodeofcare=EpisodeOfCare/${episode-id}&amp;_include=Procedure:performer&amp;_include=Procedure:based-on"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 7 Procedure resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Procedure)).count() = 7"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 Organization resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Organization)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 1 Practitioner resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(Practitioner)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 ProcedureRequest resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(ProcedureRequest)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- uitdrijvingsfase -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 2 Procedure resource(s) with code http://snomed.info/sct | 3950001. (Birth procedure)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Procedure).where(code.coding.where(system = 'http://snomed.info/sct' and code = '3950001').exists() and (true)).count() = 2"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- verrichting_kindspecifieke_maternale_verrichtingen -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 1 Procedure resource(s) with code http://snomed.info/sct | 243140006. (Lung inflation)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Procedure).where(code.coding.where(system = 'http://snomed.info/sct' and code = '243140006').exists() and (true)).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- primaire sectio caesarea -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 2 Procedure resource(s) with code http://snomed.info/sct | 80771000146107. (primaire sectio caesarea)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Procedure).where(code.coding.where(system = 'http://snomed.info/sct' and code = '80771000146107').exists() and (true)).count() = 2"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <!-- vitamine K toediening aan neonaat -->
+      <action>
+         <assert>
+            <description value="Confirm that the returned searchset Bundle contains 2 Procedure resource(s) with code http://snomed.info/sct | 698350008:370131001=133933007. (vitamine K toediening aan neonaat)"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Procedure).where(code.coding.where(system = 'http://snomed.info/sct' and code = '698350008:370131001=133933007').exists() and (true)).count() = 2"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test id="12-RetrieveCareTeam">
+      <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-test-request-mode">
+         <valueCode value="random-order"/>
+      </extension>
+      <name value="12-RetrieveCareTeam"/>
+      <description value="Retrieve all CareTeam resources linked to the EpisodeOfCare provided for this test"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="CareTeam"/>
+            <description value="Test PHR client to retrieve CareTeam resources."/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?context=EpisodeOfCare/${episode-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            </requestHeader>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that HTTP header Authorization contains the patient token Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <value value="Bearer 5ba27ab8-79ed-4fb8-b283-b33989c455f3"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'patient=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="patient="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that query parameter 'subject=' was not present to avoid BSNs in the URL."/>
+            <direction value="request"/>
+            <operator value="notContains"/>
+            <requestURL value="subject="/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Make sure that the server of the test simulator gives a success response."/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server of the test simulator returns a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 0 CareTeam resource(s)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource.is(CareTeam)).count() = 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
