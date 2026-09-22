@@ -69,10 +69,46 @@
       <description value="OAuth Token for patient 'nl-core-patient-eov-val-1-1-01'"/>
    </variable>
    <variable>
+      <name value="task-id"/>
+      <defaultValue value="eOverdracht-Task-eov-${CD6}"/>
+   </variable>
+   <variable>
       <name value="in-progress-task-response-composition-11171000146100-id"/>
       <expression value="Task.input.where(type.where(coding.where(system = 'http://snomed.info/sct' and code = '11171000146100'))).value.reference.replace('Composition/', '')"/>
       <sourceId value="in-progress-task-response"/>
    </variable>
+   <setup>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="update"/>
+            </type>
+            <resource value="Task"/>
+            <description value="At the sending XIS, a new Task is created in status 'in-progress'."/>
+            <accept value="xml"/>
+            <contentType value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <params value="/${task-id}"/>
+            <requestHeader>
+               <field value="Authorization"/>
+               <value value="${patient-token-nl-core-patient-eov-val-1-1-01}"/>
+            </requestHeader>
+            <responseId value="setup-task-response"/>
+            <sourceId value="initial-task-fixture"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </setup>
    <test>
       <name value="Serve 'in-progress' Task"/>
       <description value="The sending XIS should serve the Task specified in the notification."/>
