@@ -7,10 +7,10 @@
         * [reference.subdir] - Optional - The _name_ (not the path!) of the folder containing fixtures. Defaults to '_reference'.
     -->
     
-    <property name="tool.reponame"    value="HL7-mappings"/>
-    <property name="tool.name"        value="fhir-narrativegenerator"/>
-    <property name="tool.version"     value="fhir-narrativegenerator-0.15.0"/>
-    <property name="tool.antfile"     value="build/build.xml"/>
+    <property name="tool.reponame"    value="YATC-shared"/>
+    <property name="tool.name"        value="."/>
+    <property name="tool.version"     value="fhir-narrativegenerator-0.16.0"/>
+    <property name="tool.antfile"     value="../../../src/narrative-generator-build.xml"/>
     <property name="reference.subdir" value="_reference"/>
     
     <dirset id="in.dirs" dir="${basedir}" excludes="${dontgenerate.narrative.pattern}">
@@ -18,25 +18,46 @@
     </dirset>
     <property name="files.to.exclude" value="**/minimum/,**/rule/,**/rules/,**/*-token.*,${dontgenerate.narrative.pattern}"/>
     
-    <!-- 
-        Overwrite the target to download and install the tool because it is based on a release instead of a folder
-        structure in the target repo.
-    -->
-    <target name="get.toolrepo" depends="checkForRepoDownload" if="download.repo">
+    <!-- Resolve the origin's authentication scheme and use it for the private YATC-shared repository. -->
+    <target name="resolve.repo.url" depends="checkForRepoDownload" if="download.repo">
+        <exec executable="git" failonerror="true" outputproperty="git.origin.url">
+            <arg value="remote"/>
+            <arg value="get-url"/>
+            <arg value="origin"/>
+        </exec>
+        <condition property="git.origin.is.supported">
+            <matches string="${git.origin.url}"
+                     pattern="^(git@[^:]+:[^/]+/[^/]+|ssh://git@[^/]+/[^/]+/[^/]+|https://[^/]+/[^/]+/[^/]+)(\.git)?$"/>
+        </condition>
+        <fail unless="git.origin.is.supported"
+              message="The origin remote must be a GitHub HTTPS or SSH URL: ${git.origin.url}"/>
+        <taskdef resource="net/sf/antcontrib/antlib.xml">
+            <classpath>
+                <pathelement location="${basedir}/lib/ant-dependencies/jar/ant-contrib-1.0b3.jar"/>
+            </classpath>
+        </taskdef>
+        <propertyregex property="tool.repo.url"
+                       input="${git.origin.url}"
+                       regexp="^(.+/)[^/]+$"
+                       replace="\1${tool.reponame}.git"/>
+        <echo>Using ${tool.repo.url} for the narrative generator download</echo>
+    </target>
+
+    <target name="get.toolrepo" depends="resolve.repo.url" if="download.repo">
         <sequential>
-            <echo>Downloading the testscript tools repo from Github</echo>
-            <echo>If you want to use a local copy for debugging, specifiy it with the -Dtestscripttools.local=... parameter</echo>
-            <echo/>
+            <echo>Cloning ${tool.repo.url} at tag ${tool.version.actual}</echo>
             <mkdir dir="${testscripttools.dir}/"/>
-            <local name="zip.name"/>
-            <property name="zip.name" value="${testscripttools.dir}/package.zip"/>
-            <get src="https://github.com/Nictiz/${tool.reponame}/releases/download/${tool.version.actual}/${tool.version.actual}.zip"
-                dest="${zip.name}"/>
-            <unzip src="${zip.name}" dest="${testscripttools.dir}" failOnEmptyArchive="true">
-                <mapper type="regexp" from="^.*?/(.*)" to="\1"/>
-            </unzip>
-            <delete file="${zip.name}"/>
+            <exec executable="git" failonerror="true">
+                <arg value="clone"/>
+                <arg value="--depth"/>
+                <arg value="1"/>
+                <arg value="--branch"/>
+                <arg value="${tool.version.actual}"/>
+                <arg value="${tool.repo.url}"/>
+                <arg value="${testscripttools.dir}"/>
+            </exec>
             <property name="hastestscripttools" value="true" />
+            <echo>Finished downloading Narrative Generator</echo>
         </sequential>
     </target>
     
