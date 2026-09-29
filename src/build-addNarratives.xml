@@ -22,11 +22,34 @@
         Overwrite the target to download and install the tool because it is based on a release instead of a folder
         structure in the target repo.
     -->
-    <target name="get.toolrepo" depends="checkForRepoDownload" if="download.repo">
+    <target name="resolve.ssh.repo.url" depends="checkForRepoDownload" if="download.repo">
+        <exec executable="git" failonerror="true" outputproperty="git.origin.url">
+            <arg value="config"/>
+            <arg value="--get"/>
+            <arg value="remote.origin.url"/>
+        </exec>
+        <condition property="git.origin.is.ssh">
+            <matches string="${git.origin.url}" pattern="^git@[^:]+:.+/.+\.git$"/>
+        </condition>
+        <fail unless="git.origin.is.ssh"
+              message="The origin remote must use an SSH URL so its host alias can access private repositories: ${git.origin.url}"/>
+        <taskdef resource="net/sf/antcontrib/antlib.xml">
+            <classpath>
+                <pathelement location="${basedir}/lib/ant-dependencies/jar/ant-contrib-1.0b3.jar"/>
+            </classpath>
+        </taskdef>
+        <propertyregex property="tool.ssh.repo.url"
+                       input="${git.origin.url}"
+                       regexp="^(.+/)[^/]+$"
+                       replace="\1${tool.reponame}.git"/>
+    </target>
+
+    <target name="get.toolrepo" depends="resolve.ssh.repo.url" if="download.repo">
         <sequential>
             <echo>Downloading the testscript tools repo from Github</echo>
             <echo>If you want to use a local copy for debugging, specifiy it with the -Dtestscripttools.local=... parameter</echo>
             <echo/>
+            <echo>Cloning ${tool.ssh.repo.url} at tag ${tool.version.actual}</echo>
             <mkdir dir="${testscripttools.dir}/"/>
             <exec executable="git" failonerror="true">
                 <arg value="clone"/>
@@ -34,7 +57,7 @@
                 <arg value="1"/>
                 <arg value="--branch"/>
                 <arg value="${tool.version.actual}"/>
-                <arg value="git@github.com:Nictiz/${tool.reponame}.git"/>  <!-- Todo: ssh verwijzing nog nakijken-->
+                <arg value="${tool.ssh.repo.url}"/>
                 <arg value="${testscripttools.dir}"/>
             </exec>
             <property name="hastestscripttools" value="true" />
