@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="connection-check-json"/>
+   <url value="http://nictiz.nl/fhir/TestScript/connection-check-json"/>
+   <version value="r4.0.1-patchlevel 2026.38"/>
+   <name value="Connection_check_json"/>
+   <title value="Connection check - JSON Format"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Checks that the FHIR server can be reached through Conformancelab and returns its CapabilityStatement."/>
+   <origin>
+      <index value="1"/>
+      <profile>
+         <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-origin-profile"/>
+         <code value="Conformancelab-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <profile id="CapabilityStatement-profile"
+            value="http://hl7.org/fhir/StructureDefinition/CapabilityStatement"/>
+   <test>
+      <name value="ConnectionCheck"/>
+      <description value="Retrieve the CapabilityStatement of the server"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="capabilities"/>
+            </type>
+            <description value="Retrieve the CapabilityStatement (GET [base]/metadata)."/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server responds with HTTP status 200."/>
+            <direction value="response"/>
+            <operator value="equals"/>
+            <responseCode value="200"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response is returned in the requested format."/>
+            <direction value="response"/>
+            <contentType value="json"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned resource type is CapabilityStatement."/>
+            <direction value="response"/>
+            <resource value="CapabilityStatement"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server supports FHIR R4 (fhirVersion 4.0.x)."/>
+            <direction value="response"/>
+            <expression value="CapabilityStatement.fhirVersion.startsWith('4.0')"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the CapabilityStatement declares support for JSON."/>
+            <direction value="response"/>
+            <expression value="CapabilityStatement.format.where($this.contains('json')).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the CapabilityStatement declares support for XML."/>
+            <direction value="response"/>
+            <expression value="CapabilityStatement.format.where($this.contains('xml')).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned CapabilityStatement conforms to the base FHIR specification."/>
+            <direction value="response"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="CapabilityStatement-profile"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
