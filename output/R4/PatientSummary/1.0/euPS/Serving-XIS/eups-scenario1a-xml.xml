@@ -3,7 +3,7 @@
    <id value="eups-scenario1a-xml"/>
    <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-authentication">
       <extension url="display">
-         <valueString value="Enter your bearer token"/>
+         <valueString value="EU-PS level 1a test patient"/>
       </extension>
       <extension url="access-token">
          <valueString value=""/>
@@ -12,7 +12,7 @@
    <url value="http://nictiz.nl/fhir/TestScript/eups-scenario1a-xml"/>
    <version value="r4.0.1-patchlevel 2026.38"/>
    <name value="Eups_scenario1a_xml"/>
-   <title value="Scenario 1a - Serve EU Patient summary - XML Format"/>
+   <title value="Scenario 1a - EU-PS level 1a: Minimal metadata and empty sections - XML Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -23,7 +23,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Implementation Guide: https://build.fhir.org/ig/hl7-eu/eps/index.html"/>
+   <description value="The serving system provides an EU-PS for its level 1a test patient, in which all mandatory sections are empty, with an emptyReason and a narrative. The patient is selected by the token entered at test setup. Implementation Guide: https://build.fhir.org/ig/hl7-eu/eps/"/>
    <origin>
       <index value="1"/>
       <profile>
@@ -38,30 +38,260 @@
          <code value="FHIR-Server"/>
       </profile>
    </destination>
+   <profile id="ps-bundle-profile"
+            value="http://hl7.eu/fhir/eps/StructureDefinition/bundle-eu-eps"/>
+   <variable>
+      <name value="composition-id"/>
+      <description value="The id of the first Patient Summary Composition in the search result."/>
+      <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Composition).first().id'-->
+      <expression value="Bundle.entry.resource.where($this is Composition).first().id"/>
+      <sourceId value="ps-search-response"/>
+   </variable>
    <test>
-      <name value="1"/>
-      <description value="Provide EU Patient Summary"/>
+      <name value="Search Patient Summary"/>
+      <description value="Search the EU-PS Composition of the test patient."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Composition"/>
+            <description value="Search the Patient Summary Compositions of the patient: GET [base]/Composition?type=http://loinc.org|60591-5"/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?type=http://loinc.org|60591-5"/>
+            <responseId value="ps-search-response"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response is a searchset Bundle."/>
+            <direction value="response"/>
+            <expression value="Bundle.type = 'searchset'"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the search result contains at least one Patient Summary Composition. Without one, step 2 cannot run."/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Composition).exists()'-->
+            <expression value="Bundle.entry.resource.where($this is Composition).exists()"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the search result contains exactly one Composition. If there are more, step 2 uses the first one."/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(Composition).count() = 1'-->
+            <expression value="Bundle.entry.resource.where($this is Composition).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Retrieve Patient Summary document"/>
+      <description value="Retrieve the EU-PS as a document Bundle with $document and check the document as a whole."/>
       <action>
          <operation>
             <type>
                <system value="http://hl7.org/fhir/restful-interaction"/>
                <code value="read"/>
             </type>
-            <resource value="Patient"/>
-            <description value="Test XIS server to provide a EU Patient Summary."/>
+            <resource value="Composition"/>
+            <description value="Retrieve the Patient Summary as a document: GET [base]/Composition/[id]/$document"/>
             <accept value="xml"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
-            <requestHeader>
-               <field value="Accept"/>
-               <value value="application/fhir+xml"/>
-            </requestHeader>
-            <requestHeader>
-               <field value="Prefer"/>
-               <value value="return=representation"/>
-            </requestHeader>
+            <params value="/${composition-id}/$document"/>
+            <responseId value="ps-document"/>
          </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the operation was successful"/>
+            <operator value="in"/>
+            <responseCode value="200,201"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response is a Bundle."/>
+            <direction value="response"/>
+            <resource value="Bundle"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the Bundle is a document. (FHIR R4 allows a server to wrap the document in a searchset Bundle; that is not accepted here.)"/>
+            <direction value="response"/>
+            <expression value="Bundle.type = 'document'"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the first entry of the document is a Composition."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.is(Composition)"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the Composition is a Patient Summary (type LOINC 60591-5)."/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.first().resource.ofType(Composition).type.coding.where(system = 'http://loinc.org' and code = '60591-5').exists()'-->
+            <expression value="Bundle.entry.first().resource.where($this is Composition).type.coding.where(system = 'http://loinc.org' and code = '60591-5').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the Composition claims the profile http://hl7.eu/fhir/eps/StructureDefinition/composition-eu-eps."/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.first().resource.ofType(Composition).meta.profile.where($this.startsWith('http://hl7.eu/fhir/eps/StructureDefinition/composition-eu-eps')).exists()'-->
+            <expression value="Bundle.entry.first().resource.where($this is Composition).meta.profile.where($this.startsWith('http://hl7.eu/fhir/eps/StructureDefinition/composition-eu-eps')).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the document conforms to http://hl7.eu/fhir/eps/StructureDefinition/bundle-eu-eps, and its resources to the profiles they claim in meta.profile."/>
+            <direction value="response"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="ps-bundle-profile"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Level 1a checks"/>
+      <description value="Check that all mandatory sections are empty, with an emptyReason and a narrative."/>
+      <action>
+         <assert>
+            <description value="Section Problems (LOINC 11450-4): the section is present."/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.first().resource.ofType(Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).exists()'-->
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).exists()"/>
+            <sourceId value="ps-document"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Section Allergies and intolerances (LOINC 48765-2): the section is present."/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.first().resource.ofType(Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).exists()'-->
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).exists()"/>
+            <sourceId value="ps-document"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Section Medication summary (LOINC 10160-0): the section is present."/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.first().resource.ofType(Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '10160-0').exists()).exists()'-->
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '10160-0').exists()).exists()"/>
+            <sourceId value="ps-document"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Section History of procedures (LOINC 47519-4): the section is present."/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.first().resource.ofType(Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).exists()'-->
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).exists()"/>
+            <sourceId value="ps-document"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Section Medical devices (LOINC 46264-8): the section is present."/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.first().resource.ofType(Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).exists()'-->
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).exists()"/>
+            <sourceId value="ps-document"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Section Problems (LOINC 11450-4): the section has no entries, and has an emptyReason and a narrative."/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.first().resource.ofType(Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())'-->
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
+            <sourceId value="ps-document"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Section Allergies and intolerances (LOINC 48765-2): the section has no entries, and has an emptyReason and a narrative."/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.first().resource.ofType(Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())'-->
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
+            <sourceId value="ps-document"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Section Medication summary (LOINC 10160-0): the section has no entries, and has an emptyReason and a narrative."/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.first().resource.ofType(Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '10160-0').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())'-->
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '10160-0').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
+            <sourceId value="ps-document"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Section History of procedures (LOINC 47519-4): the section has no entries, and has an emptyReason and a narrative."/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.first().resource.ofType(Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())'-->
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
+            <sourceId value="ps-document"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Section Medical devices (LOINC 46264-8): the section has no entries, and has an emptyReason and a narrative."/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.first().resource.ofType(Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())'-->
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
+            <sourceId value="ps-document"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
       </action>
    </test>
 </TestScript>

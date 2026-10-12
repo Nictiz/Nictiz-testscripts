@@ -3,41 +3,37 @@
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="server">
     <id value="nlps-scenario2"/>
     <version value="r4.0.1"/>
-    <title value="Scenario 2 - Serve NL Patient summary"/>
-    <description value="url fhir ig"/>
+    <title value="Scenario 2 - NL-PS level 2: Narrative summaries only"/>
+    <description value="The serving system provides an NL-PS for its level 2 test patient, in which every mandatory section has a narrative summary and no structured entries. The patient is selected by the token entered at test setup. Implementation Guide: https://build.fhir.org/ig/Nictiz/NL-PS-IG/"/>
 
     <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-authentication">
-      <extension url="display">
-         <valueString value="Enter your bearer token"/>
-      </extension>
-      <extension url="access-token">
-         <valueString value=""/>
-      </extension>
-   </extension>
+        <extension url="display">
+            <valueString value="NL-PS level 2 test patient"/>
+        </extension>
+        <extension url="access-token">
+            <valueString value=""/>
+        </extension>
+    </extension>
 
     <test>
-      <name value="1"/>
-      <description value="Provide NL Patient Summary"/>
-      <action>
-         <operation>
-            <type>
-               <system value="http://hl7.org/fhir/restful-interaction"/>
-               <code value="read"/>
-            </type>
-            <resource value="Patient"/>
-            <description value="Test XIS server to provide a NL Patient Summary."/>
-            <destination value="1"/>
-            <encodeRequestUrl value="true"/>
-            <origin value="1"/>
-            <requestHeader>
-               <field value="Accept"/>
-               <value value="application/fhir+xml"/>
-            </requestHeader>
-            <requestHeader>
-               <field value="Prefer"/>
-               <value value="return=representation"/>
-            </requestHeader>
-         </operation>
-      </action>
+        <name value="Search Patient Summary"/>
+        <description value="Search the NL-PS Composition of the test patient."/>
+        <nts:include value="ps.test.search"/>
+    </test>
+
+    <test>
+        <name value="Retrieve Patient Summary document"/>
+        <description value="Retrieve the NL-PS as a document Bundle with $document and check the document as a whole."/>
+        <nts:include value="ps.test.document"
+            bundleProfile="http://hl7.org/fhir/StructureDefinition/Bundle"
+            compositionProfile="http://ig.nictiz.nl/nlps/StructureDefinition/nl-PatientSummary"
+            validationWarningOnly="true"/>
+        <!-- Warning only until the GBB package with the nl-core profiles that NL-PS refers to exists. -->
+    </test>
+
+    <test>
+        <name value="Level 2 checks"/>
+        <description value="Check that every mandatory section has a narrative summary and no structured entries."/>
+        <nts:include value="ps.level2"/>
     </test>
 </TestScript>
