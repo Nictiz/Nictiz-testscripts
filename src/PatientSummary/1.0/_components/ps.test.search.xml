@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Step 1 of retrieving a Patient Summary: search the Patient Summary Compositions of the patient. The patient is
+    selected by the token entered at test setup, so the search itself has no patient parameter.
+    The id of the first Composition found is stored in the variable 'composition-id' for step 2.
+-->
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <variable>
+        <name value="composition-id"/>
+        <description value="The id of the first Patient Summary Composition in the search result."/>
+        <expression value="Bundle.entry.resource.where($this is Composition).first().id"/>
+        <sourceId value="ps-search-response"/>
+    </variable>
+
+    <action>
+        <operation>
+            <type>
+                <system value="http://hl7.org/fhir/restful-interaction"/>
+                <code value="search"/>
+            </type>
+            <resource value="Composition"/>
+            <description value="Search the Patient Summary Compositions of the patient: GET [base]/Composition?type=http://loinc.org|60591-5"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?type=http://loinc.org|60591-5"/>
+            <responseId value="ps-search-response"/>
+        </operation>
+    </action>
+    <nts:include value="assert.response.success" scope="common"/>
+    <action>
+        <assert>
+            <description value="Confirm that the response is a searchset Bundle."/>
+            <direction value="response"/>
+            <expression value="Bundle.type = 'searchset'"/>
+        </assert>
+    </action>
+    <action>
+        <assert nts:stopTestOnFail="true">
+            <description value="Confirm that the search result contains at least one Patient Summary Composition. Without one, step 2 cannot run."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Composition).exists()"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the search result contains exactly one Composition. If there are more, step 2 uses the first one."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Composition).count() = 1"/>
+            <warningOnly value="true"/>
+        </assert>
+    </action>
+</nts:component>
