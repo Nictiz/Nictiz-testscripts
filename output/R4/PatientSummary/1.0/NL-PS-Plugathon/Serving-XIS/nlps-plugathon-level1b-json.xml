@@ -23,7 +23,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="The serving system provides an NL-PS for its level 1b test patient, in which all metadata is present, and all mandatory sections are empty, with an emptyReason and a narrative. Conformancelab sends the bearer token you enter at test setup to your server. Use a token issued by your own system that gives access to your level 1b test patient, and only to that patient. Implementation Guide: https://build.fhir.org/ig/Nictiz/NL-PS-IG/"/>
+   <description value="The serving system provides an NL-PS for its level 1b test patient, in which all metadata is present, and all mandatory sections are empty, with an emptyReason and a narrative. Conformancelab sends the bearer token you enter at test setup to your server. Use a token issued by your own system that gives access to your level 1b test patient, and only to that patient. Without a token the server may return the Patient Summaries of several patients; the script then tests the first one. Implementation Guide: https://build.fhir.org/ig/Nictiz/NL-PS-IG/"/>
    <origin>
       <index value="1"/>
       <profile>
@@ -94,7 +94,7 @@
       </action>
       <action>
          <assert>
-            <description value="Confirm that the search result contains exactly one Composition. If there are more, step 2 uses the first one."/>
+            <description value="Confirm that the search result contains exactly one Patient Summary. If there are more, step 2 uses the first one in the order of the server: check the Composition id in the request of step 2 to see which one was tested. Use a token that only gives access to one test patient to avoid this."/>
             <direction value="response"/>
             <expression value="Bundle.entry.resource.where($this is Composition).count() = 1"/>
             <stopTestOnFail value="false"/>
@@ -103,8 +103,8 @@
       </action>
    </test>
    <test>
-      <name value="Retrieve Patient Summary document"/>
-      <description value="Retrieve the NL-PS as a document Bundle with $document and check the document as a whole."/>
+      <name value="Retrieve and check Patient Summary document"/>
+      <description value="Retrieve the NL-PS as a document Bundle with $document and check the document as a whole. Check that all metadata is present, and all mandatory sections are empty, with an emptyReason and a narrative."/>
       <action>
          <operation>
             <type>
@@ -185,15 +185,11 @@
          </assert>
       </action>
       <!-- Warning only until the GBB package with the nl-core profiles that NL-PS refers to exists. -->
-   </test>
-   <test>
-      <name value="Level 1b checks"/>
-      <description value="Check that all metadata is present, and all mandatory sections are empty, with an emptyReason and a narrative."/>
       <action>
          <assert>
             <description value="Section Problems (LOINC 11450-4): the section is present."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -201,8 +197,8 @@
       <action>
          <assert>
             <description value="Section Allergies and intolerances (LOINC 48765-2): the section is present."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -210,8 +206,8 @@
       <action>
          <assert>
             <description value="Section Medication summary (LOINC 10160-0): the section is present."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '10160-0').exists()).exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -219,8 +215,8 @@
       <action>
          <assert>
             <description value="Section History of procedures (LOINC 47519-4): the section is present."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -228,8 +224,8 @@
       <action>
          <assert>
             <description value="Section Medical devices (LOINC 46264-8): the section is present."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -237,8 +233,8 @@
       <action>
          <assert>
             <description value="Section Problems (LOINC 11450-4): the section has no entries, and has an emptyReason and a narrative."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -246,8 +242,8 @@
       <action>
          <assert>
             <description value="Section Allergies and intolerances (LOINC 48765-2): the section has no entries, and has an emptyReason and a narrative."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -255,8 +251,8 @@
       <action>
          <assert>
             <description value="Section Medication summary (LOINC 10160-0): the section has no entries, and has an emptyReason and a narrative."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '10160-0').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -264,8 +260,8 @@
       <action>
          <assert>
             <description value="Section History of procedures (LOINC 47519-4): the section has no entries, and has an emptyReason and a narrative."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -273,8 +269,8 @@
       <action>
          <assert>
             <description value="Section Medical devices (LOINC 46264-8): the section has no entries, and has an emptyReason and a narrative."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -282,8 +278,8 @@
       <action>
          <assert>
             <description value="Confirm that the Composition contains a language."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).language.exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -291,8 +287,8 @@
       <action>
          <assert>
             <description value="Confirm that the Composition contains a version (extension-Composition.version)."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).extension.where(url = 'http://hl7.org/fhir/5.0/StructureDefinition/extension-Composition.version').value.exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -300,8 +296,8 @@
       <action>
          <assert>
             <description value="Confirm that the Composition contains an identifier."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).identifier.value.exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -309,8 +305,8 @@
       <action>
          <assert>
             <description value="Confirm that the Composition contains a status."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).status.exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -318,8 +314,8 @@
       <action>
          <assert>
             <description value="Confirm that the Composition contains a category."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).category.exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -327,8 +323,8 @@
       <action>
          <assert>
             <description value="Confirm that the Composition contains a subject."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).subject.exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -336,8 +332,8 @@
       <action>
          <assert>
             <description value="Confirm that the Composition contains a date."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).date.exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -345,8 +341,8 @@
       <action>
          <assert>
             <description value="Confirm that the Composition contains an author."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).author.exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -354,8 +350,8 @@
       <action>
          <assert>
             <description value="Confirm that the Composition contains a title."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).title.exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -363,8 +359,8 @@
       <action>
          <assert>
             <description value="Confirm that the Composition contains a legal attester with time and party."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).attester.where(mode = 'legal' and time.exists() and party.exists()).exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -372,8 +368,8 @@
       <action>
          <assert>
             <description value="Confirm that the Composition contains a professional attester (validator) with time and party."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).attester.where(mode = 'professional' and time.exists() and party.exists()).exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -381,8 +377,8 @@
       <action>
          <assert>
             <description value="Confirm that the Composition contains a custodian."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).custodian.exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -390,8 +386,8 @@
       <action>
          <assert>
             <description value="Confirm that the Composition contains an event with a code."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).event.code.exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -399,8 +395,8 @@
       <action>
          <assert>
             <description value="Confirm that the Composition contains an event with a period."/>
+            <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).event.period.exists()"/>
-            <sourceId value="ps-document"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
