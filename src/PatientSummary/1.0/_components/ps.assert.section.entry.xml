@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Assert a condition on the entries of one section in the Patient Summary Composition.
+    Conformancelab evaluates an assert against the response of the operation it follows and ignores
+    assert.sourceId, so include this component directly after the $document operation.
+    @param sectionName - Human readable name of the section.
+    @param sectionCode - LOINC code of the section.
+    @param condition - FHIRPath applied to the section entries, e.g. 'empty()' or 'all(reference.exists())'.
+    @param conditionDescription - What the condition checks, in words.
+    @param [warningOnly] - Defaults to false.
+-->
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <nts:parameter name="warningOnly" value="false"/>
+    <action>
+        <assert>
+            <description value="Entries of section {$sectionName} (LOINC {$sectionCode}): {$conditionDescription}"/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '{$sectionCode}').exists()).entry.{$condition}"/>
+            <warningOnly value="{$warningOnly}"/>
+        </assert>
+    </action>
+</nts:component>
