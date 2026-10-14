@@ -18,8 +18,8 @@
     <xsl:variable name="cleanupVars" as="element()">
         <variable xmlns="http://hl7.org/fhir">
             <name value="patient-id"/>
-            <sourceId value="transaction-response"/>
             <expression value="entry.response.location.where($this.startsWith('Patient/')).first().split('/')[1]"/>
+            <sourceId value="transaction-response"/>
         </variable>
     </xsl:variable>
     <xd:doc>
