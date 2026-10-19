@@ -140,13 +140,21 @@
             </xsl:variable>
             
             <xsl:choose>
-                <!-- Special handling for scenarioset 0 and scenarioset 10-->
-                <xsl:when test="$scenarioString/@scenarioset = ('0','10')">
+                <!-- Special handling for scenarioset 0 and scenarioset 10 (Cert)-->
+                <xsl:when test="($scenarioString/@scenarioset = '10' and $testGoal = 'Cert') or ($scenarioString/@scenarioset = '0')">
                     <xsl:choose>
-                        <xsl:when test="$scenarioString/@theScenario = ('0','10')">
+                        <xsl:when test="($scenarioString//@theScenario = '10' and $testGoal = 'Cert') or ($scenarioString/@theScenario = '0')">
+                            <xsl:call-template name="util:logMessage">
+                                <xsl:with-param name="level" select="$logINFO"/>
+                                <xsl:with-param name="msg">theScenario '<xsl:value-of select="$scenarioString/@theScenario"/>' and scenarioSet <xsl:value-of select="$scenarioString/@scenarioset"/> and testGoal <xsl:value-of select="$testGoal"/></xsl:with-param>
+                            </xsl:call-template>
                             <!-- do nothing, filter scenario's are handled using ada_instance_filter folder, those are 0.x format-->                            
                         </xsl:when>
                         <xsl:otherwise>
+                            <xsl:call-template name="util:logMessage">
+                                <xsl:with-param name="level" select="$logINFO"/>
+                                <xsl:with-param name="msg">wat komt hier? scenarioString '<xsl:value-of select="$scenarioString"/>' theScenario '<xsl:value-of select="$scenarioString/@theScenario"/>' and scenarioSet <xsl:value-of select="$scenarioString/@scenarioset"/> and testGoal <xsl:value-of select="$testGoal"/></xsl:with-param>
+                            </xsl:call-template>
                             <xsl:call-template name="handleFilterScenario">
                                 <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
                                 <xsl:with-param name="scenarioString" select="$scenarioString"/>
@@ -189,8 +197,8 @@
                 <xsl:call-template name="getScenarioString"/>
             </xsl:variable>
             <xsl:choose>
-                <!-- Do nothing for scenarioset 0 and 10, handled by manually maintaining nts due to complexities in generating this -->
-                <xsl:when test="$scenarioString/@scenarioset = ('0','10')"/>
+                <!-- Do nothing for scenarioset 0 and 10 cert, handled by manually maintaining nts due to complexities in generating this -->
+                <xsl:when test="($scenarioString/@scenarioset = '10' and $testGoal = 'Cert') or ($scenarioString/@scenarioset = '0')"/>
                 <xsl:otherwise>
                     <xsl:variable name="buildingBlockShort" select="substring-before(substring-after(./adaxml/data/beschikbaarstellen_medicatiegegevens/@id, 'mg-mp-mg-'), '-Scenarioset')"/>
                     <xsl:variable name="testScriptTitle">
@@ -420,7 +428,7 @@
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                                             </nts:include>
-                                            <nts:include value="medmij/test.phr.search" scope="common" nts:in-targets="MedMij">
+                                            <nts:include value="medmij/test.phr.search" useToken="true" scope="common" nts:in-targets="MedMij">
                                                 <nts:with-parameter name="description" value="Test PHR client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
@@ -444,7 +452,7 @@
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                                             </nts:include>
-                                            <nts:include value="medmij/test.xis.search" scope="common" nts:in-targets="MedMij">
+                                            <nts:include value="medmij/test.xis.search" useToken="true" scope="common" nts:in-targets="MedMij">
                                                 <nts:with-parameter name="description" value="Test XIS server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
@@ -641,7 +649,7 @@
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                             </nts:include>
-                            <nts:include value="medmij/test.phr.search" scope="common" nts:in-targets="MedMij">
+                            <nts:include value="medmij/test.phr.search" useToken="true" scope="common" nts:in-targets="MedMij">
                                 <nts:with-parameter name="description" value="Test PHR client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
@@ -666,7 +674,7 @@
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                             </nts:include>
-                            <nts:include value="medmij/test.xis.search" scope="common" nts:in-targets="MedMij">
+                            <nts:include value="medmij/test.xis.search" useToken="true" scope="common" nts:in-targets="MedMij">
                                 <nts:with-parameter name="description" value="Test XIS server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
