@@ -23,7 +23,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="The serving system provides an NL-PS for its level 2 test patient (NL-Patient-L2 in the test plan), in which every mandatory section has a narrative summary and no structured entries. Conformancelab sends the bearer token you enter at test setup to your server. Use a token issued by your own system that gives access to your level 2 test patient, and only to that patient. Without a token the server may return the Patient Summaries of several patients; the script then tests the first one. Implementation Guides: NL-PS https://ig.nictiz.nl/nlps/ and generic building blocks (GBB) https://ig.nictiz.nl/gbb/"/>
+   <description value="The serving system provides an NL-PS for its level 2 test patient (NL-Patient-L2 in the test plan), in which every mandatory section has a narrative summary and no structured entries, and Medication summary also has an emptyReason. Conformancelab sends the bearer token you enter at test setup to your server. Use a token issued by your own system that gives access to your level 2 test patient, and only to that patient. Without a token the server may return the Patient Summaries of several patients; the script then tests the first one. Implementation Guides: NL-PS https://ig.nictiz.nl/nlps/ and generic building blocks (GBB) https://ig.nictiz.nl/gbb/"/>
    <origin>
       <index value="1"/>
       <profile>
@@ -104,7 +104,7 @@
    </test>
    <test>
       <name value="Retrieve and check Patient Summary document"/>
-      <description value="Retrieve the NL-PS as a document Bundle with $document and check the document as a whole. Check that every mandatory section has a narrative summary and no structured entries."/>
+      <description value="Retrieve the NL-PS as a document Bundle with $document and check the document as a whole. Check that every mandatory section has a narrative summary and no structured entries, and Medication summary also has an emptyReason."/>
       <action>
          <operation>
             <type>
@@ -277,6 +277,15 @@
       </action>
       <action>
          <assert>
+            <description value="Section Medication summary (LOINC 10160-0): the section has an emptyReason."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '10160-0').exists()).all(emptyReason.exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
             <description value="Section Problems (LOINC 11450-4): the narrative is not generated from entries (text.status is not 'generated')."/>
             <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).all(text.status != 'generated')"/>
@@ -322,7 +331,7 @@
       </action>
       <action>
          <assert>
-            <description value="Manual check by the test coordinator: every section has a readable, meaningful narrative summary of the patient's information."/>
+            <description value="Manual check by the test coordinator: every section except Medication summary has a readable, meaningful narrative summary of the patient's information, and the Medication summary section has a readable narrative that explains why the section is empty."/>
             <defaultManualCompletion value="fail"/>
             <operator value="manualEval"/>
             <stopTestOnFail value="false"/>
