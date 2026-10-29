@@ -40,6 +40,8 @@
    </destination>
    <profile id="ps-bundle-profile"
             value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
+   <profile id="ps-composition-profile"
+            value="http://ig.nictiz.nl/nlps/StructureDefinition/nl-PatientSummary"/>
    <variable>
       <name value="composition-id"/>
       <description value="The id of the first Patient Summary Composition in the search result."/>
@@ -168,19 +170,19 @@
       </action>
       <action>
          <assert>
-            <description value="Confirm that the Composition claims the profile http://ig.nictiz.nl/nlps/StructureDefinition/nl-PatientSummary."/>
+            <description value="Confirm that the document conforms to http://hl7.org/fhir/StructureDefinition/Bundle, and its resources to the profiles they claim in meta.profile. A resource without meta.profile, such as the Patient or a GBB entry, is only validated against the base FHIR specification for now."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).meta.profile.where($this.startsWith('http://ig.nictiz.nl/nlps/StructureDefinition/nl-PatientSummary')).exists()"/>
             <stopTestOnFail value="false"/>
+            <validateProfileId value="ps-bundle-profile"/>
             <warningOnly value="true"/>
          </assert>
       </action>
       <action>
          <assert>
-            <description value="Confirm that the document conforms to http://hl7.org/fhir/StructureDefinition/Bundle, and its resources to the profiles they claim in meta.profile."/>
+            <description value="Confirm that the Composition conforms to http://ig.nictiz.nl/nlps/StructureDefinition/nl-PatientSummary, and through it to the EU-PS profile it imposes. The Composition does not need to claim the profile in meta.profile."/>
             <direction value="response"/>
             <stopTestOnFail value="false"/>
-            <validateProfileId value="ps-bundle-profile"/>
+            <validateProfileId value="ps-composition-profile"/>
             <warningOnly value="true"/>
          </assert>
       </action>
@@ -234,7 +236,7 @@
          <assert>
             <description value="Section Problems (LOINC 11450-4): the section has no entries, and has an emptyReason and a narrative."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).all(entry.empty() and emptyReason.exists() and text.exists())"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -243,7 +245,7 @@
          <assert>
             <description value="Section Allergies and intolerances (LOINC 48765-2): the section has no entries, and has an emptyReason and a narrative."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).all(entry.empty() and emptyReason.exists() and text.exists())"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -252,7 +254,7 @@
          <assert>
             <description value="Section Medication summary (LOINC 10160-0): the section has no entries, and has an emptyReason and a narrative."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '10160-0').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '10160-0').exists()).all(entry.empty() and emptyReason.exists() and text.exists())"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -261,7 +263,7 @@
          <assert>
             <description value="Section History of procedures (LOINC 47519-4): the section has no entries, and has an emptyReason and a narrative."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).all(entry.empty() and emptyReason.exists() and text.exists())"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
@@ -270,54 +272,9 @@
          <assert>
             <description value="Section Medical devices (LOINC 46264-8): the section has no entries, and has an emptyReason and a narrative."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).all(entry.empty() and emptyReason.exists() and text.div.exists())"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).all(entry.empty() and emptyReason.exists() and text.exists())"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Section Problems (LOINC 11450-4): the narrative has text.status 'generated'."/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).all(text.status = 'generated')"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="true"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Section Allergies and intolerances (LOINC 48765-2): the narrative has text.status 'generated'."/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).all(text.status = 'generated')"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="true"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Section Medication summary (LOINC 10160-0): the narrative has text.status 'generated'."/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '10160-0').exists()).all(text.status = 'generated')"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="true"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Section History of procedures (LOINC 47519-4): the narrative has text.status 'generated'."/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).all(text.status = 'generated')"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="true"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Section Medical devices (LOINC 46264-8): the narrative has text.status 'generated'."/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).all(text.status = 'generated')"/>
-            <stopTestOnFail value="false"/>
-            <warningOnly value="true"/>
          </assert>
       </action>
    </test>

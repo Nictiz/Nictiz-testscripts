@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
     Step 2 of retrieving a Patient Summary: retrieve the Composition found in step 1 as a document Bundle with
-    $document, and check the document as a whole.
+    $document, and check the document as a whole. Only the Composition is validated against a profile set in the
+    TestScript. The other resources in the document are validated against the profiles they claim in meta.profile;
+    a resource without meta.profile is only validated against the base FHIR specification.
     @param bundleProfile - The profile the returned Bundle is validated against.
-    @param compositionProfile - The profile the Composition is expected to claim in meta.profile.
+    @param compositionProfile - The profile the Composition is validated against, whether or not it claims it in
+        meta.profile.
     @param [validationWarningOnly] - Report a failed profile validation as a warning. Defaults to false.
 -->
 <nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
     <nts:parameter name="validationWarningOnly" value="false"/>
     <nts:profile id="ps-bundle-profile" value="{$bundleProfile}"/>
+    <nts:profile id="ps-composition-profile" value="{$compositionProfile}"/>
 
     <action>
         <operation>
@@ -56,17 +60,17 @@
     </action>
     <action>
         <assert>
-            <description value="Confirm that the Composition claims the profile {$compositionProfile}."/>
+            <description value="Confirm that the document conforms to {$bundleProfile}, and its resources to the profiles they claim in meta.profile. A resource without meta.profile, such as the Patient or a GBB entry, is only validated against the base FHIR specification for now."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).meta.profile.where($this.startsWith('{$compositionProfile}')).exists()"/>
-            <warningOnly value="true"/>
+            <validateProfileId value="ps-bundle-profile"/>
+            <warningOnly value="{$validationWarningOnly}"/>
         </assert>
     </action>
     <action>
         <assert>
-            <description value="Confirm that the document conforms to {$bundleProfile}, and its resources to the profiles they claim in meta.profile."/>
+            <description value="Confirm that the Composition conforms to {$compositionProfile}, and through it to the EU-PS profile it imposes. The Composition does not need to claim the profile in meta.profile."/>
             <direction value="response"/>
-            <validateProfileId value="ps-bundle-profile"/>
+            <validateProfileId value="ps-composition-profile"/>
             <warningOnly value="{$validationWarningOnly}"/>
         </assert>
     </action>
