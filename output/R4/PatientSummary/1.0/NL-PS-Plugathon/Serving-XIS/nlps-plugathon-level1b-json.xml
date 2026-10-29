@@ -23,7 +23,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="The serving system provides an NL-PS for its level 1b test patient, in which all metadata is present, and all mandatory sections are empty, with an emptyReason and a narrative. Conformancelab sends the bearer token you enter at test setup to your server. Use a token issued by your own system that gives access to your level 1b test patient, and only to that patient. Without a token the server may return the Patient Summaries of several patients; the script then tests the first one. Implementation Guides: NL-PS https://ig.nictiz.nl/nlps/ and generic building blocks (GBB) https://ig.nictiz.nl/gbb/"/>
+   <description value="The serving system provides an NL-PS for its level 1b test patient, in which all metadata is present, and all mandatory sections are empty, with an emptyReason and a narrative. Metadata covers the Composition and the Patient, Practitioner, PractitionerRole, Device and Organization in the document; per type, one filled resource is enough. A missing SHALL:populate element fails, a missing SHOULD:populate-if-known element gives a warning. Known issue: of the Organization obligations only name is SHALL; the other SHALL:populate obligations in the profile are treated as SHOULD:populate-if-known. Conformancelab sends the bearer token you enter at test setup to your server. Use a token issued by your own system that gives access to your level 1b test patient, and only to that patient. Without a token the server may return the Patient Summaries of several patients; the script then tests the first one. Implementation Guides: NL-PS https://ig.nictiz.nl/nlps/ and generic building blocks (GBB) https://ig.nictiz.nl/gbb/"/>
    <origin>
       <index value="1"/>
       <profile>
@@ -106,7 +106,7 @@
    </test>
    <test>
       <name value="Retrieve and check Patient Summary document"/>
-      <description value="Retrieve the NL-PS as a document Bundle with $document and check the document as a whole. Check that all metadata is present, and all mandatory sections are empty, with an emptyReason and a narrative."/>
+      <description value="Retrieve the NL-PS as a document Bundle with $document and check the document as a whole. Check that all metadata is present (SHOULD:populate-if-known elements as a warning), and all mandatory sections are empty, with an emptyReason and a narrative."/>
       <action>
          <operation>
             <type>
@@ -283,7 +283,7 @@
             <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).language.exists()"/>
             <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
       <action>
@@ -292,7 +292,7 @@
             <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).extension.where(url = 'http://hl7.org/fhir/5.0/StructureDefinition/extension-Composition.version').value.exists()"/>
             <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
       <action>
@@ -319,7 +319,7 @@
             <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).category.exists()"/>
             <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
       <action>
@@ -364,7 +364,7 @@
             <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).attester.where(mode = 'legal' and time.exists() and party.exists()).exists()"/>
             <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
       <action>
@@ -373,7 +373,7 @@
             <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).attester.where(mode = 'professional' and time.exists() and party.exists()).exists()"/>
             <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
       <action>
@@ -382,7 +382,7 @@
             <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).custodian.exists()"/>
             <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
       <action>
@@ -391,7 +391,7 @@
             <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).event.code.exists()"/>
             <stopTestOnFail value="false"/>
-            <warningOnly value="false"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
       <action>
@@ -400,7 +400,439 @@
             <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).event.period.exists()"/>
             <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has an identifier."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(identifier.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a gender identity with a value (extension individual-genderIdentity)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(extension.where(url = 'http://hl7.org/fhir/StructureDefinition/individual-genderIdentity').extension.where(url = 'value').value.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has pronouns with a value (extension individual-pronouns)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(extension.where(url = 'http://hl7.org/fhir/StructureDefinition/individual-pronouns').extension.where(url = 'value').value.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a sex parameter for clinical use with a value (extension patient-sexParameterForClinicalUse)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(extension.where(url = 'http://hl7.org/fhir/StructureDefinition/patient-sexParameterForClinicalUse').extension.where(url = 'value').value.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a BSN."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/bsn').exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a name."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(name.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a telecom."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(telecom.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a gender."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(gender.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a birthDate."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(birthDate.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a deceased[x]."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(deceased.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has an address."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(address.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a maritalStatus."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(maritalStatus.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a multipleBirth[x]."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(multipleBirth.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a contact."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(contact.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a contact.name."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(contact.name.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a contact.telecom."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(contact.telecom.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a contact.address."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(contact.address.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a contact.organization."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(contact.organization.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Patient, at least one Patient has a generalPractitioner."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).empty() or Bundle.entry.resource.where($this is Patient).where(generalPractitioner.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Practitioner, at least one Practitioner has an identifier."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Practitioner).empty() or Bundle.entry.resource.where($this is Practitioner).where(identifier.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Practitioner, at least one Practitioner has a name."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Practitioner).empty() or Bundle.entry.resource.where($this is Practitioner).where(name.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Practitioner, at least one Practitioner has a telecom."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Practitioner).empty() or Bundle.entry.resource.where($this is Practitioner).where(telecom.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Practitioner, at least one Practitioner has an address."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Practitioner).empty() or Bundle.entry.resource.where($this is Practitioner).where(address.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Practitioner, at least one Practitioner has a gender."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Practitioner).empty() or Bundle.entry.resource.where($this is Practitioner).where(gender.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a PractitionerRole, at least one PractitionerRole has a practitioner."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is PractitionerRole).empty() or Bundle.entry.resource.where($this is PractitionerRole).where(practitioner.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a PractitionerRole, at least one PractitionerRole has an organization."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is PractitionerRole).empty() or Bundle.entry.resource.where($this is PractitionerRole).where(organization.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a PractitionerRole, at least one PractitionerRole has a code."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is PractitionerRole).empty() or Bundle.entry.resource.where($this is PractitionerRole).where(code.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a PractitionerRole, at least one PractitionerRole has a specialty."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is PractitionerRole).empty() or Bundle.entry.resource.where($this is PractitionerRole).where(specialty.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a PractitionerRole, at least one PractitionerRole has a telecom."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is PractitionerRole).empty() or Bundle.entry.resource.where($this is PractitionerRole).where(telecom.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Device, at least one Device has an identifier."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Device).empty() or Bundle.entry.resource.where($this is Device).where(identifier.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Device, at least one Device has a udiCarrier with a deviceIdentifier."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Device).empty() or Bundle.entry.resource.where($this is Device).where(udiCarrier.deviceIdentifier.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Device, at least one Device has a udiCarrier.issuer."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Device).empty() or Bundle.entry.resource.where($this is Device).where(udiCarrier.issuer.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Device, at least one Device has a manufacturer."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Device).empty() or Bundle.entry.resource.where($this is Device).where(manufacturer.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Device, at least one Device has a manufactureDate."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Device).empty() or Bundle.entry.resource.where($this is Device).where(manufactureDate.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Device, at least one Device has an expirationDate."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Device).empty() or Bundle.entry.resource.where($this is Device).where(expirationDate.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Device, at least one Device has a lotNumber."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Device).empty() or Bundle.entry.resource.where($this is Device).where(lotNumber.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Device, at least one Device has a serialNumber."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Device).empty() or Bundle.entry.resource.where($this is Device).where(serialNumber.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Device, at least one Device has a deviceName with a name and a type."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Device).empty() or Bundle.entry.resource.where($this is Device).where(deviceName.where(name.exists() and type.exists()).exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Device, at least one Device has a modelNumber."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Device).empty() or Bundle.entry.resource.where($this is Device).where(modelNumber.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Device, at least one Device has a type."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Device).empty() or Bundle.entry.resource.where($this is Device).where(type.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Device, at least one Device has a version with a value."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Device).empty() or Bundle.entry.resource.where($this is Device).where(version.value.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Device, at least one Device has a note.text."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Device).empty() or Bundle.entry.resource.where($this is Device).where(note.text.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Organization, at least one Organization has an identifier."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Organization).empty() or Bundle.entry.resource.where($this is Organization).where(identifier.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Organization, at least one Organization has a type."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Organization).empty() or Bundle.entry.resource.where($this is Organization).where(type.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Organization, at least one Organization has a name."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Organization).empty() or Bundle.entry.resource.where($this is Organization).where(name.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Organization, at least one Organization has a telecom."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Organization).empty() or Bundle.entry.resource.where($this is Organization).where(telecom.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Organization, at least one Organization has an address."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Organization).empty() or Bundle.entry.resource.where($this is Organization).where(address.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Metadata: if the document holds a Organization, at least one Organization has a partOf."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Organization).empty() or Bundle.entry.resource.where($this is Organization).where(partOf.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
          </assert>
       </action>
    </test>
