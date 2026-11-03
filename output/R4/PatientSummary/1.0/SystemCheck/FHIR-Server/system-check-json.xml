@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="system-check-json"/>
+   <url value="http://nictiz.nl/fhir/TestScript/system-check-json"/>
+   <version value="r4.0.1-patchlevel 2026.38"/>
+   <name value="System_check_json"/>
+   <title value="System check - JSON Format"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Checks that the FHIR server can be reached through Conformancelab, returns its CapabilityStatement, and accepts a search for Patient Summary Compositions. If your server requires a token, choose SystemToken at test setup and enter your token: Conformancelab sends it with every request."/>
+   <origin>
+      <index value="1"/>
+      <profile>
+         <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-origin-profile"/>
+         <code value="Conformancelab-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <profile id="CapabilityStatement-profile"
+            value="http://hl7.org/fhir/StructureDefinition/CapabilityStatement"/>
+   <test>
+      <name value="CapabilityStatement"/>
+      <description value="Retrieve the CapabilityStatement of the server"/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="capabilities"/>
+            </type>
+            <description value="Retrieve the CapabilityStatement (GET [base]/metadata)."/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server responds with HTTP status 200."/>
+            <direction value="response"/>
+            <operator value="equals"/>
+            <responseCode value="200"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response is returned in the requested format."/>
+            <direction value="response"/>
+            <contentType value="application/fhir+json"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned resource type is CapabilityStatement."/>
+            <direction value="response"/>
+            <resource value="CapabilityStatement"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server supports FHIR R4 (fhirVersion 4.0.x)."/>
+            <direction value="response"/>
+            <expression value="CapabilityStatement.fhirVersion.startsWith('4.0')"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the CapabilityStatement declares support for JSON."/>
+            <direction value="response"/>
+            <expression value="CapabilityStatement.format.where($this.contains('json')).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the CapabilityStatement declares support for XML."/>
+            <direction value="response"/>
+            <expression value="CapabilityStatement.format.where($this.contains('xml')).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the returned CapabilityStatement conforms to the base FHIR specification."/>
+            <direction value="response"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="CapabilityStatement-profile"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Search Patient Summary"/>
+      <description value="Search the Patient Summary Compositions, with the token entered at setup if there is one."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Composition"/>
+            <description value="Search the Patient Summary Compositions (GET [base]/Composition?type=http://loinc.org|60591-5)."/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?type=http://loinc.org|60591-5"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server responds with HTTP status 200. A server that requires a token responds with 401 or 403 when no token was entered at setup."/>
+            <direction value="response"/>
+            <operator value="equals"/>
+            <responseCode value="200"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response is a searchset Bundle."/>
+            <direction value="response"/>
+            <expression value="Bundle.type = 'searchset'"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the request carried an Authorization header, so a token was entered at setup. Warning only: a server that requires no token passes without one."/>
+            <direction value="request"/>
+            <headerField value="Authorization"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
