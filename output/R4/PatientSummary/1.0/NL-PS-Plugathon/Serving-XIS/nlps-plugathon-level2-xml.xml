@@ -42,6 +42,8 @@
             value="http://hl7.org/fhir/StructureDefinition/Bundle"/>
    <profile id="ps-composition-profile"
             value="http://ig.nictiz.nl/nlps/StructureDefinition/nl-PatientSummary"/>
+   <profile id="ps-patient-profile"
+            value="http://ig.nictiz.nl/gbb/StructureDefinition/nl-core-Patient"/>
    <variable>
       <name value="composition-id"/>
       <description value="The id of the first Patient Summary Composition in the search result."/>
@@ -170,23 +172,23 @@
       </action>
       <action>
          <assert>
-            <description value="Confirm that the document conforms to http://hl7.org/fhir/StructureDefinition/Bundle, and its resources to the profiles they claim in meta.profile. A resource without meta.profile, such as the Patient or a GBB entry, is only validated against the base FHIR specification for now."/>
+            <description value="Confirm that the document conforms to http://hl7.org/fhir/StructureDefinition/Bundle."/>
             <direction value="response"/>
             <stopTestOnFail value="false"/>
             <validateProfileId value="ps-bundle-profile"/>
-            <warningOnly value="true"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
       <action>
          <assert>
-            <description value="Confirm that the Composition conforms to http://ig.nictiz.nl/nlps/StructureDefinition/nl-PatientSummary, and through it to the EU-PS profile it imposes. The Composition does not need to claim the profile in meta.profile."/>
+            <description value="Confirm that the Composition conforms to http://ig.nictiz.nl/nlps/StructureDefinition/nl-PatientSummary, and through it to the EU-PS profile it imposes."/>
             <direction value="response"/>
+            <expression value="Bundle.entry.first().resource"/>
             <stopTestOnFail value="false"/>
             <validateProfileId value="ps-composition-profile"/>
-            <warningOnly value="true"/>
+            <warningOnly value="false"/>
          </assert>
       </action>
-      <!-- Warning only until a run shows that the validator loads the NL-PS and GBB packages. -->
       <action>
          <assert>
             <description value="Section Problems (LOINC 11450-4): the section is present."/>
@@ -274,6 +276,29 @@
             <direction value="response"/>
             <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).all(entry.empty() and emptyReason.exists() and text.exists())"/>
             <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Patient"/>
+      <description value="Validate the Patient that the Composition refers to against nl-core-Patient, in the document retrieved in test &#34;Retrieve and check Patient Summary document&#34;."/>
+      <action>
+         <assert>
+            <description value="Confirm that Composition.subject refers to exactly one Patient in the document."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Patient and (fullUrl = %resource.entry.first().resource.subject.reference or ('Patient/' + resource.id) = %resource.entry.first().resource.subject.reference)).count() = 1"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the Patient conforms to http://ig.nictiz.nl/gbb/StructureDefinition/nl-core-Patient."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Patient and (fullUrl = %resource.entry.first().resource.subject.reference or ('Patient/' + resource.id) = %resource.entry.first().resource.subject.reference)).resource"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="ps-patient-profile"/>
             <warningOnly value="false"/>
          </assert>
       </action>
