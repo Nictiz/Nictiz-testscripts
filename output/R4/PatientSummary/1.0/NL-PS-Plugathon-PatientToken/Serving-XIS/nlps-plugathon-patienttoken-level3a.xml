@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
-   <id value="nlps-plugathon-patienttoken-level4a-xml"/>
+   <id value="nlps-plugathon-patienttoken-level3a"/>
    <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-authentication">
       <extension url="display">
-         <valueString value="NL-PS level 4a: bearer token from your own system for your level 4a test patient"/>
+         <valueString value="NL-PS level 3a: bearer token from your own system for your level 3a test patient"/>
       </extension>
       <extension url="access-token">
          <valueString value=""/>
       </extension>
    </extension>
-   <url value="http://nictiz.nl/fhir/TestScript/nlps-plugathon-patienttoken-level4a-xml"/>
+   <url value="http://nictiz.nl/fhir/TestScript/nlps-plugathon-patienttoken-level3a"/>
    <version value="r4.0.1-patchlevel 2026.38"/>
-   <name value="Nlps_plugathon_patienttoken_level4a_xml"/>
-   <title value="NL-PS-L4-A - Level 4a: Two minimal GBBs per section - Fixed token per patient - XML Format"/>
+   <name value="Nlps_plugathon_patienttoken_level3a"/>
+   <title value="NL-PS-L3-A - Level 3a: One minimal GBB per section - Fixed token per patient"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -23,7 +23,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="The serving system provides an NL-PS for its level 4a test patient, in which every mandatory section except Medication summary has at least two entries that refer to generic building blocks (GBBs) in the document, and has a narrative, and Medication summary has no entries, and has an emptyReason and a narrative. Conformancelab sends the bearer token you enter at test setup to your server. Use a token issued by your own system that gives access to your level 4a test patient, and only to that patient. Without a token the server may return the Patient Summaries of several patients; the script then tests the first one. Implementation Guides: NL-PS https://ig.nictiz.nl/nlps/ and generic building blocks (GBB) https://ig.nictiz.nl/gbb/"/>
+   <description value="The serving system provides an NL-PS for its level 3a test patient, in which every mandatory section except Medication summary has at least one entry that refers to a generic building block (GBB) in the document, and has a narrative, and Medication summary has no entries, and has an emptyReason and a narrative. Conformancelab sends the bearer token you enter at test setup to your server. Use a token issued by your own system that gives access to your level 3a test patient, and only to that patient. Without a token the server may return the Patient Summaries of several patients; the script then tests the first one. Implementation Guides: NL-PS https://ig.nictiz.nl/nlps/ and generic building blocks (GBB) https://ig.nictiz.nl/gbb/"/>
    <origin>
       <index value="1"/>
       <profile>
@@ -71,7 +71,6 @@
             </type>
             <resource value="Composition"/>
             <description value="Search the Patient Summary Compositions of the patient: GET [base]/Composition?type=http://loinc.org|60591-5"/>
-            <accept value="xml"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
@@ -127,7 +126,6 @@
             </type>
             <resource value="Composition"/>
             <description value="Retrieve the Patient Summary as a document: GET [base]/Composition/[id]/$document"/>
-            <accept value="xml"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
             <origin value="1"/>
@@ -235,7 +233,7 @@
    </test>
    <test>
       <name value="Section Problems"/>
-      <description value="Check section Problems (LOINC 11450-4) in the document retrieved in test &#34;Retrieve and check Patient Summary document&#34;. The section must have at least two entries. If not, the remaining checks of this test are skipped. The Condition of the first two entries is validated against nl-core-Condition; further entries are not validated."/>
+      <description value="Check section Problems (LOINC 11450-4) in the document retrieved in test &#34;Retrieve and check Patient Summary document&#34;. The section must have at least one entry. If not, the remaining checks of this test are skipped. The Condition of the first entry is validated against nl-core-Condition; further entries are not validated."/>
       <action>
          <assert>
             <description value="Section Problems (LOINC 11450-4): the section is present."/>
@@ -247,18 +245,18 @@
       </action>
       <action>
          <assert>
-            <description value="Section Problems (LOINC 11450-4): the section has at least 2 entries."/>
+            <description value="Section Problems (LOINC 11450-4): the section has at least 1 entries."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry.count() &gt;= 2"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry.count() &gt;= 1"/>
             <stopTestOnFail value="true"/>
             <warningOnly value="false"/>
          </assert>
       </action>
       <action>
          <assert>
-            <description value="Section Problems (LOINC 11450-4): the first 2 entries each refer to a Condition in the document."/>
+            <description value="Section Problems (LOINC 11450-4): the first 1 entries each refer to a Condition in the document."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry.take(2).all(reference.subsetOf(%resource.entry.where(resource is Condition).select(fullUrl | ('Condition/' + resource.id))))"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry.take(1).all(reference.subsetOf(%resource.entry.where(resource is Condition).select(fullUrl | ('Condition/' + resource.id))))"/>
             <stopTestOnFail value="true"/>
             <warningOnly value="false"/>
          </assert>
@@ -291,20 +289,10 @@
             <warningOnly value="false"/>
          </assert>
       </action>
-      <action>
-         <assert>
-            <description value="Section Problems (LOINC 11450-4): the Condition of the second entry conforms to http://ig.nictiz.nl/gbb/StructureDefinition/nl-core-Condition."/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.where(resource is Condition and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry[1].reference or ('Condition/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry[1].reference)).resource"/>
-            <stopTestOnFail value="false"/>
-            <validateProfileId value="ps-condition-profile"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
    </test>
    <test>
       <name value="Section Allergies and intolerances"/>
-      <description value="Check section Allergies and intolerances (LOINC 48765-2) in the document retrieved in test &#34;Retrieve and check Patient Summary document&#34;. The section must have at least two entries. If not, the remaining checks of this test are skipped. The AllergyIntolerance of the first two entries is validated against nl-core-AllergyIntolerance; further entries are not validated."/>
+      <description value="Check section Allergies and intolerances (LOINC 48765-2) in the document retrieved in test &#34;Retrieve and check Patient Summary document&#34;. The section must have at least one entry. If not, the remaining checks of this test are skipped. The AllergyIntolerance of the first entry is validated against nl-core-AllergyIntolerance; further entries are not validated."/>
       <action>
          <assert>
             <description value="Section Allergies and intolerances (LOINC 48765-2): the section is present."/>
@@ -316,18 +304,18 @@
       </action>
       <action>
          <assert>
-            <description value="Section Allergies and intolerances (LOINC 48765-2): the section has at least 2 entries."/>
+            <description value="Section Allergies and intolerances (LOINC 48765-2): the section has at least 1 entries."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry.count() &gt;= 2"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry.count() &gt;= 1"/>
             <stopTestOnFail value="true"/>
             <warningOnly value="false"/>
          </assert>
       </action>
       <action>
          <assert>
-            <description value="Section Allergies and intolerances (LOINC 48765-2): the first 2 entries each refer to a AllergyIntolerance in the document."/>
+            <description value="Section Allergies and intolerances (LOINC 48765-2): the first 1 entries each refer to a AllergyIntolerance in the document."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry.take(2).all(reference.subsetOf(%resource.entry.where(resource is AllergyIntolerance).select(fullUrl | ('AllergyIntolerance/' + resource.id))))"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry.take(1).all(reference.subsetOf(%resource.entry.where(resource is AllergyIntolerance).select(fullUrl | ('AllergyIntolerance/' + resource.id))))"/>
             <stopTestOnFail value="true"/>
             <warningOnly value="false"/>
          </assert>
@@ -360,20 +348,10 @@
             <warningOnly value="false"/>
          </assert>
       </action>
-      <action>
-         <assert>
-            <description value="Section Allergies and intolerances (LOINC 48765-2): the AllergyIntolerance of the second entry conforms to http://ig.nictiz.nl/gbb/StructureDefinition/nl-core-AllergyIntolerance."/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.where(resource is AllergyIntolerance and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry[1].reference or ('AllergyIntolerance/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry[1].reference)).resource"/>
-            <stopTestOnFail value="false"/>
-            <validateProfileId value="ps-allergyintolerance-profile"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
    </test>
    <test>
       <name value="Section History of procedures"/>
-      <description value="Check section History of procedures (LOINC 47519-4) in the document retrieved in test &#34;Retrieve and check Patient Summary document&#34;. The section must have at least two entries. If not, the remaining checks of this test are skipped. The Procedure of the first two entries is validated against nl-core-Procedure; further entries are not validated."/>
+      <description value="Check section History of procedures (LOINC 47519-4) in the document retrieved in test &#34;Retrieve and check Patient Summary document&#34;. The section must have at least one entry. If not, the remaining checks of this test are skipped. The Procedure of the first entry is validated against nl-core-Procedure; further entries are not validated."/>
       <action>
          <assert>
             <description value="Section History of procedures (LOINC 47519-4): the section is present."/>
@@ -385,18 +363,18 @@
       </action>
       <action>
          <assert>
-            <description value="Section History of procedures (LOINC 47519-4): the section has at least 2 entries."/>
+            <description value="Section History of procedures (LOINC 47519-4): the section has at least 1 entries."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry.count() &gt;= 2"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry.count() &gt;= 1"/>
             <stopTestOnFail value="true"/>
             <warningOnly value="false"/>
          </assert>
       </action>
       <action>
          <assert>
-            <description value="Section History of procedures (LOINC 47519-4): the first 2 entries each refer to a Procedure in the document."/>
+            <description value="Section History of procedures (LOINC 47519-4): the first 1 entries each refer to a Procedure in the document."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry.take(2).all(reference.subsetOf(%resource.entry.where(resource is Procedure).select(fullUrl | ('Procedure/' + resource.id))))"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry.take(1).all(reference.subsetOf(%resource.entry.where(resource is Procedure).select(fullUrl | ('Procedure/' + resource.id))))"/>
             <stopTestOnFail value="true"/>
             <warningOnly value="false"/>
          </assert>
@@ -429,20 +407,10 @@
             <warningOnly value="false"/>
          </assert>
       </action>
-      <action>
-         <assert>
-            <description value="Section History of procedures (LOINC 47519-4): the Procedure of the second entry conforms to http://ig.nictiz.nl/gbb/StructureDefinition/nl-core-Procedure."/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.where(resource is Procedure and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[1].reference or ('Procedure/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[1].reference)).resource"/>
-            <stopTestOnFail value="false"/>
-            <validateProfileId value="ps-procedure-profile"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
    </test>
    <test>
       <name value="Section Medical devices"/>
-      <description value="Check section Medical devices (LOINC 46264-8) in the document retrieved in test &#34;Retrieve and check Patient Summary document&#34;. The section must have at least two entries. If not, the remaining checks of this test are skipped. The DeviceUseStatement of the first two entries is validated against nl-core-DeviceUse; further entries are not validated."/>
+      <description value="Check section Medical devices (LOINC 46264-8) in the document retrieved in test &#34;Retrieve and check Patient Summary document&#34;. The section must have at least one entry. If not, the remaining checks of this test are skipped. The DeviceUseStatement of the first entry is validated against nl-core-DeviceUse; further entries are not validated."/>
       <action>
          <assert>
             <description value="Section Medical devices (LOINC 46264-8): the section is present."/>
@@ -454,18 +422,18 @@
       </action>
       <action>
          <assert>
-            <description value="Section Medical devices (LOINC 46264-8): the section has at least 2 entries."/>
+            <description value="Section Medical devices (LOINC 46264-8): the section has at least 1 entries."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry.count() &gt;= 2"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry.count() &gt;= 1"/>
             <stopTestOnFail value="true"/>
             <warningOnly value="false"/>
          </assert>
       </action>
       <action>
          <assert>
-            <description value="Section Medical devices (LOINC 46264-8): the first 2 entries each refer to a DeviceUseStatement in the document."/>
+            <description value="Section Medical devices (LOINC 46264-8): the first 1 entries each refer to a DeviceUseStatement in the document."/>
             <direction value="response"/>
-            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry.take(2).all(reference.subsetOf(%resource.entry.where(resource is DeviceUseStatement).select(fullUrl | ('DeviceUseStatement/' + resource.id))))"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry.take(1).all(reference.subsetOf(%resource.entry.where(resource is DeviceUseStatement).select(fullUrl | ('DeviceUseStatement/' + resource.id))))"/>
             <stopTestOnFail value="true"/>
             <warningOnly value="false"/>
          </assert>
@@ -493,16 +461,6 @@
             <description value="Section Medical devices (LOINC 46264-8): the DeviceUseStatement of the first entry conforms to http://ig.nictiz.nl/gbb/StructureDefinition/nl-core-DeviceUse."/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource is DeviceUseStatement and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry[0].reference or ('DeviceUseStatement/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry[0].reference)).resource"/>
-            <stopTestOnFail value="false"/>
-            <validateProfileId value="ps-deviceuse-profile"/>
-            <warningOnly value="false"/>
-         </assert>
-      </action>
-      <action>
-         <assert>
-            <description value="Section Medical devices (LOINC 46264-8): the DeviceUseStatement of the second entry conforms to http://ig.nictiz.nl/gbb/StructureDefinition/nl-core-DeviceUse."/>
-            <direction value="response"/>
-            <expression value="Bundle.entry.where(resource is DeviceUseStatement and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry[1].reference or ('DeviceUseStatement/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry[1].reference)).resource"/>
             <stopTestOnFail value="false"/>
             <validateProfileId value="ps-deviceuse-profile"/>
             <warningOnly value="false"/>
