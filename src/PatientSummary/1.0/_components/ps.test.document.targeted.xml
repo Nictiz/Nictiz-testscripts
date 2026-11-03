@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Retrieve the Patient Summary as a document and check the document as a whole. The Composition is selected with an
+    expression and validated against the profile set in the TestScript, whether or not it claims it in meta.profile.
+    @param bundleProfile - The profile the returned Bundle is validated against.
+    @param compositionProfile - The profile the Composition is validated against.
+    @param [validationWarningOnly] - Report a failed profile validation as a warning. Defaults to false.
+-->
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <nts:parameter name="validationWarningOnly" value="false"/>
+    <nts:profile id="ps-bundle-profile" value="{$bundleProfile}"/>
+    <nts:profile id="ps-composition-profile" value="{$compositionProfile}"/>
+
+    <nts:include value="ps.document.retrieve"/>
+    <action>
+        <assert>
+            <description value="Confirm that the Composition is a Patient Summary (type LOINC 60591-5)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).type.coding.where(system = 'http://loinc.org' and code = '60591-5').exists()"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the document conforms to {$bundleProfile}."/>
+            <direction value="response"/>
+            <validateProfileId value="ps-bundle-profile"/>
+            <warningOnly value="{$validationWarningOnly}"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the Composition conforms to {$compositionProfile}, and through it to the EU-PS profile it imposes."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource"/>
+            <validateProfileId value="ps-composition-profile"/>
+            <warningOnly value="{$validationWarningOnly}"/>
+        </assert>
+    </action>
+</nts:component>

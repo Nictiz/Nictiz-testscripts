@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Validate the resource that one entry of a section refers to against a GBB profile, whether or not the resource
+    claims the profile in meta.profile. Include after ps.test.section.gbb, which stops the test if the entry does
+    not refer to a resource of the expected type. Entries after the ones a level asks for are not validated.
+    @param sectionName - Human readable name of the section.
+    @param sectionCode - LOINC code of the section.
+    @param resourceType - The resource type of the GBB, e.g. 'Condition'.
+    @param gbbProfile - The canonical of the GBB profile.
+    @param profileId - The id of the profile declaration in the TestScript.
+    @param entryIndex - The index of the entry in the section, starting at 0.
+    @param entryName - The position of the entry in words, e.g. 'first'.
+    @param [validationWarningOnly] - Report a failed profile validation as a warning. Defaults to false.
+-->
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <nts:parameter name="validationWarningOnly" value="false"/>
+    <nts:profile id="{$profileId}" value="{$gbbProfile}"/>
+    <action>
+        <assert>
+            <description value="Section {$sectionName} (LOINC {$sectionCode}): the {$resourceType} of the {$entryName} entry conforms to {$gbbProfile}."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is {$resourceType} and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '{$sectionCode}').exists()).entry[{$entryIndex}].reference or ('{$resourceType}/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '{$sectionCode}').exists()).entry[{$entryIndex}].reference)).resource"/>
+            <validateProfileId value="{$profileId}"/>
+            <warningOnly value="{$validationWarningOnly}"/>
+        </assert>
+    </action>
+</nts:component>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Retrieve the Patient Summary as a document and check one GBB section: it is present, holds a minimum number of
+    entries, and its first entries refer to a resource of the expected type in the document. If one of these fails,
+    the remaining asserts of the test are skipped. Then the section must have a narrative and every entry must refer
+    to a resource of the expected type. Include ps.assert.entry.profile per entry to validate after this component.
+    A reference matches the fullUrl of a document entry or its relative form [type]/[id].
+    @param sectionName - Human readable name of the section.
+    @param sectionCode - LOINC code of the section.
+    @param resourceType - The resource type of the GBB, e.g. 'Condition'.
+    @param minEntries - The minimum number of entries: 1 for level 3, 2 for level 4.
+-->
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <nts:include value="ps.document.retrieve"/>
+    <action>
+        <assert nts:stopTestOnFail="true">
+            <description value="Section {$sectionName} (LOINC {$sectionCode}): the section is present."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '{$sectionCode}').exists()).exists()"/>
+        </assert>
+    </action>
+    <action>
+        <assert nts:stopTestOnFail="true">
+            <description value="Section {$sectionName} (LOINC {$sectionCode}): the section has at least {$minEntries} entries."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '{$sectionCode}').exists()).entry.count() &gt;= {$minEntries}"/>
+        </assert>
+    </action>
+    <action>
+        <assert nts:stopTestOnFail="true">
+            <description value="Section {$sectionName} (LOINC {$sectionCode}): the first {$minEntries} entries each refer to a {$resourceType} in the document."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '{$sectionCode}').exists()).entry.take({$minEntries}).all(reference.subsetOf(%resource.entry.where(resource is {$resourceType}).select(fullUrl | ('{$resourceType}/' + resource.id))))"/>
+        </assert>
+    </action>
+    <nts:include value="ps.assert.section"
+        condition="all(text.exists())"
+        conditionDescription="the section has a narrative."/>
+    <nts:include value="ps.assert.section"
+        condition="all(entry.reference.subsetOf(%resource.entry.where(resource is {$resourceType}).select(fullUrl | ('{$resourceType}/' + resource.id))))"
+        conditionDescription="every entry refers to a {$resourceType} in the document."/>
+</nts:component>
