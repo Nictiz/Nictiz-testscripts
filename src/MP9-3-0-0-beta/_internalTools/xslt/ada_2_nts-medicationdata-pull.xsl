@@ -428,7 +428,7 @@
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                                             </nts:include>
-                                            <nts:include value="medmij/test.phr.search" scope="common" nts:in-targets="MedMij">
+                                            <nts:include value="medmij/test.phr.search" useToken="true" scope="common" nts:in-targets="MedMij">
                                                 <nts:with-parameter name="description" value="Test PHR client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
@@ -452,7 +452,7 @@
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                                             </nts:include>
-                                            <nts:include value="medmij/test.xis.search" scope="common" nts:in-targets="MedMij">
+                                            <nts:include value="medmij/test.xis.search" useToken="true" scope="common" nts:in-targets="MedMij">
                                                 <nts:with-parameter name="description" value="Test XIS server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                                 <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
@@ -649,7 +649,7 @@
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                             </nts:include>
-                            <nts:include value="medmij/test.phr.search" scope="common" nts:in-targets="MedMij">
+                            <nts:include value="medmij/test.phr.search" useToken="true" scope="common" nts:in-targets="MedMij">
                                 <nts:with-parameter name="description" value="Test PHR client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>
@@ -674,7 +674,7 @@
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParams}"/>
                             </nts:include>
-                            <nts:include value="medmij/test.xis.search" scope="common" nts:in-targets="MedMij">
+                            <nts:include value="medmij/test.xis.search" useToken="true" scope="common" nts:in-targets="MedMij">
                                 <nts:with-parameter name="description" value="Test XIS server to serve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
                                 <nts:with-parameter name="params" value="{$theScenarioParamsMedMij}"/>

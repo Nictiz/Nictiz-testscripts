@@ -111,6 +111,6 @@ The following properties are automatically added to `properties.json` during the
 * `*.tool.version` - Override the tool version for one of the specific steps in the build process (the tool version is the full name of a git branch or tag). The wildcard aligns with the ANT project names of the build files in the `src` folder, so:
   * `generateContentAssertsForProject.tool.version` overrides the version for the script that converts a single NTS folder.
   * `generateContentAssertsForProjects.tool.version` overrides the version for the script that converts a multiple NTS folders.
-  * `addNarrativesForFolder.tool.version` overrides the version for the narrative generator (this should be the name of a release, not a branch or tag).
+  * `addNarrativesForFolder.tool.version` overrides the version for the narrative generator (this should be the name of a tag).
   * `convertFixtures.tool.version` overrides the version of the tool that converts fixture from XML to JSON.
   * `buildCLPropertiesFiles.tool.version` overrides the version of the tool that generates Conformancelab properties files.
