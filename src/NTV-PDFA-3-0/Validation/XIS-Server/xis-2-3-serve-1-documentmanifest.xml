@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://hl7.org/fhir/STU3/testscript.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript"
+    nts:scenario="server">
+    <id value="xis-2-3-serve-1-documentmanifest"/>
+    <version value="stu3-2.0"/>
+    <title value="Scenario 2.3 - Serve one DocumentManifest resource"/>
+    <description value="Serve one DocumentManifest resource of XXX_Meijer."/>
+    <nts:clAuthExtension patientResourceId="pdfa-patient2-preval" id="XXX_Meijer"/>
+    <destination>
+        <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-destination-title">
+            <valueString value="Resource endpoint"/>
+        </extension>
+        <index value="1"/>
+        <profile>
+            <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+            <code value="FHIR-Server"/>
+        </profile>
+    </destination>
+    
+    <nts:includeDateT value="yes"/>
+
+    <test id="scenario2-3-serve-1-documentmanifest" nts:in-targets="#default Nictiz-intern">
+        <description
+            value="Serve all current DocumentManifest resources of XXX-Schulte that are created in the period from T-365 to T-60."/>
+        <nts:include value="medmij/test.xis.successfulSearch" scope="common"
+            resource="DocumentManifest"
+            params="?status=current&amp;created=ge${DATE, T, D,-365}&amp;created=le${DATE, T, D,-60}"/>
+        <nts:include value="assert.response.variableNumberOfResults"
+            resource="DocumentManifest" min="1" max="2" />
+    </test>
+    
+    <test id="scenario2-3-serve-1-documentmanifest" nts:in-targets="NoManifest">
+        <description value="Handle unsupported request for DocumentManifest resources."/>
+        <nts:include value="medmij/test.xis.search" scope="common"
+            resource="DocumentManifest"
+            params="?status=current&amp;created=ge${DATE, T, D,-365}&amp;created=le${DATE, T, D,-60}"/>
+        <nts:include value="assert.response.unsupportedResource" scope="common"/>
+    </test>
+</TestScript>
