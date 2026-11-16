@@ -290,7 +290,7 @@
       <action>
          <assert>
             <label value="added NTV check"/>
-            <description value="Confirm that the returned entries contain valid author references."/>
+            <description value="Verify that each author reference in the first two DocumentReference entries starts with '#' and that the referenced ID matches the ID of a contained resource within the same DocumentReference."/>
             <direction value="response"/>
             <expression value="Bundle.entry.take(2).resource.where($this is DocumentReference).all(author.reference.startsWith('#') and author.reference.substring(1) in contained.id)"/>
             <stopTestOnFail value="false"/>
@@ -300,9 +300,29 @@
       <action>
          <assert>
             <label value="added NTV check"/>
-            <description value="Confirm that the returned entries contain valid author references."/>
+            <description value="Verify that every author in the first two DocumentReference entries has a populated display element."/>
             <direction value="response"/>
             <expression value="Bundle.entry.take(2).resource.where($this is DocumentReference).all(author.all(display.exists() and display.hasValue()))"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="added NTV check"/>
+            <description value="All DocumentReference resources SHALL have a narrative status of extensions or generated."/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(DocumentReference).all(text.status = 'extensions' or text.status = 'generated')'-->
+            <expression value="Bundle.entry.resource.where($this is DocumentReference).all(text.status = 'extensions' or text.status = 'generated')"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <label value="added NTV check"/>
+            <description value="DocumentReferences with resource-level modifier extensions SHALL have a narrative with an allowed status and XHTML content."/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.entry.resource.ofType(DocumentReference).all(modifierExtension.empty() or ((text.status = 'extensions' or text.status = 'generated') and text.div.exists()))'-->
+            <expression value="Bundle.entry.resource.where($this is DocumentReference).all(modifierExtension.empty() or ((text.status = 'extensions' or text.status = 'generated') and text.div.exists()))"/>
             <stopTestOnFail value="false"/>
             <warningOnly value="false"/>
          </assert>
