@@ -4,8 +4,8 @@
     nts:scenario="server">
     <id value="xis-2-5-serve-1-pdfa"/>
     <version value="stu3-2.0"/>
-    <title value="Scenario 2.5 - Serve one PDFA document"/>
-    <description value="Scenario 2.5 - Serve one PDFA document of XXX-Schulte via an HTTP get. If PDFA documents are served through Binary resources, scenario 1.4 should be executed instead."/>
+    <title value="Scenario 2.5 - Serve one PDFA document of XXX-Schulte via an HTTP get. If PDFA documents are served through Binary resources, scenario 1.4 should be executed instead"/>
+    <description value="Qualification of scenario 2.5 of the PDF/A Serve use case. See [the test file on the Nictiz wiki](https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2020.01/PDFA_Beschikbaarstellen) for more information."/>
     <destination>
         <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-destination-title">
             <valueString value="Resource endpoint"/>
@@ -30,27 +30,25 @@
     </variable>
 
     <test id="scenario2-5-serve-1-documentreference">
-        <name value="Scenario 2.5 - Search DocumentReference"/>
-        <description value="Serve DocumentReference resources."/>
+        <description value="Serve DocumentReference resources and check the response"/>
         <nts:include value="medmij/test.xis.successfulSearch" scope="common"
             resource="DocumentReference"
             params="?status=current"
-            responseId="documentreference-search-response"/>
+            responseId="documentreference-search-response" description="Receive a FHIR search on DocumentReference, including 'status' parameter, and send a response"/>
         <nts:include value="assert.response.variableNumberOfResults"
             resource="DocumentReference" min="1" max="2" />
         <nts:include value="assert.response.resourceWithLoinc" code="68626-1"/>
     </test>
 
     <test id="scenario2-5-serve-pdfa-document">
-        <name value="Scenario 2.5 - Get PDFA"/>
-        <description value="Serve PDFA document via an HTTP get."/>
+        <description value="Serve PDFA document via an HTTP get and check the response"/>
         <action>
             <operation nts:addAccept="false">
                 <type>
                     <system value="http://hl7.org/fhir/http-operations"/>
                     <code value="get"/>
                 </type>
-                <description value="Test XIS server get operation for a document on a known location, using the fullURL."/>
+                <description value="Receive an HTTP GET for the PDF/A document at the referenced URL, including an 'Authorization' header, and send a response"/>
                 <destination value="1"/>
                 <origin value="1"/>
                 <requestHeader>
@@ -74,15 +72,14 @@
     </test>
 
     <test id="scenario2-5-serve-pdfa-document-control">
-        <name value="Scenario 2.5 - Get PDFA without authorization header"/>
-        <description value="Test XIS Server to have control over the reference obtained from the DocumentReference.content.attachment.url. This test resolves the fullURL without an authorization header. The request should fail to confirm that the XIS has control over the context. The expected response code is not 200 (OK) but should be e.g. 401, 403 or 404."/>
+        <description value="Verify control over the document URL in the DocumentReference.content.attachment.url and check the response. This test resolves the fullURL without an authorization header. The request should fail to confirm that the XIS has control over the context. The expected response code is not 200 (OK) but should be e.g. 401, 403 or 404"/>
         <action>
             <operation nts:addAccept="false">
                 <type>
                     <system value="http://hl7.org/fhir/http-operations"/>
                     <code value="get"/>
                 </type>
-                <description value="Test XIS server get operation for a document on a known location, using the fullURL."/>
+                <description value="Receive an HTTP GET for the PDF/A document at the referenced URL, without an 'Authorization' header, and reject the unauthorized request"/>
                 <nts:include value="medmij/header.request.MedMijRequestId" scope="common"/>
                 <nts:include value="medmij/header.request.MedMijXCorrelationId" scope="common"/>
                 <url value="${pdfa-url}"/>
