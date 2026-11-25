@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="nlps-regressie-patienttoken-level1a-xml"/>
+   <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-authentication">
+      <extension url="display">
+         <valueString value="NL-PS niveau 1a: bearer token van je eigen systeem voor je testpatiënt niveau 1a"/>
+      </extension>
+      <extension url="access-token">
+         <valueString value=""/>
+      </extension>
+   </extension>
+   <url value="http://nictiz.nl/fhir/TestScript/nlps-regressie-patienttoken-level1a-xml"/>
+   <version value="r4.0.1-patchlevel 2026.38"/>
+   <name value="Nlps_regressie_patienttoken_level1a_xml"/>
+   <title value="NL-PS-REG-L1A - Regressie niveau 1a: Lege PS, minimale metadata - Fixed token per patient - XML Format"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Regressietest: alleen testgevallen met testsoort Regressie (M-eisen, geautomatiseerd). Een fout laat de test falen. Testpatiënt niveau 1a (TP-1a). Conformancelab stuurt het bearer token mee dat je bij de testopzet invoert; gebruik een token dat alleen toegang geeft tot je testpatiënt niveau 1a. Implementation Guides: NL-PS https://ig.nictiz.nl/nlps/ en generieke bouwblokken https://ig.nictiz.nl/gbb/. Traceability: PS-requirements v0.1 en het tabblad Testgevallen."/>
+   <origin>
+      <index value="1"/>
+      <profile>
+         <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-origin-profile"/>
+         <code value="Conformancelab-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <profile id="ps-bundle-eu-eps"
+            value="http://hl7.eu/fhir/eps/StructureDefinition/bundle-eu-eps"/>
+   <profile id="ps-composition-nlps"
+            value="http://ig.nictiz.nl/nlps/StructureDefinition/nl-PatientSummary"/>
+   <profile id="ps-patient-nlcore"
+            value="http://ig.nictiz.nl/gbb/StructureDefinition/nl-core-Patient"/>
+   <variable>
+      <name value="composition-id"/>
+      <description value="De id van de eerste PS-Composition in het zoekresultaat."/>
+      <expression value="Bundle.entry.resource.where($this is Composition).first().id"/>
+      <sourceId value="ps-search-response"/>
+   </variable>
+   <test>
+      <name value="TS-02 PS zoeken"/>
+      <description value="TG-02-01: zoek de PS-Composition van de testpatiënt."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Composition"/>
+            <description value="TG-02-01: GET [base]/Composition?type=http://loinc.org|60591-5"/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?type=http://loinc.org|60591-5"/>
+            <responseId value="ps-search-response"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-01 (PS-API-04): Confirm that the server responds with HTTP status 200."/>
+            <direction value="response"/>
+            <response value="okay"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-01 (PS-API-04): het antwoord is een searchset-Bundle."/>
+            <direction value="response"/>
+            <expression value="Bundle.type = 'searchset'"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-01 (PS-API-04): het zoekresultaat bevat minimaal één Composition."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Composition).exists()"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-01 (PS-API-04): elke gevonden Composition is een Patient Summary (LOINC 60591-5)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Composition).all(type.coding.where(system = 'http://loinc.org' and code = '60591-5').exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="TS-02/03 Document ophalen en valideren"/>
+      <description value="TG-02-05, TG-03-01 t/m TG-03-04, TG-03-07: haal de PS op als document en valideer Bundle en Composition."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="read"/>
+            </type>
+            <resource value="Composition"/>
+            <description value="TG-02-05: GET [base]/Composition/[id]/$document"/>
+            <accept value="xml"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${composition-id}/$document"/>
+            <responseId value="ps-document"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-05 (PS-API-07): Confirm that the server responds with HTTP status 200."/>
+            <direction value="response"/>
+            <response value="okay"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-05 (PS-API-07): het antwoord is een Bundle."/>
+            <direction value="response"/>
+            <expression value="Bundle.exists()"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-01 (PS-API-07): de Bundle is een document; een searchset-wrapper wordt niet geaccepteerd."/>
+            <direction value="response"/>
+            <expression value="Bundle.type = 'document'"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-02 (PS-API-08): de eerste entry is een Composition."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.is(Composition)"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-02 (PS-API-08): de Composition is een Patient Summary (LOINC 60591-5)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).type.coding.where(system = 'http://loinc.org' and code = '60591-5').exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-03 (PS-API-09): het document heeft een identifier met system en value, en een timestamp."/>
+            <direction value="response"/>
+            <expression value="Bundle.identifier.system.exists() and Bundle.identifier.value.exists() and Bundle.timestamp.exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-04 (PS-API-10): de Bundle conformeert aan http://hl7.eu/fhir/eps/StructureDefinition/bundle-eu-eps."/>
+            <direction value="response"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="ps-bundle-eu-eps"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-07 (PS-HDR-01): de Composition conformeert aan nl-PatientSummary en via imposeProfile aan composition-eu-eps; dekt ook TG-03-21 t/m TG-03-23 (cmp-1, cmp-2, ips-comp-1), TG-03-27 (required bindings) en de XHTML-geldigheid van TG-03-26."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="ps-composition-nlps"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="TS-03 Header en patiënt"/>
+      <description value="TG-03-05/06/08/09/11 t/m 15/17, op het document uit de vorige test."/>
+      <action>
+         <assert>
+            <description value="TG-03-05 (PS-API-11): elke referentie in het document is binnen het document oplosbaar (fullUrl of [type]/[id])."/>
+            <direction value="response"/>
+            <!--FHIRPath expressions with .ofType(...) are poorly supported at the moment, so it was rewritten. Original expression: 'Bundle.descendants().ofType(Reference).reference.where(startsWith('#').not()).distinct().subsetOf(%resource.entry.select(fullUrl | fullUrl.replaceMatches('^.*/([A-Za-z]+/[^/]+)$', '$1')))'-->
+            <expression value="Bundle.descendants().where($this is Reference).reference.where(startsWith('#').not()).distinct().subsetOf(%resource.entry.select(fullUrl | fullUrl.replaceMatches('^.*/([A-Za-z]+/[^/]+)$', '$1')))"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-06 (PS-API-12): het document bevat precies één Patient."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Patient).count() = 1"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-06 (PS-API-12): alle subject- en patient-referenties in het document verwijzen naar die ene Patient."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.select(subject | patient).reference.distinct().subsetOf(%resource.entry.where(resource is Patient).select(fullUrl | fullUrl.replaceMatches('^.*/(Patient/[^/]+)$', '$1') | ('Patient/' + resource.id)))"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-08 (PS-HDR-02): de Composition heeft een identifier met system en value."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).identifier.system.exists() and Bundle.entry.first().resource.where($this is Composition).identifier.value.exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-09 (PS-HDR-03): de Composition heeft een geldige status."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).status in ('preliminary' | 'final' | 'amended' | 'entered-in-error')"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-11 (PS-HDR-04): Composition.subject verwijst naar de Patient in het document."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).subject.reference in %resource.entry.where(resource is Patient).select(fullUrl | fullUrl.replaceMatches('^.*/(Patient/[^/]+)$', '$1') | ('Patient/' + resource.id))"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-12 (PS-HDR-05): de Composition heeft een datum."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).date.exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-13 (PS-HDR-06): de Composition heeft minimaal één auteur, en elke auteur is in het document oplosbaar."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).author.count() &gt;= 1 and Bundle.entry.first().resource.where($this is Composition).author.reference.subsetOf(%resource.entry.select(fullUrl | fullUrl.replaceMatches('^.*/([A-Za-z]+/[^/]+)$', '$1')))"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-14 (PS-HDR-07): de Composition heeft een niet-lege titel."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).title.exists() and Bundle.entry.first().resource.where($this is Composition).title.length() &gt; 0"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-15 (PS-HDR-15): de Patient conformeert aan http://ig.nictiz.nl/gbb/StructureDefinition/nl-core-Patient."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Patient and (fullUrl = %resource.entry.first().resource.subject.reference or fullUrl.replaceMatches('^.*/(Patient/[^/]+)$', '$1') = %resource.entry.first().resource.subject.reference or ('Patient/' + resource.id) = %resource.entry.first().resource.subject.reference)).resource"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="ps-patient-nlcore"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-17 (PS-HDR-16): de Patient heeft minimaal één identifier met een waarde."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Patient and (fullUrl = %resource.entry.first().resource.subject.reference or fullUrl.replaceMatches('^.*/(Patient/[^/]+)$', '$1') = %resource.entry.first().resource.subject.reference or ('Patient/' + resource.id) = %resource.entry.first().resource.subject.reference)).resource.identifier.where(value.exists()).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="TS-03 Verplichte secties"/>
+      <description value="TG-03-19 t/m TG-03-24 en TG-03-26."/>
+      <action>
+         <assert>
+            <description value="TG-03-19 (PS-SEC-01): sectie Problemen (LOINC 11450-4) komt precies één keer voor."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-19 (PS-SEC-01): sectie Allergieën en intoleranties (LOINC 48765-2) komt precies één keer voor."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-19 (PS-SEC-01): sectie Medicatieoverzicht (LOINC 10160-0) komt precies één keer voor."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '10160-0').exists()).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-19 (PS-SEC-01): sectie Verrichtingen (LOINC 47519-4) komt precies één keer voor."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-19 (PS-SEC-01): sectie Medische hulpmiddelen (LOINC 46264-8) komt precies één keer voor."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).count() = 1"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-20 (PS-SEC-02): elke sectie heeft een titel, een code en een narrative."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.all(title.exists() and code.exists() and text.exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-21 (PS-SEC-03): geen sectie is inhoudsloos (cmp-1)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.all(text.exists() or entry.exists() or section.exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-22 (PS-SEC-04): een emptyReason staat alleen bij een sectie zonder entries (cmp-2)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.all(emptyReason.empty() or entry.empty())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-23 (PS-SEC-05): Problemen, Allergieën en Medicatie hebben entries of een emptyReason (ips-comp-1)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code in ('11450-4' | '48765-2' | '10160-0')).exists()).all(entry.reference.exists() or emptyReason.exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-24 (PS-SEC-07): sectie Medicatieoverzicht is aanwezig, zonder entries, met emptyReason en narrative."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '10160-0').exists()).exists() and Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code = '10160-0').exists()).all(entry.empty() and emptyReason.exists() and text.exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-26 (PS-NAR-01): elke sectie-narrative heeft een geldige status en een niet-lege div."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.all(text.status in ('generated' | 'extensions' | 'additional') and text.`div`.exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="TS-04 Lege secties"/>
+      <description value="TG-04-01."/>
+      <action>
+         <assert>
+            <description value="TG-04-01 (PS-SEC-06): alle verplichte secties hebben geen entries, wel een emptyReason en een narrative."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code in ('11450-4' | '48765-2' | '10160-0' | '47519-4' | '46264-8')).exists()).count() = 5 and Bundle.entry.first().resource.where($this is Composition).section.where(code.coding.where(system = 'http://loinc.org' and code in ('11450-4' | '48765-2' | '10160-0' | '47519-4' | '46264-8')).exists()).all(entry.empty() and emptyReason.exists() and text.exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>

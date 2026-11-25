@@ -1,0 +1,609 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="nlps-aanvullend-patientid-level3a-json"/>
+   <url value="http://nictiz.nl/fhir/TestScript/nlps-aanvullend-patientid-level3a-json"/>
+   <version value="r4.0.1-patchlevel 2026.38"/>
+   <name value="Nlps_aanvullend_patientid_level3a_json"/>
+   <title value="NL-PS-AANV-L3A - Aanvullend niveau 3a: 1 minimale GBB per sectie - Patient id query - JSON Format"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Aanvullende testdekking: geautomatiseerde testgevallen met testsoort Overig (S-eisen en eisen die op T2 M worden). Afwijkingen geven alleen een waarschuwing. Testpatiënt niveau 3a (TP-3a). Conformancelab zoekt de PS van de Patient-id die je bij de testopzet invoert, zonder 'Patient/'. Implementation Guides: NL-PS https://ig.nictiz.nl/nlps/ en generieke bouwblokken https://ig.nictiz.nl/gbb/. Traceability: PS-requirements v0.1 en het tabblad Testgevallen."/>
+   <origin>
+      <index value="1"/>
+      <profile>
+         <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-origin-profile"/>
+         <code value="Conformancelab-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <profile id="ps-patient-eu-eps"
+            value="http://hl7.eu/fhir/eps/StructureDefinition/patient-eu-eps"/>
+   <profile id="ps-problemen-eu"
+            value="http://hl7.eu/fhir/base/StructureDefinition/condition-eu-core"/>
+   <profile id="ps-allergieen-eu"
+            value="http://hl7.eu/fhir/base/StructureDefinition/allergyIntolerance-eu-core"/>
+   <profile id="ps-verrichtingen-eu"
+            value="http://hl7.eu/fhir/eps/StructureDefinition/procedure-eu-eps"/>
+   <profile id="ps-hulpmiddelen-eu"
+            value="http://hl7.eu/fhir/eps/StructureDefinition/deviceUseStatement-eu-eps"/>
+   <variable>
+      <name value="patient-id-3a"/>
+      <defaultValue value="enter-patient-id-level-3a"/>
+      <description value="Patient.id van je testpatiënt niveau 3a, zonder 'Patient/'."/>
+   </variable>
+   <variable>
+      <name value="composition-id"/>
+      <description value="De id van de eerste PS-Composition in het zoekresultaat."/>
+      <expression value="Bundle.entry.resource.where($this is Composition).first().id"/>
+      <sourceId value="ps-search-response"/>
+   </variable>
+   <variable>
+      <name value="read-problemen-id"/>
+      <description value="De id van de Condition van de eerste entry van sectie Problemen."/>
+      <expression value="Bundle.entry.where(resource is Condition and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry[0].reference or fullUrl.replaceMatches('^.*/(Condition/[^/]+)$', '$1') = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry[0].reference or ('Condition/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry[0].reference)).resource.id"/>
+      <sourceId value="ps-document"/>
+   </variable>
+   <variable>
+      <name value="read-problemen-status"/>
+      <description value="De status-/clinicalStatus-waarde van die Condition."/>
+      <expression value="Bundle.entry.where(resource is Condition and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry[0].reference or fullUrl.replaceMatches('^.*/(Condition/[^/]+)$', '$1') = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry[0].reference or ('Condition/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry[0].reference)).resource.select(iif(status.exists(), status, clinicalStatus.coding.code.first()))"/>
+      <sourceId value="ps-document"/>
+   </variable>
+   <variable>
+      <name value="read-allergieen-id"/>
+      <description value="De id van de AllergyIntolerance van de eerste entry van sectie Allergieën en intoleranties."/>
+      <expression value="Bundle.entry.where(resource is AllergyIntolerance and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry[0].reference or fullUrl.replaceMatches('^.*/(AllergyIntolerance/[^/]+)$', '$1') = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry[0].reference or ('AllergyIntolerance/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry[0].reference)).resource.id"/>
+      <sourceId value="ps-document"/>
+   </variable>
+   <variable>
+      <name value="read-allergieen-status"/>
+      <description value="De status-/clinicalStatus-waarde van die AllergyIntolerance."/>
+      <expression value="Bundle.entry.where(resource is AllergyIntolerance and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry[0].reference or fullUrl.replaceMatches('^.*/(AllergyIntolerance/[^/]+)$', '$1') = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry[0].reference or ('AllergyIntolerance/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry[0].reference)).resource.select(iif(status.exists(), status, clinicalStatus.coding.code.first()))"/>
+      <sourceId value="ps-document"/>
+   </variable>
+   <variable>
+      <name value="read-verrichtingen-id"/>
+      <description value="De id van de Procedure van de eerste entry van sectie Verrichtingen."/>
+      <expression value="Bundle.entry.where(resource is Procedure and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference or fullUrl.replaceMatches('^.*/(Procedure/[^/]+)$', '$1') = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference or ('Procedure/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference)).resource.id"/>
+      <sourceId value="ps-document"/>
+   </variable>
+   <variable>
+      <name value="read-verrichtingen-status"/>
+      <description value="De status-/clinicalStatus-waarde van die Procedure."/>
+      <expression value="Bundle.entry.where(resource is Procedure and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference or fullUrl.replaceMatches('^.*/(Procedure/[^/]+)$', '$1') = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference or ('Procedure/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference)).resource.select(iif(status.exists(), status, clinicalStatus.coding.code.first()))"/>
+      <sourceId value="ps-document"/>
+   </variable>
+   <variable>
+      <name value="read-hulpmiddelen-id"/>
+      <description value="De id van de DeviceUseStatement van de eerste entry van sectie Medische hulpmiddelen."/>
+      <expression value="Bundle.entry.where(resource is DeviceUseStatement and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry[0].reference or fullUrl.replaceMatches('^.*/(DeviceUseStatement/[^/]+)$', '$1') = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry[0].reference or ('DeviceUseStatement/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry[0].reference)).resource.id"/>
+      <sourceId value="ps-document"/>
+   </variable>
+   <variable>
+      <name value="read-hulpmiddelen-status"/>
+      <description value="De status-/clinicalStatus-waarde van die DeviceUseStatement."/>
+      <expression value="Bundle.entry.where(resource is DeviceUseStatement and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry[0].reference or fullUrl.replaceMatches('^.*/(DeviceUseStatement/[^/]+)$', '$1') = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry[0].reference or ('DeviceUseStatement/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry[0].reference)).resource.select(iif(status.exists(), status, clinicalStatus.coding.code.first()))"/>
+      <sourceId value="ps-document"/>
+   </variable>
+   <test>
+      <name value="TS-02 PS zoeken"/>
+      <description value="TG-02-01: zoek de PS-Composition van de testpatiënt."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="search"/>
+            </type>
+            <resource value="Composition"/>
+            <description value="TG-02-01: GET [base]/Composition?type=http://loinc.org|60591-5&amp;patient=${patient-id-3a}"/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?type=http://loinc.org|60591-5&amp;patient=${patient-id-3a}"/>
+            <responseId value="ps-search-response"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-01 (PS-API-04): Confirm that the server responds with HTTP status 200."/>
+            <direction value="response"/>
+            <response value="okay"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-01 (PS-API-04): het antwoord is een searchset-Bundle."/>
+            <direction value="response"/>
+            <expression value="Bundle.type = 'searchset'"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-01 (PS-API-04): het zoekresultaat bevat minimaal één Composition."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Composition).exists()"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-01 (PS-API-04): elke gevonden Composition is een Patient Summary (LOINC 60591-5)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Composition).all(type.coding.where(system = 'http://loinc.org' and code = '60591-5').exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="Document ophalen"/>
+      <description value="Haal de PS op als document (voorwaarde voor de aanvullende checks)."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="read"/>
+            </type>
+            <resource value="Composition"/>
+            <description value="GET [base]/Composition/[id]/$document"/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${composition-id}/$document"/>
+            <responseId value="ps-document"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server responds with HTTP status 200."/>
+            <direction value="response"/>
+            <response value="okay"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Voorwaarde (PS-API-07): het antwoord is een document-Bundle met een Composition als eerste entry."/>
+            <direction value="response"/>
+            <expression value="Bundle.type = 'document' and Bundle.entry.first().resource.is(Composition)"/>
+            <stopTestOnFail value="true"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="TS-02 Actualiteit"/>
+      <description value="TG-02-06."/>
+      <action>
+         <assert>
+            <description value="TG-02-06 (PS-API-13): Composition.date ≤ Bundle.timestamp en de timestamp ligt binnen 5 minuten voor nu."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).date &lt;= Bundle.timestamp and Bundle.timestamp &lt;= now() and Bundle.timestamp &gt;= now() - 5 minutes"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="TS-03 Header en patiënt (S-eisen)"/>
+      <description value="TG-03-10, TG-03-16, TG-03-18."/>
+      <action>
+         <assert>
+            <description value="TG-03-10 (PS-HDR-03): de opgevraagde PS heeft status final."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.first().resource.where($this is Composition).status = 'final'"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-16 (PS-HDR-15): de Patient conformeert aan http://hl7.eu/fhir/eps/StructureDefinition/patient-eu-eps (wordt M op T2)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Patient and (fullUrl = %resource.entry.first().resource.subject.reference or fullUrl.replaceMatches('^.*/(Patient/[^/]+)$', '$1') = %resource.entry.first().resource.subject.reference or ('Patient/' + resource.id) = %resource.entry.first().resource.subject.reference)).resource"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="ps-patient-eu-eps"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-03-18 (PS-HDR-16): de Patient heeft een BSN, naam, geboortedatum en geslacht."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Patient and (fullUrl = %resource.entry.first().resource.subject.reference or fullUrl.replaceMatches('^.*/(Patient/[^/]+)$', '$1') = %resource.entry.first().resource.subject.reference or ('Patient/' + resource.id) = %resource.entry.first().resource.subject.reference)).resource.identifier.where(system = 'http://fhir.nl/fhir/NamingSystem/bsn').exists() and Bundle.entry.where(resource is Patient and (fullUrl = %resource.entry.first().resource.subject.reference or fullUrl.replaceMatches('^.*/(Patient/[^/]+)$', '$1') = %resource.entry.first().resource.subject.reference or ('Patient/' + resource.id) = %resource.entry.first().resource.subject.reference)).resource.name.exists() and Bundle.entry.where(resource is Patient and (fullUrl = %resource.entry.first().resource.subject.reference or fullUrl.replaceMatches('^.*/(Patient/[^/]+)$', '$1') = %resource.entry.first().resource.subject.reference or ('Patient/' + resource.id) = %resource.entry.first().resource.subject.reference)).resource.birthDate.exists() and Bundle.entry.where(resource is Patient and (fullUrl = %resource.entry.first().resource.subject.reference or fullUrl.replaceMatches('^.*/(Patient/[^/]+)$', '$1') = %resource.entry.first().resource.subject.reference or ('Patient/' + resource.id) = %resource.entry.first().resource.subject.reference)).resource.gender.exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="TS-07 Sectie Problemen (EU-validatie en codering)"/>
+      <description value="TG-07-04, TG-07-13, TG-07-14, TG-07-15."/>
+      <action>
+         <assert>
+            <description value="TG-07-04 (PS-ENT-04): de Condition van de eerste entry van sectie Problemen conformeert aan http://hl7.eu/fhir/base/StructureDefinition/condition-eu-core (wordt M op T2)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Condition and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry[0].reference or fullUrl.replaceMatches('^.*/(Condition/[^/]+)$', '$1') = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry[0].reference or ('Condition/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry[0].reference)).resource"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="ps-problemen-eu"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-07-13 (PS-TRM-02): elk Condition.code in sectie Problemen heeft minimaal één coding met system en code."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Condition and %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry.reference.intersect(fullUrl | fullUrl.replaceMatches('^.*/(Condition/[^/]+)$', '$1') | ('Condition/' + resource.id)).exists()).resource.all(code.coding.where(system.exists() and code.exists()).exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-07-14 (PS-TRM-03): elk Condition.code in sectie Problemen heeft een SNOMED CT-coding."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Condition and %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry.reference.intersect(fullUrl | fullUrl.replaceMatches('^.*/(Condition/[^/]+)$', '$1') | ('Condition/' + resource.id)).exists()).resource.all(code.coding.where(system = 'http://snomed.info/sct').exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-07-15 (PS-TRM-04): elke coding van Condition.code in sectie Problemen heeft een display."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Condition and %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '11450-4').exists()).entry.reference.intersect(fullUrl | fullUrl.replaceMatches('^.*/(Condition/[^/]+)$', '$1') | ('Condition/' + resource.id)).exists()).resource.all(code.coding.all(display.exists()))"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="TS-07 Sectie Allergieën en intoleranties (EU-validatie en codering)"/>
+      <description value="TG-07-04, TG-07-13, TG-07-14, TG-07-15."/>
+      <action>
+         <assert>
+            <description value="TG-07-04 (PS-ENT-04): de AllergyIntolerance van de eerste entry van sectie Allergieën en intoleranties conformeert aan http://hl7.eu/fhir/base/StructureDefinition/allergyIntolerance-eu-core (wordt M op T2)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is AllergyIntolerance and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry[0].reference or fullUrl.replaceMatches('^.*/(AllergyIntolerance/[^/]+)$', '$1') = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry[0].reference or ('AllergyIntolerance/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry[0].reference)).resource"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="ps-allergieen-eu"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-07-13 (PS-TRM-02): elk AllergyIntolerance.code in sectie Allergieën en intoleranties heeft minimaal één coding met system en code."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is AllergyIntolerance and %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry.reference.intersect(fullUrl | fullUrl.replaceMatches('^.*/(AllergyIntolerance/[^/]+)$', '$1') | ('AllergyIntolerance/' + resource.id)).exists()).resource.all(code.coding.where(system.exists() and code.exists()).exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-07-14 (PS-TRM-03): elk AllergyIntolerance.code in sectie Allergieën en intoleranties heeft een SNOMED CT-coding."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is AllergyIntolerance and %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry.reference.intersect(fullUrl | fullUrl.replaceMatches('^.*/(AllergyIntolerance/[^/]+)$', '$1') | ('AllergyIntolerance/' + resource.id)).exists()).resource.all(code.coding.where(system = 'http://snomed.info/sct').exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-07-15 (PS-TRM-04): elke coding van AllergyIntolerance.code in sectie Allergieën en intoleranties heeft een display."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is AllergyIntolerance and %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '48765-2').exists()).entry.reference.intersect(fullUrl | fullUrl.replaceMatches('^.*/(AllergyIntolerance/[^/]+)$', '$1') | ('AllergyIntolerance/' + resource.id)).exists()).resource.all(code.coding.all(display.exists()))"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="TS-07 Sectie Verrichtingen (EU-validatie en codering)"/>
+      <description value="TG-07-04, TG-07-13, TG-07-14, TG-07-15."/>
+      <action>
+         <assert>
+            <description value="TG-07-04 (PS-ENT-04): de Procedure van de eerste entry van sectie Verrichtingen conformeert aan http://hl7.eu/fhir/eps/StructureDefinition/procedure-eu-eps (wordt M op T2)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Procedure and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference or fullUrl.replaceMatches('^.*/(Procedure/[^/]+)$', '$1') = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference or ('Procedure/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference)).resource"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="ps-verrichtingen-eu"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-07-13 (PS-TRM-02): elk Procedure.code in sectie Verrichtingen heeft minimaal één coding met system en code."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Procedure and %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry.reference.intersect(fullUrl | fullUrl.replaceMatches('^.*/(Procedure/[^/]+)$', '$1') | ('Procedure/' + resource.id)).exists()).resource.all(code.coding.where(system.exists() and code.exists()).exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-07-14 (PS-TRM-03): elk Procedure.code in sectie Verrichtingen heeft een SNOMED CT-coding."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Procedure and %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry.reference.intersect(fullUrl | fullUrl.replaceMatches('^.*/(Procedure/[^/]+)$', '$1') | ('Procedure/' + resource.id)).exists()).resource.all(code.coding.where(system = 'http://snomed.info/sct').exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-07-15 (PS-TRM-04): elke coding van Procedure.code in sectie Verrichtingen heeft een display."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Procedure and %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry.reference.intersect(fullUrl | fullUrl.replaceMatches('^.*/(Procedure/[^/]+)$', '$1') | ('Procedure/' + resource.id)).exists()).resource.all(code.coding.all(display.exists()))"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="TS-07 Sectie Medische hulpmiddelen (EU-validatie en codering)"/>
+      <description value="TG-07-04, TG-07-13, TG-07-14, TG-07-15."/>
+      <action>
+         <assert>
+            <description value="TG-07-04 (PS-ENT-04): de DeviceUseStatement van de eerste entry van sectie Medische hulpmiddelen conformeert aan http://hl7.eu/fhir/eps/StructureDefinition/deviceUseStatement-eu-eps (wordt M op T2)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is DeviceUseStatement and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry[0].reference or fullUrl.replaceMatches('^.*/(DeviceUseStatement/[^/]+)$', '$1') = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry[0].reference or ('DeviceUseStatement/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry[0].reference)).resource"/>
+            <stopTestOnFail value="false"/>
+            <validateProfileId value="ps-hulpmiddelen-eu"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-07-13 (PS-TRM-02): elk Device.type in sectie Medische hulpmiddelen heeft minimaal één coding met system en code."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Device and (fullUrl | fullUrl.replaceMatches('^.*/(Device/[^/]+)$', '$1') | ('Device/' + resource.id)).intersect(%resource.entry.where(resource is DeviceUseStatement and %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry.reference.intersect(fullUrl | fullUrl.replaceMatches('^.*/(DeviceUseStatement/[^/]+)$', '$1') | ('DeviceUseStatement/' + resource.id)).exists()).resource.device.reference).exists()).resource.all(type.coding.where(system.exists() and code.exists()).exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-07-14 (PS-TRM-03): elk Device.type in sectie Medische hulpmiddelen heeft een SNOMED CT-coding."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Device and (fullUrl | fullUrl.replaceMatches('^.*/(Device/[^/]+)$', '$1') | ('Device/' + resource.id)).intersect(%resource.entry.where(resource is DeviceUseStatement and %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry.reference.intersect(fullUrl | fullUrl.replaceMatches('^.*/(DeviceUseStatement/[^/]+)$', '$1') | ('DeviceUseStatement/' + resource.id)).exists()).resource.device.reference).exists()).resource.all(type.coding.where(system = 'http://snomed.info/sct').exists())"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-07-15 (PS-TRM-04): elke coding van Device.type in sectie Medische hulpmiddelen heeft een display."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Device and (fullUrl | fullUrl.replaceMatches('^.*/(Device/[^/]+)$', '$1') | ('Device/' + resource.id)).intersect(%resource.entry.where(resource is DeviceUseStatement and %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '46264-8').exists()).entry.reference.intersect(fullUrl | fullUrl.replaceMatches('^.*/(DeviceUseStatement/[^/]+)$', '$1') | ('DeviceUseStatement/' + resource.id)).exists()).resource.device.reference).exists()).resource.all(type.coding.all(display.exists()))"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="TG-02-07 Condition los opvragen (PS-API-14)"/>
+      <description value="TG-02-07 (PS-API-14): vraag de Condition van de eerste entry van sectie Problemen los op. Draait als laatste, omdat de checks hierna tegen dit antwoord zouden lopen."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="read"/>
+            </type>
+            <resource value="Condition"/>
+            <description value="TG-02-07: GET [base]/Condition/[id] van de eerste entry van sectie Problemen"/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${read-problemen-id}"/>
+            <responseId value="read-problemen"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-07 (PS-API-14): de server levert de Condition met HTTP 200."/>
+            <direction value="response"/>
+            <response value="okay"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-07 (PS-API-14): de losse Condition heeft dezelfde id als in het document."/>
+            <direction value="response"/>
+            <expression value="Condition.id"/>
+            <operator value="equals"/>
+            <stopTestOnFail value="false"/>
+            <value value="${read-problemen-id}"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-07 (PS-API-14): de losse Condition heeft dezelfde status als in het document."/>
+            <direction value="response"/>
+            <expression value="Condition.select(iif(status.exists(), status, clinicalStatus.coding.code.first()))"/>
+            <operator value="equals"/>
+            <stopTestOnFail value="false"/>
+            <value value="${read-problemen-status}"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="TG-02-07 AllergyIntolerance los opvragen (PS-API-14)"/>
+      <description value="TG-02-07 (PS-API-14): vraag de AllergyIntolerance van de eerste entry van sectie Allergieën en intoleranties los op. Draait als laatste, omdat de checks hierna tegen dit antwoord zouden lopen."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="read"/>
+            </type>
+            <resource value="AllergyIntolerance"/>
+            <description value="TG-02-07: GET [base]/AllergyIntolerance/[id] van de eerste entry van sectie Allergieën en intoleranties"/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${read-allergieen-id}"/>
+            <responseId value="read-allergieen"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-07 (PS-API-14): de server levert de AllergyIntolerance met HTTP 200."/>
+            <direction value="response"/>
+            <response value="okay"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-07 (PS-API-14): de losse AllergyIntolerance heeft dezelfde id als in het document."/>
+            <direction value="response"/>
+            <expression value="AllergyIntolerance.id"/>
+            <operator value="equals"/>
+            <stopTestOnFail value="false"/>
+            <value value="${read-allergieen-id}"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-07 (PS-API-14): de losse AllergyIntolerance heeft dezelfde status als in het document."/>
+            <direction value="response"/>
+            <expression value="AllergyIntolerance.select(iif(status.exists(), status, clinicalStatus.coding.code.first()))"/>
+            <operator value="equals"/>
+            <stopTestOnFail value="false"/>
+            <value value="${read-allergieen-status}"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="TG-02-07 Procedure los opvragen (PS-API-14)"/>
+      <description value="TG-02-07 (PS-API-14): vraag de Procedure van de eerste entry van sectie Verrichtingen los op. Draait als laatste, omdat de checks hierna tegen dit antwoord zouden lopen."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="read"/>
+            </type>
+            <resource value="Procedure"/>
+            <description value="TG-02-07: GET [base]/Procedure/[id] van de eerste entry van sectie Verrichtingen"/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${read-verrichtingen-id}"/>
+            <responseId value="read-verrichtingen"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-07 (PS-API-14): de server levert de Procedure met HTTP 200."/>
+            <direction value="response"/>
+            <response value="okay"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-07 (PS-API-14): de losse Procedure heeft dezelfde id als in het document."/>
+            <direction value="response"/>
+            <expression value="Procedure.id"/>
+            <operator value="equals"/>
+            <stopTestOnFail value="false"/>
+            <value value="${read-verrichtingen-id}"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-07 (PS-API-14): de losse Procedure heeft dezelfde status als in het document."/>
+            <direction value="response"/>
+            <expression value="Procedure.select(iif(status.exists(), status, clinicalStatus.coding.code.first()))"/>
+            <operator value="equals"/>
+            <stopTestOnFail value="false"/>
+            <value value="${read-verrichtingen-status}"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+   <test>
+      <name value="TG-02-07 DeviceUseStatement los opvragen (PS-API-14)"/>
+      <description value="TG-02-07 (PS-API-14): vraag de DeviceUseStatement van de eerste entry van sectie Medische hulpmiddelen los op. Draait als laatste, omdat de checks hierna tegen dit antwoord zouden lopen."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="read"/>
+            </type>
+            <resource value="DeviceUseStatement"/>
+            <description value="TG-02-07: GET [base]/DeviceUseStatement/[id] van de eerste entry van sectie Medische hulpmiddelen"/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${read-hulpmiddelen-id}"/>
+            <responseId value="read-hulpmiddelen"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-07 (PS-API-14): de server levert de DeviceUseStatement met HTTP 200."/>
+            <direction value="response"/>
+            <response value="okay"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-07 (PS-API-14): de losse DeviceUseStatement heeft dezelfde id als in het document."/>
+            <direction value="response"/>
+            <expression value="DeviceUseStatement.id"/>
+            <operator value="equals"/>
+            <stopTestOnFail value="false"/>
+            <value value="${read-hulpmiddelen-id}"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-02-07 (PS-API-14): de losse DeviceUseStatement heeft dezelfde status als in het document."/>
+            <direction value="response"/>
+            <expression value="DeviceUseStatement.select(iif(status.exists(), status, clinicalStatus.coding.code.first()))"/>
+            <operator value="equals"/>
+            <stopTestOnFail value="false"/>
+            <value value="${read-hulpmiddelen-status}"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>

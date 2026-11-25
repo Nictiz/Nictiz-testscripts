@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+   <id value="nlps-aanvullend-systemcheck-json"/>
+   <url value="http://nictiz.nl/fhir/TestScript/nlps-aanvullend-systemcheck-json"/>
+   <version value="r4.0.1-patchlevel 2026.38"/>
+   <name value="Nlps_aanvullend_systemcheck_json"/>
+   <title value="NL-PS-AANV-SYS - Aanvullend: XML-ondersteuning en foutafhandeling - JSON Format"/>
+   <status value="active"/>
+   <publisher value="Nictiz"/>
+   <contact>
+      <name value="Nictiz"/>
+      <telecom>
+         <system value="email"/>
+         <value value="kwalificatie@nictiz.nl"/>
+         <use value="work"/>
+      </telecom>
+   </contact>
+   <description value="Aanvullende testdekking TS-01: TG-01-03 (XML) en TG-01-04 (404 bij onbekende PS). Afwijkingen geven alleen een waarschuwing. Implementation Guides: NL-PS https://ig.nictiz.nl/nlps/ en generieke bouwblokken https://ig.nictiz.nl/gbb/. Traceability: PS-requirements v0.1 en het tabblad Testgevallen."/>
+   <origin>
+      <index value="1"/>
+      <profile>
+         <system value="http://fhir.interoplab.eu/fhir/CodeSystem/Interoplab-CL-origin-profile"/>
+         <code value="Conformancelab-Client"/>
+      </profile>
+   </origin>
+   <destination>
+      <index value="1"/>
+      <profile>
+         <system value="http://terminology.hl7.org/CodeSystem/testscript-profile-destination-types"/>
+         <code value="FHIR-Server"/>
+      </profile>
+   </destination>
+   <test>
+      <name value="TS-01 XML en foutafhandeling"/>
+      <description value="TG-01-03, TG-01-04."/>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="capabilities"/>
+            </type>
+            <description value="TG-01-03: GET [base]/metadata"/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <responseId value="capstat"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the server responds with HTTP status 200."/>
+            <direction value="response"/>
+            <response value="okay"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="false"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-01-03 (PS-API-03): de CapabilityStatement declareert ondersteuning voor XML."/>
+            <direction value="response"/>
+            <expression value="CapabilityStatement.format.where($this.contains('xml')).exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <operation>
+            <type>
+               <system value="http://hl7.org/fhir/restful-interaction"/>
+               <code value="read"/>
+            </type>
+            <resource value="Composition"/>
+            <description value="TG-01-04: GET [base]/Composition/nlps-onbekend-0000/$document"/>
+            <accept value="json"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/nlps-onbekend-0000/$document"/>
+            <responseId value="unknown-ps"/>
+         </operation>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-01-04 (PS-API-15): de server antwoordt met HTTP 404."/>
+            <direction value="response"/>
+            <response value="notFound"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="TG-01-04 (PS-API-15): de server levert een OperationOutcome bij de 404."/>
+            <direction value="response"/>
+            <expression value="OperationOutcome.exists()"/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+   </test>
+</TestScript>
