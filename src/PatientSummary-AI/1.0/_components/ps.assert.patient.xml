@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Validate the Patient that Composition.subject refers to against the profiles set in the TestScript. Use in a test
+    without an operation after ps.test.document, so that the asserts run against the document. A reference matches the
+    fullUrl of a document entry or its relative form Patient/[id].
+    @param patientProfile - The profile the Patient is validated against.
+    @param euPatientProfile - The EU-PS profile the Patient is also validated against. A failed validation is a warning.
+    @param [validationWarningOnly] - Report a failed validation against patientProfile as a warning. Defaults to false.
+-->
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <nts:parameter name="validationWarningOnly" value="false"/>
+    <nts:profile id="ps-patient-profile" value="{$patientProfile}"/>
+    <nts:profile id="ps-patient-eu-profile" value="{$euPatientProfile}"/>
+
+    <action>
+        <assert nts:stopTestOnFail="true">
+            <description value="Confirm that Composition.subject refers to exactly one Patient in the document."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Patient and (fullUrl = %resource.entry.first().resource.subject.reference or ('Patient/' + resource.id) = %resource.entry.first().resource.subject.reference)).count() = 1"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the Patient conforms to {$patientProfile}."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Patient and (fullUrl = %resource.entry.first().resource.subject.reference or ('Patient/' + resource.id) = %resource.entry.first().resource.subject.reference)).resource"/>
+            <validateProfileId value="ps-patient-profile"/>
+            <warningOnly value="{$validationWarningOnly}"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="Confirm that the Patient conforms to {$euPatientProfile}. A failure is reported as a warning."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.where(resource is Patient and (fullUrl = %resource.entry.first().resource.subject.reference or ('Patient/' + resource.id) = %resource.entry.first().resource.subject.reference)).resource"/>
+            <validateProfileId value="ps-patient-eu-profile"/>
+            <warningOnly value="true"/>
+        </assert>
+    </action>
+</nts:component>
