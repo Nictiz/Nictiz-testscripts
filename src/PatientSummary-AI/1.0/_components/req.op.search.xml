@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    TS-02 stap 1: zoek de PS-Composition(s) van de testpatiënt. Zonder patientQuery selecteert het token de patiënt. Slaat de id van de eerste Composition op in composition-id.
+    Gegenereerd door gen_nts.py uit de NL-PS requirements-traceability (PS-requirements v0.1, 24-11-2026). Pas de generator aan, niet dit bestand.
+-->
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <nts:parameter name="patientQuery" value=""/>
+    <variable>
+        <name value="composition-id"/>
+        <description value="De id van de eerste PS-Composition in het zoekresultaat."/>
+        <expression value="Bundle.entry.resource.where($this is Composition).first().id"/>
+        <sourceId value="ps-search-response"/>
+    </variable>
+    <action>
+        <operation>
+            <type>
+                <system value="http://hl7.org/fhir/restful-interaction"/>
+                <code value="search"/>
+            </type>
+            <resource value="Composition"/>
+            <description value="TG-02-01: GET [base]/Composition?type=http://loinc.org|60591-5{$patientQuery}"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?type=http://loinc.org|60591-5{$patientQuery}"/>
+            <responseId value="ps-search-response"/>
+        </operation>
+    </action>
+    <action>
+        <assert>
+            <description value="TG-02-01 (PS-API-04): Confirm that the server responds with HTTP status 200."/>
+            <direction value="response"/>
+            <response value="okay"/>
+            <warningOnly value="false"/>
+        </assert>
+    </action>
+    <action>
+        <assert nts:stopTestOnFail="true">
+            <description value="TG-02-01 (PS-API-04): het antwoord is een searchset-Bundle."/>
+            <direction value="response"/>
+            <expression value="Bundle.type = 'searchset'"/>
+            <warningOnly value="false"/>
+        </assert>
+    </action>
+    <action>
+        <assert nts:stopTestOnFail="true">
+            <description value="TG-02-01 (PS-API-04): het zoekresultaat bevat minimaal één Composition."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Composition).exists()"/>
+            <warningOnly value="false"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="TG-02-01 (PS-API-04): elke gevonden Composition is een Patient Summary (LOINC 60591-5)."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Composition).all(type.coding.where(system = 'http://loinc.org' and code = '60591-5').exists())"/>
+            <warningOnly value="false"/>
+        </assert>
+    </action>
+</nts:component>

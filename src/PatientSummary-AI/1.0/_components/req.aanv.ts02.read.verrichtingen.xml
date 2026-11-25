@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    TS-02 (overig): de Procedure van de eerste entry van sectie Verrichtingen is ook los op te vragen.
+    Gegenereerd door gen_nts.py uit de NL-PS requirements-traceability (PS-requirements v0.1, 24-11-2026). Pas de generator aan, niet dit bestand.
+-->
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <variable>
+        <name value="read-verrichtingen-id"/>
+        <description value="De id van de Procedure van de eerste entry van sectie Verrichtingen."/>
+        <expression value="Bundle.entry.where(resource is Procedure and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference or fullUrl.replaceMatches('^.*/(Procedure/[^/]+)$', '$1') = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference or ('Procedure/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference)).resource.id"/>
+        <sourceId value="ps-document"/>
+    </variable>
+    <variable>
+        <name value="read-verrichtingen-status"/>
+        <description value="De status-/clinicalStatus-waarde van die Procedure."/>
+        <expression value="Bundle.entry.where(resource is Procedure and (fullUrl = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference or fullUrl.replaceMatches('^.*/(Procedure/[^/]+)$', '$1') = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference or ('Procedure/' + resource.id) = %resource.entry.first().resource.section.where(code.coding.where(system = 'http://loinc.org' and code = '47519-4').exists()).entry[0].reference)).resource.select(iif(status.exists(), status, clinicalStatus.coding.code.first()))"/>
+        <sourceId value="ps-document"/>
+    </variable>
+    <action>
+        <operation>
+            <type>
+                <system value="http://hl7.org/fhir/restful-interaction"/>
+                <code value="read"/>
+            </type>
+            <resource value="Procedure"/>
+            <description value="TG-02-07: GET [base]/Procedure/[id] van de eerste entry van sectie Verrichtingen"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="/${read-verrichtingen-id}"/>
+            <responseId value="read-verrichtingen"/>
+        </operation>
+    </action>
+    <action>
+        <assert>
+            <description value="TG-02-07 (PS-API-14): de server levert de Procedure met HTTP 200."/>
+            <direction value="response"/>
+            <response value="okay"/>
+            <warningOnly value="true"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="TG-02-07 (PS-API-14): de losse Procedure heeft dezelfde id als in het document."/>
+            <direction value="response"/>
+            <expression value="Procedure.id"/>
+            <operator value="equals"/>
+            <value value="${read-verrichtingen-id}"/>
+            <warningOnly value="true"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="TG-02-07 (PS-API-14): de losse Procedure heeft dezelfde status als in het document."/>
+            <direction value="response"/>
+            <expression value="Procedure.select(iif(status.exists(), status, clinicalStatus.coding.code.first()))"/>
+            <operator value="equals"/>
+            <value value="${read-verrichtingen-status}"/>
+            <warningOnly value="true"/>
+        </assert>
+    </action>
+</nts:component>

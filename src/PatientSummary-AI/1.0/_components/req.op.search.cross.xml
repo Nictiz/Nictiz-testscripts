@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    TS-02 kruiscontrole: zoek de PS van een andere testpatiënt; die mag niet de eerder gevonden Composition zijn.
+    Gegenereerd door gen_nts.py uit de NL-PS requirements-traceability (PS-requirements v0.1, 24-11-2026). Pas de generator aan, niet dit bestand.
+-->
+<nts:component xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
+    <action>
+        <operation>
+            <type>
+                <system value="http://hl7.org/fhir/restful-interaction"/>
+                <code value="search"/>
+            </type>
+            <resource value="Composition"/>
+            <description value="TG-02-03: GET [base]/Composition?type=http://loinc.org|60591-5&amp;patient=[id testpatiënt 3a]"/>
+            <destination value="1"/>
+            <encodeRequestUrl value="true"/>
+            <origin value="1"/>
+            <params value="?type=http://loinc.org|60591-5&amp;patient=${patient-id-3a-cross}"/>
+            <responseId value="ps-search-cross"/>
+        </operation>
+    </action>
+    <action>
+        <assert>
+            <description value="TG-02-03 (PS-API-05): Confirm that the server responds with HTTP status 200."/>
+            <direction value="response"/>
+            <response value="okay"/>
+            <warningOnly value="false"/>
+        </assert>
+    </action>
+    <action>
+        <assert nts:stopTestOnFail="true">
+            <description value="TG-02-03 (PS-API-05): het zoekresultaat voor de andere patiënt bevat een Composition."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Composition).exists()"/>
+            <warningOnly value="false"/>
+        </assert>
+    </action>
+    <action>
+        <assert>
+            <description value="TG-02-03 (PS-API-05): die Composition is niet de PS van de eerste testpatiënt."/>
+            <direction value="response"/>
+            <expression value="Bundle.entry.resource.where($this is Composition).first().id"/>
+            <operator value="notEquals"/>
+            <value value="${composition-id}"/>
+            <warningOnly value="false"/>
+        </assert>
+    </action>
+</nts:component>
