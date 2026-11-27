@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript">
    <id value="mp9-ma-xis-01-01-xml"/>
+   <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-rule">
+      <extension url="ruleId">
+         <valueId value="assert-response-queryParamsInSelfLink"/>
+      </extension>
+      <extension url="path">
+         <valueString value="../../_reference/rules/assert_response_queryParamsInSelfLink.groovy"/>
+      </extension>
+   </extension>
    <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-authentication">
       <extension url="display">
          <valueString value="XXX-BOSCHMAN"/>
@@ -12,7 +20,7 @@
    <url value="http://nictiz.nl/fhir/TestScript/mp9-ma-xis-01-01-xml"/>
    <version value="stu3-9.0.7-patchlevel 2026.46"/>
    <name value="Mp9_ma_xis_01_01_xml"/>
-   <title value="Scenario 1.1 - XML Format"/>
+   <title value="Scenario 1.1 - Serve medication agreements of person 'XXX-BOSCHMAN' with period of use start and end dates - XML Format"/>
    <status value="active"/>
    <publisher value="Nictiz"/>
    <contact>
@@ -23,7 +31,7 @@
          <use value="work"/>
       </telecom>
    </contact>
-   <description value="Scenario 1.1 - Medicatieafspraak gebruiksperiode ingangsdatum en einddatum"/>
+   <description value="Qualification of scenario 1.1 of the Medication Agreement Serve use case. See [the qualification documentation on the Nictiz wiki](https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2019.01_Kwalificatie#Medicatiegegevens) for more information."/>
    <origin>
       <index value="1"/>
       <profile>
@@ -49,8 +57,7 @@
       <description value="X-Correlation-ID, by default a UUID following the MedMij Afsprakenstelsel. Does not have to be edited, see https://nictiz.atlassian.net/browse/MM-5132 for more information"/>
    </variable>
    <test id="mg-mgr-mg-MA-Scenarioset1-1-1">
-      <name value="Scenario 1.1"/>
-      <description value="Scenario 1.1 - Medicatieafspraak gebruiksperiode ingangsdatum en einddatum"/>
+      <description value="Serve medication agreements of person 'XXX-BOSCHMAN' with period of use start and end dates and check the response"/>
       <action>
          <operation>
             <type>
@@ -58,7 +65,7 @@
                <code value="search"/>
             </type>
             <resource value="MedicationRequest"/>
-            <description value="Test XIS server to serve MedicationAgreement (NL: MedicatieAfspraak) - Medicatieafspraak gebruiksperiode ingangsdatum en einddatum"/>
+            <description value="Receive a FHIR search on MedicationRequest, including the 'category' and '_include' parameters, and send a response"/>
             <accept value="xml"/>
             <destination value="1"/>
             <encodeRequestUrl value="true"/>
@@ -231,7 +238,19 @@
       </action>
       <action>
          <assert>
-            <description value="Confirm that the returned searchset Bundle contains at least 1 MedicationAgreement. "/>
+            <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-assert-rule">
+               <extension url="ruleId">
+                  <valueId value="assert-response-queryParamsInSelfLink"/>
+               </extension>
+            </extension>
+            <description value="Confirm that the parameters in the request URL are all handled by the server, by inspecting the self link."/>
+            <stopTestOnFail value="false"/>
+            <warningOnly value="true"/>
+         </assert>
+      </action>
+      <action>
+         <assert>
+            <description value="Confirm that the response Bundle contains 1 MedicationRequest resource(s)."/>
             <direction value="response"/>
             <expression value="Bundle.entry.where(resource.is(MedicationRequest)).count() &gt;= 1"/>
             <stopTestOnFail value="false"/>

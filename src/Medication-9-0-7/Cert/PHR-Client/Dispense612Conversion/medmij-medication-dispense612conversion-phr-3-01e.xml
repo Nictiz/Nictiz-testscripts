@@ -2,24 +2,25 @@
 <TestScript xmlns="http://hl7.org/fhir" xmlns:nts="http://nictiz.nl/xsl/testscript" nts:scenario="client">
     <id value="medmij-medication-dispense612conversion-phr-3-01e"/>
     <version value="stu3-9.0.7"/>
-    <title value="Scenario 3.1e - Filter op gebruiksperiode, alles vanaf T-21."/>
-    <description value="Scenario 3.1e - Filter op gebruiksperiode, alles vanaf T-21. Patient Peter P. Veenoord."/>    
+    <title value="Scenario 3.1e - Retrieve translated medication dispenses of person 'VEENOORD' filtered by period of use from T-21 onwards"/>
+    <description value="Qualification of scenario 3.1e of the Medication Dispense Translation Retrieve use case. See [the qualification documentation on the Nictiz wiki](https://informatiestandaarden.nictiz.nl/wiki/MedMij:V2019.01_Kwalificatie#Verstrekkingenvertaling) for more information. Test person: Peter P. Veenoord (resource id 'VEENOORD')."/>
     <nts:clAuthExtension patientResourceId="VEENOORD"/>
     <nts:includeDateT value="yes"/>
     
     <test id="Scenario-3-1e">
         <nts:include value="test.client.ext.requestModes" scope="common" requestMode="extra-allowed"/>
-        <name value="Scenario 3.1e"/>
-        <description value="Filter op gebruiksperiode, alles vanaf T-21."/>
-        <nts:include value="phr-operation-search-dispense612conversion.xml">
-            <nts:with-parameter name="description"
-                value="Test PHR Client search operation - Filter op gebruiksperiode, alles vanaf T-21."/>
-            <nts:with-parameter name="accept" value="xml"/>
-            <nts:with-parameter name="internal-searchparams" value="&amp;periodofuse=ge${DATE, T, D,-21}"/>
-        </nts:include>
+        <description value="Retrieve translated medication dispenses of person 'VEENOORD' filtered by period of use from T-21 onwards and check the request"/>
+        <nts:include value="medmij/test.phr.search"
+            scope="common"
+            resource="MedicationDispense"
+            params="?category=http://snomed.info/sct|373784005,http://snomed.info/sct|422037009&amp;_include=MedicationDispense:medication&amp;_include=MedicationDispense:patient&amp;_include=MedicationDispense:performer&amp;periodofuse=ge${DATE, T, D,-21}"
+            description="Send a FHIR search on MedicationDispense, including the 'category', '_include' and 'periodofuse' parameters"/>
         <action>
             <assert>
-                <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-assert-query-parameter">
+                <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-assert-type">
+                    <valueCode value="queryParameter"/>
+                </extension>
+                <extension url="http://fhir.interoplab.eu/fhir/StructureDefinition/Interoplab-CL-ext-assert-type-argument">
                     <valueString value="periodofuse"/>
                 </extension>
                 <description value="Check if request contains the expected search parameter 'periodofuse' with one of the expected operators 'ge' or 'gt' and its matching value"/>
@@ -28,7 +29,6 @@
                 <value value="ge${DATE, T, D,-21},gt${DATE, T, D,-22}"/>
             </assert>
         </action>    
-        <nts:include value="medmij/assert.request.general" scope="common" />
         <nts:include value="canary-assert.response.successfulSearch" scope="common"/>
     </test>
 </TestScript>
