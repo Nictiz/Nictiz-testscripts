@@ -153,7 +153,7 @@
                         <xsl:otherwise>
                             <xsl:call-template name="util:logMessage">
                                 <xsl:with-param name="level" select="$logINFO"/>
-                                <xsl:with-param name="msg">wat komt hier? scenarioString '<xsl:value-of select="$scenarioString"/>' theScenario '<xsl:value-of select="$scenarioString/@theScenario"/>' and scenarioSet <xsl:value-of select="$scenarioString/@scenarioset"/> and testGoal <xsl:value-of select="$testGoal"/></xsl:with-param>
+                                <xsl:with-param name="msg">scenarioString '<xsl:value-of select="$scenarioString"/>' theScenario '<xsl:value-of select="$scenarioString/@theScenario"/>' and scenarioSet <xsl:value-of select="$scenarioString/@scenarioset"/> and testGoal <xsl:value-of select="$testGoal"/></xsl:with-param>
                             </xsl:call-template>
                             <xsl:call-template name="handleFilterScenario">
                                 <xsl:with-param name="buildingBlockShort" select="$buildingBlockShort"/>
@@ -377,6 +377,7 @@
             </xsl:choose>
         </xsl:variable>
         <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts, $theAdditionalParamParts)"/>
+        <xsl:variable name="theScenarioParamsLatestStop" select="concat('?patient=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts, $theAdditionalParamParts)"/>
         <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts, $theAdditionalParamParts)"/>
         
         <xsl:variable name="returnCount" select="(count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)] | $adaInstance//medicamenteuze_behandeling_id/parent::node()))"/>
@@ -556,6 +557,15 @@
             <xsl:value-of select="concat('category=http://snomed.info/sct|', $matchCategoryCode, replace($additionalScenarioParams, '&amp;', '&amp;'), '&amp;_include=', $matchResource, ':medication')"/>
         </xsl:variable>
         
+        <xsl:variable name="theParamPartsLatestStop">
+            <xsl:choose>
+                <xsl:when test="contains($additionalScenarioParams, '${DATE, T, D' )">
+                    <xsl:value-of select="concat('category=http://snomed.info/sct|', $matchCategoryCode, '&amp;_include=', $matchResource, ':medication')"/>
+                </xsl:when>
+            </xsl:choose>
+        </xsl:variable>
+            
+        
         <xsl:variable name="practitionerParamParts" select="'&amp;_include:iterate=PractitionerRole:organization&amp;_include:iterate=PractitionerRole:practitioner&amp;_include:iterate=PractitionerRole:location'"/>    
         <xsl:variable name="theAdditionalParamParts">
             <!-- MP-1555: added additional includes-->
@@ -588,8 +598,12 @@
         </xsl:variable>
         <xsl:variable name="theScenarioParams" select="concat('?patient.identifier=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamParts, $theAdditionalParamParts)"/>
         <xsl:variable name="theScenarioParamsMedMij" select="concat('?', $theParamParts , $theAdditionalParamParts)"/>
+        <xsl:variable name="theScenarioParamsLatestStop" select="concat('?patient=', $bsnSystem, '|', $patientBsn, '&amp;', $theParamPartsLatestStop, $theAdditionalParamParts)"/>
+        
         
         <xsl:variable name="returnCount" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)] | $adaInstance//medicamenteuze_behandeling_id/parent::node())"/>
+        <xsl:variable name="returnCountLatestStop" select="count($adaInstance/medicamenteuze_behandeling/*[not(self::identificatie)] | $adaInstance//medicamenteuze_behandeling_id/parent::node())"/>
+        
         <!-- Select ADA Medication entries -->
         <xsl:variable name="medicationValues" as="xs:string*" select="($adaInstance/medicamenteuze_behandeling//farmaceutisch_product/@value | $adaInstance//medicamenteuze_behandeling_id/..//farmaceutisch_product/@value)"/>
         <xsl:variable name="medicationValuesDistinct" as="xs:string*" select="distinct-values($medicationValues)"/>  
@@ -643,7 +657,7 @@
                     <description value="{$testDescription}"/>
                     <xsl:choose>
                         <xsl:when test="$transactionTypeNormalized = 'retrieve'">
-                            
+                            <!-- retrieve request -->
                             <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
                                 <nts:with-parameter name="description" value="Test client to retrieve {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
                                 <nts:with-parameter name="resource" value="{$matchResource}"/>
@@ -665,6 +679,14 @@
                                 <nts:with-parameter name="resource" value="Medication"/>
                                 <nts:with-parameter name="count" value="{$expectedMedCount}"/>
                             </nts:include> 
+                            <!-- latestStop operation -->
+                            <xsl:if test="$theScenarioParamsLatestStop">
+                            <nts:include value="test.client.search" scope="common" nts:in-targets="#default">
+                                <nts:with-parameter name="description" value="Test client to retrieve the latest stop of the {$matchResource} resource(s) representing MP9 building block {$buildingBlockLong}"/>
+                                <nts:with-parameter name="resource" value="{$matchResource}"/>
+                                <nts:with-parameter name="params" value="{$theScenarioParamsLatestStop}"/>
+                            </nts:include>
+                            </xsl:if>
                         </xsl:when>
                         <xsl:when test="$transactionTypeNormalized = 'serve'">                           
                             <!--NICTIZ-29763 removed CheckContent from target so no content asserts scripts will be generated
